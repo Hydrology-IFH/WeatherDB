@@ -16,19 +16,6 @@ except:
         if dir.joinpath("secretSettings.py").is_file():
             sys.path.insert(0, dir.as_posix())
             break
-    # sys.path.insert(0, Path(__file__).resolve().parents[3].as_posix())
-
-    # from main.settings import DATABASES
-
-    # DB_ENG = sqlalchemy.create_engine(
-    #     "postgresql://{user}:{pwd}@{host}:{port}/{name}".format(
-    #         user=DATABASES["weather"]["USER"],
-    #         pwd=DATABASES["weather"]["PASSWORD"],
-    #         host=DATABASES["weather"]["HOST"],
-    #         name=DATABASES["weather"]["NAME"],
-    #         port=DATABASES["weather"]["PORT"]
-    #         )
-    #     )
     import secretSettings as secrets
     DB_ENG = sqlalchemy.create_engine(
         "postgresql://{user}:{pwd}@{host}:{port}/{name}".format(
@@ -39,8 +26,6 @@ except:
             port=secrets.DB_PORT
             )
         )
-    ###################################
-    ## here something must get changed to also work without django environment
 
 # check if user has super user privileges
 with DB_ENG.connect() as con:
@@ -51,6 +36,14 @@ with DB_ENG.connect() as con:
             WHERE member = (SELECT oid FROM pg_roles WHERE rolname='{user}'));
         """.format(user=DB_ENG.url.username)).first()[0]
 
+# decorator function to overwrite methods
+def check_superuser(methode):
+    def no_super_user(*args, **kwargs):
+        raise PermissionError("You are no super user of the Database and therefor this function is not available.")
+    if DB_ENG.is_superuser:
+        return methode
+    else:
+        return no_super_user
 # DWD - CDC FTP Server
 class FTP(ftplib.FTP):
     def login(self, **kwargs):

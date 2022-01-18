@@ -16,7 +16,7 @@ import datetime
 # import re
 from tempfile import TemporaryDirectory
 
-from .lib.connections import CDC, DB_ENG
+from .lib.connections import CDC, DB_ENG, check_superuser
 from .lib.utils import get_ftp_file_list
 from .lib.max_fun.import_DWD import get_dwd_meta
 from .station import (StationBase,
@@ -92,6 +92,7 @@ class StationsBase:
 
         return meta
 
+    @check_superuser
     def update_meta(self):
         """Update the meta table by comparing to the CDC server.
 
@@ -151,6 +152,7 @@ class StationsBase:
             "The {para_long} meta table got successfully updated."\
                 .format(para_long=self._para_long))
 
+    @check_superuser
     def _update_db_meta(self, meta):
         """Update a meta table on the database with new DataFrame.
 
@@ -228,6 +230,7 @@ class StationsBase:
         with DB_ENG.connect() as con:
             con.execute(sql)
 
+    @check_superuser
     def update_period_meta(self, stids="all"):
         """Update the period in the meta table of the raw data.
 
@@ -479,6 +482,7 @@ class StationsBase:
             pbar.variables["last_station"] = stat.id
             pbar.update()
 
+    @check_superuser
     def update_raw(self, only_new=True, only_real=True, stids="all"):
         """Download all stations data from CDC and upload to database.
 
@@ -531,6 +535,7 @@ class StationsBase:
                 para=self._para,
                 start_tstp=start_tstp.strftime("%Y%m%d %H:%M")))
 
+    @check_superuser
     def last_imp_quality_check(self):
         """Do the quality check of the last import.
         """
@@ -541,6 +546,7 @@ class StationsBase:
             kwargs=dict(period=(None,None)),
             do_mp=False)
 
+    @check_superuser
     def last_imp_fillup(self):
         """Do the filling of the last import.
         """
@@ -557,6 +563,7 @@ class StationsBase:
             kwargs=dict(period=period),
             do_mp=False)
 
+    @check_superuser
     def quality_check(self, period=(None, None), only_real=True, stids="all"):
         """Quality check the raw data for a given period.
 
@@ -579,6 +586,7 @@ class StationsBase:
             kwargs=dict(period=period),
             do_mp=False)
 
+    @check_superuser
     def update_ma(self, stids="all"):
         """Update the multi annual values for the stations.
 
@@ -604,6 +612,7 @@ class StationsBase:
             kwargs=dict(),
             do_mp=False)
 
+    @check_superuser
     def fillup(self, only_real=False, stids="all"):
         """Fill up the quality checked data with data from nearby stations to get complete timeseries.
 
@@ -632,31 +641,7 @@ class StationsBase:
             do_mp=False)
 
 class StationsTETBase(StationsBase):
-    def update_exp_fact(self, stids="all"):
-        """Update the exposition factors.
-
-        Get the value from the raster and save to the database.
-
-        Parameters
-        ----------
-        stids: string or list of int, optional
-            The Stations for which to compute.
-            Can either be "all", for all possible stations
-            or a list with the Station IDs.
-            The default is "all".
-
-        Raises
-        ------
-        ValueError
-            If the given stids (Station_IDs) are not all valid.
-        """
-        self._run_in_mp(
-            stations=self.get_stations(only_real=False, stids=stids),
-            methode="update_exp_fact",
-            name="update exp-fact for {para}".format(para=self._para.upper()),
-            kwargs=dict(),
-            do_mp=False)
-
+    @check_superuser
     def fillup(self, only_real=False, stids="all"):
         # create virtual stations if necessary
         if not only_real:
@@ -677,6 +662,7 @@ class PrecipitationStations(StationsBase):
     _StationClass = PrecipitationStation
     _timeout_raw_imp = 360
 
+    @check_superuser
     def update_richter_class(self, stids="all"):
         """Update the Richter exposition class.
 

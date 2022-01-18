@@ -15,7 +15,7 @@ import rasterio.mask
 from shapely.geometry import Point, MultiLineString
 import shapely.wkt
 
-from .lib.connections import CDC, DB_ENG
+from .lib.connections import CDC, DB_ENG, check_superuser
 from .lib.max_fun.import_DWD import dwd_id_to_str, get_dwd_file
 from .lib.utils import TimestampPeriod, get_ftp_file_list
 from .lib.max_fun.geometry import polar_line, raster2points
@@ -72,15 +72,17 @@ RICHTER_CLASSES = {
     },
 }
 
-
+# get log
 log = logging.getLogger(__name__)
 
-disallow_nosuperuser = property(
-    doc='(!) You are not a super user of the Database and therefor this function is not available.')
 
+# class definitions
+###################
 
 class StationBase:
-    # this is only a Base class and is not working on it's own,
+    """This is the Base class for one Station.
+    It is not working on it's own, because those parameters need to get defined in the real classes
+    """
     # because those parameters need to get defined in the real classes:
     _ftp_folder_base = ["None"]  # the base folder on the CDC-FTP server
     _date_col = None  # The name of the date column on the CDC server
@@ -108,29 +110,6 @@ class StationBase:
     # the postgresql data type of the timestamp column, e.g. "date" or "timestamp"
     _tstp_dtype = None
     _interval = None  # The interval of the timeseries e.g. "1 day" or "10 min"
-    # _sql_add_coef_calc = "" # additional sql statement to add the exposition factor to the calculation of the coefficients
-    # not used because the grid values are already normalized to the multi annual station data. Considering the exposition factor would result in ann error
-
-    # hidding methods if not superuser of DB
-    if not DB_ENG.is_superuser:
-        quality_check = disallow_nosuperuser
-        update_raw = disallow_nosuperuser
-        update_ma = disallow_nosuperuser
-        _update_db_timeserie = disallow_nosuperuser
-        update_period_meta = disallow_nosuperuser
-        _create_timeseries_table = disallow_nosuperuser
-        _expand_timeserie_to_period = disallow_nosuperuser
-        _mark_last_imp_done = disallow_nosuperuser
-        last_imp_quality_check = disallow_nosuperuser
-        last_imp_fillup = disallow_nosuperuser
-        quality_check = disallow_nosuperuser
-        fillup = disallow_nosuperuser
-        _drop = disallow_nosuperuser
-        _check_isin_db = disallow_nosuperuser
-        _check_ma = disallow_nosuperuser
-        _update_meta = disallow_nosuperuser
-        _execute_long_sql = disallow_nosuperuser
-
 
     def __init__(self, id):
         if type(self) == StationBase:
@@ -155,14 +134,14 @@ class StationBase:
         self._cached_periods = dict()
 
     def _check_isin_meta(self):
-        if self.isin_meta():
-            return True
-        else:
-            raise NotImplementedError("""
-                The given {para_long} station with id {stid}
-                is not in the corresponding meta table in the DB""".format(
-                stid=self.id, para_long=self._para_long
-            ))
+            if self.isin_meta():
+                return True
+            else:
+                raise NotImplementedError("""
+                    The given {para_long} station with id {stid}
+                    is not in the corresponding meta table in the DB""".format(
+                    stid=self.id, para_long=self._para_long
+                ))
 
     def _check_kind(self, kind):
         """Check if the given kind is valid.
@@ -286,26 +265,30 @@ class StationBase:
 
         return period
 
+    def _clean_cached_period(self):
+        time_limit = datetime.now() - timedelta(minutes=1)
+        for key in list(self._cached_periods):
+            if self._cached_periods[key]["time"] < time_limit:
+                self._cached_periods.pop(key)
+    
+    @check_superuser
     def _check_ma(self):
         if not self.isin_ma():
             self._update_ma()
 
+    @check_superuser
     def _check_isin_db(self):
         """Check if the station has already a timeserie and if not create one.
         """
         if not self.isin_db():
             self._create_timeseries_table()
 
-    def _clean_cached_period(self):
-        time_limit = datetime.now() - timedelta(minutes=1)
-        for key in list(self._cached_periods):
-            if self._cached_periods[key]["time"] < time_limit:
-                self._cached_periods.pop(key)
-
+    @check_superuser
     def _create_timeseries_table(self):
         """Create the timeseries table in the DB if it is not yet existing."""
         pass
 
+    @check_superuser
     def _expand_timeserie_to_period(self):
         # The interval of 9h and 30 seconds is due to the fact, that the fact that t and et data for the previous day is only updated around 9 on the following day
         # the 10 minutes interval is to get the previous day and not the same day
@@ -318,14 +301,14 @@ class StationBase:
                             'day',
                             min(start_tstp_last_imp) - '9h 30min'::INTERVAL )
                         - '10 min'::INTERVAL
-                     FROM para_variables)::{tstp_dtype},
-                     '{interval}'::INTERVAL)::{tstp_dtype} AS timestamp)
+                    FROM para_variables)::{tstp_dtype},
+                    '{interval}'::INTERVAL)::{tstp_dtype} AS timestamp)
             INSERT INTO timeseries."{stid}_{para}"(timestamp)
                 (SELECT wts.timestamp
-                 FROM whole_ts wts
-                 LEFT JOIN timeseries."{stid}_{para}" ts
-                     ON ts.timestamp=wts.timestamp
-                 WHERE ts.timestamp IS NULL);
+                FROM whole_ts wts
+                LEFT JOIN timeseries."{stid}_{para}" ts
+                    ON ts.timestamp=wts.timestamp
+                WHERE ts.timestamp IS NULL);
         """.format(
             stid=self.id,
             para=self._para,
@@ -337,6 +320,7 @@ class StationBase:
                 as con:
             con.execute(sql)
 
+    @check_superuser
     def _update_db_timeserie(self, df, kinds):
         """Update the timeseries table on the database with new DataFrame.
 
@@ -364,8 +348,8 @@ class StationBase:
         # check if df is empty
         if len(df) == 0:
             log.debug(("The _update_db_timeserie methode got an empty df " +
-                       "for the {para_long} Station with ID {stid}"
-                       ).format(
+                    "for the {para_long} Station with ID {stid}"
+                    ).format(
                 para_long=self._para_long,
                 stid=self.id))
             return None
@@ -402,6 +386,7 @@ class StationBase:
                 # run sql command
                 con.execute(sql_insert)
 
+    @check_superuser
     def _drop(self, why="No reason given"):
         """Drop this station from the database. (meta table and timeseries)
         """
@@ -426,6 +411,7 @@ class StationBase:
             "The {para_long} Station with ID {stid} got droped from the database."
             .format(stid=self.id, para_long=self._para_long))
 
+    @check_superuser
     def _update_meta(self, cols, values):
         sets = []
         for col, value in zip(cols, values):
@@ -448,6 +434,7 @@ class StationBase:
                 as con:
             con.execute(sql_update)
 
+    @check_superuser
     def _execute_long_sql(self, sql, description="treated"):
         done = False
         attempts = 0
@@ -457,11 +444,11 @@ class StationBase:
             try:
                 with DB_ENG.connect() as con:
                     con.execution_options(isolation_level="AUTOCOMMIT"
-                                          ).execute(sql)
+                                        ).execute(sql)
                 done = True
             except OperationalError as err:
                 log_msg = ("There was an operational error for the {para_long} Station (ID:{stid})" +
-                           "\nHere is the complete error:\n" + str(err)).format(
+                        "\nHere is the complete error:\n" + str(err)).format(
                     stid=self.id, para_long=self._para_long)
                 if any([
                         True if re.search(
@@ -567,7 +554,40 @@ class StationBase:
         with DB_ENG.connect() as con:
             res = con.execute(sql)
         return res.first()[0]
+    
+    def is_last_imp_done(self, kind):
+        """Is the last import for the given kind already worked in?
 
+
+        Parameters
+        ----------
+        kind :  str
+            The data kind to look for filled period.
+            Must be a column in the timeseries DB.
+            Must be one of "raw", "qc", "filled", "adj", "best".
+            If "best" is given, then depending on the parameter of the station the best kind is selected.
+            For Precipitation this is "corr" and for the other this is "filled".
+            For the precipitation also "qn" and "corr" are valid.
+
+        Returns
+        -------
+        bool
+            True if the last import of the given kind is already treated.
+        """
+
+        kind = self._check_kind(kind)
+        sql = """
+            SELECT last_imp_{kind}
+            FROM meta_{para}
+            WHERE station_id = {stid}
+        """.format(stid=self.id, para=self._para, kind=kind)
+
+        with DB_ENG.connect() as con:
+            res = con.execute(sql)
+
+        return res.first()[0]
+
+    @check_superuser
     def update_period_meta(self):
         """Update the time period in the meta file.
         """
@@ -589,6 +609,7 @@ class StationBase:
         with DB_ENG.connect() as con:
             con.execute(sql)
 
+    @check_superuser
     def update_ma(self, skip_if_exist=True):
         """Update the multi annual values in the stations_raster_values table.
 
@@ -647,6 +668,153 @@ class StationBase:
             self._drop(
                 why="no multi-annual data was found from 'rasters.{raster_name}'"
                 .format(raster_name=self._ma_raster["db_table"]))
+
+    @check_superuser
+    def update_raw(self, only_new=True, ftp_file_list=None):
+        """Download data from CDC and upload to database.
+
+        Parameters
+        ----------
+        only_new : bool, optional
+            Get only the files that are not yet in the database?
+            If False all the available files are loaded again.
+            The default is True
+        ftp_file_list : list of (strings, datetime), optional
+            A list of files on the FTP server together with their modification time.
+            If None, then the list is fetched from the server.
+            The default is None
+
+        Returns
+        -------
+        pandas.DataFrame
+            The raw Dataframe of the Stations data.
+        """
+        zipfiles = self.get_zipfiles(
+            only_new=only_new,
+            ftp_file_list=ftp_file_list)
+
+        # check for empty list of zipfiles
+        if len(zipfiles) == 0:
+            log.debug(
+                """raw_update of {para_long} Station {stid}:
+                No zipfile was found and therefor no new data was imported."""
+                .format(para_long=self._para_long, stid=self.id))
+            return None
+
+        # download raw data
+        df_all = self._download_raw(zipfiles=zipfiles.index)
+
+        # cut out valid time period
+        df_all = df_all.loc[df_all.index >= MIN_TSTP]
+
+        # change to db format and upload to DB
+        dict_cdc_db = dict(
+            zip(self._cdc_col_names_imp, self._db_col_names_imp))
+        cols_change = [
+            name for name in self._cdc_col_names_imp
+            if dict_cdc_db[name] not in self._kinds_not_decimal]
+        selection = df_all[self._cdc_col_names_imp].copy()
+        selection[cols_change] = (selection[cols_change] * self._decimals)\
+            .round(0).astype("Int64")
+        selection = selection[selection.isna().sum(
+            axis=1) <= (len(selection.columns)-1)]
+        self._update_db_timeserie(
+            selection,
+            kinds=self._db_col_names_imp)
+
+        # update raw_files db table
+        update_values = \
+            ", ".join([str(pair) for pair in zip(
+                zipfiles,
+                zipfiles["modtime"].dt.strftime("%Y%m%d %H:%M").values)]
+            )
+        with DB_ENG.connect() as con:
+            con.execute('''
+                INSERT INTO raw_files(filepath, modtime)
+                VALUES {values}
+                ON CONFLICT (filepath) DO UPDATE SET modtime = EXCLUDED.modtime
+                '''.format(values=update_values))
+
+        # if empty skip updating meta filepath
+        if len(selection) == 0:
+            log_msg = ("raw_update of {para_long} Station {stid}: " +
+                    "The downloaded new dataframe was empty and therefor no new data was imported.")\
+                .format(para_long=self._para_long, stid=self.id)
+            if not only_new and not self.is_virtual():
+                # delete station from meta file because
+                # there will never be data for this station
+                self._drop(
+                    why="while updating raw data with only_new=False the df was empty even thought the station is not virtual")
+                log_msg += "\nBecause only_new was False, the station got droped from the meta file."
+
+            # return empty df
+            log.debug(log_msg)
+            return None
+
+        # update meta file
+        # -----------------
+        # get last_imp valid kinds that are in the meta file
+        last_imp_valid_kinds = self._valid_kinds.copy()
+        last_imp_valid_kinds.remove("raw")
+        for name in ["qn", "filled_by"]:
+            if name in last_imp_valid_kinds:
+                last_imp_valid_kinds.remove(name)
+
+        # create update sql
+        sql_update_meta = '''
+            INSERT INTO meta_{para} as meta
+                (station_id, von_datum, bis_datum, last_imp_von, last_imp_bis
+                    {last_imp_cols})
+            VALUES ({stid}, '{min_tstp}', '{max_tstp}', '{min_tstp}',
+                    '{max_tstp}'{last_imp_values})
+            ON CONFLICT (station_id) DO UPDATE SET
+                von_datum = LEAST (meta.von_datum, EXCLUDED.von_datum),
+                bis_datum = GREATEST (meta.bis_datum, EXCLUDED.bis_datum),
+                last_imp_von = CASE WHEN {last_imp_test}
+                                    THEN EXCLUDED.last_imp_von
+                                    ELSE LEAST(meta.last_imp_von,
+                                            EXCLUDED.last_imp_von)
+                                    END,
+                last_imp_bis = CASE WHEN ({last_imp_test})
+                                    THEN EXCLUDED.last_imp_bis
+                                    ELSE GREATEST(meta.last_imp_bis,
+                                                EXCLUDED.last_imp_bis)
+                                    END
+                {last_imp_conflicts};
+            '''.format(
+            para=self._para,
+            stid=self.id,
+            min_tstp=selection.index.min().strftime("%Y%m%d %H:%M"),
+            max_tstp=selection.index.max().strftime("%Y%m%d %H:%M"),
+            last_imp_values=(
+                ", " +
+                ", ".join(["FALSE"] * len(last_imp_valid_kinds))
+            ) if len(last_imp_valid_kinds) > 0 else "",
+            last_imp_cols=(
+                ", last_imp_" +
+                ", last_imp_".join(last_imp_valid_kinds)
+            ) if len(last_imp_valid_kinds) > 0 else "",
+            last_imp_conflicts=(
+                ", last_imp_" +
+                " = FALSE, last_imp_".join(last_imp_valid_kinds) +
+                " = FALSE"
+            ) if len(last_imp_valid_kinds) > 0 else "",
+            last_imp_test=(
+                "meta.last_imp_" +
+                " AND meta.last_imp_".join(last_imp_valid_kinds)
+            ) if len(last_imp_valid_kinds) > 0 else "true")
+
+        # execute meta update
+        with DB_ENG.connect()\
+                .execution_options(isolation_level="AUTOCOMMIT") as con:
+            con.execute(sql_update_meta)
+
+        log.info("The raw data for {para_long} station with ID {stid} got updated for the period {min_tstp} to {max_tstp}."
+                .format(
+                    para_long=self._para_long,
+                    stid=self.id,
+                    min_tstp=str(selection.index.min()),
+                    max_tstp=str(selection.index.max())))
 
     def get_zipfiles(self, only_new=True, ftp_file_list=None):
         """Get the zipfiles on the CDC server with the raw data.
@@ -717,152 +885,6 @@ class StationBase:
         else:
             return zipfiles  # .index.to_list()
 
-    def update_raw(self, only_new=True, ftp_file_list=None):
-        """Download data from CDC and upload to database.
-
-        Parameters
-        ----------
-        only_new : bool, optional
-            Get only the files that are not yet in the database?
-            If False all the available files are loaded again.
-            The default is True
-        ftp_file_list : list of (strings, datetime), optional
-            A list of files on the FTP server together with their modification time.
-            If None, then the list is fetched from the server.
-            The default is None
-
-        Returns
-        -------
-        pandas.DataFrame
-            The raw Dataframe of the Stations data.
-        """
-        zipfiles = self.get_zipfiles(
-            only_new=only_new,
-            ftp_file_list=ftp_file_list)
-
-        # check for empty list of zipfiles
-        if len(zipfiles) == 0:
-            log.debug(
-                """raw_update of {para_long} Station {stid}:
-                No zipfile was found and therefor no new data was imported."""
-                .format(para_long=self._para_long, stid=self.id))
-            return None
-
-        # download raw data
-        df_all = self._download_raw(zipfiles=zipfiles.index)
-
-        # cut out valid time period
-        df_all = df_all.loc[df_all.index >= MIN_TSTP]
-
-        # change to db format and upload to DB
-        dict_cdc_db = dict(
-            zip(self._cdc_col_names_imp, self._db_col_names_imp))
-        cols_change = [
-            name for name in self._cdc_col_names_imp
-            if dict_cdc_db[name] not in self._kinds_not_decimal]
-        selection = df_all[self._cdc_col_names_imp].copy()
-        selection[cols_change] = (selection[cols_change] * self._decimals)\
-            .round(0).astype("Int64")
-        selection = selection[selection.isna().sum(
-            axis=1) <= (len(selection.columns)-1)]
-        self._update_db_timeserie(
-            selection,
-            kinds=self._db_col_names_imp)
-
-        # update raw_files db table
-        update_values = \
-            ", ".join([str(pair) for pair in zip(
-                zipfiles,
-                zipfiles["modtime"].dt.strftime("%Y%m%d %H:%M").values)]
-            )
-        with DB_ENG.connect() as con:
-            con.execute('''
-                INSERT INTO raw_files(filepath, modtime)
-                VALUES {values}
-                ON CONFLICT (filepath) DO UPDATE SET modtime = EXCLUDED.modtime
-                '''.format(values=update_values))
-
-        # if empty skip updating meta filepath
-        if len(selection) == 0:
-            log_msg = ("raw_update of {para_long} Station {stid}: " +
-                       "The downloaded new dataframe was empty and therefor no new data was imported.")\
-                .format(para_long=self._para_long, stid=self.id)
-            if not only_new and not self.is_virtual():
-                # delete station from meta file because
-                # there will never be data for this station
-                self._drop(
-                    why="while updating raw data with only_new=False the df was empty even thought the station is not virtual")
-                log_msg += "\nBecause only_new was False, the station got droped from the meta file."
-
-            # return empty df
-            log.debug(log_msg)
-            return None
-
-        # update meta file
-        # -----------------
-        # get last_imp valid kinds that are in the meta file
-        last_imp_valid_kinds = self._valid_kinds.copy()
-        last_imp_valid_kinds.remove("raw")
-        for name in ["qn", "filled_by"]:
-            if name in last_imp_valid_kinds:
-                last_imp_valid_kinds.remove(name)
-
-        # create update sql
-        sql_update_meta = '''
-            INSERT INTO meta_{para} as meta
-                (station_id, von_datum, bis_datum, last_imp_von, last_imp_bis
-                    {last_imp_cols})
-            VALUES ({stid}, '{min_tstp}', '{max_tstp}', '{min_tstp}',
-                    '{max_tstp}'{last_imp_values})
-            ON CONFLICT (station_id) DO UPDATE SET
-                von_datum = LEAST (meta.von_datum, EXCLUDED.von_datum),
-                bis_datum = GREATEST (meta.bis_datum, EXCLUDED.bis_datum),
-                last_imp_von = CASE WHEN {last_imp_test}
-                                    THEN EXCLUDED.last_imp_von
-                                    ELSE LEAST(meta.last_imp_von,
-                                               EXCLUDED.last_imp_von)
-                                    END,
-                last_imp_bis = CASE WHEN ({last_imp_test})
-                                    THEN EXCLUDED.last_imp_bis
-                                    ELSE GREATEST(meta.last_imp_bis,
-                                                  EXCLUDED.last_imp_bis)
-                                    END
-                {last_imp_conflicts};
-            '''.format(
-            para=self._para,
-            stid=self.id,
-            min_tstp=selection.index.min().strftime("%Y%m%d %H:%M"),
-            max_tstp=selection.index.max().strftime("%Y%m%d %H:%M"),
-            last_imp_values=(
-                ", " +
-                ", ".join(["FALSE"] * len(last_imp_valid_kinds))
-            ) if len(last_imp_valid_kinds) > 0 else "",
-            last_imp_cols=(
-                ", last_imp_" +
-                ", last_imp_".join(last_imp_valid_kinds)
-            ) if len(last_imp_valid_kinds) > 0 else "",
-            last_imp_conflicts=(
-                ", last_imp_" +
-                " = FALSE, last_imp_".join(last_imp_valid_kinds) +
-                " = FALSE"
-            ) if len(last_imp_valid_kinds) > 0 else "",
-            last_imp_test=(
-                "meta.last_imp_" +
-                " AND meta.last_imp_".join(last_imp_valid_kinds)
-            ) if len(last_imp_valid_kinds) > 0 else "true")
-
-        # execute meta update
-        with DB_ENG.connect()\
-                .execution_options(isolation_level="AUTOCOMMIT") as con:
-            con.execute(sql_update_meta)
-
-        log.info("The raw data for {para_long} station with ID {stid} got updated for the period {min_tstp} to {max_tstp}."
-                 .format(
-                     para_long=self._para_long,
-                     stid=self.id,
-                     min_tstp=str(selection.index.min()),
-                     max_tstp=str(selection.index.max())))
-
     def _download_raw(self, zipfiles):
         # download raw data
         # import every file and merge data
@@ -888,6 +910,7 @@ class StationBase:
     def download_raw(self, only_new=False):
         return self._download_raw(zipfiles=self.get_zipfiles(only_new=only_new).index)
 
+    @check_superuser
     def _get_sql_new_qc(self, period=(None, None)):
         """Create the SQL statement for the new quality checked data.
 
@@ -905,6 +928,7 @@ class StationBase:
         """
         pass  # define in the specific classes
 
+    @check_superuser
     def quality_check(self, period=(None, None)):
         """Quality check the raw data for a given period.
 
@@ -933,7 +957,7 @@ class StationBase:
         self._execute_long_sql(
             sql=sql_qc,
             description="quality checked for the period {min_tstp} to {max_tstp}.".format(
-                         **period.get_sql_format_dict(format=self._tstp_format)
+                        **period.get_sql_format_dict(format=self._tstp_format)
                     ))
 
         # mark last import as done if in period
@@ -941,6 +965,7 @@ class StationBase:
         if last_imp_period.inside(period):
             self._mark_last_imp_done(kind="qc")
 
+    @check_superuser
     def fillup(self, period=(None, None)):
         """Fill up missing data with measurements from nearby stations."""
         self._expand_timeserie_to_period()
@@ -984,8 +1009,8 @@ class StationBase:
             sql_format_dict.update(dict(
                 is_winter_col=""",
                     CASE WHEN EXTRACT(MONTH FROM timestamp) IN (1, 2, 3, 10, 11, 12)
-                         THEN true::bool
-                         ELSE false::bool
+                        THEN true::bool
+                        ELSE false::bool
                     END AS is_winter""",
                 coef_calc=(
                     "ma_other.{ma_col[0]}{coef_sign[0]}ma_stat.{ma_col[0]}::float AS coef_wi, \n" + " "*24 +
@@ -996,8 +1021,8 @@ class StationBase:
                 coef_format="i.coef_wi, \n" + " " * 24 + "i.coef_so",
                 filled_calc="""
                     CASE WHEN nf.is_winter
-                         THEN round(nb.{base_col} {coef_sign[1]} %%3$s, 0)::int
-                         ELSE round(nb.{base_col} {coef_sign[1]} %%4$s, 0)::int
+                        THEN round(nb.{base_col} {coef_sign[1]} %%3$s, 0)::int
+                        ELSE round(nb.{base_col} {coef_sign[1]} %%4$s, 0)::int
                     END""".format(**sql_format_dict)
             ))
         else:
@@ -1009,7 +1034,7 @@ class StationBase:
             CREATE TEMP TABLE new_filled_{stid}_{para}
                 ON COMMIT DROP
                 AS (SELECT timestamp, {base_col} AS filled,
-                           NULL::int AS filled_by {is_winter_col}
+                        NULL::int AS filled_by {is_winter_col}
                     FROM timeseries."{stid}_{para}" ts
                     WHERE ts.{base_col} IS NULL {cond_period});
             ALTER TABLE new_filled_{stid}_{para} ADD PRIMARY KEY (timestamp);
@@ -1029,8 +1054,8 @@ class StationBase:
                         LEFT JOIN stations_raster_values ma_other
                             ON ma_other.station_id=meta.station_id
                         LEFT JOIN (SELECT {ma_cols}, exp_fact
-                                   FROM stations_raster_values
-                                   WHERE station_id = {stid}) ma_stat
+                                FROM stations_raster_values
+                                WHERE station_id = {stid}) ma_stat
                             ON 1=1
                         WHERE meta.station_id != {stid}
                             AND meta.station_id || '_{para}' IN (
@@ -1042,8 +1067,8 @@ class StationBase:
                         ORDER BY ST_DISTANCE(
                             geometry_utm,
                             (SELECT geometry_utm
-                             FROM meta_{para}
-                             WHERE station_id={stid})) ASC)
+                            FROM meta_{para}
+                            WHERE station_id={stid})) ASC)
                     LOOP
                         CONTINUE WHEN i.von_datum >= max_unfilled_tstp;
                         EXECUTE FORMAT(
@@ -1076,8 +1101,8 @@ class StationBase:
                     SET bis_tstp_filled=tstps.max,
                         von_tstp_filled=tstps.min
                     FROM (SELECT max(ts.timestamp) , min(ts.timestamp)
-                          FROM timeseries."{stid}_{para}" ts
-                          WHERE ts."filled" IS NOT NULL) tstps
+                        FROM timeseries."{stid}_{para}" ts
+                        WHERE ts."filled" IS NOT NULL) tstps
                     WHERE station_id={stid};
                 END
             $do$;
@@ -1088,44 +1113,13 @@ class StationBase:
 
         # mark last imp done
         if ("qc" not in self._valid_kinds) or \
-           (self.is_last_imp_done(kind="qc")):
+        (self.is_last_imp_done(kind="qc")):
             if period.is_empty():
                 self._mark_last_imp_done(kind="filled")
             elif period.contains(self.get_last_imp_period()):
                 self._mark_last_imp_done(kind="filled")
 
-    def is_last_imp_done(self, kind):
-        """Is the last import for the given kind already worked in?
-
-
-        Parameters
-        ----------
-        kind :  str
-            The data kind to look for filled period.
-            Must be a column in the timeseries DB.
-            Must be one of "raw", "qc", "filled", "adj", "best".
-            If "best" is given, then depending on the parameter of the station the best kind is selected.
-            For Precipitation this is "corr" and for the other this is "filled".
-            For the precipitation also "qn" and "corr" are valid.
-
-        Returns
-        -------
-        bool
-            True if the last import of the given kind is already treated.
-        """
-
-        kind = self._check_kind(kind)
-        sql = """
-            SELECT last_imp_{kind}
-            FROM meta_{para}
-            WHERE station_id = {stid}
-        """.format(stid=self.id, para=self._para, kind=kind)
-
-        with DB_ENG.connect() as con:
-            res = con.execute(sql)
-
-        return res.first()[0]
-
+    @check_superuser
     def _mark_last_imp_done(self, kind):
         """Mark the last import for the given kind as done.
 
@@ -1149,6 +1143,7 @@ class StationBase:
         with DB_ENG.connect() as con:
             con.execute(sql)
 
+    @check_superuser
     def last_imp_quality_check(self):
         """Do the quality check of the last import.
         """
@@ -1156,6 +1151,7 @@ class StationBase:
             self.quality_check(period=self.get_last_imp_period())
             self._mark_last_imp_done(kind="qc")
 
+    @check_superuser
     def last_imp_fillup(self, last_imp_period=None):
         """Do the filling up of the last import.
         """
@@ -1884,14 +1880,6 @@ class PrecipitationStation(StationNBase):
     _valid_kinds = ["raw", "qn", "qc", "corr", "filled", "filled_by"]
     _best_kind = "corr"
 
-    # hidding methos if not superuser of DB
-    if not DB_ENG.is_superuser:
-        _create_timeseries_table = disallow_nosuperuser
-        richter_correct = disallow_nosuperuser
-        corr = disallow_nosuperuser
-        update_richter_class = disallow_nosuperuser
-        update_horizon = disallow_nosuperuser
-
     def __init__(self, id):
         super().__init__(id)
         self.id_str = dwd_id_to_str(id)
@@ -1989,6 +1977,7 @@ class PrecipitationStation(StationNBase):
 
         return sql_new_qc
 
+    @check_superuser
     def _create_timeseries_table(self):
         """Create the timeseries table in the DB if it is not yet existing."""
         sql_add_table = '''
@@ -2014,6 +2003,7 @@ class PrecipitationStation(StationNBase):
                 richter_class = key
         return richter_class
 
+    @check_superuser
     def update_horizon(self, skip_if_exist=True):
         """Update the horizon angle (Horizontabschirmung) in the meta table.
 
@@ -2124,6 +2114,7 @@ class PrecipitationStation(StationNBase):
 
                 return horizon
 
+    @check_superuser
     def update_richter_class(self, skip_if_exist=True):
         """Update the richter class in the meta table.
 
@@ -2157,6 +2148,7 @@ class PrecipitationStation(StationNBase):
 
         return richter_class
 
+    @check_superuser
     def richter_correct(self, period=(None, None)):
         """Do the richter correction on the filled data for the given period.
 
@@ -2341,6 +2333,7 @@ class PrecipitationStation(StationNBase):
             con.execution_options(isolation_level="AUTOCOMMIT"
                                   ).execute(sql_update)
 
+    @check_superuser
     def corr(self, period=(None, None)):
         self.richter_correct(period=period)
 
@@ -2423,10 +2416,6 @@ class PrecipitationDailyStation(StationNBase):
     get_adj = property(doc='(!) Disallowed inherited')
     get_qc = property(doc='(!) Disallowed inherited')
 
-    # hidding methos if not superuser of DB
-    if not DB_ENG.is_superuser:
-        _create_timeseries_table = disallow_nosuperuser
-
     def __init__(self, id):
         super().__init__(id)
         self.id_str = dwd_id_to_str(id)
@@ -2443,6 +2432,7 @@ class PrecipitationDailyStation(StationNBase):
 
         return df_all
 
+    @check_superuser
     def _create_timeseries_table(self):
         """Create the timeseries table in the DB if it is not yet existing."""
         sql_add_table = '''

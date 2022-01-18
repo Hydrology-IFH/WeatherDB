@@ -1,10 +1,19 @@
 import logging
-
+from .lib.connections import DB_ENG
 from .stations import StationsN, StationsND, StationsT, StationsET
 
 log = logging.getLogger(__name__)
 
+if not DB_ENG.is_superuser:
+    raise PermissionError("You are no super user of the Database and therefor the Broker class is not available.")
+
 class Broker(object):
+    """A class to manage and update the database.
+
+    Can get used to update all the stations and parameters at once.
+
+    This class is only working with super user privileges.
+    """
     def __init__(self):
         self.stations_nd = StationsND()
         self.stations_n = StationsN()
@@ -233,9 +242,5 @@ class Broker(object):
         self.last_imp_quality_check()
         self.last_imp_fillup()
         self.last_imp_corr()
-
-    def create_roger_ts(self, stid, folder):
-        pass
-
 
 
