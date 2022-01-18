@@ -2425,7 +2425,7 @@ class PrecipitationDailyStation(StationNBase):
 
     # hidding methos if not superuser of DB
     if not DB_ENG.is_superuser:
-        _create_timeseries_table = prop_disallow
+        _create_timeseries_table = disallow_nosuperuser
 
     def __init__(self, id):
         super().__init__(id)
