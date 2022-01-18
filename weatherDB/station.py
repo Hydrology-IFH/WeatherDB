@@ -594,12 +594,13 @@ class StationBase:
         period = self.get_filled_period(kind="raw")
         sql = """
             UPDATE meta_{para}
-            SET von_datum='{min_tstp}',
-                bis_datum='{max_tstp}'
+            SET von_datum={min_tstp},
+                bis_datum={max_tstp}
             WHERE station_id={stid};
         """.format(
             stid=self.id, para=self._para,
-            **period.get_sql_format_dict(format=self._tstp_format)
+            **period.get_sql_format_dict(
+                format="'{}'".format(self._tstp_format))
         )
 
         with DB_ENG.connect() as con:
@@ -953,8 +954,9 @@ class StationBase:
         self._execute_long_sql(
             sql=sql_qc,
             description="quality checked for the period {min_tstp} to {max_tstp}.".format(
-                        **period.get_sql_format_dict(format=self._tstp_format)
-                    ))
+                **period.get_sql_format_dict(
+                    format=self._tstp_format)
+                ))
 
         # mark last import as done if in period
         last_imp_period = self.get_last_imp_period()

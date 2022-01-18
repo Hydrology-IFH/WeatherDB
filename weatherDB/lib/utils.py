@@ -221,7 +221,7 @@ class TimestampPeriod(object):
         else:
             return False
 
-    def get_sql_format_dict(self, format="%Y%m%d %H:%M"):
+    def get_sql_format_dict(self, format="'%Y%m%d %H:%M'"):
         period_str = self.strftime(format=format)
         period_str = [str(el).replace("None", "NULL") for el in period_str]
         return dict(min_tstp=period_str[0], max_tstp=period_str[1])
