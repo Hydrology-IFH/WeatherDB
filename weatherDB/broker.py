@@ -104,7 +104,7 @@ class Broker(object):
                 stations.update_period_meta()
 
     def quality_check(self, paras=["n", "t", "et"], with_fillup_nd=True):
-        """[summary]
+        """Do the quality check on the stations raw data.
 
         Parameters
         ----------
@@ -235,12 +235,3 @@ class Broker(object):
         self.quality_check(paras=["n", "t", "et"])
         self.fillup(paras=["n", "t", "et"])
         self.richter_correct()
-
-    def new_import(self):
-        log.info("="*79 + "\nBroker new_import starts")
-        self.update_raw()
-        self.last_imp_quality_check()
-        self.last_imp_fillup()
-        self.last_imp_corr()
-
-
