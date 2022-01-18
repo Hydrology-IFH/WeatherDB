@@ -1053,7 +1053,7 @@ class StationBase:
                         FROM meta_{para} meta
                         LEFT JOIN stations_raster_values ma_other
                             ON ma_other.station_id=meta.station_id
-                        LEFT JOIN (SELECT {ma_cols}, exp_fact
+                        LEFT JOIN (SELECT {ma_cols}
                                 FROM stations_raster_values
                                 WHERE station_id = {stid}) ma_stat
                             ON 1=1
@@ -2272,62 +2272,7 @@ class PrecipitationStation(StationNBase):
             sql_delta_n=sql_delta_n,
             **sql_format_dict
         )
-
-        # create the query
-        # sql_new_corr = """
-        # WITH
-        #     richter AS (
-        #         SELECT precipitation_typ, "b_{richter_class}" AS b, "E"
-        #         FROM richter_values),
-        #     tsn_2 AS (
-        #         WITH tsn_1 AS (
-        #             SELECT timestamp,
-        #                 timestamp::date AS date,
-        #                 CASE WHEN EXTRACT(MONTH FROM timestamp) IN (1, 2, 3, 10, 11, 12)
-        #                         THEN true::bool
-        #                         ELSE false::bool
-        #                 END AS is_winter,
-        #                 "filled" AS n
-        #             FROM timeseries."{stid}_{para}"
-        #             {period_clause}
-        #             )
-        #         SELECT
-        #             tsn_1.timestamp,
-        #             n,
-        #             CASE WHEN (tst."filled" >= 30 AND "is_winter") THEN 'precip_winter'
-        #                 WHEN (tst."filled" >= 30 AND NOT "is_winter") THEN 'precip_summer'
-        #                 WHEN (tst."filled" <= -7) THEN 'snow'
-        #                 WHEN (tst."filled" IS NULL) THEN NULL
-        #                 ELSE 'mix'
-        #             END AS precipitation_typ
-        #         FROM tsn_1
-        #         LEFT JOIN timeseries."{stid}_t" tst
-        #             ON tst.timestamp=tsn_1.date
-        #         )
-        #     SELECT timestamp, round("n" + "b" * ("n"/{decim})^"E" * {decim}) AS "corr"
-        #     FROM tsn_2
-        #     LEFT JOIN richter r ON r."precipitation_typ"=tsn_2."precipitation_typ"
-        # """.format(
-        #     richter_class=richter_class,
-        #     stid=self.id, para=self._para,
-        #     period_clause=sql_period_clause,
-        #     decim=self._decimals)
-
-        # sql_update = """
-        #     WITH new_corr as ({sql_new_corr})
-        #     UPDATE timeseries."{stid}_{para}" ts
-        #     SET "corr" = new."corr"
-        #     FROM new_corr new
-        #     WHERE ts.timestamp = new.timestamp
-        #         AND ts."corr" IS DISTINCT FROM new."corr";
-        # """.format(
-        #     sql_new_corr=sql_new_corr,
-        #     **sql_format_dict)
-        ###########################################################
-        # Here I stopped and the sql is not ready yet
-        # now it should be ready but did not get tested yet
-        ##########################################################
-        # return sql_update
+        
         # run commands
         with DB_ENG.connect() as con:
             con.execution_options(isolation_level="AUTOCOMMIT"
@@ -2361,7 +2306,7 @@ class PrecipitationStation(StationNBase):
             The corresponding richter exposition class.
         """
         sql = """
-            SELECT exposition_class
+            SELECT richter_class
             FROM meta_{para}
             WHERE station_id = {stid}
         """.format(stid=self.id, para=self._para)
