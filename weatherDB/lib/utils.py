@@ -205,16 +205,14 @@ class TimestampPeriod(object):
         return out
 
     def inside(self, other):
-        if type(other) != TimestampPeriod:
-            other = TimestampPeriod(*other)
+        other = self._check_period(other)
         if self.start >= other.start and self.end <= other.end:
             return True
         else:
             return False
 
     def contains(self, other):
-        if type(other) != TimestampPeriod:
-            other = TimestampPeriod(*other)
+        other = self._check_period(other)
         return other.inside(self)
 
     def is_empty(self):

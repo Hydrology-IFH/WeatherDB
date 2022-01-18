@@ -594,16 +594,12 @@ class StationBase:
         period = self.get_filled_period(kind="raw")
         sql = """
             UPDATE meta_{para}
-            SET von_datum={min_tstp},
-                bis_datum={max_tstp}
+            SET von_datum='{min_tstp}',
+                bis_datum='{max_tstp}'
             WHERE station_id={stid};
         """.format(
             stid=self.id, para=self._para,
             **period.get_sql_format_dict(format=self._tstp_format)
-            # von_tstp="'{0}'".format(period[0].strftime(self._tstp_format))\
-            #     if period[0] is not None else "NULL",
-            # bis_tstp="'{0}'".format(period[1].strftime(self._tstp_format))\
-            #     if period[1] is not None else "NULL"
         )
 
         with DB_ENG.connect() as con:

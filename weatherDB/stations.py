@@ -129,24 +129,6 @@ class StationsBase:
                 meta=meta.drop(["von_datum", "bis_datum"], axis=1))
         else:
             self._update_db_meta(meta=meta)
-            # meta[["von_datum", "bis_datum"]] = pd.NaT
-
-        # update von_datum and bis_datum
-        # for stid in meta.index:
-        #     try:
-        #         stat = self._StationClass(stid)
-        #     except NotImplementedError:
-        #         continue
-        #     period = stat.get_filled_period(kind="raw")
-        #     if (period[0] is not None) and \
-        #             (meta.loc[stid, "von_datum"] > pd.Timestamp(period[0])):
-        #         meta.loc[stid, "von_datum"] = period[0]
-        #     if (period[1] is not None) and \
-        #             (meta.loc[stid, "bis_datum"] < pd.Timestamp(period[1])):
-        #         meta.loc[stid, "bis_datum"] = period[1]
-
-        # self._update_db_meta(
-        #     meta=meta[["von_datum", "bis_datum"]])
 
         log.info(
             "The {para_long} meta table got successfully updated."\
@@ -480,7 +462,7 @@ class StationsBase:
         for stat in stations:
             getattr(stat, methode)(**kwargs)
             pbar.variables["last_station"] = stat.id
-            pbar.update()
+            pbar.update(pbar.value + 1)
 
     @check_superuser
     def update_raw(self, only_new=True, only_real=True, stids="all"):
