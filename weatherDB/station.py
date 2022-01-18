@@ -75,7 +75,7 @@ RICHTER_CLASSES = {
 
 log = logging.getLogger(__name__)
 
-prop_disallow = property(
+disallow_nosuperuser = property(
     doc='(!) You are not a super user of the Database and therefor this function is not available.')
 
 
@@ -111,21 +111,26 @@ class StationBase:
     # _sql_add_coef_calc = "" # additional sql statement to add the exposition factor to the calculation of the coefficients
     # not used because the grid values are already normalized to the multi annual station data. Considering the exposition factor would result in ann error
 
-    # hidding methos if not superuser of DB
+    # hidding methods if not superuser of DB
     if not DB_ENG.is_superuser:
-        quality_check = prop_disallow
-        update_raw = prop_disallow
-        update_ma = prop_disallow
-        _update_db_timeserie = prop_disallow
-        update_period_meta = prop_disallow
-        _create_timeseries_table = prop_disallow
-        _expand_timeserie_to_period = prop_disallow
-        _mark_last_imp_done = prop_disallow
-        last_imp_quality_check = prop_disallow
-        last_imp_fillup = prop_disallow
-        quality_check = prop_disallow
-        fillup = prop_disallow
-        _drop = prop_disallow
+        quality_check = disallow_nosuperuser
+        update_raw = disallow_nosuperuser
+        update_ma = disallow_nosuperuser
+        _update_db_timeserie = disallow_nosuperuser
+        update_period_meta = disallow_nosuperuser
+        _create_timeseries_table = disallow_nosuperuser
+        _expand_timeserie_to_period = disallow_nosuperuser
+        _mark_last_imp_done = disallow_nosuperuser
+        last_imp_quality_check = disallow_nosuperuser
+        last_imp_fillup = disallow_nosuperuser
+        quality_check = disallow_nosuperuser
+        fillup = disallow_nosuperuser
+        _drop = disallow_nosuperuser
+        _check_isin_db = disallow_nosuperuser
+        _check_ma = disallow_nosuperuser
+        _update_meta = disallow_nosuperuser
+        _execute_long_sql = disallow_nosuperuser
+
 
     def __init__(self, id):
         if type(self) == StationBase:
@@ -1668,9 +1673,10 @@ class StationTETBase(StationBase):
 
     # hidding methos if not superuser of DB
     if not DB_ENG.is_superuser:
-        _create_meta_virtual = prop_disallow
-        _create_timeseries_table = prop_disallow
-        update_exp_fact = prop_disallow
+        _create_meta_virtual = disallow_nosuperuser
+        _create_timeseries_table = disallow_nosuperuser
+        update_exp_fact = disallow_nosuperuser
+        quality_check = disallow_nosuperuser
 
     def _check_isin_meta(self):
         """Check if the Station is in the Meta table and if not create a virtual station.
@@ -1880,9 +1886,11 @@ class PrecipitationStation(StationNBase):
 
     # hidding methos if not superuser of DB
     if not DB_ENG.is_superuser:
-        _create_timeseries_table = prop_disallow
-        richter_correct = prop_disallow
-        update_richter_class = prop_disallow
+        _create_timeseries_table = disallow_nosuperuser
+        richter_correct = disallow_nosuperuser
+        corr = disallow_nosuperuser
+        update_richter_class = disallow_nosuperuser
+        update_horizon = disallow_nosuperuser
 
     def __init__(self, id):
         super().__init__(id)

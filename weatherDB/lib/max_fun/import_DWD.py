@@ -4,7 +4,6 @@
 
 __author__ = "Max Schmit"
 __copyright__ = "Copyright 2021, Max Schmit"
-__email__ = "maxschm@hotmail.com"
 
 # libraries
 import os
