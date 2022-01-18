@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2021/W32TeX) (preloaded format=pdflatex 2021.12.23)  18 JAN 2022 11:38
+This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2021/W32TeX) (preloaded format=pdflatex 2021.12.23)  18 JAN 2022 15:32
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -789,204 +789,57 @@ File: ts1qtm.fd 2009/09/25 v1.2 font definition file for TS1/qtm
 ]
 Chapter 2.
 LaTeX Font Info:    Trying to load font information for T1+txtt on input line 2
-75.
+90.
 (c:/texlive/2021/texmf-dist/tex/latex/txfonts/t1txtt.fd
 File: t1txtt.fd 2000/12/15 v3.1
 )
 LaTeX Font Info:    Font shape `T1/txtt/b/n' in size <10> not available
-(Font)              Font shape `T1/txtt/bx/n' tried instead on input line 275.
-LaTeX Font Info:    Font shape `T1/txtt/m/it' in size <10> not available
-(Font)              Font shape `T1/txtt/m/sl' tried instead on input line 299.
- [3]
-
-LaTeX Warning: Hyper reference `weatherDB.lib:weatherDB.lib.utils.TimestampPeri
-od' on page 4 undefined on input line 536.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 534--539
-[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/n/10 TimestampPeriod \T1/t
-xtt/m/sl/10 or (tuple or list of datetime.datetime
- []
-
-[4]
-
-LaTeX Warning: Hyper reference `weatherDB.lib:weatherDB.lib.utils.TimestampPeri
-od' on page 5 undefined on input line 617.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 616--620
-[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/n/10 TimestampPeriod \T1/t
-xtt/m/sl/10 or (tuple or list of datetime.datetime or
- []
-
-[5]
-
-LaTeX Warning: Hyper reference `weatherDB.lib:weatherDB.lib.utils.TimestampPeri
-od' on page 6 undefined on input line 834.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 832--837
-[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/n/10 TimestampPeriod \T1/t
-xtt/m/sl/10 or (tuple or list of datetime.datetime
- []
-
-[6]
-
-LaTeX Warning: Hyper reference `weatherDB.lib:weatherDB.lib.utils.TimestampPeri
-od' on page 7 undefined on input line 943.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 941--946
-[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/n/10 TimestampPeriod \T1/t
-xtt/m/sl/10 or (tuple or list of datetime.datetime
- []
-
-[7]
-
-LaTeX Warning: Hyper reference `weatherDB.lib:weatherDB.lib.utils.TimestampPeri
-od' on page 8 undefined on input line 1002.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1001--1005
-[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/n/10 TimestampPeriod \T1/t
-xtt/m/sl/10 or (tuple or list of datetime.datetime or
- []
-
-
-LaTeX Warning: Hyper reference `weatherDB.lib:weatherDB.lib.utils.TimestampPeri
-od' on page 8 undefined on input line 1035.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1033--1038
-[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/n/10 TimestampPeriod \T1/t
-xtt/m/sl/10 or (tuple or list of datetime.datetime
- []
-
-
-LaTeX Warning: Hyper reference `weatherDB.lib:weatherDB.lib.utils.TimestampPeri
-od' on page 8 undefined on input line 1064.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1063--1067
-[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/n/10 TimestampPeriod \T1/t
-xtt/m/sl/10 or (tuple or list of datetime.datetime or
- []
-
-[8] [9] [10]
-
-LaTeX Warning: Hyper reference `weatherDB.lib:weatherDB.lib.utils.TimestampPeri
-od' on page 11 undefined on input line 1486.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1485--1489
-[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/n/10 TimestampPeriod \T1/t
-xtt/m/sl/10 or (tuple or list of datetime.datetime or
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1511--1516
-[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/sl/10 util.TimestampPeriod
- or (tuple or list of datetime.
- []
-
-[11]
-
-LaTeX Warning: Hyper reference `weatherDB.lib:weatherDB.lib.utils.TimestampPeri
-od' on page 12 undefined on input line 1616.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1614--1619
-[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/n/10 TimestampPeriod \T1/t
-xtt/m/sl/10 or (tuple or list of datetime.datetime
- []
-
-
-LaTeX Warning: Hyper reference `weatherDB.lib:weatherDB.lib.utils.TimestampPeri
-od' on page 12 undefined on input line 1672.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1670--1675
-[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/n/10 TimestampPeriod \T1/t
-xtt/m/sl/10 or (tuple or list of datetime.datetime
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1714--1719
-[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/sl/10 util.TimestampPeriod
- or (tuple or list of datetime.
- []
-
-
-LaTeX Warning: Hyper reference `weatherDB.lib:weatherDB.lib.utils.TimestampPeri
-od' on page 12 undefined on input line 1752.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1750--1755
-[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/n/10 TimestampPeriod \T1/t
-xtt/m/sl/10 or (tuple or list of datetime.datetime
- []
-
-[12] [13] [14]
-Underfull \hbox (badness 10000) in paragraph at lines 2144--2148
-[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/sl/10 tuple or list of dat
-etime.datetime or None, optional\T1/qtm/m/n/10 ) ^^U The
- []
-
-[15] [16]
+(Font)              Font shape `T1/txtt/bx/n' tried instead on input line 290.
 LaTeX Font Info:    Trying to load font information for TS1+txtt on input line 
 1.
- (c:/texlive/2021/texmf-dist/tex/latex/txfonts/ts1txtt.fd
+
+(c:/texlive/2021/texmf-dist/tex/latex/txfonts/ts1txtt.fd
 File: ts1txtt.fd 2000/12/15 v3.1
 )
 LaTeX Font Info:    Font shape `TS1/txtt/b/n' in size <10> not available
 (Font)              Font shape `TS1/txtt/bx/n' tried instead on input line 1.
-
-
-LaTeX Warning: Hyper reference `weatherDB.lib:weatherDB.lib.utils.TimestampPeri
-od' on page 17 undefined on input line 2500.
-
-
-LaTeX Warning: Hyper reference `weatherDB.lib:weatherDB.lib.utils.TimestampPeri
-od' on page 17 undefined on input line 2518.
-
-[17]
-Underfull \hbox (badness 10000) in paragraph at lines 2624--2628
+LaTeX Font Info:    Font shape `T1/txtt/m/it' in size <10> not available
+(Font)              Font shape `T1/txtt/m/sl' tried instead on input line 339.
+ [3] [4]
+Underfull \hbox (badness 10000) in paragraph at lines 536--540
 []\T1/txtt/bx/n/10 ftp_folder \T1/qtm/m/n/10 (\T1/txtt/m/sl/10 str\T1/qtm/m/n/1
 0 ) ^^U the base folder where to look
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2624--2628
+Underfull \hbox (badness 10000) in paragraph at lines 536--540
 \T1/qtm/m/n/10 for the sta-tions_id file. e.g. ftp_folder = ^^Pcli-
  []
 
 
-Overfull \hbox (170.21487pt too wide) in paragraph at lines 2657--2659
+Overfull \hbox (170.21487pt too wide) in paragraph at lines 569--571
 []\T1/qtm/m/n/10 ^^Q/cli-mate_environment/CDC/observations_germany/climate/10_m
 inutes/air_temperature/recent/10minutenwerte_TU_00044_akt.zip^^Q 
  []
 
-[18]
-Overfull \hbox (105.43478pt too wide) in paragraph at lines 2661--2663
+
+Overfull \hbox (105.43478pt too wide) in paragraph at lines 573--575
 []\T1/qtm/m/n/10 ^^Q/cli-mate_environment/CDC/derived_germany/soil/daily/histor
 ical/derived_germany_soil_daily_historical_73.txt.gz^^Q 
  []
 
-[19] [20
+[5] [6
 
 ]
 Chapter 3.
-[21] [22
+[7] [8
 
-] [23
+] [9
 
 
 ]
 No file weatherdb.ind.
 (./weatherdb.aux)
-
-LaTeX Warning: There were undefined references.
-
 
 LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
 
@@ -996,36 +849,39 @@ Package rerunfilecheck Warning: File `weatherdb.out' has changed.
 (rerunfilecheck)                or use package `bookmark'.
 
 Package rerunfilecheck Info: Checksums for `weatherdb.out':
-(rerunfilecheck)             Before: 2B119B266930F7862157D5F3780E767D;2652
-(rerunfilecheck)             After:  31F3699309E6D90A12D89E100E2F3B5E;2652.
+(rerunfilecheck)             Before: 31F3699309E6D90A12D89E100E2F3B5E;2652
+(rerunfilecheck)             After:  40B3BDDE1D2F95135748300CD8F56FB3;2634.
  ) 
 Here is how much of TeX's memory you used:
- 14987 strings out of 478353
- 243405 string characters out of 5852100
- 568511 words of memory out of 5000000
- 32553 multiletter control sequences out of 15000+600000
+ 14845 strings out of 478353
+ 241594 string characters out of 5852100
+ 568824 words of memory out of 5000000
+ 32547 multiletter control sequences out of 15000+600000
  455104 words of font info for 69 fonts, out of 8000000 for 9000
  1142 hyphenation exceptions out of 8191
- 70i,12n,76p,1075b,686s stack positions out of 5000i,500n,10000p,200000b,80000s
-pdfTeX warning (dest): name{section*.131} has been referenced but does not ex
+ 70i,11n,76p,1075b,535s stack positions out of 5000i,500n,10000p,200000b,80000s
+pdfTeX warning (dest): name{section*.132} has been referenced but does not ex
 ist, replaced by a fixed one
 
-pdfTeX warning (dest): name{subparagraph*.124} has been referenced but does not
+pdfTeX warning (dest): name{section*.154} has been referenced but does not exis
+t, replaced by a fixed one
+
+pdfTeX warning (dest): name{subparagraph*.147} has been referenced but does not
  exist, replaced by a fixed one
 
-pdfTeX warning (dest): name{subparagraph*.123} has been referenced but does not
+pdfTeX warning (dest): name{subparagraph*.146} has been referenced but does not
  exist, replaced by a fixed one
 
-pdfTeX warning (dest): name{paragraph*.122} has been referenced but does not ex
+pdfTeX warning (dest): name{paragraph*.145} has been referenced but does not ex
 ist, replaced by a fixed one
 
-pdfTeX warning (dest): name{paragraph*.120} has been referenced but does not ex
+pdfTeX warning (dest): name{paragraph*.131} has been referenced but does not ex
 ist, replaced by a fixed one
 
-pdfTeX warning (dest): name{paragraph*.117} has been referenced but does not ex
+pdfTeX warning (dest): name{paragraph*.128} has been referenced but does not ex
 ist, replaced by a fixed one
 
-pdfTeX warning (dest): name{subsubsection*.116} has been referenced but does no
+pdfTeX warning (dest): name{subsubsection*.127} has been referenced but does no
 t exist, replaced by a fixed one
 
 {c:/texlive/2021/texmf-dist/fonts/enc/dvips/tex-gyre/q-ec.enc}{c:/texlive/2021/
@@ -1038,10 +894,10 @@ dist/fonts/type1/public/tex-gyre/qtmri.pfb><c:/texlive/2021/texmf-dist/fonts/ty
 pe1/public/txfonts/t1xbtt.pfb><c:/texlive/2021/texmf-dist/fonts/type1/public/tx
 fonts/t1xtt.pfb><c:/texlive/2021/texmf-dist/fonts/type1/public/txfonts/t1xtt.pf
 b><c:/texlive/2021/texmf-dist/fonts/type1/public/txfonts/tcxbtt.pfb>
-Output written on weatherdb.pdf (27 pages, 212040 bytes).
+Output written on weatherdb.pdf (13 pages, 172305 bytes).
 PDF statistics:
- 471 PDF objects out of 1000 (max. 8388607)
- 419 compressed objects within 5 object streams
- 196 named destinations out of 1000 (max. 500000)
+ 242 PDF objects out of 1000 (max. 8388607)
+ 206 compressed objects within 3 object streams
+ 60 named destinations out of 1000 (max. 500000)
  149 words of extra memory for PDF output out of 10000 (max. 10000000)
 
