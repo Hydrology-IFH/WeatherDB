@@ -704,7 +704,7 @@ class StationBase:
         # cut out valid time period
         df_all = df_all.loc[df_all.index >= MIN_TSTP]
 
-        # change to db format and upload to DB
+        # change to db format
         dict_cdc_db = dict(
             zip(self._cdc_col_names_imp, self._db_col_names_imp))
         cols_change = [
@@ -713,8 +713,12 @@ class StationBase:
         selection = df_all[self._cdc_col_names_imp].copy()
         selection[cols_change] = (selection[cols_change] * self._decimals)\
             .round(0).astype("Int64")
-        selection = selection[selection.isna().sum(
-            axis=1) <= (len(selection.columns)-1)]
+
+        # remove NAs in raw column
+        raw_col = self._cdc_col_names_imp[self._db_col_names_imp.index("raw")]
+        selection = selection[~selection[raw_col].isna()]
+
+        # upload to DB
         self._update_db_timeserie(
             selection,
             kinds=self._db_col_names_imp)
@@ -772,7 +776,7 @@ class StationBase:
                                     ELSE LEAST(meta.last_imp_von,
                                             EXCLUDED.last_imp_von)
                                     END,
-                last_imp_bis = CASE WHEN ({last_imp_test})
+                last_imp_bis = CASE WHEN {last_imp_test}
                                     THEN EXCLUDED.last_imp_bis
                                     ELSE GREATEST(meta.last_imp_bis,
                                                 EXCLUDED.last_imp_bis)
