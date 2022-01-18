@@ -2025,6 +2025,17 @@ class PrecipitationStation(StationNBase):
             if horizon is not None:
                 return horizon
 
+        # check if files are available
+        for dgm_name in ["dgm5", "dgm80"]:
+            if not RASTERS["local"][dgm_name].is_file():
+                raise ValueError(
+                    "The {dgm_name} was not found in the data directory under: \n{fp}".format(
+                        dgm_name=dgm_name,
+                        fp=str(RASTERS["local"][dgm_name])
+                    ) 
+                )
+
+        # get the horizontabschirmung value
         radius = 75000 # this value got defined because the maximum height is around 4000m for germany
         with rio.open(RASTERS["local"]["dgm5"]) as dgm5,\
              rio.open(RASTERS["local"]["dgm80"]) as dgm80:
@@ -2272,7 +2283,7 @@ class PrecipitationStation(StationNBase):
             sql_delta_n=sql_delta_n,
             **sql_format_dict
         )
-        
+
         # run commands
         with DB_ENG.connect() as con:
             con.execution_options(isolation_level="AUTOCOMMIT"
