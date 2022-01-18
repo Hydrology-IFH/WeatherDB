@@ -1,0 +1,134 @@
+\indexentry{module@\spxentry{module}!weatherDB.broker@\spxentry{weatherDB.broker}|hyperpage}{3}
+\indexentry{weatherDB.broker@\spxentry{weatherDB.broker}!module@\spxentry{module}|hyperpage}{3}
+\indexentry{Broker (class in weatherDB.broker)@\spxentry{Broker}\spxextra{class in weatherDB.broker}|hyperpage}{3}
+\indexentry{\_\_init\_\_() (weatherDB.broker.Broker method)@\spxentry{\_\_init\_\_()}\spxextra{weatherDB.broker.Broker method}|hyperpage}{3}
+\indexentry{create\_roger\_ts() (weatherDB.broker.Broker method)@\spxentry{create\_roger\_ts()}\spxextra{weatherDB.broker.Broker method}|hyperpage}{3}
+\indexentry{fillup() (weatherDB.broker.Broker method)@\spxentry{fillup()}\spxextra{weatherDB.broker.Broker method}|hyperpage}{3}
+\indexentry{initiate\_db() (weatherDB.broker.Broker method)@\spxentry{initiate\_db()}\spxextra{weatherDB.broker.Broker method}|hyperpage}{3}
+\indexentry{last\_imp\_corr() (weatherDB.broker.Broker method)@\spxentry{last\_imp\_corr()}\spxextra{weatherDB.broker.Broker method}|hyperpage}{3}
+\indexentry{last\_imp\_fillup() (weatherDB.broker.Broker method)@\spxentry{last\_imp\_fillup()}\spxextra{weatherDB.broker.Broker method}|hyperpage}{3}
+\indexentry{last\_imp\_quality\_check() (weatherDB.broker.Broker method)@\spxentry{last\_imp\_quality\_check()}\spxextra{weatherDB.broker.Broker method}|hyperpage}{3}
+\indexentry{new\_import() (weatherDB.broker.Broker method)@\spxentry{new\_import()}\spxextra{weatherDB.broker.Broker method}|hyperpage}{3}
+\indexentry{quality\_check() (weatherDB.broker.Broker method)@\spxentry{quality\_check()}\spxextra{weatherDB.broker.Broker method}|hyperpage}{3}
+\indexentry{update\_db() (weatherDB.broker.Broker method)@\spxentry{update\_db()}\spxextra{weatherDB.broker.Broker method}|hyperpage}{3}
+\indexentry{update\_ma() (weatherDB.broker.Broker method)@\spxentry{update\_ma()}\spxextra{weatherDB.broker.Broker method}|hyperpage}{3}
+\indexentry{update\_meta() (weatherDB.broker.Broker method)@\spxentry{update\_meta()}\spxextra{weatherDB.broker.Broker method}|hyperpage}{3}
+\indexentry{update\_period\_meta() (weatherDB.broker.Broker method)@\spxentry{update\_period\_meta()}\spxextra{weatherDB.broker.Broker method}|hyperpage}{3}
+\indexentry{update\_raw() (weatherDB.broker.Broker method)@\spxentry{update\_raw()}\spxextra{weatherDB.broker.Broker method}|hyperpage}{3}
+\indexentry{module@\spxentry{module}!weatherDB.station@\spxentry{weatherDB.station}|hyperpage}{3}
+\indexentry{weatherDB.station@\spxentry{weatherDB.station}!module@\spxentry{module}|hyperpage}{3}
+\indexentry{EvapotranspirationStation (class in weatherDB.station)@\spxentry{EvapotranspirationStation}\spxextra{class in weatherDB.station}|hyperpage}{3}
+\indexentry{\_\_init\_\_() (weatherDB.station.EvapotranspirationStation method)@\spxentry{\_\_init\_\_()}\spxextra{weatherDB.station.EvapotranspirationStation method}|hyperpage}{3}
+\indexentry{get\_adj() (weatherDB.station.EvapotranspirationStation method)@\spxentry{get\_adj()}\spxextra{weatherDB.station.EvapotranspirationStation method}|hyperpage}{3}
+\indexentry{GroupStation (class in weatherDB.station)@\spxentry{GroupStation}\spxextra{class in weatherDB.station}|hyperpage}{4}
+\indexentry{\_\_init\_\_() (weatherDB.station.GroupStation method)@\spxentry{\_\_init\_\_()}\spxextra{weatherDB.station.GroupStation method}|hyperpage}{4}
+\indexentry{get\_df() (weatherDB.station.GroupStation method)@\spxentry{get\_df()}\spxextra{weatherDB.station.GroupStation method}|hyperpage}{4}
+\indexentry{get\_possible\_paras() (weatherDB.station.GroupStation method)@\spxentry{get\_possible\_paras()}\spxextra{weatherDB.station.GroupStation method}|hyperpage}{4}
+\indexentry{PrecipitationDailyStation (class in weatherDB.station)@\spxentry{PrecipitationDailyStation}\spxextra{class in weatherDB.station}|hyperpage}{4}
+\indexentry{\_\_init\_\_() (weatherDB.station.PrecipitationDailyStation method)@\spxentry{\_\_init\_\_()}\spxextra{weatherDB.station.PrecipitationDailyStation method}|hyperpage}{4}
+\indexentry{get\_adj (weatherDB.station.PrecipitationDailyStation property)@\spxentry{get\_adj}\spxextra{weatherDB.station.PrecipitationDailyStation property}|hyperpage}{4}
+\indexentry{get\_corr (weatherDB.station.PrecipitationDailyStation property)@\spxentry{get\_corr}\spxextra{weatherDB.station.PrecipitationDailyStation property}|hyperpage}{4}
+\indexentry{get\_qc (weatherDB.station.PrecipitationDailyStation property)@\spxentry{get\_qc}\spxextra{weatherDB.station.PrecipitationDailyStation property}|hyperpage}{4}
+\indexentry{last\_imp\_quality\_check (weatherDB.station.PrecipitationDailyStation property)@\spxentry{last\_imp\_quality\_check}\spxextra{weatherDB.station.PrecipitationDailyStation property}|hyperpage}{4}
+\indexentry{quality\_check (weatherDB.station.PrecipitationDailyStation property)@\spxentry{quality\_check}\spxextra{weatherDB.station.PrecipitationDailyStation property}|hyperpage}{4}
+\indexentry{PrecipitationStation (class in weatherDB.station)@\spxentry{PrecipitationStation}\spxextra{class in weatherDB.station}|hyperpage}{4}
+\indexentry{\_\_init\_\_() (weatherDB.station.PrecipitationStation method)@\spxentry{\_\_init\_\_()}\spxextra{weatherDB.station.PrecipitationStation method}|hyperpage}{4}
+\indexentry{corr() (weatherDB.station.PrecipitationStation method)@\spxentry{corr()}\spxextra{weatherDB.station.PrecipitationStation method}|hyperpage}{4}
+\indexentry{get\_corr() (weatherDB.station.PrecipitationStation method)@\spxentry{get\_corr()}\spxextra{weatherDB.station.PrecipitationStation method}|hyperpage}{4}
+\indexentry{get\_qn() (weatherDB.station.PrecipitationStation method)@\spxentry{get\_qn()}\spxextra{weatherDB.station.PrecipitationStation method}|hyperpage}{5}
+\indexentry{get\_richter\_class() (weatherDB.station.PrecipitationStation method)@\spxentry{get\_richter\_class()}\spxextra{weatherDB.station.PrecipitationStation method}|hyperpage}{5}
+\indexentry{get\_slope() (weatherDB.station.PrecipitationStation method)@\spxentry{get\_slope()}\spxextra{weatherDB.station.PrecipitationStation method}|hyperpage}{5}
+\indexentry{richter\_correct() (weatherDB.station.PrecipitationStation method)@\spxentry{richter\_correct()}\spxextra{weatherDB.station.PrecipitationStation method}|hyperpage}{5}
+\indexentry{update\_richter\_class() (weatherDB.station.PrecipitationStation method)@\spxentry{update\_richter\_class()}\spxextra{weatherDB.station.PrecipitationStation method}|hyperpage}{5}
+\indexentry{StationBase (class in weatherDB.station)@\spxentry{StationBase}\spxextra{class in weatherDB.station}|hyperpage}{5}
+\indexentry{\_\_init\_\_() (weatherDB.station.StationBase method)@\spxentry{\_\_init\_\_()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{5}
+\indexentry{download\_raw() (weatherDB.station.StationBase method)@\spxentry{download\_raw()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{5}
+\indexentry{fillup() (weatherDB.station.StationBase method)@\spxentry{fillup()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{5}
+\indexentry{get\_adj() (weatherDB.station.StationBase method)@\spxentry{get\_adj()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{5}
+\indexentry{get\_coef() (weatherDB.station.StationBase method)@\spxentry{get\_coef()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{5}
+\indexentry{get\_coef\_height() (weatherDB.station.StationBase method)@\spxentry{get\_coef\_height()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{5}
+\indexentry{get\_df() (weatherDB.station.StationBase method)@\spxentry{get\_df()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{6}
+\indexentry{get\_dist() (weatherDB.station.StationBase method)@\spxentry{get\_dist()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{6}
+\indexentry{get\_filled() (weatherDB.station.StationBase method)@\spxentry{get\_filled()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{6}
+\indexentry{get\_filled\_period() (weatherDB.station.StationBase method)@\spxentry{get\_filled\_period()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{6}
+\indexentry{get\_geom() (weatherDB.station.StationBase method)@\spxentry{get\_geom()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{7}
+\indexentry{get\_last\_imp\_period() (weatherDB.station.StationBase method)@\spxentry{get\_last\_imp\_period()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{7}
+\indexentry{get\_ma() (weatherDB.station.StationBase method)@\spxentry{get\_ma()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{7}
+\indexentry{get\_multi\_annual() (weatherDB.station.StationBase method)@\spxentry{get\_multi\_annual()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{7}
+\indexentry{get\_neighboor\_stids() (weatherDB.station.StationBase method)@\spxentry{get\_neighboor\_stids()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{7}
+\indexentry{get\_qc() (weatherDB.station.StationBase method)@\spxentry{get\_qc()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{7}
+\indexentry{get\_quality\_checked() (weatherDB.station.StationBase method)@\spxentry{get\_quality\_checked()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{7}
+\indexentry{get\_raster\_value() (weatherDB.station.StationBase method)@\spxentry{get\_raster\_value()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{7}
+\indexentry{get\_raw() (weatherDB.station.StationBase method)@\spxentry{get\_raw()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{7}
+\indexentry{get\_zipfiles() (weatherDB.station.StationBase method)@\spxentry{get\_zipfiles()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{7}
+\indexentry{is\_last\_imp\_done() (weatherDB.station.StationBase method)@\spxentry{is\_last\_imp\_done()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{8}
+\indexentry{is\_virtual() (weatherDB.station.StationBase method)@\spxentry{is\_virtual()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{8}
+\indexentry{isin\_db() (weatherDB.station.StationBase method)@\spxentry{isin\_db()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{8}
+\indexentry{isin\_ma() (weatherDB.station.StationBase method)@\spxentry{isin\_ma()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{8}
+\indexentry{isin\_meta() (weatherDB.station.StationBase method)@\spxentry{isin\_meta()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{8}
+\indexentry{last\_imp\_fillup() (weatherDB.station.StationBase method)@\spxentry{last\_imp\_fillup()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{8}
+\indexentry{last\_imp\_quality\_check() (weatherDB.station.StationBase method)@\spxentry{last\_imp\_quality\_check()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{8}
+\indexentry{plot() (weatherDB.station.StationBase method)@\spxentry{plot()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{8}
+\indexentry{quality\_check() (weatherDB.station.StationBase method)@\spxentry{quality\_check()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{8}
+\indexentry{update\_ma() (weatherDB.station.StationBase method)@\spxentry{update\_ma()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{8}
+\indexentry{update\_period\_meta() (weatherDB.station.StationBase method)@\spxentry{update\_period\_meta()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{9}
+\indexentry{update\_raw() (weatherDB.station.StationBase method)@\spxentry{update\_raw()}\spxextra{weatherDB.station.StationBase method}|hyperpage}{9}
+\indexentry{StationET (in module weatherDB.station)@\spxentry{StationET}\spxextra{in module weatherDB.station}|hyperpage}{9}
+\indexentry{StationN (in module weatherDB.station)@\spxentry{StationN}\spxextra{in module weatherDB.station}|hyperpage}{9}
+\indexentry{StationNBase (class in weatherDB.station)@\spxentry{StationNBase}\spxextra{class in weatherDB.station}|hyperpage}{9}
+\indexentry{get\_adj() (weatherDB.station.StationNBase method)@\spxentry{get\_adj()}\spxextra{weatherDB.station.StationNBase method}|hyperpage}{9}
+\indexentry{StationND (in module weatherDB.station)@\spxentry{StationND}\spxextra{in module weatherDB.station}|hyperpage}{9}
+\indexentry{StationT (in module weatherDB.station)@\spxentry{StationT}\spxextra{in module weatherDB.station}|hyperpage}{9}
+\indexentry{StationTETBase (class in weatherDB.station)@\spxentry{StationTETBase}\spxextra{class in weatherDB.station}|hyperpage}{9}
+\indexentry{get\_adj() (weatherDB.station.StationTETBase method)@\spxentry{get\_adj()}\spxextra{weatherDB.station.StationTETBase method}|hyperpage}{9}
+\indexentry{get\_coef\_exp() (weatherDB.station.StationTETBase method)@\spxentry{get\_coef\_exp()}\spxextra{weatherDB.station.StationTETBase method}|hyperpage}{10}
+\indexentry{get\_exp\_fact() (weatherDB.station.StationTETBase method)@\spxentry{get\_exp\_fact()}\spxextra{weatherDB.station.StationTETBase method}|hyperpage}{10}
+\indexentry{isin\_meta\_n() (weatherDB.station.StationTETBase method)@\spxentry{isin\_meta\_n()}\spxextra{weatherDB.station.StationTETBase method}|hyperpage}{10}
+\indexentry{update\_exp\_fact() (weatherDB.station.StationTETBase method)@\spxentry{update\_exp\_fact()}\spxextra{weatherDB.station.StationTETBase method}|hyperpage}{10}
+\indexentry{TemperatureStation (class in weatherDB.station)@\spxentry{TemperatureStation}\spxextra{class in weatherDB.station}|hyperpage}{10}
+\indexentry{\_\_init\_\_() (weatherDB.station.TemperatureStation method)@\spxentry{\_\_init\_\_()}\spxextra{weatherDB.station.TemperatureStation method}|hyperpage}{10}
+\indexentry{get\_adj() (weatherDB.station.TemperatureStation method)@\spxentry{get\_adj()}\spxextra{weatherDB.station.TemperatureStation method}|hyperpage}{10}
+\indexentry{get\_multi\_annual() (weatherDB.station.TemperatureStation method)@\spxentry{get\_multi\_annual()}\spxextra{weatherDB.station.TemperatureStation method}|hyperpage}{10}
+\indexentry{prop\_disallow (in module weatherDB.station)@\spxentry{prop\_disallow}\spxextra{in module weatherDB.station}|hyperpage}{10}
+\indexentry{module@\spxentry{module}!weatherDB.stations@\spxentry{weatherDB.stations}|hyperpage}{11}
+\indexentry{weatherDB.stations@\spxentry{weatherDB.stations}!module@\spxentry{module}|hyperpage}{11}
+\indexentry{EvapotranspirationStations (class in weatherDB.stations)@\spxentry{EvapotranspirationStations}\spxextra{class in weatherDB.stations}|hyperpage}{11}
+\indexentry{download\_raw() (weatherDB.stations.EvapotranspirationStations method)@\spxentry{download\_raw()}\spxextra{weatherDB.stations.EvapotranspirationStations method}|hyperpage}{11}
+\indexentry{PrecipitationDailyStations (class in weatherDB.stations)@\spxentry{PrecipitationDailyStations}\spxextra{class in weatherDB.stations}|hyperpage}{11}
+\indexentry{PrecipitationStations (class in weatherDB.stations)@\spxentry{PrecipitationStations}\spxextra{class in weatherDB.stations}|hyperpage}{11}
+\indexentry{update\_richter\_class() (weatherDB.stations.PrecipitationStations method)@\spxentry{update\_richter\_class()}\spxextra{weatherDB.stations.PrecipitationStations method}|hyperpage}{11}
+\indexentry{StationsBase (class in weatherDB.stations)@\spxentry{StationsBase}\spxextra{class in weatherDB.stations}|hyperpage}{11}
+\indexentry{\_\_init\_\_() (weatherDB.stations.StationsBase method)@\spxentry{\_\_init\_\_()}\spxextra{weatherDB.stations.StationsBase method}|hyperpage}{11}
+\indexentry{download\_meta() (weatherDB.stations.StationsBase method)@\spxentry{download\_meta()}\spxextra{weatherDB.stations.StationsBase method}|hyperpage}{11}
+\indexentry{fillup() (weatherDB.stations.StationsBase method)@\spxentry{fillup()}\spxextra{weatherDB.stations.StationsBase method}|hyperpage}{11}
+\indexentry{get\_meta() (weatherDB.stations.StationsBase method)@\spxentry{get\_meta()}\spxextra{weatherDB.stations.StationsBase method}|hyperpage}{11}
+\indexentry{get\_stations() (weatherDB.stations.StationsBase method)@\spxentry{get\_stations()}\spxextra{weatherDB.stations.StationsBase method}|hyperpage}{11}
+\indexentry{last\_imp\_fillup() (weatherDB.stations.StationsBase method)@\spxentry{last\_imp\_fillup()}\spxextra{weatherDB.stations.StationsBase method}|hyperpage}{11}
+\indexentry{last\_imp\_quality\_check() (weatherDB.stations.StationsBase method)@\spxentry{last\_imp\_quality\_check()}\spxextra{weatherDB.stations.StationsBase method}|hyperpage}{11}
+\indexentry{quality\_check() (weatherDB.stations.StationsBase method)@\spxentry{quality\_check()}\spxextra{weatherDB.stations.StationsBase method}|hyperpage}{11}
+\indexentry{update\_ma() (weatherDB.stations.StationsBase method)@\spxentry{update\_ma()}\spxextra{weatherDB.stations.StationsBase method}|hyperpage}{12}
+\indexentry{update\_meta() (weatherDB.stations.StationsBase method)@\spxentry{update\_meta()}\spxextra{weatherDB.stations.StationsBase method}|hyperpage}{12}
+\indexentry{update\_period\_meta() (weatherDB.stations.StationsBase method)@\spxentry{update\_period\_meta()}\spxextra{weatherDB.stations.StationsBase method}|hyperpage}{12}
+\indexentry{update\_raw() (weatherDB.stations.StationsBase method)@\spxentry{update\_raw()}\spxextra{weatherDB.stations.StationsBase method}|hyperpage}{12}
+\indexentry{StationsET (in module weatherDB.stations)@\spxentry{StationsET}\spxextra{in module weatherDB.stations}|hyperpage}{12}
+\indexentry{StationsN (in module weatherDB.stations)@\spxentry{StationsN}\spxextra{in module weatherDB.stations}|hyperpage}{12}
+\indexentry{StationsND (in module weatherDB.stations)@\spxentry{StationsND}\spxextra{in module weatherDB.stations}|hyperpage}{12}
+\indexentry{StationsT (in module weatherDB.stations)@\spxentry{StationsT}\spxextra{in module weatherDB.stations}|hyperpage}{12}
+\indexentry{StationsTETBase (class in weatherDB.stations)@\spxentry{StationsTETBase}\spxextra{class in weatherDB.stations}|hyperpage}{12}
+\indexentry{update\_exp\_fact() (weatherDB.stations.StationsTETBase method)@\spxentry{update\_exp\_fact()}\spxextra{weatherDB.stations.StationsTETBase method}|hyperpage}{12}
+\indexentry{TemperatureStations (class in weatherDB.stations)@\spxentry{TemperatureStations}\spxextra{class in weatherDB.stations}|hyperpage}{12}
+\indexentry{module@\spxentry{module}!weatherDB.lib.connections@\spxentry{weatherDB.lib.connections}|hyperpage}{12}
+\indexentry{weatherDB.lib.connections@\spxentry{weatherDB.lib.connections}!module@\spxentry{module}|hyperpage}{12}
+\indexentry{FTP (class in weatherDB.lib.connections)@\spxentry{FTP}\spxextra{class in weatherDB.lib.connections}|hyperpage}{12}
+\indexentry{login() (weatherDB.lib.connections.FTP method)@\spxentry{login()}\spxextra{weatherDB.lib.connections.FTP method}|hyperpage}{12}
+\indexentry{module@\spxentry{module}!weatherDB.lib.utils@\spxentry{weatherDB.lib.utils}|hyperpage}{13}
+\indexentry{weatherDB.lib.utils@\spxentry{weatherDB.lib.utils}!module@\spxentry{module}|hyperpage}{13}
+\indexentry{get\_ftp\_file\_list() (in module weatherDB.lib.utils)@\spxentry{get\_ftp\_file\_list()}\spxextra{in module weatherDB.lib.utils}|hyperpage}{13}
+\indexentry{module@\spxentry{module}!weatherDB.lib.max\_fun.import\_DWD@\spxentry{weatherDB.lib.max\_fun.import\_DWD}|hyperpage}{13}
+\indexentry{weatherDB.lib.max\_fun.import\_DWD@\spxentry{weatherDB.lib.max\_fun.import\_DWD}!module@\spxentry{module}|hyperpage}{13}
+\indexentry{FTP (class in weatherDB.lib.max\_fun.import\_DWD)@\spxentry{FTP}\spxextra{class in weatherDB.lib.max\_fun.import\_DWD}|hyperpage}{13}
+\indexentry{login() (weatherDB.lib.max\_fun.import\_DWD.FTP method)@\spxentry{login()}\spxextra{weatherDB.lib.max\_fun.import\_DWD.FTP method}|hyperpage}{13}
+\indexentry{dwd\_id\_to\_str() (in module weatherDB.lib.max\_fun.import\_DWD)@\spxentry{dwd\_id\_to\_str()}\spxextra{in module weatherDB.lib.max\_fun.import\_DWD}|hyperpage}{13}
+\indexentry{get\_dwd\_data() (in module weatherDB.lib.max\_fun.import\_DWD)@\spxentry{get\_dwd\_data()}\spxextra{in module weatherDB.lib.max\_fun.import\_DWD}|hyperpage}{13}
+\indexentry{get\_dwd\_file() (in module weatherDB.lib.max\_fun.import\_DWD)@\spxentry{get\_dwd\_file()}\spxextra{in module weatherDB.lib.max\_fun.import\_DWD}|hyperpage}{13}
+\indexentry{get\_dwd\_meta() (in module weatherDB.lib.max\_fun.import\_DWD)@\spxentry{get\_dwd\_meta()}\spxextra{in module weatherDB.lib.max\_fun.import\_DWD}|hyperpage}{14}

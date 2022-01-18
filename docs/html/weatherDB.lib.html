@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>weatherDB.lib package &mdash; WeatherDB 0.0.1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="weatherDB.lib.max_fun package" href="weatherDB.lib.max_fun.html" />
+    <link rel="prev" title="weatherDB package" href="weatherDB.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> WeatherDB
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="README.html">     Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">     API reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="weatherDB.html">weatherDB package</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="weatherDB.html#module-weatherDB.broker">weatherDB.broker module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="weatherDB.html#module-weatherDB.station">weatherDB.station module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="weatherDB.html#module-weatherDB.stations">weatherDB.stations module</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="weatherDB.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">weatherDB.lib package</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#module-weatherDB.lib.connections">weatherDB.lib.connections module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#module-weatherDB.lib.utils">weatherDB.lib.utils module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="#subpackages">Subpackages</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="weatherDB.lib.max_fun.html">weatherDB.lib.max_fun package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">WeatherDB</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="modules.html">weatherDB</a> &raquo;</li>
+          <li><a href="weatherDB.html">weatherDB package</a> &raquo;</li>
+      <li>weatherDB.lib package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/weatherDB.lib.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<section id="weatherdb-lib-package">
+<h1>weatherDB.lib package<a class="headerlink" href="#weatherdb-lib-package" title="Permalink to this headline"></a></h1>
+<section id="module-weatherDB.lib.connections">
+<span id="weatherdb-lib-connections-module"></span><h2>weatherDB.lib.connections module<a class="headerlink" href="#module-weatherDB.lib.connections" title="Permalink to this headline"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="weatherDB.lib.connections.FTP">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">weatherDB.lib.connections.</span></span><span class="sig-name descname"><span class="pre">FTP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">host=''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user=''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">passwd=''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acct=''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout=&lt;object</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_address=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding='utf-8'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.lib.connections.FTP" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ftplib.FTP</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="weatherDB.lib.connections.FTP.login">
+<span class="sig-name descname"><span class="pre">login</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.lib.connections.FTP.login" title="Permalink to this definition"></a></dt>
+<dd><p>Login, default anonymous.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-weatherDB.lib.utils">
+<span id="weatherdb-lib-utils-module"></span><h2>weatherDB.lib.utils module<a class="headerlink" href="#module-weatherDB.lib.utils" title="Permalink to this headline"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="weatherDB.lib.utils.get_ftp_file_list">
+<span class="sig-prename descclassname"><span class="pre">weatherDB.lib.utils.</span></span><span class="sig-name descname"><span class="pre">get_ftp_file_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ftp_conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ftp_folders</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.lib.utils.get_ftp_file_list" title="Permalink to this definition"></a></dt>
+<dd><p>Get a list of files in the folders with their modification dates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ftp_conn</strong> (<em>ftplib.FTP</em>) – Ftp connection.</p></li>
+<li><p><strong>ftp_folders</strong> (<em>list of str</em><em> or </em><em>pathlike object</em>) – The directories on the ftp server to look for files.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A list of Tuples. Every tuple stands for one file.
+The tuple consists of (filepath, modification date).</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list of tuples of strs</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="weatherDB.lib.max_fun.html">weatherDB.lib.max_fun package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="weatherDB.lib.max_fun.html#module-weatherDB.lib.max_fun.import_DWD">weatherDB.lib.max_fun.import_DWD module</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="weatherDB.html" class="btn btn-neutral float-left" title="weatherDB package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="weatherDB.lib.max_fun.html" class="btn btn-neutral float-right" title="weatherDB.lib.max_fun package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Max Schmit.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,8 @@
+geopandas
+shapely
+pandas
+numpy
+progressbar2
+sqlalchemey
+re
+ftplib

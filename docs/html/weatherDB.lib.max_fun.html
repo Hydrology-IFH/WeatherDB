@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>weatherDB.lib.max_fun package &mdash; WeatherDB 0.0.1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="weatherDB.lib package" href="weatherDB.lib.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> WeatherDB
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="README.html">     Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">     API reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="weatherDB.html">weatherDB package</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="weatherDB.html#module-weatherDB.broker">weatherDB.broker module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="weatherDB.html#module-weatherDB.station">weatherDB.station module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="weatherDB.html#module-weatherDB.stations">weatherDB.stations module</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="weatherDB.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="weatherDB.lib.html">weatherDB.lib package</a><ul class="current">
+<li class="toctree-l5"><a class="reference internal" href="weatherDB.lib.html#module-weatherDB.lib.connections">weatherDB.lib.connections module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="weatherDB.lib.html#module-weatherDB.lib.utils">weatherDB.lib.utils module</a></li>
+<li class="toctree-l5 current"><a class="reference internal" href="weatherDB.lib.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l6 current"><a class="current reference internal" href="#">weatherDB.lib.max_fun package</a><ul>
+<li class="toctree-l7"><a class="reference internal" href="#module-weatherDB.lib.max_fun.import_DWD">weatherDB.lib.max_fun.import_DWD module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">WeatherDB</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="modules.html">weatherDB</a> &raquo;</li>
+          <li><a href="weatherDB.html">weatherDB package</a> &raquo;</li>
+          <li><a href="weatherDB.lib.html">weatherDB.lib package</a> &raquo;</li>
+      <li>weatherDB.lib.max_fun package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/weatherDB.lib.max_fun.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<section id="weatherdb-lib-max-fun-package">
+<h1>weatherDB.lib.max_fun package<a class="headerlink" href="#weatherdb-lib-max-fun-package" title="Permalink to this headline"></a></h1>
+<section id="module-weatherDB.lib.max_fun.import_DWD">
+<span id="weatherdb-lib-max-fun-import-dwd-module"></span><h2>weatherDB.lib.max_fun.import_DWD module<a class="headerlink" href="#module-weatherDB.lib.max_fun.import_DWD" title="Permalink to this headline"></a></h2>
+<p>A collection of functions to import data from the DWD-CDC Server.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="weatherDB.lib.max_fun.import_DWD.FTP">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">weatherDB.lib.max_fun.import_DWD.</span></span><span class="sig-name descname"><span class="pre">FTP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">host=''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user=''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">passwd=''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acct=''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout=&lt;object</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_address=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding='utf-8'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.lib.max_fun.import_DWD.FTP" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ftplib.FTP</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="weatherDB.lib.max_fun.import_DWD.FTP.login">
+<span class="sig-name descname"><span class="pre">login</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.lib.max_fun.import_DWD.FTP.login" title="Permalink to this definition"></a></dt>
+<dd><p>Login, default anonymous.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="weatherDB.lib.max_fun.import_DWD.dwd_id_to_str">
+<span class="sig-prename descclassname"><span class="pre">weatherDB.lib.max_fun.import_DWD.</span></span><span class="sig-name descname"><span class="pre">dwd_id_to_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.lib.max_fun.import_DWD.dwd_id_to_str" title="Permalink to this definition"></a></dt>
+<dd><p>Convert a station id to normal DWD format as str.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>id</strong> (<em>int</em><em> or </em><em>str</em>) – The id of the station.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>string of normal DWD Station id.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="weatherDB.lib.max_fun.import_DWD.get_dwd_data">
+<span class="sig-prename descclassname"><span class="pre">weatherDB.lib.max_fun.import_DWD.</span></span><span class="sig-name descname"><span class="pre">get_dwd_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">station_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ftp_folder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.lib.max_fun.import_DWD.get_dwd_data" title="Permalink to this definition"></a></dt>
+<dd><p>Get the weather data for one station from the DWD server.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>station_id</strong> (<em>str</em><em> or </em><em>int</em>) – Number of the station to get the weather data from.</p></li>
+<li><p><strong>ftp_folder</strong> (<em>str</em>) – the base folder where to look for the stations_id file.
+e.g. ftp_folder = “climate_environment/CDC/observations_germany/climate/hourly/precipitation/historical/”.
+If the parent folder, where “recent”/”historical” folder is inside, both the historical and recent data gets merged.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The DataFrame of the selected file in the zip folder.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="weatherDB.lib.max_fun.import_DWD.get_dwd_file">
+<span class="sig-prename descclassname"><span class="pre">weatherDB.lib.max_fun.import_DWD.</span></span><span class="sig-name descname"><span class="pre">get_dwd_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">zip_filepath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.lib.max_fun.import_DWD.get_dwd_file" title="Permalink to this definition"></a></dt>
+<dd><p>Get a DataFrame from one single (zip-)file from the DWD FTP server.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>zip_filepath</strong> (<em>str</em>) – <p>Path to the file on the server. e.g.</p>
+<ul class="simple">
+<li><p>”/climate_environment/CDC/observations_germany/climate/10_minutes/air_temperature/recent/10minutenwerte_TU_00044_akt.zip”</p></li>
+<li><p>”/climate_environment/CDC/derived_germany/soil/daily/historical/derived_germany_soil_daily_historical_73.txt.gz”</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The DataFrame of the selected file in the zip folder.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="weatherDB.lib.max_fun.import_DWD.get_dwd_meta">
+<span class="sig-prename descclassname"><span class="pre">weatherDB.lib.max_fun.import_DWD.</span></span><span class="sig-name descname"><span class="pre">get_dwd_meta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ftp_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_years</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_hole_d</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">9999</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.lib.max_fun.import_DWD.get_dwd_meta" title="Permalink to this definition"></a></dt>
+<dd><p>Get the meta file from the ftp_folder on the DWD server.</p>
+<p>Downloads the meta file of a given folder.
+Corrects the meta file of missing files. So if no file for the station is
+in the folder the meta entry gets deleted.
+Reset “von_datum” in meta file if there is a biger gap than max_hole_d.
+Delets entries with less years than min_years.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ftp_folder</strong> (<em>str</em>) – The path to the directory where to search for the meta file.
+e.g. “climate_environment/CDC/observations_germany/climate/hourly/precipitation/recent/”.</p></li>
+<li><p><strong>min_years</strong> (<em>int</em><em>, </em><em>optional</em>) – filter the list of stations by a minimum amount of years,
+that they have data for. 0 if the data should not get filtered.
+Only works if the meta file has a timerange defined,
+e.g. in “observations”.
+The default is 0.</p></li>
+<li><p><strong>max_hole_d</strong> (<em>int</em>) – The maximum amount of days missing in the data allowed.
+If there are several files for one station and the time hole is biger
+than this value, the older “von_datum” is overwriten
+in the meta GeoDataFrame.
+The default is 2.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a GeoDataFrame of the meta file</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>geopandas.GeoDataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="weatherDB.lib.html" class="btn btn-neutral float-left" title="weatherDB.lib package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Max Schmit.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
