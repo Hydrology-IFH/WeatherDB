@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>weatherDB.lib package &mdash; WeatherDB 0.0.1 documentation</title>
+  <title>weatherDB.lib package &mdash; WeatherDB 0.0.2 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -133,6 +133,97 @@
 </section>
 <section id="module-weatherDB.lib.utils">
 <span id="weatherdb-lib-utils-module"></span><h2>weatherDB.lib.utils module<a class="headerlink" href="#module-weatherDB.lib.utils" title="Permalink to this headline"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="weatherDB.lib.utils.TimestampPeriod">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">weatherDB.lib.utils.</span></span><span class="sig-name descname"><span class="pre">TimestampPeriod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.lib.utils.TimestampPeriod" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A class to save a Timespan with a minimal and maximal Timestamp.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="weatherDB.lib.utils.TimestampPeriod.COMPARE">
+<span class="sig-name descname"><span class="pre">COMPARE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'inner':</span> <span class="pre">{0:</span> <span class="pre">&lt;built-in</span> <span class="pre">function</span> <span class="pre">max&gt;,</span> <span class="pre">1:</span> <span class="pre">&lt;built-in</span> <span class="pre">function</span> <span class="pre">min&gt;},</span> <span class="pre">'outer':</span> <span class="pre">{0:</span> <span class="pre">&lt;built-in</span> <span class="pre">function</span> <span class="pre">min&gt;,</span> <span class="pre">1:</span> <span class="pre">&lt;built-in</span> <span class="pre">function</span> <span class="pre">max&gt;}}</span></em><a class="headerlink" href="#weatherDB.lib.utils.TimestampPeriod.COMPARE" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="weatherDB.lib.utils.TimestampPeriod.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.lib.utils.TimestampPeriod.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>Initiate a TimestampPeriod.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start</strong> (<em>pd.Timestamp</em><em> or </em><em>similar</em>) – The start of the Period.</p></li>
+<li><p><strong>end</strong> (<em>pd.Timestamp</em><em> or </em><em>similar</em>) – The end of the Period.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="weatherDB.lib.utils.TimestampPeriod.contains">
+<span class="sig-name descname"><span class="pre">contains</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.lib.utils.TimestampPeriod.contains" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="weatherDB.lib.utils.TimestampPeriod.get_period">
+<span class="sig-name descname"><span class="pre">get_period</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.lib.utils.TimestampPeriod.get_period" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="weatherDB.lib.utils.TimestampPeriod.get_sql_format_dict">
+<span class="sig-name descname"><span class="pre">get_sql_format_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'%Y%m%d</span> <span class="pre">%H:%M'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.lib.utils.TimestampPeriod.get_sql_format_dict" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="weatherDB.lib.utils.TimestampPeriod.has_NaT">
+<span class="sig-name descname"><span class="pre">has_NaT</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.lib.utils.TimestampPeriod.has_NaT" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="weatherDB.lib.utils.TimestampPeriod.has_only_NaT">
+<span class="sig-name descname"><span class="pre">has_only_NaT</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.lib.utils.TimestampPeriod.has_only_NaT" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="weatherDB.lib.utils.TimestampPeriod.inside">
+<span class="sig-name descname"><span class="pre">inside</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.lib.utils.TimestampPeriod.inside" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="weatherDB.lib.utils.TimestampPeriod.is_empty">
+<span class="sig-name descname"><span class="pre">is_empty</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.lib.utils.TimestampPeriod.is_empty" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="weatherDB.lib.utils.TimestampPeriod.strftime">
+<span class="sig-name descname"><span class="pre">strftime</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'%Y-%m-%d</span> <span class="pre">%H:%M:%S'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.lib.utils.TimestampPeriod.strftime" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="weatherDB.lib.utils.TimestampPeriod.union">
+<span class="sig-name descname"><span class="pre">union</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">how</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'inner'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.lib.utils.TimestampPeriod.union" title="Permalink to this definition"></a></dt>
+<dd><p>Unite 2 TimestampPeriods to one.</p>
+<p>Compares the Periods and computes a new one.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>other</strong> (<a class="reference internal" href="#weatherDB.lib.utils.TimestampPeriod" title="weatherDB.lib.utils.TimestampPeriod"><em>TimestampPeriod</em></a>) – The other TimestampPeriod with whome to compare.</p></li>
+<li><p><strong>how</strong> (<em>str</em><em>, </em><em>optional</em>) – How to compare the 2 TimestampPeriods.
+Can be “inner” or “outer”.
+“inner”: the maximal Timespan for both is computed.
+“outer”: The minimal Timespan for both is computed.
+The default is “inner”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A new TimespanPeriod object uniting both TimestampPeriods.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#weatherDB.lib.utils.TimestampPeriod" title="weatherDB.lib.utils.TimestampPeriod">TimestampPeriod</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="weatherDB.lib.utils.get_ftp_file_list">
 <span class="sig-prename descclassname"><span class="pre">weatherDB.lib.utils.</span></span><span class="sig-name descname"><span class="pre">get_ftp_file_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ftp_conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ftp_folders</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.lib.utils.get_ftp_file_list" title="Permalink to this definition"></a></dt>
@@ -179,7 +270,7 @@ The tuple consists of (filepath, modification date).</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2021, Max Schmit.</p>
+    <p>&#169; Copyright Copyright 2021, Max Schmit.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

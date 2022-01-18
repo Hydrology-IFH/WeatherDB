@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2021/W32TeX) (preloaded format=pdflatex 2021.12.23)  4 JAN 2022 08:42
+This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2021/W32TeX) (preloaded format=pdflatex 2021.12.23)  18 JAN 2022 11:38
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -645,7 +645,7 @@ File: l3backend-pdftex.def 2021-12-14 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count311
 \l__pdf_internal_box=\box119
 )
-No file weatherdb.aux.
+(./weatherdb.aux)
 \openout1 = `weatherdb.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 211.
@@ -666,6 +666,7 @@ LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 211.
 LaTeX Font Info:    ... okay on input line 211.
 LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 211.
 LaTeX Font Info:    ... okay on input line 211.
+
 (c:/texlive/2021/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
 \scratchcounter=\count312
@@ -739,6 +740,8 @@ Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
 LaTeX Info: Redefining \ref on input line 211.
 LaTeX Info: Redefining \pageref on input line 211.
 LaTeX Info: Redefining \nameref on input line 211.
+
+(./weatherdb.out) (./weatherdb.out)
 \@outlinefile=\write5
 \openout5 = `weatherdb.out'.
 
@@ -765,7 +768,7 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 {c:/texlive/2021/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] [2
 
 
-]
+] (./weatherdb.toc)
 \tf@toc=\write6
 \openout6 = `weatherdb.toc'.
 
@@ -792,156 +795,190 @@ File: t1txtt.fd 2000/12/15 v3.1
 )
 LaTeX Font Info:    Font shape `T1/txtt/b/n' in size <10> not available
 (Font)              Font shape `T1/txtt/bx/n' tried instead on input line 275.
-
-
-LaTeX Warning: Hyper reference `weatherDB:weatherDB.station.StationTETBase' on 
-page 3 undefined on input line 373.
-
 LaTeX Font Info:    Font shape `T1/txtt/m/it' in size <10> not available
-(Font)              Font shape `T1/txtt/m/sl' tried instead on input line 373.
-[3]
-Underfull \hbox (badness 10000) in paragraph at lines 436--440
-[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/sl/10 tuple or list of dat
-etime.datetime or None, optional\T1/qtm/m/n/10 ) ^^U The
+(Font)              Font shape `T1/txtt/m/sl' tried instead on input line 299.
+ [3]
+
+LaTeX Warning: Hyper reference `weatherDB.lib:weatherDB.lib.utils.TimestampPeri
+od' on page 4 undefined on input line 536.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 534--539
+[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/n/10 TimestampPeriod \T1/t
+xtt/m/sl/10 or (tuple or list of datetime.datetime
+ []
+
+[4]
+
+LaTeX Warning: Hyper reference `weatherDB.lib:weatherDB.lib.utils.TimestampPeri
+od' on page 5 undefined on input line 617.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 616--620
+[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/n/10 TimestampPeriod \T1/t
+xtt/m/sl/10 or (tuple or list of datetime.datetime or
+ []
+
+[5]
+
+LaTeX Warning: Hyper reference `weatherDB.lib:weatherDB.lib.utils.TimestampPeri
+od' on page 6 undefined on input line 834.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 832--837
+[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/n/10 TimestampPeriod \T1/t
+xtt/m/sl/10 or (tuple or list of datetime.datetime
+ []
+
+[6]
+
+LaTeX Warning: Hyper reference `weatherDB.lib:weatherDB.lib.utils.TimestampPeri
+od' on page 7 undefined on input line 943.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 941--946
+[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/n/10 TimestampPeriod \T1/t
+xtt/m/sl/10 or (tuple or list of datetime.datetime
+ []
+
+[7]
+
+LaTeX Warning: Hyper reference `weatherDB.lib:weatherDB.lib.utils.TimestampPeri
+od' on page 8 undefined on input line 1002.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1001--1005
+[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/n/10 TimestampPeriod \T1/t
+xtt/m/sl/10 or (tuple or list of datetime.datetime or
  []
 
 
-LaTeX Warning: Hyper reference `weatherDB:weatherDB.station.StationNBase' on pa
-ge 4 undefined on input line 491.
+LaTeX Warning: Hyper reference `weatherDB.lib:weatherDB.lib.utils.TimestampPeri
+od' on page 8 undefined on input line 1035.
 
 
-LaTeX Warning: Hyper reference `weatherDB:weatherDB.station.StationNBase' on pa
-ge 4 undefined on input line 551.
-
-[4] [5]
-Underfull \hbox (badness 10000) in paragraph at lines 770--774
-[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/sl/10 tuple or list of dat
-etime.datetime or None, optional\T1/qtm/m/n/10 ) ^^U The
+Underfull \hbox (badness 10000) in paragraph at lines 1033--1038
+[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/n/10 TimestampPeriod \T1/t
+xtt/m/sl/10 or (tuple or list of datetime.datetime
  []
 
-[6] [7] [8]
 
-LaTeX Warning: Hyper reference `weatherDB:weatherDB.station.EvapotranspirationS
-tation' on page 9 undefined on input line 1253.
-
-
-LaTeX Warning: Hyper reference `weatherDB:weatherDB.station.PrecipitationStatio
-n' on page 9 undefined on input line 1262.
+LaTeX Warning: Hyper reference `weatherDB.lib:weatherDB.lib.utils.TimestampPeri
+od' on page 8 undefined on input line 1064.
 
 
-LaTeX Warning: Hyper reference `weatherDB:weatherDB.station.StationBase' on pag
-e 9 undefined on input line 1271.
+Underfull \hbox (badness 10000) in paragraph at lines 1063--1067
+[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/n/10 TimestampPeriod \T1/t
+xtt/m/sl/10 or (tuple or list of datetime.datetime or
+ []
+
+[8] [9] [10]
+
+LaTeX Warning: Hyper reference `weatherDB.lib:weatherDB.lib.utils.TimestampPeri
+od' on page 11 undefined on input line 1486.
 
 
-LaTeX Warning: Hyper reference `weatherDB:weatherDB.station.PrecipitationDailyS
-tation' on page 9 undefined on input line 1309.
+Underfull \hbox (badness 10000) in paragraph at lines 1485--1489
+[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/n/10 TimestampPeriod \T1/t
+xtt/m/sl/10 or (tuple or list of datetime.datetime or
+ []
 
 
-LaTeX Warning: Hyper reference `weatherDB:weatherDB.station.TemperatureStation'
- on page 9 undefined on input line 1318.
-
-
-LaTeX Warning: Hyper reference `weatherDB:weatherDB.station.StationBase' on pag
-e 9 undefined on input line 1327.
-
-[9]
-
-LaTeX Warning: Hyper reference `weatherDB:weatherDB.station.StationTETBase' on 
-page 10 undefined on input line 1446.
-
-[10]
-
-LaTeX Warning: Hyper reference `weatherDB:weatherDB.stations.StationsTETBase' o
-n page 11 undefined on input line 1523.
-
-
-LaTeX Warning: Hyper reference `weatherDB:weatherDB.stations.StationsBase' on p
-age 11 undefined on input line 1538.
-
-
-LaTeX Warning: Hyper reference `weatherDB:weatherDB.stations.StationsBase' on p
-age 11 undefined on input line 1547.
+Underfull \hbox (badness 10000) in paragraph at lines 1511--1516
+[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/sl/10 util.TimestampPeriod
+ or (tuple or list of datetime.
+ []
 
 [11]
 
-LaTeX Warning: Hyper reference `weatherDB:weatherDB.stations.Evapotranspiration
-Stations' on page 12 undefined on input line 1750.
+LaTeX Warning: Hyper reference `weatherDB.lib:weatherDB.lib.utils.TimestampPeri
+od' on page 12 undefined on input line 1616.
 
 
-LaTeX Warning: Hyper reference `weatherDB:weatherDB.stations.PrecipitationStati
-ons' on page 12 undefined on input line 1759.
+Underfull \hbox (badness 10000) in paragraph at lines 1614--1619
+[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/n/10 TimestampPeriod \T1/t
+xtt/m/sl/10 or (tuple or list of datetime.datetime
+ []
 
 
-LaTeX Warning: Hyper reference `weatherDB:weatherDB.stations.PrecipitationDaily
-Stations' on page 12 undefined on input line 1768.
+LaTeX Warning: Hyper reference `weatherDB.lib:weatherDB.lib.utils.TimestampPeri
+od' on page 12 undefined on input line 1672.
 
 
-LaTeX Warning: Hyper reference `weatherDB:weatherDB.stations.TemperatureStation
-s' on page 12 undefined on input line 1777.
+Underfull \hbox (badness 10000) in paragraph at lines 1670--1675
+[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/n/10 TimestampPeriod \T1/t
+xtt/m/sl/10 or (tuple or list of datetime.datetime
+ []
 
 
-LaTeX Warning: Hyper reference `weatherDB:weatherDB.stations.StationsBase' on p
-age 12 undefined on input line 1786.
+Underfull \hbox (badness 10000) in paragraph at lines 1714--1719
+[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/sl/10 util.TimestampPeriod
+ or (tuple or list of datetime.
+ []
 
 
-LaTeX Warning: Hyper reference `weatherDB:weatherDB.stations.StationsTETBase' o
-n page 12 undefined on input line 1801.
+LaTeX Warning: Hyper reference `weatherDB.lib:weatherDB.lib.utils.TimestampPeri
+od' on page 12 undefined on input line 1752.
 
-[12]
-Underfull \hbox (badness 10000) in paragraph at lines 1932--1936
+
+Underfull \hbox (badness 10000) in paragraph at lines 1750--1755
+[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/n/10 TimestampPeriod \T1/t
+xtt/m/sl/10 or (tuple or list of datetime.datetime
+ []
+
+[12] [13] [14]
+Underfull \hbox (badness 10000) in paragraph at lines 2144--2148
+[]\T1/txtt/bx/n/10 period \T1/qtm/m/n/10 (\T1/txtt/m/sl/10 tuple or list of dat
+etime.datetime or None, optional\T1/qtm/m/n/10 ) ^^U The
+ []
+
+[15] [16]
+LaTeX Font Info:    Trying to load font information for TS1+txtt on input line 
+1.
+ (c:/texlive/2021/texmf-dist/tex/latex/txfonts/ts1txtt.fd
+File: ts1txtt.fd 2000/12/15 v3.1
+)
+LaTeX Font Info:    Font shape `TS1/txtt/b/n' in size <10> not available
+(Font)              Font shape `TS1/txtt/bx/n' tried instead on input line 1.
+
+
+LaTeX Warning: Hyper reference `weatherDB.lib:weatherDB.lib.utils.TimestampPeri
+od' on page 17 undefined on input line 2500.
+
+
+LaTeX Warning: Hyper reference `weatherDB.lib:weatherDB.lib.utils.TimestampPeri
+od' on page 17 undefined on input line 2518.
+
+[17]
+Underfull \hbox (badness 10000) in paragraph at lines 2624--2628
 []\T1/txtt/bx/n/10 ftp_folder \T1/qtm/m/n/10 (\T1/txtt/m/sl/10 str\T1/qtm/m/n/1
 0 ) ^^U the base folder where to look
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1932--1936
+Underfull \hbox (badness 10000) in paragraph at lines 2624--2628
 \T1/qtm/m/n/10 for the sta-tions_id file. e.g. ftp_folder = ^^Pcli-
  []
 
-[13]
-Overfull \hbox (170.21487pt too wide) in paragraph at lines 1965--1967
+
+Overfull \hbox (170.21487pt too wide) in paragraph at lines 2657--2659
 []\T1/qtm/m/n/10 ^^Q/cli-mate_environment/CDC/observations_germany/climate/10_m
 inutes/air_temperature/recent/10minutenwerte_TU_00044_akt.zip^^Q 
  []
 
-
-Overfull \hbox (105.43478pt too wide) in paragraph at lines 1969--1971
+[18]
+Overfull \hbox (105.43478pt too wide) in paragraph at lines 2661--2663
 []\T1/qtm/m/n/10 ^^Q/cli-mate_environment/CDC/derived_germany/soil/daily/histor
 ical/derived_germany_soil_daily_historical_73.txt.gz^^Q 
  []
 
-[14]
-Chapter 3.
-[15
-
-] [16
+[19] [20
 
 ]
+Chapter 3.
+[21] [22
 
-LaTeX Warning: Reference `weatherDB:module-weatherDB.broker' on page 17 undefin
-ed on input line 2060.
-
-
-LaTeX Warning: Reference `weatherDB.lib:module-weatherDB.lib.connections' on pa
-ge 17 undefined on input line 2061.
-
-
-LaTeX Warning: Reference `weatherDB.lib.max_fun:module-weatherDB.lib.max_fun.im
-port_DWD' on page 17 undefined on input line 2062.
-
-
-LaTeX Warning: Reference `weatherDB.lib:module-weatherDB.lib.utils' on page 17 
-undefined on input line 2063.
-
-
-LaTeX Warning: Reference `weatherDB:module-weatherDB.station' on page 17 undefi
-ned on input line 2064.
-
-
-LaTeX Warning: Reference `weatherDB:module-weatherDB.stations' on page 17 undef
-ined on input line 2065.
-
-[17
+] [23
 
 
 ]
@@ -959,31 +996,52 @@ Package rerunfilecheck Warning: File `weatherdb.out' has changed.
 (rerunfilecheck)                or use package `bookmark'.
 
 Package rerunfilecheck Info: Checksums for `weatherdb.out':
-(rerunfilecheck)             Before: <no file>
-(rerunfilecheck)             After:  2B119B266930F7862157D5F3780E767D;2652.
+(rerunfilecheck)             Before: 2B119B266930F7862157D5F3780E767D;2652
+(rerunfilecheck)             After:  31F3699309E6D90A12D89E100E2F3B5E;2652.
  ) 
 Here is how much of TeX's memory you used:
- 14844 strings out of 478353
- 240193 string characters out of 5852100
- 560187 words of memory out of 5000000
- 32472 multiletter control sequences out of 15000+600000
- 453503 words of font info for 62 fonts, out of 8000000 for 9000
+ 14987 strings out of 478353
+ 243405 string characters out of 5852100
+ 568511 words of memory out of 5000000
+ 32553 multiletter control sequences out of 15000+600000
+ 455104 words of font info for 69 fonts, out of 8000000 for 9000
  1142 hyphenation exceptions out of 8191
- 70i,12n,76p,803b,633s stack positions out of 5000i,500n,10000p,200000b,80000s
-{c:/texlive/2021/texmf-dist/fonts/enc/dvips/tex-gyre/q-ec.enc}{c:/texlive/202
-1/texmf-dist/fonts/enc/dvips/tex-gyre/q-ts1.enc}<c:/texlive/2021/texmf-dist/fon
-ts/type1/public/tex-gyre/qhvb.pfb><c:/texlive/2021/texmf-dist/fonts/type1/publi
-c/tex-gyre/qhvbi.pfb><c:/texlive/2021/texmf-dist/fonts/type1/public/tex-gyre/qh
-vr.pfb><c:/texlive/2021/texmf-dist/fonts/type1/public/tex-gyre/qtmb.pfb><c:/tex
-live/2021/texmf-dist/fonts/type1/public/tex-gyre/qtmr.pfb><c:/texlive/2021/texm
-f-dist/fonts/type1/public/tex-gyre/qtmri.pfb><c:/texlive/2021/texmf-dist/fonts/
-type1/public/txfonts/t1xbtt.pfb><c:/texlive/2021/texmf-dist/fonts/type1/public/
-txfonts/t1xtt.pfb><c:/texlive/2021/texmf-dist/fonts/type1/public/txfonts/t1xtt.
-pfb>
-Output written on weatherdb.pdf (21 pages, 188249 bytes).
+ 70i,12n,76p,1075b,686s stack positions out of 5000i,500n,10000p,200000b,80000s
+pdfTeX warning (dest): name{section*.131} has been referenced but does not ex
+ist, replaced by a fixed one
+
+pdfTeX warning (dest): name{subparagraph*.124} has been referenced but does not
+ exist, replaced by a fixed one
+
+pdfTeX warning (dest): name{subparagraph*.123} has been referenced but does not
+ exist, replaced by a fixed one
+
+pdfTeX warning (dest): name{paragraph*.122} has been referenced but does not ex
+ist, replaced by a fixed one
+
+pdfTeX warning (dest): name{paragraph*.120} has been referenced but does not ex
+ist, replaced by a fixed one
+
+pdfTeX warning (dest): name{paragraph*.117} has been referenced but does not ex
+ist, replaced by a fixed one
+
+pdfTeX warning (dest): name{subsubsection*.116} has been referenced but does no
+t exist, replaced by a fixed one
+
+{c:/texlive/2021/texmf-dist/fonts/enc/dvips/tex-gyre/q-ec.enc}{c:/texlive/2021/
+texmf-dist/fonts/enc/dvips/tex-gyre/q-ts1.enc}<c:/texlive/2021/texmf-dist/fonts
+/type1/public/tex-gyre/qhvb.pfb><c:/texlive/2021/texmf-dist/fonts/type1/public/
+tex-gyre/qhvbi.pfb><c:/texlive/2021/texmf-dist/fonts/type1/public/tex-gyre/qhvr
+.pfb><c:/texlive/2021/texmf-dist/fonts/type1/public/tex-gyre/qtmb.pfb><c:/texli
+ve/2021/texmf-dist/fonts/type1/public/tex-gyre/qtmr.pfb><c:/texlive/2021/texmf-
+dist/fonts/type1/public/tex-gyre/qtmri.pfb><c:/texlive/2021/texmf-dist/fonts/ty
+pe1/public/txfonts/t1xbtt.pfb><c:/texlive/2021/texmf-dist/fonts/type1/public/tx
+fonts/t1xtt.pfb><c:/texlive/2021/texmf-dist/fonts/type1/public/txfonts/t1xtt.pf
+b><c:/texlive/2021/texmf-dist/fonts/type1/public/txfonts/tcxbtt.pfb>
+Output written on weatherdb.pdf (27 pages, 212040 bytes).
 PDF statistics:
- 318 PDF objects out of 1000 (max. 8388607)
- 276 compressed objects within 3 object streams
- 160 named destinations out of 1000 (max. 500000)
- 21 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 471 PDF objects out of 1000 (max. 8388607)
+ 419 compressed objects within 5 object streams
+ 196 named destinations out of 1000 (max. 500000)
+ 149 words of extra memory for PDF output out of 10000 (max. 10000000)
 
