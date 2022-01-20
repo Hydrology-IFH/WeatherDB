@@ -270,7 +270,7 @@ class StationBase:
         for key in list(self._cached_periods):
             if self._cached_periods[key]["time"] < time_limit:
                 self._cached_periods.pop(key)
-    
+
     @check_superuser
     def _check_ma(self):
         if not self.isin_ma():
@@ -554,7 +554,7 @@ class StationBase:
         with DB_ENG.connect() as con:
             res = con.execute(sql)
         return res.first()[0]
-    
+
     def is_last_imp_done(self, kind):
         """Is the last import for the given kind already worked in?
 
@@ -1048,7 +1048,7 @@ class StationBase:
                         FROM new_filled_{stid}_{para});
                 BEGIN
                     FOR i IN (
-                        SELECT meta.station_id, 
+                        SELECT meta.station_id,
                             meta.von_datum,
                             meta.station_id || '_{para}' AS tablename,
                             {coef_calc}
@@ -1099,7 +1099,7 @@ class StationBase:
                     FROM new_filled_{stid}_{para} new
                     WHERE ts.timestamp = new.timestamp
                         AND ts."filled" IS DISTINCT FROM new."filled";
-                    UPDATE public."meta_{para}" 
+                    UPDATE public."meta_{para}"
                     SET bis_tstp_filled=tstps.max,
                         von_tstp_filled=tstps.min
                     FROM (SELECT max(ts.timestamp) , min(ts.timestamp)
@@ -2034,7 +2034,7 @@ class PrecipitationStation(StationNBase):
                     "The {dgm_name} was not found in the data directory under: \n{fp}".format(
                         dgm_name=dgm_name,
                         fp=str(RASTERS["local"][dgm_name])
-                    ) 
+                    )
                 )
 
         # get the horizontabschirmung value
@@ -2184,8 +2184,8 @@ class PrecipitationStation(StationNBase):
         delta = timedelta(hours=5, minutes=50)
         # if (stat_t_period[0] is None or stat_t_period[1] is None)\
         if stat_t_period.has_NaT()\
-            or (stat_t_period[0] > (stat_n_period[0] - delta).date() or
-                stat_t_period[1] < (stat_n_period[1] - delta).date()):
+            or (stat_t_period[0].date() > (stat_n_period[0] - delta).date() or
+                stat_t_period[1].date()  < (stat_n_period[1] - delta).date()):
             stat_t.fillup()
 
         # get the richter exposition class
@@ -2195,7 +2195,9 @@ class PrecipitationStation(StationNBase):
                             .format(stid=self.id))
 
         # check if period is given
-        if any(period):
+        if type(period) != TimestampPeriod:
+                period = TimestampPeriod(*period)
+        if not period.is_empty():
             period = self._check_period(
                 period=period, kinds=["filled"])
             sql_period_clause = """
@@ -2275,12 +2277,12 @@ class PrecipitationStation(StationNBase):
         # calculate the new corr
         sql_update = """
             UPDATE timeseries."{stid}_{para}" ts
-            SET rs."corr" = CASE WHEN "filled" > 0
+            SET "corr" = CASE WHEN "filled" > 0
                             THEN ts."filled" + ts_delta_n."delta_10min"
                             ELSE ts."filled"
-                            END AS "corr"
+                            END
             FROM ({sql_delta_n}) ts_delta_n
-            WHERE (ts.timestamp - INTERVAL '5h 50min')::date = ts_delta_n.timestamp;
+            WHERE (ts.timestamp - INTERVAL '5h 50min')::date = ts_delta_n.date;
         """.format(
             sql_delta_n=sql_delta_n,
             **sql_format_dict
@@ -2291,9 +2293,28 @@ class PrecipitationStation(StationNBase):
             con.execution_options(isolation_level="AUTOCOMMIT"
                                   ).execute(sql_update)
 
+        # mark last import as done, if previous are ok
+        if(self.is_last_imp_done(kind="qc") and self.is_last_imp_done(kind="filled")):
+            if (period.is_empty() or
+                period.contains(self.get_last_imp_period())):
+                self._mark_last_imp_done(kind="corr")
+
     @check_superuser
     def corr(self, period=(None, None)):
         self.richter_correct(period=period)
+
+    @check_superuser
+    def last_imp_corr(self, last_imp_period=None):
+        """Do the filling up of the last import.
+        """
+        if last_imp_period is None:
+            period = self.get_last_imp_period(all=True)
+        else:
+            period = last_imp_period
+        if not self.is_last_imp_done(kind="filled"):
+            self.fillup(period=self.get_last_imp_period(all=True))
+            if self.is_last_imp_done(kind="qc"):
+                self._mark_last_imp_done(kind="filled")
 
     def get_corr(self, period=(None, None)):
         return self.get_df(period=period, kinds=["corr"])

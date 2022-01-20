@@ -185,10 +185,16 @@ class Broker(object):
             if stations._para in paras:
                 stations.last_imp_fillup()
 
+    def richter_correct(self):
+        """Richter correct all of the precipitation data.
+        """
+        log.info("="*79 + "\nBroker: last_imp_corr starts")
+        self.stations_n.richter_correct()
+
     def last_imp_corr(self):
         """Richter correct the last imported precipitation data.
         """
-        log.info("="*79 + "\nBroker last_imp_corr starts")
+        log.info("="*79 + "\nBroker: last_imp_corr starts")
         self.stations_n.last_imp_corr()
 
     def update_db(self, paras=["n_d", "n", "t", "et"]):

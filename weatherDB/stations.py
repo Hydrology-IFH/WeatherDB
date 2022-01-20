@@ -670,6 +670,59 @@ class PrecipitationStations(StationsBase):
             kwargs=dict(),
             do_mp=False)
 
+    @check_superuser
+    def richter_correct(self, stids="all"):
+        """Richter correct the filled data.
+
+        Parameters
+        ----------
+        stids: string or list of int, optional
+            The Stations for which to compute.
+            Can either be "all", for all possible stations
+            or a list with the Station IDs.
+            The default is "all".
+
+        Raises
+        ------
+        ValueError
+            If the given stids (Station_IDs) are not all valid.
+        """
+        self._run_in_mp(
+            stations=self.get_stations(only_real=False, stids=stids),
+            methode="richter_correct",
+            kwargs={},
+            name="richter correction on {para}".format(para=self._para.upper()),
+            do_mp=False)
+
+    @check_superuser
+    def last_imp_corr(self, stids="all"):
+        """Richter correct the filled data for the last imported period.
+
+        Parameters
+        ----------
+        stids: string or list of int, optional
+            The Stations for which to compute.
+            Can either be "all", for all possible stations
+            or a list with the Station IDs.
+            The default is "all".
+
+        Raises
+        ------
+        ValueError
+            If the given stids (Station_IDs) are not all valid.
+        """
+        stations = self.get_stations(only_real=True)
+        period = stations[0].get_last_imp_period(all=True)
+        log.info("The {para_long} Stations fillup of the last import is started for the period {min_tstp} - {max_tstp}".format(
+            para_long=self._para_long,
+            **period.get_sql_format_dict(format="%Y%m%d %H:%M")))
+        self._run_in_mp(
+            stations=stations,
+            methode="richter_correct",
+            kwargs={"period": period},
+            name="richter correction on {para}".format(para=self._para.upper()),
+            do_mp=False)
+
 
 class PrecipitationDailyStations(StationsBase):
     _StationClass = PrecipitationDailyStation
