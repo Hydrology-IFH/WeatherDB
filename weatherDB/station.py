@@ -2162,7 +2162,7 @@ class PrecipitationStation(StationNBase):
         return richter_class
 
     @check_superuser
-    def richter_correct(self, period=(None, None)):
+    def richter_correct(self, period=(None, None), return_sql=False):
         """Do the richter correction on the filled data for the given period.
 
         Parameters
@@ -2171,6 +2171,11 @@ class PrecipitationStation(StationNBase):
             The minimum and maximum Timestamp for which to get the timeseries.
             If None is given, the maximum or minimal possible Timestamp is taken.
             The default is (None, None).
+        return_sql : bool, optional
+            Whether the sql Script should get returned.
+            This is only for debugging purposes.
+            If True then the sql script is returned and not executed.
+            The default is False.
 
         Raises
         ------
@@ -2201,11 +2206,9 @@ class PrecipitationStation(StationNBase):
             period = self._check_period(
                 period=period, kinds=["filled"])
             sql_period_clause = """
-                WHERE timestamp BETWEEN '{min_tstp}' AND '{max_tstp}'
+                WHERE timestamp BETWEEN {min_tstp} AND {max_tstp}
             """.format(
                 **period.get_sql_format_dict()
-                # min_tstp=period[0].strftime(self._tstp_format),
-                # max_tstp=period[1].strftime(self._tstp_format)
             )
         else:
             sql_period_clause = ""
@@ -2287,6 +2290,10 @@ class PrecipitationStation(StationNBase):
             sql_delta_n=sql_delta_n,
             **sql_format_dict
         )
+
+        # retrun sql code for debuging purpose
+        if return_sql:
+            return sql_update
 
         # run commands
         with DB_ENG.connect() as con:

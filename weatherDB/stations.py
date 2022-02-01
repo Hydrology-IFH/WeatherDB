@@ -534,15 +534,16 @@ class StationsBase:
         """
         stations = self.get_stations(only_real=True)
         period = stations[0].get_last_imp_period(all=True)
+        period_log = period.strftime("%Y-%m-%d %H:%M")
         log.info("The {para_long} Stations fillup of the last import is started for the period {min_tstp} - {max_tstp}".format(
             para_long=self._para_long,
-            min_tstp=period[0].strftime("%Y%m%d %H:%M"),
-            max_tstp=period[1].strftime("%Y%m%d %H:%M")))
+            min_tstp=period_log[0],
+            max_tstp=period_log[1]))
         self._run_in_mp(
             stations=stations,
             methode="last_imp_fillup",
             name="fillup {para} data".format(para=self._para.upper()),
-            kwargs=dict(period=period),
+            kwargs=dict(last_imp_period=period),
             do_mp=False)
 
     @check_superuser
