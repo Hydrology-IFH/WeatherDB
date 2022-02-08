@@ -1240,6 +1240,61 @@ class StationBase:
     def get_name(self):
         return self.get_meta(infos="stationsname")
 
+    def get_period_meta(self, kind, all=False):
+        """Get a specific period from the meta information table.
+
+        This functions returns the information from the meta table. 
+        In this table there are several periods saved, like the period of the last import.
+
+        Parameters
+        ----------
+        kind : str
+            The kind of period to return.
+            Should be one of ['filled', 'raw', 'last_imp'].
+            filled: the maximum filled period of the filled timeserie.
+            raw: the maximum filled timeperiod of the raw data.
+            last_imp: the maximum filled timeperiod of the last import.
+        all : bool, optional
+            Should the maximum Timespan for all the filled periods be returned.
+            If False only the period for this station is returned.
+            The default is False.
+
+        Returns
+        -------
+        TimespanPeriod:
+            The TimespanPeriod of the station or of all the stations if all=True.
+
+        Raises
+        ------
+        ValueError
+            If a wrong kind is handed in.
+        """        
+        sql_format_dict = dict(para=self._para, stid=self.id, kind=kind)
+        # check kind
+        if kind not in ["filled", "raw", "last_imp"]:
+            raise ValueError(("get_period_meta of {para_long} Station {stid}:\n" +
+                "The given kind '{kind}' is not valid. Please use one of ['filled', 'raw', 'last_imp']"
+            ).format(para_long=self._para_long, **sql_format_dict))
+
+        # create sql statement
+        if all:
+            sql = """
+                SELECT LEAST({kind}_von) as {kind}_von,
+                    GREATEST({kind}_bis) as {kind}_bis
+                FROM meta_{para};
+            """.format(**sql_format_dict)
+        else:
+            sql = """
+                SELECT {kind}_von, {kind}_bis
+                FROM meta_{para}
+                WHERE station_id = {stid};
+            """.format(**sql_format_dict)
+
+        with DB_ENG.connect() as con:
+            res = con.execute(sql)
+
+        return TimestampPeriod(*res.first())
+
     def get_filled_period(self, kind):
         """Get the min and max Timestamp for which there is data in the corresponding table.
 
