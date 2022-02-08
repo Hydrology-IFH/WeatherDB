@@ -1121,6 +1121,12 @@ class StationBase:
             elif period.contains(self.get_last_imp_period()):
                 self._mark_last_imp_done(kind="filled")
 
+        # log
+        log.info(
+            "The {para_long} Station ({stid}) got successfully filled for the period {min_tstp} - {max_tstp}".format(
+                para_long=self._para_long, 
+                stid=self.id,
+                **period.get_sql_format_dict()))
     @check_superuser
     def _mark_last_imp_done(self, kind):
         """Mark the last import for the given kind as done.
