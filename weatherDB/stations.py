@@ -512,7 +512,8 @@ class StationsBase:
         with DB_ENG.connect() as con:
             con.execute("""
                 UPDATE para_variables
-                SET start_tstp_last_imp='{start_tstp}'::timestamp
+                SET start_tstp_last_imp='{start_tstp}'::timestamp,
+                max_tstp_last_imp=(SELECT max(raw_bis) FROM meta_{para})
                 WHERE para='{para}';
             """.format(
                 para=self._para,

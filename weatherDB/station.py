@@ -290,17 +290,20 @@ class StationBase:
 
     @check_superuser
     def _expand_timeserie_to_period(self):
+        """Expand the timeserie to the complete possible time range"""
         # The interval of 9h and 30 seconds is due to the fact, that the fact that t and et data for the previous day is only updated around 9 on the following day
         # the 10 minutes interval is to get the previous day and not the same day
         sql = """
             WITH whole_ts AS (
                 SELECT generate_series(
                     '{min_tstp}'::{tstp_dtype},
-                    (SELECT
-                        date_trunc(
-                            'day',
-                            min(start_tstp_last_imp) - '9h 30min'::INTERVAL )
-                        - '10 min'::INTERVAL
+                    (SELECT 
+                        LEAST(
+                            date_trunc(
+                                'day', 
+                                min(start_tstp_last_imp) - '9h 30min'::INTERVAL
+                            ) - '10 min'::INTERVAL,
+                            min(max_tstp_last_imp))
                     FROM para_variables)::{tstp_dtype},
                     '{interval}'::INTERVAL)::{tstp_dtype} AS timestamp)
             INSERT INTO timeseries."{stid}_{para}"(timestamp)
@@ -980,7 +983,8 @@ class StationBase:
             base_col="qc" if "qc" in self._valid_kinds else "raw",
             cond_mas_not_null=" OR ".join([
                 "ma_other.{ma_col} IS NOT NULL".format(ma_col=ma_col)
-                    for ma_col in self._ma_cols])
+                    for ma_col in self._ma_cols]),
+            sql_extra_fillup=self._sql_extra_fillup()
         )
 
         # make condition for period
@@ -988,7 +992,7 @@ class StationBase:
                 period = TimestampPeriod(*period)
         if not period.is_empty():
             sql_format_dict.update(dict(
-                cond_period=" AND ts.timestamp BETWEEN {min_tstp} AND {max_tstp}".format(
+                cond_period=" WHERE ts.timestamp BETWEEN {min_tstp} AND {max_tstp}".format(
                     **period.get_sql_format_dict())
             ))
         else:
@@ -1037,19 +1041,20 @@ class StationBase:
                 ON COMMIT DROP
                 AS (SELECT timestamp, {base_col} AS filled,
                         NULL::int AS filled_by {is_winter_col}
-                    FROM timeseries."{stid}_{para}" ts
-                    WHERE ts.{base_col} IS NULL {cond_period});
+                    FROM timeseries."{stid}_{para}" ts {cond_period});
             ALTER TABLE new_filled_{stid}_{para} ADD PRIMARY KEY (timestamp);
             DO
             $do$
                 DECLARE i RECORD;
-                    max_unfilled_tstp timestamp := (
-                        SELECT max(timestamp)
-                        FROM new_filled_{stid}_{para});
+                    unfilled_period RECORD;
                 BEGIN
+                    SELECT min(timestamp) AS min, max(timestamp) AS max 
+                    INTO unfilled_period
+                    FROM new_filled_{stid}_{para}
+                    WHERE "filled" IS NULL;
                     FOR i IN (
                         SELECT meta.station_id,
-                            meta.von_datum,
+                            meta.raw_von, meta.raw_bis,
                             meta.station_id || '_{para}' AS tablename,
                             {coef_calc}
                         FROM meta_{para} meta
@@ -1072,7 +1077,8 @@ class StationBase:
                             FROM meta_{para}
                             WHERE station_id={stid})) ASC)
                     LOOP
-                        CONTINUE WHEN i.von_datum >= max_unfilled_tstp;
+                        CONTINUE WHEN i.raw_von > unfilled_period.max
+                                      OR i.raw_bis < unfilled_period.min;
                         EXECUTE FORMAT(
                         $$
                         UPDATE new_filled_{stid}_{para} nf
@@ -1087,12 +1093,13 @@ class StationBase:
                         {coef_format}
                         );
                         EXIT WHEN (SELECT SUM((filled IS NULL)::int) = 0
-                                FROM new_filled_{stid}_{para});
-                        max_unfilled_tstp := (
-                            SELECT max(timestamp)
-                            FROM new_filled_{stid}_{para}
-                            WHERE "filled" IS NULL);
+                                   FROM new_filled_{stid}_{para});
+                        SELECT min(timestamp) AS min, max(timestamp) AS max 
+                        INTO unfilled_period  
+                        FROM new_filled_{stid}_{para}
+                        WHERE "filled" IS NULL;
                     END LOOP;
+                    {sql_extra_fillup}
                     UPDATE timeseries."{stid}_{para}" ts
                     SET filled = new.filled,
                         filled_by = new.filled_by
@@ -1100,8 +1107,8 @@ class StationBase:
                     WHERE ts.timestamp = new.timestamp
                         AND ts."filled" IS DISTINCT FROM new."filled";
                     UPDATE public."meta_{para}"
-                    SET bis_tstp_filled=tstps.max,
-                        von_tstp_filled=tstps.min
+                    SET filled_bis=tstps.max,
+                        filled_von=tstps.min
                     FROM (SELECT max(ts.timestamp) , min(ts.timestamp)
                         FROM timeseries."{stid}_{para}" ts
                         WHERE ts."filled" IS NOT NULL) tstps
@@ -1127,6 +1134,20 @@ class StationBase:
                 para_long=self._para_long, 
                 stid=self.id,
                 **period.get_sql_format_dict()))
+
+    @check_superuser
+    def _sql_extra_fillup(self):
+        """Get the additional sql statement to treat the newly filled temporary table before updating the real timeserie.
+
+        This is mainly for the precipitation Station and returns an empty string for the other stations.
+
+        Returns
+        -------
+        str
+            The SQL statement.
+        """        
+        return ""
+
     @check_superuser
     def _mark_last_imp_done(self, kind):
         """Mark the last import for the given kind as done.
@@ -1285,8 +1306,8 @@ class StationBase:
         # create sql statement
         if all:
             sql = """
-                SELECT LEAST({kind}_von) as {kind}_von,
-                    GREATEST({kind}_bis) as {kind}_bis
+                SELECT min({kind}_von) as {kind}_von,
+                    max({kind}_bis) as {kind}_bis
                 FROM meta_{para};
             """.format(**sql_format_dict)
         else:
@@ -1952,9 +1973,7 @@ class PrecipitationStation(StationNBase):
         sql_format_dict = dict(
             para=self._para, stid=self.id, para_long=self._para_long,
             **period.get_sql_format_dict(format=self._tstp_format),
-            # min_tstp=period[0].strftime(self._tstp_format),
-            # max_tstp=period[1].strftime(self._tstp_format),
-            limit=0.1*self._decimals)
+            limit=0.1*self._decimals) # don't delete values below 0.1mm/10min if they are consecutive
 
         # check if daily station is available
         sql_check_d = """
@@ -1975,8 +1994,7 @@ class PrecipitationStation(StationNBase):
                     SELECT (ts.timestamp - INTERVAL '5h 50 min')::date as date, sum("raw") as raw
                     FROM timeseries."{stid}_{para}" ts
                     WHERE ts.timestamp BETWEEN '{min_tstp}' AND '{max_tstp}'
-                    GROUP BY (ts.timestamp - INTERVAL '5h 50 min')::date
-                    ORDER BY date)
+                    GROUP BY (ts.timestamp - INTERVAL '5h 50 min')::date)
                 SELECT date
                 FROM timeseries."{stid}_{para}_d" ts_d
                 LEFT JOIN ts_10min_d ON ts_d.timestamp::date=ts_10min_d.date
@@ -2015,10 +2033,6 @@ class PrecipitationStation(StationNBase):
             SELECT tstp_1 AS timestamp FROM tstps_df
             UNION SELECT tstp_2 FROM tstps_df
             UNION SELECT tstp_3 FROM tstps_df
-            UNION (SELECT timestamp
-                  FROM timeseries."{stid}_{para}"
-                  WHERE raw < 0)
-            ORDER BY timestamp
         """.format(**sql_format_dict)
 
         sql_new_qc = """
@@ -2384,6 +2398,31 @@ class PrecipitationStation(StationNBase):
             if self.is_last_imp_done(kind="qc"):
                 self._mark_last_imp_done(kind="filled")
 
+    @check_superuser
+    def _sql_extra_fillup(self):
+        sql = """
+            UPDATE new_filled_{stid}_{para} ts
+            SET filled = filled * coef 
+            FROM (
+                SELECT 
+                    date, 
+                    ts_d."raw"/ts_10."filled" AS coef 
+                FROM (
+                    SELECT 
+                        date(timestamp - '5h 50min'::INTERVAL), 
+                        sum(filled) AS filled
+                    FROM new_filled_{stid}_{para}
+                    GROUP BY date(timestamp - '5h 50min'::INTERVAL)
+                    ) ts_10
+                LEFT JOIN timeseries."{stid}_n_d" ts_d 
+                    ON ts_10.date=ts_d.timestamp
+                WHERE ts_d."raw" IS NOT NULL 
+                      AND ts_10.filled > 0
+                ) df_coef 
+            WHERE (ts.timestamp - '5h 50min'::INTERVAL)::date = df_coef.date 
+                AND coef != 1;
+        """
+
     def get_corr(self, period=(None, None)):
         return self.get_df(period=period, kinds=["corr"])
 
@@ -2510,6 +2549,7 @@ class TemperatureStation(StationTETBase):
         super().__init__(id)
         self.id_str = dwd_id_to_str(id)
 
+    @check_superuser
     def _get_sql_new_qc(self, period):
         # create sql for new qc
         sql_new_qc = """
