@@ -2423,6 +2423,35 @@ class PrecipitationStation(StationNBase):
                 AND coef != 1;
         """
 
+    @check_superuser
+    def fillup(self, period=(None, None)):
+        super().fillup(period=period)
+
+        # recheck the period to get the period used.
+        # because of the period cache this uses nearly no computational time.
+        period = self._check_period(period=period, kinds=["qc"])
+
+        # update difference to regnie
+        sql_update = """
+            UPDATE meta_n 
+            SET quot_filled_regnie = quots.quot_regnie,
+                quot_filled_dwd_grid = quots.quot_dwd 
+            FROM (
+                SELECT df_ma.ys / (srv.n_regnie_year*100) AS quot_regnie, 
+                    df_ma.ys / (srv.n_year*100) AS quot_dwd
+                FROM (
+                    SELECT avg(df_a.yearly_sum) as ys
+                    FROM (
+                        SELECT sum("filled") AS yearly_sum
+                        FROM timeseries."{stid}_{para}"
+                        GROUP BY date_trunc('year', "timestamp")
+                        HAVING count("filled") > 363 * 6 * 24) df_a
+                    ) df_ma
+                LEFT JOIN stations_raster_values srv 
+                    ON station_id={stids}) quots
+            WHERE station_id ={stid};
+        """.format(stid=self.id, para=self._para)
+
     def get_corr(self, period=(None, None)):
         return self.get_df(period=period, kinds=["corr"])
 
