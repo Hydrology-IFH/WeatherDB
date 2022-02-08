@@ -526,7 +526,7 @@ class StationsBase:
             stations=self.get_stations(only_real=True),
             methode="last_imp_quality_check",
             name="quality check {para} data".format(para=self._para.upper()),
-            kwargs=dict(period=(None,None)),
+            kwargs=dict(),
             do_mp=False)
 
     @check_superuser
