@@ -419,7 +419,7 @@ class StationBase:
         sets = []
         for col, value in zip(cols, values):
             sets.append(
-                "{col}={value}".format(
+                "{col}='{value}'".format(
                     col=col, value=value))
 
         sql_update = """
@@ -2146,7 +2146,7 @@ class PrecipitationStation(StationNBase):
         radius = 75000 # this value got defined because the maximum height is around 4000m for germany
         with rio.open(RASTERS["local"]["dgm5"]) as dgm5,\
              rio.open(RASTERS["local"]["dgm80"]) as dgm80:
-                geom = self.get_geom_shp()
+                geom = self.get_geom_shp(crs="utm")
                 xy = [geom.x, geom.y]
                 # sample station heght
                 stat_h = list(dgm5.sample(
