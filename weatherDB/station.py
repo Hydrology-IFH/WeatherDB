@@ -2500,8 +2500,7 @@ class PrecipitationStation(StationNBase):
     def fillup(self, period=(None, None)):
         super().fillup(period=period)
 
-        # recheck the period to get the period used.
-        # because of the period cache this uses nearly no computational time.
+        # check the period to get the period used.
         period = self._check_period(period=period, kinds=["qc"])
 
         # update difference to regnie
