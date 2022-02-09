@@ -478,6 +478,8 @@ class StationBase:
                     para_long=self._para_long,
                     desc=description))
 
+        return done
+
     def isin_db(self):
         """Check if Station is already in a timeseries table.
 
@@ -958,7 +960,7 @@ class StationBase:
             stid=self.id, para=self._para)
 
         # run commands
-        self._execute_long_sql(
+        done = self._execute_long_sql(
             sql=sql_qc,
             description="quality checked for the period {min_tstp} to {max_tstp}.".format(
                 **period.get_sql_format_dict(
@@ -967,7 +969,7 @@ class StationBase:
 
         # mark last import as done if in period
         last_imp_period = self.get_last_imp_period()
-        if last_imp_period.inside(period):
+        if done and last_imp_period.inside(period):
             self._mark_last_imp_done(kind="qc")
 
     @check_superuser
@@ -1048,7 +1050,7 @@ class StationBase:
                 DECLARE i RECORD;
                     unfilled_period RECORD;
                 BEGIN
-                    SELECT min(timestamp) AS min, max(timestamp) AS max 
+                    SELECT min(timestamp) AS min, max(timestamp) AS max
                     INTO unfilled_period
                     FROM new_filled_{stid}_{para}
                     WHERE "filled" IS NULL;
@@ -1094,8 +1096,8 @@ class StationBase:
                         );
                         EXIT WHEN (SELECT SUM((filled IS NULL)::int) = 0
                                    FROM new_filled_{stid}_{para});
-                        SELECT min(timestamp) AS min, max(timestamp) AS max 
-                        INTO unfilled_period  
+                        SELECT min(timestamp) AS min, max(timestamp) AS max
+                        INTO unfilled_period
                         FROM new_filled_{stid}_{para}
                         WHERE "filled" IS NULL;
                     END LOOP;
@@ -1118,11 +1120,14 @@ class StationBase:
         """.format(**sql_format_dict)
 
         # execute
-        self._execute_long_sql(sql=sql, description="filled")
+        done = self._execute_long_sql(
+            sql=sql,
+            description="filled for the period {min_tstp} - {max_tstp}".format(
+                **period.get_sql_format_dict()))
 
         # mark last imp done
-        if ("qc" not in self._valid_kinds) or \
-        (self.is_last_imp_done(kind="qc")):
+        if done and (("qc" not in self._valid_kinds) or
+                     (self.is_last_imp_done(kind="qc"))):
             if period.is_empty():
                 self._mark_last_imp_done(kind="filled")
             elif period.contains(self.get_last_imp_period()):
@@ -2288,6 +2293,30 @@ class PrecipitationStation(StationNBase):
         else:
             sql_period_clause = ""
 
+        # check if temperature station is filled
+        stat_t = StationT(self.id)
+        stat_t_period = stat_t.get_filled_period(kind="filled")
+        stat_n_period = self.get_filled_period(kind="filled")
+        delta = timedelta(hours=5, minutes=50)
+        min_date = pd.Timestamp(MIN_TSTP).date()
+        stat_t_min = stat_t_period[0].date()
+        stat_t_max = stat_t_period[1].date()
+        stat_n_min = (stat_n_period[0] - delta).date()
+        stat_n_max = (stat_n_period[1] - delta).date()
+        if stat_t_period.has_NaT()\
+                or (stat_t_min > stat_n_min
+                    and not (stat_n_min < min_date)
+                            and (stat_t_min == min_date)) \
+                or (stat_t_max  < stat_n_max)\
+                and not stat_t.is_last_imp_done(kind="filled"):
+            stat_t.fillup(period=period)
+
+        # get the richter exposition class
+        richter_class = self.update_richter_class(skip_if_exist=True)
+        if richter_class is None:
+            raise Exception("No richter class was found for the precipitation station {stid} and therefor no richter correction was possible."
+                            .format(stid=self.id))
+
         # create the sql queries
         sql_format_dict = dict(
             stid=self.id,
@@ -2371,15 +2400,34 @@ class PrecipitationStation(StationNBase):
             return sql_update
 
         # run commands
-        with DB_ENG.connect() as con:
-            con.execution_options(isolation_level="AUTOCOMMIT"
-                                  ).execute(sql_update)
+        done = self._execute_long_sql(
+            sql_update, 
+            description="richter corrected for period {min_tstp} - {max_tstp}".format(
+                **period.get_sql_format_dict()
+            ))
 
         # mark last import as done, if previous are ok
-        if(self.is_last_imp_done(kind="qc") and self.is_last_imp_done(kind="filled")):
+        if done and (self.is_last_imp_done(kind="qc") and self.is_last_imp_done(kind="filled")):
             if (period.is_empty() or
                 period.contains(self.get_last_imp_period())):
                 self._mark_last_imp_done(kind="corr")
+
+        # calculate the difference to filled timeserie
+        if period[0].year < pd.Timestamp.now().year:
+            sql_diff_filled = """
+                UPDATE meta_n 
+                SET quot_corr_filled = quot_avg
+                FROM (
+                    SELECT avg(quot)*100 AS quot_avg
+                    FROM (
+                        SELECT sum("corr")::float/sum("filled")::float AS quot
+                        FROM timeseries."{stid}_{para}"
+                        GROUP BY date_trunc('year', "timestamp")
+                        HAVING count("filled") > 364 * 6 *24) df_y) df_avg
+                WHERE station_id={stid};""".format(**sql_format_dict)
+
+            with DB_ENG.connect() as con:
+                con.execute(sql_diff_filled)
 
     @check_superuser
     def corr(self, period=(None, None)):
@@ -2432,25 +2480,29 @@ class PrecipitationStation(StationNBase):
         period = self._check_period(period=period, kinds=["qc"])
 
         # update difference to regnie
-        sql_update = """
-            UPDATE meta_n 
-            SET quot_filled_regnie = quots.quot_regnie,
-                quot_filled_dwd_grid = quots.quot_dwd 
-            FROM (
-                SELECT df_ma.ys / (srv.n_regnie_year*100) AS quot_regnie, 
-                    df_ma.ys / (srv.n_year*100) AS quot_dwd
+        if period[0].year < pd.Timestamp.now().year:
+            sql_diff_ma = """
+                UPDATE meta_n
+                SET quot_filled_regnie = quots.quot_regnie,
+                    quot_filled_dwd_grid = quots.quot_dwd
                 FROM (
-                    SELECT avg(df_a.yearly_sum) as ys
+                    SELECT df_ma.ys / (srv.n_regnie_year*100) AS quot_regnie,
+                        df_ma.ys / (srv.n_year*100) AS quot_dwd
                     FROM (
-                        SELECT sum("filled") AS yearly_sum
-                        FROM timeseries."{stid}_{para}"
-                        GROUP BY date_trunc('year', "timestamp")
-                        HAVING count("filled") > 363 * 6 * 24) df_a
-                    ) df_ma
-                LEFT JOIN stations_raster_values srv 
-                    ON station_id={stids}) quots
-            WHERE station_id ={stid};
-        """.format(stid=self.id, para=self._para)
+                        SELECT avg(df_a.yearly_sum) as ys
+                        FROM (
+                            SELECT sum("filled") AS yearly_sum
+                            FROM timeseries."{stid}_{para}"
+                            GROUP BY date_trunc('year', "timestamp")
+                            HAVING count("filled") > 363 * 6 * 24) df_a
+                        ) df_ma
+                    LEFT JOIN stations_raster_values srv
+                        ON station_id={stids}) quots
+                WHERE station_id ={stid};
+            """.format(stid=self.id, para=self._para)
+
+            with DB_ENG.connect() as con:
+                con.execute(sql_diff_ma)
 
     def get_corr(self, period=(None, None)):
         return self.get_df(period=period, kinds=["corr"])
