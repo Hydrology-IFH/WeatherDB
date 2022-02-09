@@ -1232,7 +1232,7 @@ class StationBase:
 
         return res.first()[0]
 
-    def get_geom(self, format="EWKT"):
+    def get_geom(self, format="EWKT", crs=None):
         """Get the point geometry of the station.
 
         Parameters
@@ -1243,6 +1243,10 @@ class StationBase:
             ST_AsXXXXX function needs to exist in postgresql language.
             If None, then the binary representation is returned.
             the default is "EWKT".
+        crs: str, int or None, optional
+            If None, then the geometry is returned in WGS84 (EPSG:4326).
+            If string, then it should be one of "WGS84" or "UTM".
+            If int, then it should be the EPSG code.
 
         Returns
         -------
@@ -1253,21 +1257,42 @@ class StationBase:
         # change WKT to Text, because Postgis function is ST_AsText for WKT
         if format == "WKT":
             format = "Text"
-
+        
+        # check crs
+        utm=""
+        trans_fun=""
+        epsg=""
+        if type(crs)==str:
+            if crs.lower() == "utm":
+                utm="_utm"
+        elif type(crs)==int:
+            trans_fun="ST_TRANSFORM("
+            epsg=", {0})".format(crs)
+        # get the geom
         return self.get_meta(
             infos=[
-                "{0}(geometry)".format(
-                    "ST_As" + format if format else "")])
+                "{trans_fun}{st_fun}(geometry{utm}){epsg}".format(
+                    st_fun="ST_As" + format if format else "",
+                    utm=utm,
+                    trans_fun=trans_fun,
+                    epsg=epsg)])
 
-    def get_geom_shp(self):
+    def get_geom_shp(self, crs=None):
         """Get the geometry of the station as a shapely Point object.
 
+        Parameters
+        ----------
+        crs: str, int or None, optional
+            If None, then the geometry is returned in WGS84 (EPSG:4326).
+            If string, then it should be one of "WGS84" or "UTM".
+            If int, then it should be the EPSG code.
+            
         Returns
         -------
         shapely.geometries.Point
             The location of the station as shapely Point.
         """
-        return shapely.wkt.loads(self.get_geom("Text"))
+        return shapely.wkt.loads(self.get_geom("Text", crs=crs))
 
     def get_name(self):
         return self.get_meta(infos="stationsname")
