@@ -442,7 +442,7 @@ class StationsBase:
 
                     pbar.update(sum(finished))
             time.sleep(2)
-            
+
         pbar.update(sum(finished))
         pool.join()
         pool.terminate()
