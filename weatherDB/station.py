@@ -2306,7 +2306,7 @@ class PrecipitationStation(StationNBase):
 
         # check if period is given
         if type(period) != TimestampPeriod:
-                period = TimestampPeriod(*period)
+            period = TimestampPeriod(*period)
         if not period.is_empty():
             period = self._check_period(
                 period=period, kinds=["filled"])
@@ -2438,7 +2438,7 @@ class PrecipitationStation(StationNBase):
                 self._mark_last_imp_done(kind="corr")
 
         # calculate the difference to filled timeserie
-        if period[0].year < pd.Timestamp.now().year:
+        if period.is_empty() or period[0].year < pd.Timestamp.now().year:
             sql_diff_filled = """
                 UPDATE meta_n 
                 SET quot_corr_filled = quot_avg
@@ -2500,11 +2500,12 @@ class PrecipitationStation(StationNBase):
     def fillup(self, period=(None, None)):
         super().fillup(period=period)
 
-        # check the period to get the period used.
-        period = self._check_period(period=period, kinds=["qc"])
+        # check the period
+        if type(period) != TimestampPeriod:
+            period= TimestampPeriod(*period)
 
         # update difference to regnie
-        if period[0].year < pd.Timestamp.now().year:
+        if period.is_empty() or period[0].year < pd.Timestamp.now().year:
             sql_diff_ma = """
                 UPDATE meta_n
                 SET quot_filled_regnie = quots.quot_regnie,
