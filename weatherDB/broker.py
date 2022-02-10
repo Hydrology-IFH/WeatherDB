@@ -17,13 +17,13 @@ class Broker(object):
     def __init__(self):
         self.stations_nd = StationsND()
         self.stations_t = StationsT()
-        self.stations_n = StationsN()
         self.stations_et = StationsET()
+        self.stations_n = StationsN()
         self.stations = [
             self.stations_nd,
             self.stations_t,
-            self.stations_n,
-            self.stations_et]
+            self.stations_et,
+            self.stations_n]
 
     def _check_paras(self, paras, valid_paras=["n_d", "n", "t", "et"]):
         valid_paras = ["n_d", "n", "t", "et"]

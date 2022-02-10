@@ -1592,7 +1592,7 @@ class StationBase:
             else:
                 return None
 
-    def get_df(self, kinds, period=(None, None), db_unit=False):
+    def get_df(self, kinds, period=(None, None), agg_to=None, db_unit=False):
         """Get a timeseries DataFrame from the database.
 
         Parameters
@@ -1606,6 +1606,14 @@ class StationBase:
             The minimum and maximum Timestamp for which to get the timeseries.
             If None is given, the maximum or minimal possible Timestamp is taken.
             The default is (None, None).
+        agg_to : str or None, optional
+            Aggregate to a given timespan.
+            Can be anything smaller than the maximum timespan of the saved data. 
+            If a Timeperiod smaller than the saved data is given, than the maximum possible timeperiod is returned.
+            For T and ET it can be "month", "year".
+            For N it can also be "hour".
+            If None than the maximum timeperiod is taken.
+            The default is None.
         db_unit : bool, optional
             Should the result be in the Database unit.
             If False the unit is getting converted to normal unit, like mm or °C.
@@ -1635,18 +1643,42 @@ class StationBase:
         if period.is_empty():
             return None
 
+        # aggregating?
+        timestamp_col = "timestamp"
+        group_by = ""
+        if agg_to is not None:
+            # check agg_fun
+            if agg_to is "date":
+                agg_to = "day"
+            agg_to_valid = ["hour", "day", "month", "year", "decade"]
+            if agg_to not in agg_to_valid:
+                raise ValueError(
+                    "The given agg_to Parameter \"{agg_to}\" is not a valid aggregating period. Please use one of:\n{agg_valid}".format(
+                        agg_to=agg_to,
+                        agg_valid=", ".join(agg_to_valid)
+                    ))
+            # create sql parts
+            kinds = [
+                "{agg_fun}({kind})".format(
+                    agg_fun=self._agg_fun, kind=kind) for kind in kinds]
+            timestamp_col = "date_trunc('{agg_to}', timestamp)".format(
+                agg_to=agg_to)
+            group_by = "GROUP BY " + timestamp_col
+
         # create base sql
         sql = """
-            SELECT timestamp, {kinds}
+            SELECT {timestamp_col} as timestamp, {kinds}
             FROM timeseries."{stid}_{para}"
             WHERE timestamp BETWEEN '{min_tstp}' AND '{max_tstp}'
+            {group_by}
             ORDER BY timestamp ASC;
             """.format(
             stid=self.id,
-            para=self._para, kinds=', '.join(kinds),
+            para=self._para, 
+            kinds=', '.join(kinds),
+            group_by=group_by,
+            timestamp_col=timestamp_col,
             **period.get_sql_format_dict(format=self._tstp_format)
-            # min_tstp=period[0].strftime(self._tstp_format),
-            # max_tstp=period[1].strftime(self._tstp_format)
         )
 
         df = pd.read_sql(sql, con=DB_ENG, index_col="timestamp")
@@ -1668,11 +1700,55 @@ class StationBase:
 
         return df
 
-    def get_raw(self, period=(None, None)):
-        return self.get_df(period=period, kinds="raw")
+    def get_raw(self, period=(None, None), agg_to=None):
+        """Get the raw timeserie.
 
-    def get_qc(self, period=(None, None)):
-        return self.get_df(period=period, kinds="qc")
+        Parameters
+        ----------
+        period : TimestampPeriod or (tuple or list of datetime.datetime or None), optional
+            The minimum and maximum Timestamp for which to get the timeserie.
+            If None is given, the maximum or minimal possible Timestamp is taken.
+            The default is (None, None).
+        agg_to : str or None, optional
+            Aggregate to a given timespan.
+            Can be anything smaller than the maximum timespan of the saved data. 
+            If a Timeperiod smaller than the saved data is given, than the maximum possible timeperiod is returned.
+            For T and ET it can be "month", "year".
+            For N it can also be "hour".
+            If None than the maximum timeperiod is taken.
+            The default is None.
+
+        Returns
+        -------
+        pd.DataFrame
+            The raw timeserie for this station and the given period.
+        """
+        return self.get_df(period=period, kinds="raw", agg_to=agg_to)
+
+    def get_qc(self, period=(None, None), agg_to=None):
+        """Get the quality checked timeserie.
+
+        Parameters
+        ----------
+        period : TimestampPeriod or (tuple or list of datetime.datetime or None), optional
+            The minimum and maximum Timestamp for which to get the timeserie.
+            If None is given, the maximum or minimal possible Timestamp is taken.
+            The default is (None, None).
+        agg_to : str or None, optional
+            Aggregate to a given timespan.
+            Can be anything smaller than the maximum timespan of the saved data. 
+            If a Timeperiod smaller than the saved data is given, than the maximum possible timeperiod is returned.
+            For T and ET it can be "month", "year".
+            For N it can also be "hour".
+            If None than the maximum timeperiod is taken.
+            The default is None.
+
+        Returns
+        -------
+        pd.DataFrame
+            The quality checked timeserie for this station and the given period.
+        """
+        return self.get_df(period=period, kinds="qc", agg_to=agg_to)
 
     def get_dist(self, period=(None, None)):
         """Get the timeserie with the infomation from which station the data got filled and the corresponding distance to this station.
@@ -1751,7 +1827,7 @@ class StationBase:
 
         return df
 
-    def get_adj(self, period=(None, None)):
+    def get_adj(self, period=(None, None), agg_to=None):
         """Get the adjusted timeserie.
 
         The timeserie is adjusted to the multi annual mean.
@@ -1763,6 +1839,14 @@ class StationBase:
             The minimum and maximum Timestamp for which to get the timeseries.
             If None is given, the maximum or minimal possible Timestamp is taken.
             The default is (None, None).
+        agg_to : str or None, optional
+            Aggregate to a given timespan.
+            Can be anything smaller than the maximum timespan of the saved data. 
+            If a Timeperiod smaller than the saved data is given, than the maximum possible timeperiod is returned.
+            For T and ET it can be "month", "year".
+            For N it can also be "hour".
+            If None than the maximum timeperiod is taken.
+            The default is None.
 
         Returns
         -------
@@ -1771,7 +1855,10 @@ class StationBase:
         """
         # this is only the first part of the methode
         # get basic values
-        main_df = self.get_df(period=period, kinds=[self._best_kind])
+        main_df = self.get_df(
+            period=period, 
+            kinds=[self._best_kind], 
+            agg_to=agg_to)
         ma = self.get_multi_annual()
 
         # create empty adj_df
@@ -1782,10 +1869,7 @@ class StationBase:
 
         return main_df, adj_df, ma  # the rest must get implemented in the subclasses
 
-    def get_quality_checked(self, period=(None, None)):
-        pass
-
-    def plot(self, period=(None, None), kind="filled", **kwargs):
+    def plot(self, period=(None, None), kind="filled", agg_to=None, **kwargs):
         """Plot the data of this station.
 
         Parameters
@@ -1800,8 +1884,16 @@ class StationBase:
             Must be one of "raw", "qc", "filled", "adj".
             For the precipitation also "qn" and "corr" are valid.
             The default is "filled.
+        agg_to : str or None, optional
+            Aggregate to a given timespan.
+            Can be anything smaller than the maximum timespan of the saved data. 
+            If a Timeperiod smaller than the saved data is given, than the maximum possible timeperiod is returned.
+            For T and ET it can be "month", "year".
+            For N it can also be "hour".
+            If None than the maximum timeperiod is taken.
+            The default is None.
         """
-        df = self.get_df(kinds=[kind], period=period, db_unit=False)
+        df = self.get_df(kinds=[kind], period=period, db_unit=False, agg_to=agg_to)
 
         df.plot(
             xlabel="Datum", ylabel=self._unit,
