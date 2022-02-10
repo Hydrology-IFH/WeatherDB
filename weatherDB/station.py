@@ -110,6 +110,7 @@ class StationBase:
     # the postgresql data type of the timestamp column, e.g. "date" or "timestamp"
     _tstp_dtype = None
     _interval = None  # The interval of the timeseries e.g. "1 day" or "10 min"
+    _agg_fun = "sum" # the sql aggregating function to use
 
     def __init__(self, id):
         if type(self) == StationBase:
@@ -1909,13 +1910,6 @@ class StationTETBase(StationBase):
     _interval = "1 day"
     _tstp_format = "%Y%m%d"
 
-    # hidding methos if not superuser of DB
-    if not DB_ENG.is_superuser:
-        _create_meta_virtual = disallow_nosuperuser
-        _create_timeseries_table = disallow_nosuperuser
-        update_exp_fact = disallow_nosuperuser
-        quality_check = disallow_nosuperuser
-
     def _check_isin_meta(self):
         """Check if the Station is in the Meta table and if not create a virtual station.
 
@@ -2762,6 +2756,7 @@ class TemperatureStation(StationTETBase):
     _decimals = 10
     _ma_cols = ["t_year"]
     _coef_sign = ["-", "+"]
+    _agg_fun = "avg"
 
     def __init__(self, id):
         super().__init__(id)
@@ -3001,14 +2996,20 @@ class GroupStation(object):
 
         # get the period
         period = TimestampPeriod._check_period(period)
-        period_new = self.get_filled_period(kind=kind).union(
-            period,
-            how="inner")
-        if not period.is_empty() and period_new != period:
-            raise Warning("The Period for Station {stid} got changed from {period} to {period_new}.".format(
-                stid=self.id,
-                period=str(period),
-                period_new=str(period_new)))
+        period_filled = self.get_filled_period(kind=kind)
+        
+        if period.is_empty():
+            period = period_filled
+        else:
+            period = period_filled.union(
+                period,
+                how="inner")
+            if period_filled != period:
+                raise Warning(
+                    "The Period for Station {stid} got changed from {period} to {period_filled}.".format(
+                        stid=self.id,
+                        period=str(period),
+                        period_filled=str(period_filled)))
 
         # get the data
         df_et = self.get_df(period=period, kind=kind, paras=["et"])
@@ -3021,8 +3022,9 @@ class GroupStation(object):
 
         # check for NAs
         if (df_et.isna().sum().sum() > 0
-            or df_t.isna().sum().sum() > 0
-            or df_n.isna().sum().sum() > 0):
+                or df_t.isna().sum().sum() > 0
+                or df_n.isna().sum().sum() > 0) \
+            and kind in ["filled", "corr"]:
             raise Warning("There were NAs in the timeserie for Station {stid}. this should not happen. Please review the code and the database.".format(
                 stid=self.id))
 
@@ -3101,7 +3103,6 @@ class GroupStation(object):
                     dir=dir))
 
         return dir
-
 
     @staticmethod
     def _split_date(dates):
