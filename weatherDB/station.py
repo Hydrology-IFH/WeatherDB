@@ -179,6 +179,28 @@ class StationBase:
 
         return kind
 
+    def _check_kind_tstp_meta(self, kind):
+        """Check if the kind has a timestamp von and bis in the meta table."""
+        if kind != "last_imp":
+            kind = self._check_kind(kind)
+
+        # compute the valid kinds if not already done
+        if not hasattr(self, "_valid_kinds_tstp_meta"):
+            self._valid_kinds_tstp_meta = ["last_imp"]
+            for vk in self._valid_kinds:
+                if vk in ["raw", "filled", "corr"]:
+                    self._valid_kinds_tstp_meta.append(vk)
+
+        if kind not in self._valid_kinds_tstp_meta:
+            raise NotImplementedError("""
+                The given kind "{kind}" is not a valid kind.
+                Must be one of "{valid_kinds}"
+                """.format(
+                kind=kind,
+                valid_kinds='", "'.join(self._valid_kinds_tstp_meta)))
+
+        return kind
+
     def _check_kinds(self, kinds):
         """Check if the given kinds are valid.
 
@@ -477,8 +499,13 @@ class StationBase:
                     stid=self.id,
                     para_long=self._para_long,
                     desc=description))
-
-        return done
+        else:
+            raise Exception(
+                "The {para_long} Station ({stid}) could not get {desc}.".format(
+                    stid=self.id,
+                    para_long=self._para_long,
+                    desc=description)
+            )
 
     def isin_db(self):
         """Check if Station is already in a timeseries table.
@@ -593,14 +620,28 @@ class StationBase:
         return res.first()[0]
 
     @check_superuser
-    def update_period_meta(self):
+    def update_period_meta(self, kind):
         """Update the time period in the meta file.
+
+        Compute teh filled period of a timeserie and save in the meta table.
+
+        Parameters
+        ----------
+        kind :  str
+            The data kind to look for filled period.
+            Must be a column in the timeseries DB.
+            Must be one of "raw", "qc", "filled".
+            If "best" is given, then depending on the parameter of the station the best kind is selected.
+            For Precipitation this is "corr" and for the other this is "filled".
+            For the precipitation also "corr" are valid.
         """
-        period = self.get_filled_period(kind="raw")
+        kind = self._valid_kinds_tstp_meta(kind)
+        period = self.get_filled_period(kind=kind)
+
         sql = """
             UPDATE meta_{para}
-            SET von_datum={min_tstp},
-                bis_datum={max_tstp}
+            SET {kind}_von={min_tstp},
+                {kind}_bis={max_tstp}
             WHERE station_id={stid};
         """.format(
             stid=self.id, para=self._para,
@@ -696,7 +737,7 @@ class StationBase:
             ftp_file_list=ftp_file_list)
 
         # check for empty list of zipfiles
-        if len(zipfiles) == 0:
+        if not zipfiles:
             log.debug(
                 """raw_update of {para_long} Station {stid}:
                 No zipfile was found and therefor no new data was imported."""
@@ -769,13 +810,13 @@ class StationBase:
         # create update sql
         sql_update_meta = '''
             INSERT INTO meta_{para} as meta
-                (station_id, von_datum, bis_datum, last_imp_von, last_imp_bis
+                (station_id, raw_von, raw_bis, last_imp_von, last_imp_bis
                     {last_imp_cols})
             VALUES ({stid}, '{min_tstp}', '{max_tstp}', '{min_tstp}',
                     '{max_tstp}'{last_imp_values})
             ON CONFLICT (station_id) DO UPDATE SET
-                von_datum = LEAST (meta.von_datum, EXCLUDED.von_datum),
-                bis_datum = GREATEST (meta.bis_datum, EXCLUDED.bis_datum),
+                raw_von = LEAST (meta.raw_von, EXCLUDED.raw_von),
+                raw_bis = GREATEST (meta.raw_bis, EXCLUDED.raw_bis),
                 last_imp_von = CASE WHEN {last_imp_test}
                                     THEN EXCLUDED.last_imp_von
                                     ELSE LEAST(meta.last_imp_von,
@@ -960,7 +1001,7 @@ class StationBase:
             stid=self.id, para=self._para)
 
         # run commands
-        done = self._execute_long_sql(
+        self._execute_long_sql(
             sql=sql_qc,
             description="quality checked for the period {min_tstp} to {max_tstp}.".format(
                 **period.get_sql_format_dict(
@@ -969,7 +1010,7 @@ class StationBase:
 
         # mark last import as done if in period
         last_imp_period = self.get_last_imp_period()
-        if done and last_imp_period.inside(period):
+        if last_imp_period.inside(period):
             self._mark_last_imp_done(kind="qc")
 
     @check_superuser
@@ -1108,13 +1149,6 @@ class StationBase:
                     FROM new_filled_{stid}_{para} new
                     WHERE ts.timestamp = new.timestamp
                         AND ts."filled" IS DISTINCT FROM new."filled";
-                    UPDATE public."meta_{para}"
-                    SET filled_bis=tstps.max,
-                        filled_von=tstps.min
-                    FROM (SELECT max(ts.timestamp) , min(ts.timestamp)
-                        FROM timeseries."{stid}_{para}" ts
-                        WHERE ts."filled" IS NOT NULL) tstps
-                    WHERE station_id={stid};
                 END
             $do$;
         """.format(**sql_format_dict)
@@ -1125,6 +1159,10 @@ class StationBase:
             description="filled for the period {min_tstp} - {max_tstp}".format(
                 **period.get_sql_format_dict()))
 
+        # update timespan in meta table
+        if done:
+            self.update_period_meta(kind="filled")
+
         # mark last imp done
         if done and (("qc" not in self._valid_kinds) or
                      (self.is_last_imp_done(kind="qc"))):
@@ -1132,13 +1170,6 @@ class StationBase:
                 self._mark_last_imp_done(kind="filled")
             elif period.contains(self.get_last_imp_period()):
                 self._mark_last_imp_done(kind="filled")
-
-        # log
-        log.info(
-            "The {para_long} Station ({stid}) got successfully filled for the period {min_tstp} - {max_tstp}".format(
-                para_long=self._para_long, 
-                stid=self.id,
-                **period.get_sql_format_dict()))
 
     @check_superuser
     def _sql_extra_fillup(self):
@@ -1194,7 +1225,7 @@ class StationBase:
         else:
             period = last_imp_period
         if not self.is_last_imp_done(kind="filled"):
-            self.fillup(period=self.get_last_imp_period(all=True))
+            self.fillup(period=period)
             self._mark_last_imp_done(kind="filled")
 
     def get_meta(self, infos="all"):
@@ -1300,7 +1331,7 @@ class StationBase:
     def get_period_meta(self, kind, all=False):
         """Get a specific period from the meta information table.
 
-        This functions returns the information from the meta table. 
+        This functions returns the information from the meta table.
         In this table there are several periods saved, like the period of the last import.
 
         Parameters
@@ -1325,7 +1356,7 @@ class StationBase:
         ------
         ValueError
             If a wrong kind is handed in.
-        """        
+        """
         sql_format_dict = dict(para=self._para, stid=self.id, kind=kind)
         # check kind
         if kind not in ["filled", "raw", "last_imp"]:
@@ -1352,8 +1383,10 @@ class StationBase:
 
         return TimestampPeriod(*res.first())
 
-    def get_filled_period(self, kind):
-        """Get the min and max Timestamp for which there is data in the corresponding table.
+    def get_filled_period(self, kind, from_meta=False):
+        """Get the min and max Timestamp for which there is data in the corresponding timeserie.
+
+        Computes the period from the timeserie or meta table.
 
         Parameters
         ----------
@@ -1364,6 +1397,10 @@ class StationBase:
             If "best" is given, then depending on the parameter of the station the best kind is selected.
             For Precipitation this is "corr" and for the other this is "filled".
             For the precipitation also "qn" and "corr" are valid.
+        from_meta : bool, optional
+            Should the period be from the meta table?
+            If False: the period is returned from the timeserie. In this case this function is only a wrapper for .get_period_meta.
+            The default is False.
 
         Raises
         ------
@@ -1378,6 +1415,8 @@ class StationBase:
             A TimestampPeriod of the filled timeserie.
             (NaT, NaT) if the timeserie is all empty or not defined.
         """
+        if from_meta:
+            return self.get_period_meta(kind=kind, all=False)
 
         kind = self._check_kind(kind=kind)
 
@@ -2050,9 +2089,9 @@ class PrecipitationStation(StationNBase):
                         ts2.timestamp as tstp_2,
                         ts3.timestamp as tstp_3
                 from timeseries."{stid}_{para}" ts
-                inner join timeseries."{stid}_{para}" ts2
+                INNER JOIN timeseries."{stid}_{para}" ts2
                     on ts.timestamp = ts2.timestamp - INTERVAL '10 min'
-                inner join timeseries."{stid}_{para}" ts3
+                INNER JOIN timeseries."{stid}_{para}" ts3
                     on ts.timestamp = ts3.timestamp - INTERVAL '20 min'
                 WHERE ts.qn != 3
                     AND ts.raw = ts2.raw AND ts2.raw = ts3.raw
@@ -2266,7 +2305,7 @@ class PrecipitationStation(StationNBase):
         return richter_class
 
     @check_superuser
-    def richter_correct(self, period=(None, None), return_sql=False):
+    def richter_correct(self, period=(None, None)):
         """Do the richter correction on the filled data for the given period.
 
         Parameters
@@ -2275,34 +2314,12 @@ class PrecipitationStation(StationNBase):
             The minimum and maximum Timestamp for which to get the timeseries.
             If None is given, the maximum or minimal possible Timestamp is taken.
             The default is (None, None).
-        return_sql : bool, optional
-            Whether the sql Script should get returned.
-            This is only for debugging purposes.
-            If True then the sql script is returned and not executed.
-            The default is False.
 
         Raises
         ------
         Exception
             If no richter class was found for this station.
         """
-        # check if temperature station is filled
-        stat_t = StationT(self.id)
-        stat_t_period = stat_t.get_filled_period(kind="filled")
-        stat_n_period = self.get_filled_period(kind="filled")
-        delta = timedelta(hours=5, minutes=50)
-        # if (stat_t_period[0] is None or stat_t_period[1] is None)\
-        if stat_t_period.has_NaT()\
-            or (stat_t_period[0].date() > (stat_n_period[0] - delta).date() or
-                stat_t_period[1].date()  < (stat_n_period[1] - delta).date()):
-            stat_t.fillup()
-
-        # get the richter exposition class
-        richter_class = self.update_richter_class(skip_if_exist=True)
-        if richter_class is None:
-            raise Exception("No richter class was found for the precipitation station {stid} and therefor no richter correction was possible."
-                            .format(stid=self.id))
-
         # check if period is given
         if type(period) != TimestampPeriod:
             period = TimestampPeriod(*period)
@@ -2419,19 +2436,15 @@ class PrecipitationStation(StationNBase):
             **sql_format_dict
         )
 
-        # retrun sql code for debuging purpose
-        if return_sql:
-            return sql_update
-
         # run commands
-        done = self._execute_long_sql(
+        self._execute_long_sql(
             sql_update, 
             description="richter corrected for period {min_tstp} - {max_tstp}".format(
-                **period.get_sql_format_dict()
+                **period.get_sql_format_dict(format="%Y-%m-%d %H:%M")
             ))
 
         # mark last import as done, if previous are ok
-        if done and (self.is_last_imp_done(kind="qc") and self.is_last_imp_done(kind="filled")):
+        if (self.is_last_imp_done(kind="qc") and self.is_last_imp_done(kind="filled")):
             if (period.is_empty() or
                 period.contains(self.get_last_imp_period())):
                 self._mark_last_imp_done(kind="corr")
@@ -2453,22 +2466,31 @@ class PrecipitationStation(StationNBase):
             with DB_ENG.connect() as con:
                 con.execute(sql_diff_filled)
 
+        # update filled time in meta table
+        self.update_period_meta(kind="corr")
+
     @check_superuser
     def corr(self, period=(None, None)):
         self.richter_correct(period=period)
 
     @check_superuser
     def last_imp_corr(self, last_imp_period=None):
-        """Do the filling up of the last import.
+        """Do the richter correction up of the last import.
         """
         if last_imp_period is None:
             period = self.get_last_imp_period(all=True)
         else:
             period = last_imp_period
-        if not self.is_last_imp_done(kind="filled"):
-            self.fillup(period=self.get_last_imp_period(all=True))
-            if self.is_last_imp_done(kind="qc"):
-                self._mark_last_imp_done(kind="filled")
+        if not self.is_last_imp_done(kind="corr"):
+            self.richter_correct(
+                period=period)
+            if self.is_last_imp_done(kind="qc") \
+                    and self.is_last_imp_done(kind="filled"):
+                self._mark_last_imp_done(kind="corr")
+        else:
+            log.info("The last import of {para_long} Station {stid} was already richter corrected and is therefor skiped".format(
+                stid=self.id, para_long=self._para_long
+            ))
 
     @check_superuser
     def _sql_extra_fillup(self):
@@ -2523,7 +2545,7 @@ class PrecipitationStation(StationNBase):
                             HAVING count("filled") > 363 * 6 * 24) df_a
                         ) df_ma
                     LEFT JOIN stations_raster_values srv
-                        ON station_id={stids}) quots
+                        ON station_id={stid}) quots
                 WHERE station_id ={stid};
             """.format(stid=self.id, para=self._para)
 
@@ -2645,7 +2667,7 @@ class TemperatureStation(StationTETBase):
         "climate_environment/CDC/observations_germany/climate/daily/kl/"]
     _date_col = "MESS_DATUM"
     _para = "t"
-    _para_long = "temperature"
+    _para_long = "Temperature"
     _cdc_col_names_imp = ["TMK"]
     _unit = "°C"
     _decimals = 10
@@ -2747,7 +2769,7 @@ class GroupStation(object):
     """A class to group all possible parameters of one station.
     """
 
-    def __init__(self, id):
+    def __init__(self, id, error_if_missing=True):
         self.id = id
         self.station_parts = []
         for StatClass in [StationN, StationT, StationET]:
@@ -2755,11 +2777,18 @@ class GroupStation(object):
                 self.station_parts.append(
                     StatClass(id=id)
                 )
-            except:
-                pass
+            except Exception as e:
+                if error_if_missing:
+                    raise e
 
-    def get_possible_paras(self, type="long"):
+    def get_possible_paras(self, short=False):    
         """Get the possible parameters for this station.
+
+        Parameters
+        ----------
+        short : bool, optional
+            Should the short name of the parameters be returned.
+            The default is "long".
 
         Returns
         -------
@@ -2767,17 +2796,41 @@ class GroupStation(object):
             A list of the long parameter names that are possible for this station to get.
         """
         paras = []
-        attr_name = "para_long" if type == "long" else "para"
+        attr_name = "_para" if short else "_para_long"
         for stat in self.station_parts:
             paras.append(getattr(stat, attr_name))
 
         return paras
 
-    def get_filled_period(self, kind="best"):
-        filled_period = self.station_parts[0].get_filled_period(kind=kind)
+    def get_filled_period(self, kind="best", from_meta=True):
+        """Get the combined filled period for all 3 stations.
+
+        This is the maximum possible timerange for these stations.
+
+        Parameters
+        ----------
+        kind :  str
+            The data kind to look for filled period.
+            Must be a column in the timeseries DB.
+            Must be one of "raw", "qc", "filled", "adj".
+            If "best" is given, then depending on the parameter of the station the best kind is selected.
+            For Precipitation this is "corr" and for the other this is "filled".
+            For the precipitation also "qn" and "corr" are valid.
+        from_meta : bool, optional
+            Should the period be from the meta table?
+            If False: the period is returned from the timeserie. In this case this function is only a wrapper for .get_period_meta.
+            The default is True.
+
+        Returns
+        -------
+        TimestampPeriod
+            The maximum filled period for the 3 parameters for this station.
+        """        
+        filled_period = self.station_parts[0].get_filled_period(
+            kind=kind, from_meta=from_meta)
         for stat in self.station_parts[1:]:
             filled_period = filled_period.union(
-                stat.get_filled_period(kind=kind),
+                stat.get_filled_period(kind=kind, from_meta=from_meta),
                 how="inner")
         return filled_period
 
