@@ -56,8 +56,7 @@ RASTERS = {
 RICHTER_CLASSES = {
     "no-protection": {
         "min_horizon": 0,
-        "max_horizon": 3 # in degrees
-        # 3° converted to percentage with np.tan(np.radians([3,7,12,90]))
+        "max_horizon": 3
     },
     "little-protection": {
         "min_horizon": 3,
@@ -321,10 +320,10 @@ class StationBase:
             WITH whole_ts AS (
                 SELECT generate_series(
                     '{min_tstp}'::{tstp_dtype},
-                    (SELECT 
+                    (SELECT
                         LEAST(
                             date_trunc(
-                                'day', 
+                                'day',
                                 min(start_tstp_last_imp) - '9h 30min'::INTERVAL
                             ) - '10 min'::INTERVAL,
                             min(max_tstp_last_imp))
@@ -421,11 +420,10 @@ class StationBase:
         sql = """
             DROP TABLE IF EXISTS timeseries."{stid}_{para}";
             DELETE FROM meta_{para} WHERE station_id={stid};
-            INSERT INTO droped_stations(station_id_para, why, timestamp)
-            VALUES ('{stid}_{para}', '{why}', NOW())
-            ON CONFLICT (station_id_para)
+            INSERT INTO droped_stations(station_id, para, why, timestamp)
+            VALUES ('{stid}', '{para}', '{why}', NOW())
+            ON CONFLICT (station_id, para)
                 DO UPDATE SET
-                    station_id_para = EXCLUDED.station_id_para,
                     why = EXCLUDED.why,
                     timestamp = EXCLUDED.timestamp;
         """.format(
@@ -1156,18 +1154,17 @@ class StationBase:
         """.format(**sql_format_dict)
 
         # execute
-        done = self._execute_long_sql(
+        self._execute_long_sql(
             sql=sql,
             description="filled for the period {min_tstp} - {max_tstp}".format(
                 **period.get_sql_format_dict()))
 
         # update timespan in meta table
-        if done:
-            self.update_period_meta(kind="filled")
+        self.update_period_meta(kind="filled")
 
         # mark last imp done
-        if done and (("qc" not in self._valid_kinds) or
-                     (self.is_last_imp_done(kind="qc"))):
+        if (("qc" not in self._valid_kinds) or
+                (self.is_last_imp_done(kind="qc"))):
             if period.is_empty():
                 self._mark_last_imp_done(kind="filled")
             elif period.contains(self.get_last_imp_period()):
@@ -1183,7 +1180,7 @@ class StationBase:
         -------
         str
             The SQL statement.
-        """        
+        """
         return ""
 
     @check_superuser
@@ -1319,7 +1316,7 @@ class StationBase:
             If None, then the geometry is returned in WGS84 (EPSG:4326).
             If string, then it should be one of "WGS84" or "UTM".
             If int, then it should be the EPSG code.
-            
+
         Returns
         -------
         shapely.geometries.Point
@@ -1447,24 +1444,7 @@ class StationBase:
         TimespanPeriod or tuple of datetime.datetime:
                 (minimal datetime, maximal datetime)
         """
-        sql_format_dict = dict(para=self._para, stid=self.id)
-        if all:
-            sql = """
-                SELECT LEAST(last_imp_von) as last_imp_von,
-                    GREATEST(last_imp_bis) as last_imp_bis
-                FROM meta_{para};
-            """.format(**sql_format_dict)
-        else:
-            sql = """
-                SELECT last_imp_von, last_imp_bis
-                FROM meta_{para}
-                WHERE station_id = {stid};
-            """.format(**sql_format_dict)
-
-        with DB_ENG.connect() as con:
-            res = con.execute(sql)
-
-        return TimestampPeriod(*res.first())
+        return self.get_period_meta(kind="last_imp", all=all)
 
     def get_neighboor_stids(self, n=5, only_real=True):
         """Get a list with Station Ids of the nearest neighboor stations.
@@ -2818,7 +2798,8 @@ class EvapotranspirationStation(StationTETBase):
             WITH nears AS ({sql_near_mean})
             SELECT
                 timestamp,
-                (CASE WHEN (ABS(nears.raw - nears.mean) > 5)
+                (CASE WHEN ((nears.raw > (nears.mean * 2) AND nears.raw > 3)
+                            OR (nears.raw < (nears.mean * 0.5) AND nears.raw > 2))
                     THEN NULL
                     ELSE nears."raw" END) as qc
             FROM nears
@@ -3096,7 +3077,7 @@ class GroupStation(object):
             if len(list(dir.iterdir())) > 0:
                 raise ValueError(
                     "The given directory '{dir}' is not empty.".format(
-                        dir=dir))
+                        dir=str(dir)))
         elif dir.suffix == "":
             dir.mkdir()
         else:
