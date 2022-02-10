@@ -17,7 +17,7 @@ import datetime
 from tempfile import TemporaryDirectory
 
 from .lib.connections import CDC, DB_ENG, check_superuser
-from .lib.utils import get_ftp_file_list
+from .lib.utils import get_ftp_file_list, TimestampPeriod
 from .lib.max_fun.import_DWD import get_dwd_meta
 from .station import (StationBase,
     PrecipitationDailyStation,  PrecipitationStation,
@@ -782,10 +782,6 @@ class GroupStations(object):
         columns : list, optional
             A list of columns from the meta file to return
             The default is: ["Station_id", "von_datum", "bis_datum", "geometry"]
-        only_real: bool, optional
-            Whether only real stations are returned or also virtual ones.
-            True: only stations with own data are returned.
-            The default is True.
 
         Returns
         -------
@@ -860,6 +856,10 @@ class GroupStations(object):
         # check directory
         dir = self._GroupStation._check_dir(dir)
 
+        # check period
+        period = self._check_period(
+            period=period, stids=stids, kind=kind)
+
         # create GroupStation instances
         stats = self.get_stations(stids=stids)
         pbar = self._StationsBase._get_progressbar(
@@ -874,8 +874,24 @@ class GroupStations(object):
             pbar.variables["last_station"] = stat.id
             pbar.update(pbar.value + 1)
 
-    def create_roger_ts_tempzip(self, period=(None, None), kind="best", stids="all"):
-        temp_dir = TemporaryDirectory()
+    # def create_roger_ts_tempzip(self, period=(None, None), kind="best", stids="all"):
+    #     temp_dir = TemporaryDirectory()
+
+    def _check_period(self, period, stids, kind):
+        max_period = self._GroupStation(stids[0]).get_filled_period(kind=kind)
+        for stid in stids[1:]:
+            max_period = max_period.union(
+                self._GroupStation(stid).get_filled_period(kind=kind))
+
+        if type(period) != TimestampPeriod:
+            period = TimestampPeriod(*period)
+        if period.empty():
+            return max_period
+        else:
+            if not period.inside(max_period):
+                raise Warning("The asked period is too large. Only {min_tstp} - {max_tstp} is returned".format(
+                    **max_period.get_sql_format_dict(format="%Y-%m-%d %H:%M")))
+            return period.union(max_period)
 
     def _check_valid_stids(self, stids):
         meta = self.get_meta(columns=["Station_id"])
