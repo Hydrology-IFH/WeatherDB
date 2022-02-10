@@ -1357,14 +1357,11 @@ class StationBase:
         ValueError
             If a wrong kind is handed in.
         """
-        sql_format_dict = dict(para=self._para, stid=self.id, kind=kind)
         # check kind
-        if kind not in ["filled", "raw", "last_imp"]:
-            raise ValueError(("get_period_meta of {para_long} Station {stid}:\n" +
-                "The given kind '{kind}' is not valid. Please use one of ['filled', 'raw', 'last_imp']"
-            ).format(para_long=self._para_long, **sql_format_dict))
+        kind = self._check_kind_tstp_meta(kind)
 
         # create sql statement
+        sql_format_dict = dict(para=self._para, stid=self.id, kind=kind)
         if all:
             sql = """
                 SELECT min({kind}_von) as {kind}_von,
@@ -2678,7 +2675,6 @@ class TemperatureStation(StationTETBase):
         super().__init__(id)
         self.id_str = dwd_id_to_str(id)
 
-    @check_superuser
     def _get_sql_new_qc(self, period):
         # create sql for new qc
         sql_new_qc = """
