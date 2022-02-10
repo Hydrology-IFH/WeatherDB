@@ -23,7 +23,7 @@ from .lib.max_fun.geometry import polar_line, raster2points
 # Variables
 MIN_TSTP = datetime.strptime("19940101", "%Y%m%d")
 THIS_DIR = Path(__file__).parent.resolve()
-DATA_DIR = THIS_DIR.parents[3].joinpath("data")
+DATA_DIR = THIS_DIR.parents[2].joinpath("data")
 RASTERS = {
     "dwd_grid": {
         "srid": 31467,
@@ -2178,8 +2178,7 @@ class PrecipitationStation(StationNBase):
                     line_parts = pd.DataFrame(
                         columns=["Start_point", "radius", "line"])
                     # look for holes inside the line
-                    for i, j in enumerate(
-                            dgm_gpd[dgm_gpd["dist"].diff() > 10].index):
+                    for j in dgm_gpd[dgm_gpd["dist"].diff() > 10].index:
                         line_parts = line_parts.append(
                             {"Start_point": dgm_gpd.loc[j-1, "geometry"],
                              "radius": dgm_gpd.loc[j, "dist"] - dgm_gpd.loc[j-1, "dist"]},
@@ -2473,28 +2472,30 @@ class PrecipitationStation(StationNBase):
 
     @check_superuser
     def _sql_extra_fillup(self):
-        sql = """
+        sql_extra = """
             UPDATE new_filled_{stid}_{para} ts
-            SET filled = filled * coef 
+            SET filled = filled * coef
             FROM (
-                SELECT 
-                    date, 
-                    ts_d."raw"/ts_10."filled" AS coef 
+                SELECT
+                    date,
+                    ts_d."raw"/ts_10."filled" AS coef
                 FROM (
-                    SELECT 
-                        date(timestamp - '5h 50min'::INTERVAL), 
+                    SELECT
+                        date(timestamp - '5h 50min'::INTERVAL),
                         sum(filled) AS filled
                     FROM new_filled_{stid}_{para}
                     GROUP BY date(timestamp - '5h 50min'::INTERVAL)
                     ) ts_10
-                LEFT JOIN timeseries."{stid}_n_d" ts_d 
+                LEFT JOIN timeseries."{stid}_n_d" ts_d
                     ON ts_10.date=ts_d.timestamp
-                WHERE ts_d."raw" IS NOT NULL 
+                WHERE ts_d."raw" IS NOT NULL
                       AND ts_10.filled > 0
-                ) df_coef 
-            WHERE (ts.timestamp - '5h 50min'::INTERVAL)::date = df_coef.date 
+                ) df_coef
+            WHERE (ts.timestamp - '5h 50min'::INTERVAL)::date = df_coef.date
                 AND coef != 1;
-        """
+        """.format(stid=self.id, para=self._para)
+
+        return sql_extra
 
     @check_superuser
     def fillup(self, period=(None, None)):
