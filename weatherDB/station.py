@@ -3002,15 +3002,16 @@ class GroupStation(object):
         if period.is_empty():
             period = period_filled
         else:
-            period = period_filled.union(
+            period_new = period_filled.union(
                 period,
                 how="inner")
-            if period_filled != period:
+            if period_new != period:
                 warnings.warn(
                     "The Period for Station {stid} got changed from {period} to {period_filled}.".format(
                         stid=self.id,
                         period=str(period),
                         period_filled=str(period_filled)))
+                period = period_new
 
         # get the data
         df_et = self.get_df(period=period, kind=kind, paras=["et"])
