@@ -5,6 +5,7 @@ import re
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -3005,7 +3006,7 @@ class GroupStation(object):
                 period,
                 how="inner")
             if period_filled != period:
-                raise Warning(
+                warnings.warn(
                     "The Period for Station {stid} got changed from {period} to {period_filled}.".format(
                         stid=self.id,
                         period=str(period),
@@ -3025,7 +3026,7 @@ class GroupStation(object):
                 or df_t.isna().sum().sum() > 0
                 or df_n.isna().sum().sum() > 0) \
             and kind in ["filled", "corr"]:
-            raise Warning("There were NAs in the timeserie for Station {stid}. this should not happen. Please review the code and the database.".format(
+            warnings.warn("There were NAs in the timeserie for Station {stid}. this should not happen. Please review the code and the database.".format(
                 stid=self.id))
 
         # create filepaths
