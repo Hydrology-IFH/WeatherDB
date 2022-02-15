@@ -4,5 +4,3 @@ pandas
 numpy
 progressbar2
 sqlalchemy
-re
-ftplib
