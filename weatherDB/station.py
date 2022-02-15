@@ -1292,7 +1292,7 @@ class StationBase:
         # change WKT to Text, because Postgis function is ST_AsText for WKT
         if format == "WKT":
             format = "Text"
-        
+
         # check crs
         utm=""
         trans_fun=""
@@ -1595,7 +1595,7 @@ class StationBase:
             The default is (None, None).
         agg_to : str or None, optional
             Aggregate to a given timespan.
-            Can be anything smaller than the maximum timespan of the saved data. 
+            Can be anything smaller than the maximum timespan of the saved data.
             If a Timeperiod smaller than the saved data is given, than the maximum possible timeperiod is returned.
             For T and ET it can be "month", "year".
             For N it can also be "hour".
@@ -1661,7 +1661,7 @@ class StationBase:
             ORDER BY timestamp ASC;
             """.format(
             stid=self.id,
-            para=self._para, 
+            para=self._para,
             kinds=', '.join(kinds),
             group_by=group_by,
             timestamp_col=timestamp_col,
@@ -1698,7 +1698,7 @@ class StationBase:
             The default is (None, None).
         agg_to : str or None, optional
             Aggregate to a given timespan.
-            Can be anything smaller than the maximum timespan of the saved data. 
+            Can be anything smaller than the maximum timespan of the saved data.
             If a Timeperiod smaller than the saved data is given, than the maximum possible timeperiod is returned.
             For T and ET it can be "month", "year".
             For N it can also be "hour".
@@ -1723,7 +1723,7 @@ class StationBase:
             The default is (None, None).
         agg_to : str or None, optional
             Aggregate to a given timespan.
-            Can be anything smaller than the maximum timespan of the saved data. 
+            Can be anything smaller than the maximum timespan of the saved data.
             If a Timeperiod smaller than the saved data is given, than the maximum possible timeperiod is returned.
             For T and ET it can be "month", "year".
             For N it can also be "hour".
@@ -1828,7 +1828,7 @@ class StationBase:
             The default is (None, None).
         agg_to : str or None, optional
             Aggregate to a given timespan.
-            Can be anything smaller than the maximum timespan of the saved data. 
+            Can be anything smaller than the maximum timespan of the saved data.
             If a Timeperiod smaller than the saved data is given, than the maximum possible timeperiod is returned.
             For T and ET it can be "month", "year".
             For N it can also be "hour".
@@ -1843,8 +1843,8 @@ class StationBase:
         # this is only the first part of the methode
         # get basic values
         main_df = self.get_df(
-            period=period, 
-            kinds=[self._best_kind], 
+            period=period,
+            kinds=[self._best_kind],
             agg_to=agg_to)
         ma = self.get_multi_annual()
 
@@ -1873,7 +1873,7 @@ class StationBase:
             The default is "filled.
         agg_to : str or None, optional
             Aggregate to a given timespan.
-            Can be anything smaller than the maximum timespan of the saved data. 
+            Can be anything smaller than the maximum timespan of the saved data.
             If a Timeperiod smaller than the saved data is given, than the maximum possible timeperiod is returned.
             For T and ET it can be "month", "year".
             For N it can also be "hour".
@@ -2392,6 +2392,7 @@ class PrecipitationStation(StationNBase):
         # check if period is given
         if type(period) != TimestampPeriod:
             period = TimestampPeriod(*period)
+        period_in = period.copy()
         if not period.is_empty():
             period = self._check_period(
                 period=period, kinds=["filled"])
@@ -2554,7 +2555,7 @@ class PrecipitationStation(StationNBase):
 
             self.richter_correct(
                 period=period)
-                
+
             if self.is_last_imp_done(kind="qc") \
                     and self.is_last_imp_done(kind="filled"):
                 self._mark_last_imp_done(kind="corr")
@@ -2897,7 +2898,7 @@ class GroupStation(object):
         -------
         TimestampPeriod
             The maximum filled period for the 3 parameters for this station.
-        """        
+        """
         filled_period = self.station_parts[0].get_filled_period(
             kind=kind, from_meta=from_meta)
         for stat in self.station_parts[1:]:
