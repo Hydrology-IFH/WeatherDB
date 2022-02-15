@@ -1,14 +1,6 @@
 weatherDB package
 =================
 
-weatherDB.broker module
------------------------
-
-.. automodule:: weatherDB.broker
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 weatherDB.station module
 ------------------------
 
@@ -21,6 +13,14 @@ weatherDB.stations module
 -------------------------
 
 .. automodule:: weatherDB.stations
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   
+weatherDB.broker module
+-----------------------
+
+.. automodule:: weatherDB.broker
    :members:
    :undoc-members:
    :show-inheritance:
