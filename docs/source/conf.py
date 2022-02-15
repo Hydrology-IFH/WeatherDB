@@ -61,7 +61,8 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'sync.ffs_db']
 source_suffix = [".rst", ".md"]
 
 autodoc_default_options = {
-	'special-members': '__init__'
+	'special-members': '__init__',
+    'member-order': 'bysource'
 }
 
 # -- Options for HTML output -------------------------------------------------
