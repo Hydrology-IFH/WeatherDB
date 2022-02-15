@@ -16,7 +16,7 @@ from pathlib import Path
 # import sphinx_rtd_theme
 import shutil
 
-os.environ["RTD_documentation_import"] = True
+os.environ["RTD_documentation_import"] = "YES"
 
 src_path = Path(__file__).parent
 base_path = src_path.parents[1]
