@@ -1,3 +1,7 @@
+"""
+This module has grouping classes for all the stations of one parameter. E.G. PrecipitationStations (or StationsN) groups all the Precipitation Stations available.
+Those classes can get used to do actions on all the stations.
+"""
 # libraries
 # from multiprocessing import queues
 import warnings

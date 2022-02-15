@@ -1,3 +1,7 @@
+"""
+This submodule has only one class Broker. This one is used to do actions on all the stations together. Mainly only used for updating the DB.
+"""
+# libraries
 import logging
 from .lib.connections import DB_ENG
 from .stations import StationsN, StationsND, StationsT, StationsET
