@@ -3,3 +3,7 @@ logs
 build
 sync.ffs_db
 *.log
+_build
+latex
+Makefile
+make.bat
