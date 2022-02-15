@@ -768,7 +768,6 @@ class GroupStations(object):
     """
     _StationN = PrecipitationStation
     _GroupStation = GroupStation
-    _StationsBase = StationsBase
 
     def __init__(self):
         self.stationsN = StationsN()
@@ -828,31 +827,26 @@ class GroupStations(object):
 
         return stations
 
-    def create_roger_ts(self, dir, period=(None, None), kind="best", stids="all",):
-        """Get a list with all the stations as Station-objects.
+    def create_roger_ts(self, dir, period=(None, None), kind="best", stids="all", zip=False):
+        """Create the roger weather tables.
 
         Parameters
         ----------
-        only_real: bool, optional
-            Whether only real stations are returned or also virtual ones.
-            True: only stations with own data are returned.
-            The default is True.
+        dir : path-like object
+            The directory where to save the tables.
+        period : tuple or TimestampPeriod, optional
+            , by default (None, None)
+        kind : str, optional
+            _description_, by default "best"
         stids: string or list of int, optional
-            The Stations to return.
+            The Stations for which to compute.
             Can either be "all", for all possible stations
             or a list with the Station IDs.
             The default is "all".
-
-        Returns
-        -------
-        Station-object
-            returns a list with the corresponding station objects.
-
-        Raises
-        ------
-        ValueError
-            If the given stids (Station_IDs) are not all valid.
-        """
+        zip : bool, optional
+            Should the outcome get zipped in one arcive.
+            The default is False.
+        """        
         # check directory
         dir = self._GroupStation._check_dir(dir)
 
