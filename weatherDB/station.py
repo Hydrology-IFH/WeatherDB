@@ -2544,14 +2544,21 @@ class PrecipitationStation(StationNBase):
         self.richter_correct(period=period)
 
     @check_superuser
-    def last_imp_corr(self, last_imp_period=None):
-        """Do the richter correction up of the last import.
+    def last_imp_richter_correct(self, _last_imp_period=None):
+        """Do the richter correction of the last import.
+
+        Parameters
+        ----------
+        _last_imp_period : _type_, optional
+            Give the overall period of the last import.
+            This is only for intern use of the stationsN methode to not compute over and over again the period.
+            The default is None.
         """
         if not self.is_last_imp_done(kind="corr"):
-            if last_imp_period is None:
+            if _last_imp_period is None:
                 period = self.get_last_imp_period(all=True)
             else:
-                period = last_imp_period
+                period = _last_imp_period
 
             self.richter_correct(
                 period=period)
@@ -2563,6 +2570,11 @@ class PrecipitationStation(StationNBase):
             log.info("The last import of {para_long} Station {stid} was already richter corrected and is therefor skiped".format(
                 stid=self.id, para_long=self._para_long
             ))
+
+    @check_superuser
+    def last_imp_corr(self, _last_imp_period=None):
+        """A wrapper for last_imp_richter_correct()."""
+        return self.last_imp_richter_correct(_last_imp_period=_last_imp_period)
 
     @check_superuser
     def _sql_extra_fillup(self):

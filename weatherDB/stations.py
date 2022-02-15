@@ -545,7 +545,7 @@ class StationsBase:
             stations=stations,
             methode="last_imp_fillup",
             name="fillup {para} data".format(para=self._para.upper()),
-            kwargs=dict(last_imp_period=period),
+            kwargs=dict(_last_imp_period=period),
             do_mp=False)
 
     @check_superuser
@@ -862,7 +862,7 @@ class GroupStations(object):
 
         # create GroupStation instances
         stats = self.get_stations(stids=stids)
-        pbar = self._StationsBase._get_progressbar(
+        pbar = StationsBase._get_progressbar(
             max_value=len(stats),
             name="create RoGeR-TS")
         pbar.update(0)
