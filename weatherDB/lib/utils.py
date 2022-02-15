@@ -226,4 +226,8 @@ class TimestampPeriod(object):
         period_str = [str(el).replace("None", "NULL") for el in period_str]
         return dict(min_tstp=period_str[0], max_tstp=period_str[1])
 
+    def copy(self):
+        new = TimestampPeriod(self.start, self.end)
+        new.is_date = self.is_date
+        return new
 

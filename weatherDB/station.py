@@ -635,7 +635,7 @@ class StationBase:
             For Precipitation this is "corr" and for the other this is "filled".
             For the precipitation also "corr" are valid.
         """
-        kind = self._valid_kinds_tstp_meta(kind)
+        kind = self._check_kind_tstp_meta(kind)
         period = self.get_filled_period(kind=kind)
 
         sql = """
@@ -645,6 +645,7 @@ class StationBase:
             WHERE station_id={stid};
         """.format(
             stid=self.id, para=self._para,
+            kind=kind,
             **period.get_sql_format_dict(
                 format="'{}'".format(self._tstp_format))
         )
@@ -737,7 +738,7 @@ class StationBase:
             ftp_file_list=ftp_file_list)
 
         # check for empty list of zipfiles
-        if not zipfiles:
+        if zipfiles is None or len(zipfiles)==0:
             log.debug(
                 """raw_update of {para_long} Station {stid}:
                 No zipfile was found and therefor no new data was imported."""
@@ -1214,6 +1215,10 @@ class StationBase:
         if not self.is_last_imp_done(kind="qc"):
             self.quality_check(period=self.get_last_imp_period())
             self._mark_last_imp_done(kind="qc")
+
+    @check_superuser
+    def last_imp_qc(self):
+        self._last_imp_quality_check()
 
     @check_superuser
     def last_imp_fillup(self, last_imp_period=None):
@@ -2502,21 +2507,21 @@ class PrecipitationStation(StationNBase):
 
         # run commands
         self._execute_long_sql(
-            sql_update, 
-            description="richter corrected for period {min_tstp} - {max_tstp}".format(
+            sql_update,
+            description="richter corrected for the period {min_tstp} - {max_tstp}".format(
                 **period.get_sql_format_dict(format="%Y-%m-%d %H:%M")
             ))
 
         # mark last import as done, if previous are ok
         if (self.is_last_imp_done(kind="qc") and self.is_last_imp_done(kind="filled")):
-            if (period.is_empty() or
-                period.contains(self.get_last_imp_period())):
+            if (period_in.is_empty() or
+                period_in.contains(self.get_last_imp_period())):
                 self._mark_last_imp_done(kind="corr")
 
         # calculate the difference to filled timeserie
         if period.is_empty() or period[0].year < pd.Timestamp.now().year:
             sql_diff_filled = """
-                UPDATE meta_n 
+                UPDATE meta_n
                 SET quot_corr_filled = quot_avg
                 FROM (
                     SELECT avg(quot)*100 AS quot_avg
@@ -2541,13 +2546,15 @@ class PrecipitationStation(StationNBase):
     def last_imp_corr(self, last_imp_period=None):
         """Do the richter correction up of the last import.
         """
-        if last_imp_period is None:
-            period = self.get_last_imp_period(all=True)
-        else:
-            period = last_imp_period
         if not self.is_last_imp_done(kind="corr"):
+            if last_imp_period is None:
+                period = self.get_last_imp_period(all=True)
+            else:
+                period = last_imp_period
+
             self.richter_correct(
                 period=period)
+                
             if self.is_last_imp_done(kind="qc") \
                     and self.is_last_imp_done(kind="filled"):
                 self._mark_last_imp_done(kind="corr")
@@ -2846,7 +2853,7 @@ class GroupStation(object):
                 if error_if_missing:
                     raise e
 
-    def get_possible_paras(self, short=False):    
+    def get_possible_paras(self, short=False):
         """Get the possible parameters for this station.
 
         Parameters
@@ -2979,7 +2986,7 @@ class GroupStation(object):
         # get the period
         period = TimestampPeriod._check_period(period)
         period_filled = self.get_filled_period(kind=kind)
-        
+
         if period.is_empty():
             period = period_filled
         else:
