@@ -16,35 +16,31 @@ for dir in this_dir.parents:
         break
 
 # find example settings for the documentation
-if not secret_found:
-    for dir in this_dir.parents:
-        if dir.joinpath("secretSettings_example.py").is_file():
-            sys.path.insert(0, dir.as_posix())
-            break
+if not secret_found and "RTD_documentation_import" in os.environ:
+    DB_ENG = None
+else:
 
-# import the secret settings
-try:
+    # import the secret settings
     import secretSettings as secrets
-except:
-    import secretSettings_example as secrets # only for the creation of the docs
-DB_ENG = sqlalchemy.create_engine(
-    "postgresql://{user}:{pwd}@{host}:{port}/{name}".format(
-        user=secrets.DB_WEA_USER,
-        pwd=secrets.DB_WEA_PWD,
-        host=secrets.DB_HOST,
-        name=secrets.DB_WEA_NAME,
-        port=secrets.DB_PORT
-        )
-        )
 
-# check if user has super user privileges
-with DB_ENG.connect() as con:
-    DB_ENG.is_superuser = con.execute("""
-        SELECT 'weather_owner' in (
-            SELECT rolname FROM pg_auth_members
-            LEFT JOIN pg_roles ON oid=roleid
-            WHERE member = (SELECT oid FROM pg_roles WHERE rolname='{user}'));
-        """.format(user=DB_ENG.url.username)).first()[0]
+    DB_ENG = sqlalchemy.create_engine(
+        "postgresql://{user}:{pwd}@{host}:{port}/{name}".format(
+            user=secrets.DB_WEA_USER,
+            pwd=secrets.DB_WEA_PWD,
+            host=secrets.DB_HOST,
+            name=secrets.DB_WEA_NAME,
+            port=secrets.DB_PORT
+            )
+            )
+
+    # check if user has super user privileges
+    with DB_ENG.connect() as con:
+        DB_ENG.is_superuser = con.execute("""
+            SELECT 'weather_owner' in (
+                SELECT rolname FROM pg_auth_members
+                LEFT JOIN pg_roles ON oid=roleid
+                WHERE member = (SELECT oid FROM pg_roles WHERE rolname='{user}'));
+            """.format(user=DB_ENG.url.username)).first()[0]
 
 # decorator function to overwrite methods
 def check_superuser(methode):
@@ -54,6 +50,7 @@ def check_superuser(methode):
         return methode
     else:
         return no_super_user
+        
 # DWD - CDC FTP Server
 class FTP(ftplib.FTP):
     def login(self, **kwargs):
