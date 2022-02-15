@@ -5,3 +5,4 @@ numpy
 progressbar2
 sqlalchemy
 rasterio
+psycopg2
