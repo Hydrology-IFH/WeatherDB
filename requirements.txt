@@ -3,6 +3,6 @@ shapely
 pandas
 numpy
 progressbar2
-sqlalchemey
+sqlalchemy
 re
 ftplib
