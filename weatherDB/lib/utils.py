@@ -194,17 +194,81 @@ class TimestampPeriod(object):
         return not self.__eq__(other)
 
     def has_NaT(self):
+        """Has the TimestampPeriod at least one NaT. 
+        
+        This means that the start or end is not given.
+        Normally this should never happen, because it makes no sense.
+
+        Returns
+        -------
+        bool
+            True if the TimestampPeriod has at least on NaT.
+            False if the TimestampPeriod has at least a start or a end.
+        """    
         return any([tstp is NaT for tstp in self])
 
     def has_only_NaT(self):
+        """Has the TimestampPeriod only NaT, meaning is empty. 
+        
+        This means that the start and end is not given.
+
+        Returns
+        -------
+        bool
+            True if the TimestampPeriod is empty.
+            False if the TimestampPeriod has a start and an end.
+        """    
         return all([tstp is NaT for tstp in self])
+    
+    def is_empty(self):
+        """Is the TimestampPeriod empty. 
+        
+        This means that the start and end is not given.
+
+        Returns
+        -------
+        bool
+            True if the TimestampPeriod is empty.
+            False if the TimestampPeriod has a start and an end.
+        """        
+        return self.has_only_NaT(self)
 
     def strftime(self, format="%Y-%m-%d %H:%M:%S"):
+        """Convert the TimestampPeriod to a list of strings.
+
+        Formates the Timestamp as a string.
+
+        Parameters
+        ----------
+        format : str, optional
+            The Timestamp-format to use. 
+            The Default is "%Y-%m-%d %H:%M:%S"
+
+        Returns
+        -------
+        list of 2 strings
+            A list of the start and end of the TimestampPeriod as formated string.
+        """        
         out = [tstp.strftime(format) if tstp is not NaT else None
                     for tstp in self.get_period()]
         return out
 
     def inside(self, other):
+        """Is the TimestampPeriod inside another TimestampPeriod?
+
+        Parameters
+        ----------
+        other : Timestampperiod or tuple of 2 Timestamp or Timestamp strings
+            The other Timestamp to test against.
+            Test if this TimestampPeriod is inside the other.
+
+        Returns
+        -------
+        bool
+            True if this TimestampPeriod is inside the other.
+            Meaning that the start is higher or equal than the others starts
+            and the end is smaller than the others end.
+        """        
         other = self._check_period(other)
         if self.start >= other.start and self.end <= other.end:
             return True
@@ -212,21 +276,50 @@ class TimestampPeriod(object):
             return False
 
     def contains(self, other):
+        """Does this TimestampPeriod contain another TimestampPeriod?
+
+        Parameters
+        ----------
+        other : Timestampperiod or tuple of 2 Timestamp or Timestamp strings
+            The other Timestamp to test against.
+            Test if this TimestampPeriod contains the other.
+
+        Returns
+        -------
+        bool
+            True if this TimestampPeriod contains the other.
+            Meaning that the start is smaller or equal than the others starts
+            and the end is higher than the others end.
+        """
         other = self._check_period(other)
         return other.inside(self)
 
-    def is_empty(self):
-        if self.start is NaT and self.end is NaT:
-            return True
-        else:
-            return False
-
     def get_sql_format_dict(self, format="'%Y%m%d %H:%M'"):
+        """Get the dictionary to use in sql queries.
+
+        Parameters
+        ----------
+        format : str, optional
+            The Timestamp-format to use. 
+            The Default is "'%Y%m%d %H:%M'"
+
+        Returns
+        -------
+        dict
+            a dictionary with 2 keys (min_tstp, max_tstp) and the corresponding Timestamp as formated string.
+        """        
         period_str = self.strftime(format=format)
         period_str = [str(el).replace("None", "NULL") for el in period_str]
         return dict(min_tstp=period_str[0], max_tstp=period_str[1])
 
     def copy(self):
+        """Copy this TimestampPeriod.
+
+        Returns
+        -------
+        TimestampPeriod
+            a new TimestampPeriod object that is equal to this one.
+        """        
         new = TimestampPeriod(self.start, self.end)
         new.is_date = self.is_date
         return new
