@@ -1,30 +1,40 @@
 # libraries
 import ftplib
+import sqlalchemy
+import sys, os
+from pathlib import Path
 
 # DB connection
-try:
-    from aldjemy.core import get_engine
-    DB_ENG = get_engine("weather")
-except:
-    # if not started inside of django environment
-    import sqlalchemy
-    import sys, os
-    from pathlib import Path
+###############
+# find secret settings path and insert into path
+this_dir = Path(__file__).parent.resolve()
+secret_found = False
+for dir in this_dir.parents:
+    if dir.joinpath("secretSettings.py").is_file():
+        sys.path.insert(0, dir.as_posix())
+        secret_found = True
+        break
 
-    # find secret settings path and insert into path
-    for dir in Path(__file__).parent.resolve().parents:
-        if dir.joinpath("secretSettings.py").is_file():
-            sys.path.insert(0, dir.as_posix())
-            break
+# find example settings for the documentation
+if not secret_found:
+    for dir in this_dir.parents:
+        if dir.joinpath("secretSettings_example.py").is_file():
+        sys.path.insert(0, dir.as_posix())
+        break
+
+# import the secret settings
+try:
     import secretSettings as secrets
-    DB_ENG = sqlalchemy.create_engine(
-        "postgresql://{user}:{pwd}@{host}:{port}/{name}".format(
-            user=secrets.DB_WEA_USER,
-            pwd=secrets.DB_WEA_PWD,
-            host=secrets.DB_HOST,
-            name=secrets.DB_WEA_NAME,
-            port=secrets.DB_PORT
-            )
+except:
+    import secretSettings_example as secrets # only for the creation of the docs
+DB_ENG = sqlalchemy.create_engine(
+    "postgresql://{user}:{pwd}@{host}:{port}/{name}".format(
+        user=secrets.DB_WEA_USER,
+        pwd=secrets.DB_WEA_PWD,
+        host=secrets.DB_HOST,
+        name=secrets.DB_WEA_NAME,
+        port=secrets.DB_PORT
+        )
         )
 
 # check if user has super user privileges
