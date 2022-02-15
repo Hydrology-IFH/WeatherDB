@@ -19,8 +19,8 @@ for dir in this_dir.parents:
 if not secret_found:
     for dir in this_dir.parents:
         if dir.joinpath("secretSettings_example.py").is_file():
-        sys.path.insert(0, dir.as_posix())
-        break
+            sys.path.insert(0, dir.as_posix())
+            break
 
 # import the secret settings
 try:
