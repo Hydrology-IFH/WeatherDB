@@ -5,9 +5,6 @@
 # Required
 version: 2
 
-# formats
-formats: all
-
 # Set the version of Python and other tools you might need
 build:
   os: ubuntu-20.04
@@ -18,15 +15,11 @@ build:
 sphinx:
    configuration: docs/Sphinx/conf.py
 
-# If using Sphinx, optionally build your docs in additional formats such as PDF
-# formats:
-#    - pdf
+# formats
+formats: all
 
 # Optionally declare the Python requirements required to build your docs
 python:
    install:
    - requirements: requirements.txt
-   - method: pip
-     path: .
-     extra_requirements:
-       - nbsphinx
+   - requirements: docs/requirements.txt
