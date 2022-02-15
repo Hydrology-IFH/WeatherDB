@@ -18,7 +18,8 @@ import itertools
 import datetime
 # from pathlib import Path
 # import re
-from tempfile import TemporaryDirectory
+import zipfile
+from pathlib import Path
 
 from .lib.connections import CDC, DB_ENG, check_superuser
 from .lib.utils import get_ftp_file_list, TimestampPeriod
@@ -838,6 +839,7 @@ class GroupStations(object):
         ----------
         dir : path-like object
             The directory where to save the tables.
+            If the directory is a ZipFile, then the output will get zipped into this.
         period : tuple or TimestampPeriod, optional
             , by default (None, None)
         kind : str, optional
@@ -848,11 +850,13 @@ class GroupStations(object):
             or a list with the Station IDs.
             The default is "all".
         zip : bool, optional
-            Should the outcome get zipped in one arcive.
+            Should the outcome get zipped in one archive.
             The default is False.
         """        
         # check directory
-        dir = self._GroupStation._check_dir(dir)
+        dir = self._check_dir(dir)
+
+        stids = self._check_stids(stids)
 
         # check period
         period = self._check_period(
@@ -864,16 +868,27 @@ class GroupStations(object):
             max_value=len(stats),
             name="create RoGeR-TS")
         pbar.update(0)
-        for stat in stats:
-            stat.create_roger_ts(
-                dir=dir.joinpath(str(stat.id)),
-                period=period,
-                kind=kind)
-            pbar.variables["last_station"] = stat.id
-            pbar.update(pbar.value + 1)
 
-    # def create_roger_ts_tempzip(self, period=(None, None), kind="best", stids="all"):
-    #     temp_dir = TemporaryDirectory()
+        if dir.suffix == ".zip":
+            with zipfile.ZipFile(
+                    dir, "w", 
+                    compression=zipfile.ZIP_LZMA,
+                    compresslevel=8) as zf:
+                for stat in stats:
+                    stat.create_roger_ts(
+                        dir=zf,
+                        period=period,
+                        kind=kind)
+                    pbar.variables["last_station"] = stat.id
+                    pbar.update(pbar.value + 1)
+        else:
+            for stat in stats:
+                stat.create_roger_ts(
+                    dir=dir.joinpath(str(stat.id)),
+                    period=period,
+                    kind=kind)
+                pbar.variables["last_station"] = stat.id
+                pbar.update(pbar.value + 1)
 
     def _check_period(self, period, stids, kind):
         max_period = self._GroupStation(stids[0]).get_filled_period(kind=kind)
@@ -883,7 +898,7 @@ class GroupStations(object):
 
         if type(period) != TimestampPeriod:
             period = TimestampPeriod(*period)
-        if period.empty():
+        if period.is_empty():
             return max_period
         else:
             if not period.inside(max_period):
@@ -891,12 +906,69 @@ class GroupStations(object):
                     **max_period.get_sql_format_dict(format="%Y-%m-%d %H:%M")))
             return period.union(max_period)
 
-    def _check_valid_stids(self, stids):
+    def _check_stids(self, stids):
         meta = self.get_meta(columns=["Station_id"])
-        if all([stid in meta.index for stid in stids]):
-            return True
+        if stids == "all":
+            return meta["Station_id"].values.to_list()
         else:
-            return False
+            stids_valid = [stid in meta.index for stid in stids]
+            if all(stids_valid):
+                return stids
+            else:
+                raise ValueError(
+                    "There is no station defined in the database for the IDs:\n{stids}".format(
+                        stids=", ".join(
+                            [stid for stid in stids 
+                                  if stid not in stids_valid])))
+    
+    @staticmethod
+    def _check_dir(dir):
+        """Checks if a directors is valid and empty.
+
+        If not existing the directory is created.
+
+        Parameters
+        ----------
+        dir : pathlib object or zipfile.ZipFile
+            The directory to check.
+
+        Raises
+        ------
+        ValueError
+            If the directory is not empty.
+        ValueError
+            If the directory is not valid. E.G. it is a file path.
+        """
+        # check types
+        if type(dir) == str:
+            dir = Path(dir)
+
+        # check directory
+        if isinstance(dir, zipfile.ZipFile):
+            return dir
+        elif isinstance(dir, Path):
+            if dir.is_dir():
+                if len(list(dir.iterdir())) > 0:
+                    raise ValueError(
+                        "The given directory '{dir}' is not empty.".format(
+                            dir=str(dir)))
+            elif dir.suffix == "":
+                dir.mkdir()
+            elif dir.suffix == ".zip":
+                if not dir.parent.is_dir():
+                    raise ValueError(
+                        "The given parent directory '{dir}' of the zipfile is not a directory.".format(
+                            dir=dir.parents))
+            else:
+                raise ValueError(
+                    "The given directory '{dir}' is not a directory.".format(
+                        dir=dir))
+        else:
+            raise ValueError(
+                "The given directory '{dir}' is not a directory or zipfile.".format(
+                    dir=dir))
+        
+        return dir
 
 # clean station
 del PrecipitationStation, PrecipitationDailyStation, TemperatureStation, EvapotranspirationStation, GroupStation

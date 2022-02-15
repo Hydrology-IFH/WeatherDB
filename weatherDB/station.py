@@ -12,6 +12,7 @@ import time
 from datetime import datetime, timedelta
 from pathlib import Path
 import warnings
+import zipfile
 
 import numpy as np
 import pandas as pd
@@ -2420,7 +2421,7 @@ class PrecipitationStation(StationNBase):
         stat_t_max = stat_t_period[1].date()
         stat_n_min = (stat_n_period[0] - delta).date()
         stat_n_max = (stat_n_period[1] - delta).date()
-        if stat_t_period.has_NaT()\
+        if stat_t_period.is_empty()\
                 or (stat_t_min > stat_n_min
                     and not (stat_n_min < min_date)
                             and (stat_t_min == min_date)) \
@@ -2980,8 +2981,9 @@ class GroupStation(object):
 
         Parameters
         ----------
-        dir : pathlib like object
-            The directory to store the timeseries in.
+        dir : pathlib like object or zipfile.ZipFile
+            The directory or Zipfile to store the timeseries in.
+            If a zipfile is given a folder with the statiopns ID is added to the filepath.
         period : TimestampPeriod like object, optional
             The period for which to get the timeseries.
             If (None, None) is entered, then the maximal possible period is computed.
@@ -3040,9 +3042,12 @@ class GroupStation(object):
         # create filepaths
         name_suffix = "_{stid:0>4}.txt".format(stid=self.id)
 
-        file_n = Path(dir, "N" + name_suffix)
-        file_et = Path(dir, "ET" + name_suffix)
-        file_t = Path(dir, "Ta" + name_suffix)
+        # file_n = Path(dir, "N" + name_suffix)
+        # file_et = Path(dir, "ET" + name_suffix)
+        # file_t = Path(dir, "Ta" + name_suffix)
+        file_n = "N" + name_suffix
+        file_t = "T" + name_suffix
+        file_et = "ET" + name_suffix
 
         # # create headers and files
         x, y = self.get_geom().split(";")[1]\
@@ -3057,24 +3062,43 @@ class GroupStation(object):
         header_t = ("Name: " + name + "\t" * 3 + "\n" +
                     "Lat: " + y + "   ,Lon: " + x + "\t" * 3 + "\n")
 
-        with open(file_n, "w") as f:
-            f.write(header_n)
-        with open(file_et, "w") as f:
-            f.write(header_et)
-        with open(file_t, "w") as f:
-            f.write(header_t)
+        # with open(file_n, "w") as f:
+        #     f.write(header_n)
+        # with open(file_et, "w") as f:
+        #     f.write(header_et)
+        # with open(file_t, "w") as f:
+        #     f.write(header_t)
 
         # create tables
-        self._split_date(df_n.index)\
+        str_n = header_n + self._split_date(df_n.index)\
             .join(df_n)\
-            .to_csv(file_n, sep="\t", decimal=".", index=False, mode="a")
-        self._split_date(df_t.index).iloc[:, 0:3]\
+            .to_csv(sep="\t", decimal=".", index=False, mode="a")
+        str_t = header_t + self._split_date(df_t.index).iloc[:, 0:3]\
             .join(df_t)\
-            .to_csv(file_t, sep="\t", decimal=".", index=False, mode="a")
-        self._split_date(df_et.index).iloc[:, 0:3]\
+            .to_csv(sep="\t", decimal=".", index=False, mode="a")
+        str_et = header_et + self._split_date(df_et.index).iloc[:, 0:3]\
             .join(df_et)\
             .join(pd.Series([0]*len(df_et), name="R/R0", index=df_et.index))\
-            .to_csv(file_et, sep="\t", decimal=".", index=False, mode="a")
+            .to_csv(sep="\t", decimal=".", index=False, mode="a")
+
+        # write to file
+        if isinstance(dir, Path):
+            with open(dir.joinpath(file_n), "w") as f:
+                f.write(str_n)
+            with open(dir.joinpath(file_t), "w") as f:
+                f.write(str_t)
+            with open(dir.joinpath(file_et), "w") as f:
+                f.write(str_et)
+        elif type(dir) == zipfile.ZipFile:
+            dir.writestr(
+                "{stid}/{file}".format(stid=self.id, file=file_n), 
+                str_n)
+            dir.writestr(
+                "{stid}/{file}".format(stid=self.id, file=file_t),
+                str_t)
+            dir.writestr(
+                "{stid}/{file}".format(stid=self.id, file=file_et), 
+                str_et)
 
     @staticmethod
     def _check_dir(dir):
@@ -3084,7 +3108,7 @@ class GroupStation(object):
 
         Parameters
         ----------
-        dir : pathlib object
+        dir : pathlib object or zipfile.ZipFile
             The directory to check.
 
         Raises
@@ -3099,16 +3123,21 @@ class GroupStation(object):
             dir = Path(dir)
 
         # check directory
-        if dir.is_dir():
-            if len(list(dir.iterdir())) > 0:
+        if isinstance(dir, Path):
+            if dir.is_dir():
+                if len(list(dir.iterdir())) > 0:
+                    raise ValueError(
+                        "The given directory '{dir}' is not empty.".format(
+                            dir=str(dir)))
+            elif dir.suffix == "":
+                dir.mkdir()
+            else:
                 raise ValueError(
-                    "The given directory '{dir}' is not empty.".format(
-                        dir=str(dir)))
-        elif dir.suffix == "":
-            dir.mkdir()
-        else:
+                    "The given directory '{dir}' is not a directory.".format(
+                        dir=dir))
+        elif not isinstance(dir, zipfile.ZipFile):
             raise ValueError(
-                "The given directory '{dir}' is not a directory.".format(
+                "The given directory '{dir}' is not a directory or zipfile.".format(
                     dir=dir))
 
         return dir
