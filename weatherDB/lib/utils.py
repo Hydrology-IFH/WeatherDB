@@ -1,4 +1,6 @@
-
+"""
+Some utilities functions and classes that are used in the module.
+"""
 # libraries
 import dateutil
 import ftplib
@@ -231,7 +233,7 @@ class TimestampPeriod(object):
             True if the TimestampPeriod is empty.
             False if the TimestampPeriod has a start and an end.
         """        
-        return self.has_only_NaT(self)
+        return self.has_only_NaT()
 
     def strftime(self, format="%Y-%m-%d %H:%M:%S"):
         """Convert the TimestampPeriod to a list of strings.
