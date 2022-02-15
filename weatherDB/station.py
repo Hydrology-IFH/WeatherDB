@@ -1635,7 +1635,7 @@ class StationBase:
         group_by = ""
         if agg_to is not None:
             # check agg_fun
-            if agg_to is "date":
+            if agg_to == "date":
                 agg_to = "day"
             agg_to_valid = ["hour", "day", "month", "year", "decade"]
             if agg_to not in agg_to_valid:
