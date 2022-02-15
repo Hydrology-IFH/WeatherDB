@@ -2,6 +2,8 @@ WeatherDB - module
 ==================
 author: Max Schmit
 
+[![Documentation Status](https://readthedocs.org/projects/weatherdb-module/badge/?version=latest)](https://weatherdb-module.readthedocs.io/en/latest/?badge=latest)
+
 The weather-DB module offers an API to interact with the automaticaly filled weather Database.
 
 Depending on the Database user privileges you can use more or less methodes of the classes.
