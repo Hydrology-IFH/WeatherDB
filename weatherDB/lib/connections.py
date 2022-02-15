@@ -17,7 +17,8 @@ for dir in this_dir.parents:
 
 # find example settings for the documentation
 if not secret_found and "RTD_documentation_import" in os.environ:
-    DB_ENG = None
+    from mock_alchemy.mocking import UnifiedAlchemyMagicMock
+    DB_ENG = UnifiedAlchemyMagicMock()
 else:
 
     # import the secret settings
