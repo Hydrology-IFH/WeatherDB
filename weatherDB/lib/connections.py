@@ -31,7 +31,7 @@ else:
             name=secrets.DB_WEA_NAME,
             port=secrets.DB_PORT
             )
-            )
+        )
 
     # check if user has super user privileges
     with DB_ENG.connect() as con:
@@ -50,7 +50,7 @@ def check_superuser(methode):
         return methode
     else:
         return no_super_user
-        
+
 # DWD - CDC FTP Server
 class FTP(ftplib.FTP):
     def login(self, **kwargs):

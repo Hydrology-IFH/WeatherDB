@@ -11,10 +11,12 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 
-import sys
+import sys, os
 from pathlib import Path
 # import sphinx_rtd_theme
 import shutil
+
+os.environ["RTD_documentation_import"] = True
 
 src_path = Path(__file__).parent
 base_path = src_path.parents[1]
