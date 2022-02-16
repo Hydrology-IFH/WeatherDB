@@ -16,8 +16,7 @@ import progressbar as pb
 import logging
 import itertools
 import datetime
-# from pathlib import Path
-# import re
+import socket
 import zipfile
 from pathlib import Path
 
@@ -832,30 +831,50 @@ class GroupStations(object):
 
         return stations
 
-    def create_roger_ts(self, dir, period=(None, None), kind="best", stids="all", zip=False):
-        """Create the roger weather tables.
+    def create_ts(self, dir, period=(None, None), kind="best",
+                  stids="all", agg_to="10 min", et_et0=None, split_date=False):
+        """Download and create the weather tables as csv files.
 
         Parameters
         ----------
         dir : path-like object
             The directory where to save the tables.
             If the directory is a ZipFile, then the output will get zipped into this.
-        period : tuple or TimestampPeriod, optional
-            , by default (None, None)
-        kind : str, optional
-            _description_, by default "best"
+        period : TimestampPeriod like object, optional
+            The period for which to get the timeseries.
+            If (None, None) is entered, then the maximal possible period is computed.
+            The default is (None, None)
+        kind :  str
+            The data kind to look for filled period.
+            Must be a column in the timeseries DB.
+            Must be one of "raw", "qc", "filled", "adj".
+            If "best" is given, then depending on the parameter of the station the best kind is selected.
+            For Precipitation this is "corr" and for the other this is "filled".
+            For the precipitation also "qn" and "corr" are valid.
         stids: string or list of int, optional
             The Stations for which to compute.
             Can either be "all", for all possible stations
             or a list with the Station IDs.
             The default is "all".
-        zip : bool, optional
-            Should the outcome get zipped in one archive.
-            The default is False.
-        """        
-        # check directory
+        agg_to : str, optional
+            To what aggregation level should the timeseries get aggregated to.
+            The minimum aggregation for Temperatur and ET is daily and for the precipitation it is 10 minutes.
+            If a smaller aggregation is selected the minimum possible aggregation for the respective parameter is returned.
+            So if 10 minutes is selected, than precipitation is returned in 10 minuets and T and ET as daily.
+            The default is "10 min".
+        et_et0 : int or None, optional
+            Should the ET timeserie contain a column with et_et0.
+            If None, then no column is added.
+            If int, then a ET/ET0 column is appended with this number as standard value.
+            Until now providing a serie of different values is not possible.
+            The default is None.
+        split_date : bool, optional
+            Should the timestamp get splitted into parts, so one column for year, one for month etc.?
+            If False the timestamp is saved in one column as string.
+        """
+        start_time = datetime.datetime.now()
+        # check directory and stids
         dir = self._check_dir(dir)
-
         stids = self._check_stids(stids)
 
         # check period
@@ -872,23 +891,94 @@ class GroupStations(object):
         if dir.suffix == ".zip":
             with zipfile.ZipFile(
                     dir, "w", 
-                    compression=zipfile.ZIP_LZMA,
-                    compresslevel=8) as zf:
+                    compression=zipfile.ZIP_DEFLATED,
+                    compresslevel=5) as zf:
                 for stat in stats:
-                    stat.create_roger_ts(
+                    stat.create_ts(
                         dir=zf,
                         period=period,
-                        kind=kind)
+                        kind=kind,
+                        agg_to=agg_to,
+                        et_et0=et_et0,
+                        split_date=split_date)
                     pbar.variables["last_station"] = stat.id
                     pbar.update(pbar.value + 1)
         else:
             for stat in stats:
-                stat.create_roger_ts(
+                stat.create_ts(
                     dir=dir.joinpath(str(stat.id)),
                     period=period,
-                    kind=kind)
+                    kind=kind,
+                    agg_to=agg_to,
+                    et_et0=et_et0,
+                    split_date=split_date)
                 pbar.variables["last_station"] = stat.id
                 pbar.update(pbar.value + 1)
+
+        # get size of output file
+        if dir.suffix == ".zip":
+            out_size = dir.stat().st_size
+        else:
+            out_size = sum(
+                f.stat().st_size for f in dir.glob('**/*') if f.is_file())
+
+        # save needed time to db
+        sql_save_time = """
+            INSERT INTO needed_download_time(timestamp, quantity, aggregate, timespan, zip, pc, duration, output_size)
+            VALUES (now(), '{quantity}', '{agg_to}', '{timespan}', '{zip}', '{pc}', '{duration}', '{out_size}');
+        """.format(
+            quantity=len(stids), 
+            agg_to=agg_to,
+            timespan=str(period.get_interval()),
+            duration=str(datetime.datetime.now() - start_time),
+            zip="true" if dir.suffix ==".zip" else "false",
+            pc=socket.gethostname(),
+            out_size=out_size)
+        with DB_ENG.connect() as con:
+            con.execute(sql_save_time)
+
+        # create log message
+        log.debug(
+            "The timeseries tables for {quantity} stations got created in {dir}".format(
+                quantity=len(stids), dir=dir))
+
+    def create_roger_ts(self, dir, period=(None, None), 
+                        kind="best", et_et0=1):
+        """Create the timeserie files for roger as csv.
+
+        This is only a wrapper function for create_ts with some standard settings.
+
+        Parameters
+        ----------
+        dir : pathlib like object or zipfile.ZipFile
+            The directory or Zipfile to store the timeseries in.
+            If a zipfile is given a folder with the stations ID is added to the filepath.
+        period : TimestampPeriod like object, optional
+            The period for which to get the timeseries.
+            If (None, None) is entered, then the maximal possible period is computed.
+            The default is (None, None)
+        kind :  str
+            The data kind to look for filled period.
+            Must be a column in the timeseries DB.
+            Must be one of "raw", "qc", "filled", "adj".
+            If "best" is given, then depending on the parameter of the station the best kind is selected.
+            For Precipitation this is "corr" and for the other this is "filled".
+            For the precipitation also "qn" and "corr" are valid.
+        et_et0 : int or None, optional
+            Should the ET timeserie contain a column with et_et0.
+            If None, then no column is added.
+            If int, then a ET/ET0 column is appended with this number as standard value.
+            Until now providing a serie of different values is not possible.
+            The default is 1.
+
+        Raises
+        ------
+        Warning
+            If there are NAs in the timeseries or the period got changed.
+        """
+        return self.create_ts(dir=dir, period=period, kind=kind,
+                              agg_to="10 min", et_et0=et_et0, 
+                              split_dates=True)
 
     def _check_period(self, period, stids, kind):
         max_period = self._GroupStation(stids[0]).get_filled_period(kind=kind)

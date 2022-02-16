@@ -314,6 +314,17 @@ class TimestampPeriod(object):
         period_str = [str(el).replace("None", "NULL") for el in period_str]
         return dict(min_tstp=period_str[0], max_tstp=period_str[1])
 
+    def get_interval(self):
+        """Get the interval of the TimestampPeriod.
+
+        Returns
+        -------
+        pd.Timedelta
+            The interval of this TimestampPeriod.
+            E.G. Timedelta(2 days 12:30:12)
+        """        
+        return self.end - self.start
+
     def copy(self):
         """Copy this TimestampPeriod.
 

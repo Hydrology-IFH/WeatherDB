@@ -1,5 +1,5 @@
 """
-This modulehas a class for every type of station. E.g. PrecipitationStation (or StationN). 
+This module has a class for every type of station. E.g. PrecipitationStation (or StationN). 
 One object represents one Station with one parameter. 
 This object can get used to get the corresponding timeserie.
 There is also a StationGroup class that groups the three parameters precipitation, temperature and evapotranspiration together for one station.
@@ -78,6 +78,22 @@ RICHTER_CLASSES = {
         "max_horizon": np.inf
     },
 }
+AGG_TO = { # possible aggregation periods from small to big
+    None: {
+        "split":{"n": 5, "t":3, "et": 3}}, 
+    "10 min": {
+        "split":{"n": 5, "t":3, "et": 3}}, 
+    "hour": {
+        "split":{"n": 4, "t":3, "et": 3}},
+    "day": {
+        "split":{"n": 3, "t":3, "et": 3}},
+    "month": {
+        "split":{"n": 2, "t":2, "et": 2}},
+    "year": {
+        "split":{"n": 1, "t":1, "et": 1}},
+    "decade": {
+        "split":{"n": 1, "t":1, "et": 1}} 
+    }
 
 # get log
 log = logging.getLogger(__name__)
@@ -117,6 +133,7 @@ class StationBase:
     # the postgresql data type of the timestamp column, e.g. "date" or "timestamp"
     _tstp_dtype = None
     _interval = None  # The interval of the timeseries e.g. "1 day" or "10 min"
+    _min_agg_to = None # Similar to the interval, but same format ass in AGG_TO
     _agg_fun = "sum" # the sql aggregating function to use
 
     def __init__(self, id):
@@ -280,12 +297,6 @@ class StationBase:
             period = filled_period
         else:
             period = period.union(filled_period, how="inner")
-        # for i, comp_fun in enumerate([max,min]):
-        #     comp_el = list(
-        #         value for value in [period[i], filled_period[i]]
-        #                 if value is not None)
-        #     if len(comp_el) != 0:
-        #         period[i] = comp_fun(comp_el)
 
         # save for later
         self._cached_periods.update({
@@ -294,6 +305,19 @@ class StationBase:
                 "return": period}})
 
         return period
+
+    def _check_agg_to(self, agg_to):       
+        agg_to_valid = list(AGG_TO.keys())
+        if agg_to not in agg_to_valid:
+            raise ValueError(
+                "The given agg_to Parameter \"{agg_to}\" is not a valid aggregating period. Please use one of:\n{agg_valid}".format(
+                    agg_to=agg_to,
+                    agg_valid=", ".join([str(item) for item in agg_to_valid])
+                ))
+        if agg_to_valid.index(agg_to) <= agg_to_valid.index(self._min_agg_to):
+            return None
+        else:
+            return agg_to
 
     def _clean_cached_period(self):
         time_limit = datetime.now() - timedelta(minutes=1)
@@ -1611,6 +1635,7 @@ class StationBase:
         db_unit : bool, optional
             Should the result be in the Database unit.
             If False the unit is getting converted to normal unit, like mm or °C.
+            The numbers are saved as integer in the database and got therefor multiplied by 10 or 100 to get to an integer.
             The default is False.
 
         Returns
@@ -1640,20 +1665,11 @@ class StationBase:
         # aggregating?
         timestamp_col = "timestamp"
         group_by = ""
+        agg_to = self._check_agg_to(agg_to)
         if agg_to is not None:
-            # check agg_fun
-            if agg_to == "date":
-                agg_to = "day"
-            agg_to_valid = ["hour", "day", "month", "year", "decade"]
-            if agg_to not in agg_to_valid:
-                raise ValueError(
-                    "The given agg_to Parameter \"{agg_to}\" is not a valid aggregating period. Please use one of:\n{agg_valid}".format(
-                        agg_to=agg_to,
-                        agg_valid=", ".join(agg_to_valid)
-                    ))
             # create sql parts
             kinds = [
-                "{agg_fun}({kind})".format(
+                "{agg_fun}({kind}) AS {kind}".format(
                     agg_fun=self._agg_fun, kind=kind) for kind in kinds]
             timestamp_col = "date_trunc('{agg_to}', timestamp)".format(
                 agg_to=agg_to)
@@ -1901,6 +1917,7 @@ class StationBase:
 class StationTETBase(StationBase):
     _tstp_dtype = "date"
     _interval = "1 day"
+    _min_agg_to = "day"
     _tstp_format = "%Y%m%d"
 
     def _check_isin_meta(self):
@@ -2105,6 +2122,7 @@ class PrecipitationStation(StationNBase):
     _tstp_format = "%Y%m%d %H:%M"
     _tstp_dtype = "timestamp"
     _interval = "10 min"
+    _min_agg_to = "10 min"
     _unit = "mm/10min"
     _valid_kinds = ["raw", "qn", "qc", "corr", "filled", "filled_by"]
     _best_kind = "corr"
@@ -2711,6 +2729,7 @@ class PrecipitationDailyStation(StationNBase):
     _tstp_format = "%Y%m%d"
     _tstp_dtype = "date"
     _interval = "1 day"
+    _min_agg_to = "day"
     _unit = "mm/day"
     _valid_kinds = ["raw", "filled", "filled_by"]
     _best_kind = "filled"
@@ -2926,7 +2945,7 @@ class GroupStation(object):
                 how="inner")
         return filled_period
 
-    def get_df(self, period=(None, None), kind="best", paras="all"):
+    def get_df(self, period=(None, None), kind="best", paras="all", agg_to="10 min"):
         """Get a DataFrame with the corresponding data.
 
         Parameters
@@ -2942,6 +2961,12 @@ class GroupStation(object):
             If "best" is given, then depending on the parameter of the station the best kind is selected.
             For Precipitation this is "corr" and for the other this is "filled".
             For the precipitation also "qn" and "corr" are valid.
+        agg_to : str, optional
+            To what aggregation level should the timeseries get aggregated to.
+            The minimum aggregation for Temperatur and ET is daily and for the precipitation it is 10 minutes.
+            If a smaller aggregation is selected the minimum possible aggregation for the respective parameter is returned.
+            So if 10 minutes is selected, than precipitation is returned in 10 minuets and T and ET as daily.
+            The default is "10 min".
 
         Returns
         -------
@@ -2951,7 +2976,8 @@ class GroupStation(object):
         dfs = []
         for stat in self.station_parts:
             if paras == "all" or stat._para in paras:
-                df = stat.get_df(period=period, kinds=[kind])
+                df = stat.get_df(
+                    period=period, kinds=[kind], agg_to=agg_to)
                 df = df.rename(dict(zip(
                     df.columns,
                     [stat._para + "_" + kind])),
@@ -2965,7 +2991,7 @@ class GroupStation(object):
             df_all = dfs[0]
         else:
             raise ValueError("No timeserie was found for {paras} and Station {stid}".format(
-                paras=", ".join(paras),
+                paras=", ".join(paras) is type(paras),
                 stid=self.id))
 
         return df_all
@@ -2976,8 +3002,11 @@ class GroupStation(object):
     def get_name(self):
         return self.station_parts[0].get_name()
 
-    def create_roger_ts(self, dir, period=(None, None), kind="best"):
-        """Create the timeserie files for RoGeR.
+    def create_roger_ts(self, dir, period=(None, None), 
+                        kind="best", et_et0=1):
+        """Create the timeserie files for roger as csv.
+
+        This is only a wrapper function for create_ts with some standard settings.
 
         Parameters
         ----------
@@ -2995,6 +3024,51 @@ class GroupStation(object):
             If "best" is given, then depending on the parameter of the station the best kind is selected.
             For Precipitation this is "corr" and for the other this is "filled".
             For the precipitation also "qn" and "corr" are valid.
+        et_et0: int or None, optional
+
+        Raises
+        ------
+        Warning
+            If there are NAs in the timeseries or the period got changed.
+        """
+        return self.create_ts(dir=dir, period=period, kind=kind,
+                              agg_to="10 min", et_et0=et_et0, split_date=True)
+
+    def create_ts(self, dir, period=(None, None), kind="best", 
+                  agg_to="10 min", et_et0=None, split_date=False):
+        """Create the timeserie files as csv.
+
+        Parameters
+        ----------
+        dir : pathlib like object or zipfile.ZipFile
+            The directory or Zipfile to store the timeseries in.
+            If a zipfile is given a folder with the statiopns ID is added to the filepath.
+        period : TimestampPeriod like object, optional
+            The period for which to get the timeseries.
+            If (None, None) is entered, then the maximal possible period is computed.
+            The default is (None, None)
+        kind :  str
+            The data kind to look for filled period.
+            Must be a column in the timeseries DB.
+            Must be one of "raw", "qc", "filled", "adj".
+            If "best" is given, then depending on the parameter of the station the best kind is selected.
+            For Precipitation this is "corr" and for the other this is "filled".
+            For the precipitation also "qn" and "corr" are valid.
+        agg_to : str, optional
+            To what aggregation level should the timeseries get aggregated to.
+            The minimum aggregation for Temperatur and ET is daily and for the precipitation it is 10 minutes.
+            If a smaller aggregation is selected the minimum possible aggregation for the respective parameter is returned.
+            So if 10 minutes is selected, than precipitation is returned in 10 minuets and T and ET as daily.
+            The default is "10 min".
+        et_et0 : int or None, optional
+            Should the ET timeserie contain a column with et_et0.
+            If None, then no column is added.
+            If int, then a ET/ET0 column is appended with this number as standard value.
+            Until now providing a serie of different values is not possible.
+            The default is None.
+        split_date : bool, optional
+            Should the timestamp get splitted into parts, so one column for year, one for month etc.?
+            If False the timestamp is saved in one column as string.
 
         Raises
         ------
@@ -3023,82 +3097,147 @@ class GroupStation(object):
                 period = period_new
 
         # get the data
-        df_et = self.get_df(period=period, kind=kind, paras=["et"])
-        df_t = self.get_df(period=period, kind=kind, paras=["t"])
-        df_n = self.get_df(period=period, kind=kind, paras=["n"])
+        # df_et = self.get_df(
+        #     period=period, kind=kind, 
+        #     paras=["et"], agg_to=agg_to)
+        # df_t = self.get_df(
+        #     period=period, kind=kind, 
+        #     paras=["t"], agg_to=agg_to)
+        # df_n = self.get_df(
+        #     period=period, kind=kind, 
+        #     paras=["n"], agg_to=agg_to)
 
-        # rename columns
-        for df, para in zip([df_et, df_t, df_n], ["ET", "T", "N"]):
-            df.rename(dict(zip(df.columns, para)), axis=1, inplace=True)
+        # prepare loop
+        name_suffix = "_{stid:0>4}.txt".format(stid=self.id)
+        x, y = self.get_geom().split(";")[1]\
+                .replace("POINT(", "").replace(")", "")\
+                .split(" ")
+        name = self.get_name() + " (ID: {stid})".format(stid=self.id)
+        do_zip = type(dir) == zipfile.ZipFile
+
+        for para in ["n", "t", "et"]:
+            # get the timeserie
+            df = self.get_df(
+                period=period, kind=kind, 
+                paras=[para], agg_to=agg_to)
+
+            # rename columns
+            df.rename(dict(zip(df.columns, para.upper())), axis=1, inplace=True)
+
+             # check for NAs
+            if df.isna().sum().sum() > 0 and kind in ["filled", "corr", "best"]:
+                warnings.warn("There were NAs in the timeserie for Station {stid}. this should not happen. Please review the code and the database.".format(
+                    stid=self.id))
+
+            # get the number of columns
+            num_col = 1
+            if split_date:
+                num_col += AGG_TO[agg_to]["split"][para]
+            else:
+                num_col += 1
+            
+            # special operations for et
+            if para == "et" and et_et0 is None:
+                num_col += 1
+                df = df.join(
+                    pd.Series([et_et0]*len(df), name="R/R0", index=df.index))
+
+            # create header
+            header = ("Name: " + name + "\t" * (num_col-1) + "\n" +
+                        "Lat: " + y + "   ,Lon: " + x + "\t" * (num_col-1) + "\n")
+            
+            # create tables
+            if split_date:
+                df = self._split_date(df.index)\
+                        .iloc[:, 0:AGG_TO[agg_to]["split"][para]]\
+                        .join(df)
+            else:
+                df.reset_index(inplace=True)
+
+            # write table out
+            str_df = header + df.to_csv(sep="\t", decimal=".", index=False)
+            file_name = para.upper() + name_suffix
+            if do_zip:
+                dir.writestr(
+                    "{stid}/{file}".format(
+                        stid=self.id, file=file_name), 
+                    str_df)
+            else:
+                with open(dir.joinpath(file_name), "w") as f:
+                    f.write(str_df)
 
         # check for NAs
-        if (df_et.isna().sum().sum() > 0
-                or df_t.isna().sum().sum() > 0
-                or df_n.isna().sum().sum() > 0) \
-            and kind in ["filled", "corr"]:
-            warnings.warn("There were NAs in the timeserie for Station {stid}. this should not happen. Please review the code and the database.".format(
-                stid=self.id))
+        # if (df_et.isna().sum().sum() > 0
+        #         or df_t.isna().sum().sum() > 0
+        #         or df_n.isna().sum().sum() > 0) \
+        #     and kind in ["filled", "corr", "best"]:
+        #     warnings.warn("There were NAs in the timeserie for Station {stid}. this should not happen. Please review the code and the database.".format(
+        #         stid=self.id))
 
         # create filepaths
-        name_suffix = "_{stid:0>4}.txt".format(stid=self.id)
+        # name_suffix = "_{stid:0>4}.txt".format(stid=self.id)
+        # file_n = "N" + name_suffix
+        # file_t = "T" + name_suffix
+        # file_et = "ET" + name_suffix
 
-        # file_n = Path(dir, "N" + name_suffix)
-        # file_et = Path(dir, "ET" + name_suffix)
-        # file_t = Path(dir, "Ta" + name_suffix)
-        file_n = "N" + name_suffix
-        file_t = "T" + name_suffix
-        file_et = "ET" + name_suffix
+        # get the number of columns
+        # agg_to = StationBase._check_agg_to(agg_to)
+        # for para, num_col_base in zip(["n", "t", "et"], )
+        # num_col_n = 1 + AGG_TO[agg_to]["split"]["n"]
+        # num_col_t = 1 + AGG_TO[agg_to]["split"]["t_et"]
+        # num_col_et = 1 if et_et0 is None else 2
+        # if split_date:
+        #     num_col_n = num_col_n + AGG_TO[agg_to]["split"]["n"]
+        #     num_col_t = num_col_t + AGG_TO[agg_to]["split"]["t"]
+        #     num_col_et = num_col_et + AGG_TO[agg_to]["split"]["t"]
+        # else:
+        #     num_col_n += 1
+        #     num_col_t += 1
+        #     num_col_et += 1
 
         # # create headers and files
-        x, y = self.get_geom().split(";")[1]\
-            .replace("POINT(", "").replace(")", "")\
-            .split(" ")
-        name = self.get_name() + " (ID: {stid})".format(stid=self.id)
+        # x, y = self.get_geom().split(";")[1]\
+        #     .replace("POINT(", "").replace(")", "")\
+        #     .split(" ")
+        # name = self.get_name() + " (ID: {stid})".format(stid=self.id)
 
-        header_n = ("Name: " + name + "\t" * 5 + "\n" +
-                    "Lat: " + y + "   ,Lon: " + x + "\t" * 5 + "\n")
-        header_et = ("Name: " + name + "\t" * 4 + "\n" +
-                    "Lat: " + y + "   ,Lon: " + x + "\t" * 4 + "\n")
-        header_t = ("Name: " + name + "\t" * 3 + "\n" +
-                    "Lat: " + y + "   ,Lon: " + x + "\t" * 3 + "\n")
+        # header_n = ("Name: " + name + "\t" * (num_col_n-1) + "\n" +
+        #             "Lat: " + y + "   ,Lon: " + x + "\t" * (num_col_n-1) + "\n")
+        # header_t = ("Name: " + name + "\t" * (num_col_t-1) + "\n" +
+        #             "Lat: " + y + "   ,Lon: " + x + "\t" * (num_col_t-1) + "\n")
+        # header_et = ("Name: " + name + "\t" * (num_col_et-1) + "\n" +
+        #             "Lat: " + y + "   ,Lon: " + x + "\t" * (num_col_et-1) + "\n")
 
-        # with open(file_n, "w") as f:
-        #     f.write(header_n)
-        # with open(file_et, "w") as f:
-        #     f.write(header_et)
-        # with open(file_t, "w") as f:
-        #     f.write(header_t)
-
-        # create tables
-        str_n = header_n + self._split_date(df_n.index)\
-            .join(df_n)\
-            .to_csv(sep="\t", decimal=".", index=False, mode="a")
-        str_t = header_t + self._split_date(df_t.index).iloc[:, 0:3]\
-            .join(df_t)\
-            .to_csv(sep="\t", decimal=".", index=False, mode="a")
-        str_et = header_et + self._split_date(df_et.index).iloc[:, 0:3]\
-            .join(df_et)\
-            .join(pd.Series([0]*len(df_et), name="R/R0", index=df_et.index))\
-            .to_csv(sep="\t", decimal=".", index=False, mode="a")
+        # # create tables
+        # str_n = header_n + self._split_date(df_n.index)\
+        #     .join(df_n)\
+        #     .to_csv(sep="\t", decimal=".", index=False, mode="a")
+        # str_t = header_t + self._split_date(df_t.index).iloc[:, 0:3]\
+        #     .join(df_t)\
+        #     .to_csv(sep="\t", decimal=".", index=False, mode="a")
+        # str_et = header_et + self._split_date(df_et.index).iloc[:, 0:3]\
+        #     .join(df_et)\
+        #     .join(pd.Series([0]*len(df_et), name="R/R0", index=df_et.index))\
+        #     .to_csv(sep="\t", decimal=".", index=False, mode="a")
 
         # write to file
-        if isinstance(dir, Path):
-            with open(dir.joinpath(file_n), "w") as f:
-                f.write(str_n)
-            with open(dir.joinpath(file_t), "w") as f:
-                f.write(str_t)
-            with open(dir.joinpath(file_et), "w") as f:
-                f.write(str_et)
-        elif type(dir) == zipfile.ZipFile:
-            dir.writestr(
-                "{stid}/{file}".format(stid=self.id, file=file_n), 
-                str_n)
-            dir.writestr(
-                "{stid}/{file}".format(stid=self.id, file=file_t),
-                str_t)
-            dir.writestr(
-                "{stid}/{file}".format(stid=self.id, file=file_et), 
-                str_et)
+        # if isinstance(dir, Path):
+        #     with open(dir.joinpath(file_n), "w") as f:
+        #         f.write(str_n)
+        #     with open(dir.joinpath(file_t), "w") as f:
+        #         f.write(str_t)
+        #     with open(dir.joinpath(file_et), "w") as f:
+        #         f.write(str_et)
+        # elif type(dir) == zipfile.ZipFile:
+        #     dir.writestr(
+        #         "{stid}/{file}".format(stid=self.id, file=file_n), 
+        #         str_n)
+        #     dir.writestr(
+        #         "{stid}/{file}".format(stid=self.id, file=file_t),
+        #         str_t)
+        #     dir.writestr(
+        #         "{stid}/{file}".format(stid=self.id, file=file_et), 
+                # str_et)
 
     @staticmethod
     def _check_dir(dir):
@@ -3163,12 +3302,9 @@ class GroupStation(object):
         if type(dates) == datetime or type(dates) == pd.Timestamp:
             dates = pd.DatetimeIndex([dates])
             index = range(0, len(dates))
-        # elif type(dates) == pd.Series:
-        #     index = dates.index
-        #     dates = pd.DatetimeIndex(dates.to_list())
+
         elif type(dates) == pd.DatetimeIndex:
             index = dates
-            # dates = dates.to_pydatetime()
         else:
             index = range(0, len(dates))
 
