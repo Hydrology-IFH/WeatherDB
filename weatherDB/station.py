@@ -764,8 +764,8 @@ class StationBase:
             INSERT INTO meta_{para} as meta
                 (station_id, raw_von, raw_bis, last_imp_von, last_imp_bis
                     {last_imp_cols})
-            VALUES ({stid}, '{min_tstp}', '{max_tstp}', '{min_tstp}',
-                    '{max_tstp}'{last_imp_values})
+            VALUES ({stid}, {min_tstp}, {max_tstp}, {min_tstp},
+                    {max_tstp}{last_imp_values})
             ON CONFLICT (station_id) DO UPDATE SET
                 raw_von = LEAST (meta.raw_von, EXCLUDED.raw_von),
                 raw_bis = GREATEST (meta.raw_bis, EXCLUDED.raw_bis),
@@ -800,7 +800,8 @@ class StationBase:
                 "meta.last_imp_" +
                 " AND meta.last_imp_".join(last_imp_valid_kinds)
             ) if len(last_imp_valid_kinds) > 0 else "true",
-            **period.get_sql_format_dict())
+            **period.get_sql_format_dict(
+                format="'{}'".format(self._tstp_format)))
 
         # execute meta update
         with DB_ENG.connect()\
@@ -1079,7 +1080,8 @@ class StationBase:
         if not period.is_empty():
             sql_format_dict.update(dict(
                 cond_period=" WHERE ts.timestamp BETWEEN {min_tstp} AND {max_tstp}".format(
-                    **period.get_sql_format_dict())
+                    **period.get_sql_format_dict(
+                        format="'{}'".format(self._tstp_format)))
             ))
         else:
             sql_format_dict.update(dict(
@@ -1691,7 +1693,7 @@ class StationBase:
         sql = """
             SELECT {timestamp_col} as timestamp, {kinds}
             FROM timeseries."{stid}_{para}"
-            WHERE timestamp BETWEEN '{min_tstp}' AND '{max_tstp}'
+            WHERE timestamp BETWEEN {min_tstp} AND {max_tstp}
             {group_by}
             ORDER BY timestamp ASC;
             """.format(
@@ -1700,7 +1702,8 @@ class StationBase:
             kinds=', '.join(kinds),
             group_by=group_by,
             timestamp_col=timestamp_col,
-            **period.get_sql_format_dict(format=self._tstp_format)
+            **period.get_sql_format_dict(
+                format="'{}'".format(self._tstp_format))
         )
 
         df = pd.read_sql(sql, con=DB_ENG, index_col="timestamp")
@@ -1804,12 +1807,12 @@ class StationBase:
             SELECT timestamp, filled_by, distance
             FROM timeseries."{stid}_{para}"
             LEFT JOIN dist ON filled_by=station_id
-            WHERE BETWEEN '{min_tstp}' AND '{max_tstp}';""".format(
+            WHERE BETWEEN {min_tstp} AND {max_tstp};""".format(
             stid=self.id,
             para=self._para,
-            **period.get_sql_format_dict(format=self._tstp_format)
-            # min_tstp=period[0].strftime(self._tstp_format),
-            # max_tstp=period[1].strftime(self._tstp_format)
+            **period.get_sql_format_dict(
+                format="'{}'".format(self._tstp_format)
+            )
         )
 
         df = pd.read_sql(
@@ -1993,8 +1996,8 @@ class StationCanVirtualBase(StationBase):
 
 
 class StationTETBase(StationCanVirtualBase):
-    """A base class for T and ET. 
-    
+    """A base class for T and ET.
+
     This class adds methods that are only used by temperatur and evapotranspiration stations.
     """
     _tstp_dtype = "date"
@@ -2067,14 +2070,14 @@ class StationTETBase(StationCanVirtualBase):
                 ON ts.timestamp=ts4.timestamp
             LEFT JOIN timeseries."{near_stids[4]}_{para}" ts5
                 ON ts.timestamp=ts5.timestamp
-            WHERE ts.timestamp BETWEEN '{min_tstp}' AND '{max_tstp}'
+            WHERE ts.timestamp BETWEEN {min_tstp} AND {max_tstp}
             """.format(
             stid=self.id,
             para=self._para,
             near_stids=near_stids,
             coefs=coefs,
             coef_sign=self._coef_sign,
-            **period.get_sql_format_dict(format=self._tstp_format)
+            **period.get_sql_format_dict()
         )
 
         return sql_near_mean
@@ -2155,7 +2158,7 @@ class PrecipitationStation(StationNBase):
         # create sql_format_dict
         sql_format_dict = dict(
             para=self._para, stid=self.id, para_long=self._para_long,
-            **period.get_sql_format_dict(format=self._tstp_format),
+            **period.get_sql_format_dict(format="'{}'".format(self._tstp_format)),
             limit=0.1*self._decimals) # don't delete values below 0.1mm/10min if they are consecutive
 
         # check if daily station is available
@@ -2176,12 +2179,12 @@ class PrecipitationStation(StationNBase):
                 WITH ts_10min_d AS (
                     SELECT (ts.timestamp - INTERVAL '5h 50 min')::date as date, sum("raw") as raw
                     FROM timeseries."{stid}_{para}" ts
-                    WHERE ts.timestamp BETWEEN '{min_tstp}' AND '{max_tstp}'
+                    WHERE ts.timestamp BETWEEN {min_tstp} AND {max_tstp}
                     GROUP BY (ts.timestamp - INTERVAL '5h 50 min')::date)
                 SELECT date
                 FROM timeseries."{stid}_{para}_d" ts_d
                 LEFT JOIN ts_10min_d ON ts_d.timestamp::date=ts_10min_d.date
-                WHERE ts_d.timestamp BETWEEN '{min_tstp}'::date AND '{max_tstp}'::date
+                WHERE ts_d.timestamp BETWEEN {min_tstp}::date AND {max_tstp}::date
                     AND ts_10min_d.raw = 0 AND ts_d.raw <> 0
             """.format(**sql_format_dict)
         else:
@@ -2211,7 +2214,7 @@ class PrecipitationStation(StationNBase):
                     AND ts.raw = ts2.raw AND ts2.raw = ts3.raw
                     AND ts.raw > {limit:n}
                     AND ts.raw is not NULL
-                    AND ts.timestamp BETWEEN '{min_tstp}' AND '{max_tstp}'
+                    AND ts.timestamp BETWEEN {min_tstp} AND {max_tstp}
             )
             SELECT tstp_1 AS timestamp FROM tstps_df
             UNION SELECT tstp_2 FROM tstps_df
@@ -2229,7 +2232,7 @@ class PrecipitationStation(StationNBase):
                     THEN NULL
                     ELSE ts."raw" END) as qc
             FROM timeseries."{stid}_{para}" ts
-            WHERE ts.timestamp BETWEEN '{min_tstp}' AND '{max_tstp}'
+            WHERE ts.timestamp BETWEEN {min_tstp} AND {max_tstp}
         """.format(
             sql_tstps_failed=sql_tstps_failed,
             sql_dates_failed=sql_dates_failed,
@@ -2444,7 +2447,9 @@ class PrecipitationStation(StationNBase):
             sql_period_clause = """
                 WHERE timestamp BETWEEN {min_tstp} AND {max_tstp}
             """.format(
-                **period.get_sql_format_dict()
+                **period.get_sql_format_dict(
+                    format="'{}'".format(self._tstp_format)
+                )
             )
         else:
             sql_period_clause = ""
