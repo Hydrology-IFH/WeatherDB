@@ -718,15 +718,15 @@ class PrecipitationStations(StationsBase):
         ValueError
             If the given stids (Station_IDs) are not all valid.
         """
-        stations = self.get_stations(only_real=True)
+        stations = self.get_stations(only_real=True, stids=stids)
         period = stations[0].get_last_imp_period(all=True)
         log.info("The {para_long} Stations fillup of the last import is started for the period {min_tstp} - {max_tstp}".format(
             para_long=self._para_long,
             **period.get_sql_format_dict(format="%Y%m%d %H:%M")))
         self._run_in_mp(
             stations=stations,
-            methode="richter_correct",
-            kwargs={"period": period},
+            methode="last_imp_corr",
+            kwargs={"_last_imp_period": period},
             name="richter correction on {para}".format(para=self._para.upper()),
             do_mp=False)
 
@@ -890,7 +890,7 @@ class GroupStations(object):
 
         if dir.suffix == ".zip":
             with zipfile.ZipFile(
-                    dir, "w", 
+                    dir, "w",
                     compression=zipfile.ZIP_DEFLATED,
                     compresslevel=5) as zf:
                 for stat in stats:
@@ -927,7 +927,7 @@ class GroupStations(object):
             INSERT INTO needed_download_time(timestamp, quantity, aggregate, timespan, zip, pc, duration, output_size)
             VALUES (now(), '{quantity}', '{agg_to}', '{timespan}', '{zip}', '{pc}', '{duration}', '{out_size}');
         """.format(
-            quantity=len(stids), 
+            quantity=len(stids),
             agg_to=agg_to,
             timespan=str(period.get_interval()),
             duration=str(datetime.datetime.now() - start_time),
@@ -942,7 +942,7 @@ class GroupStations(object):
             "The timeseries tables for {quantity} stations got created in {dir}".format(
                 quantity=len(stids), dir=dir))
 
-    def create_roger_ts(self, dir, period=(None, None), 
+    def create_roger_ts(self, dir, period=(None, None),
                         kind="best", et_et0=1):
         """Create the timeserie files for roger as csv.
 
@@ -977,7 +977,7 @@ class GroupStations(object):
             If there are NAs in the timeseries or the period got changed.
         """
         return self.create_ts(dir=dir, period=period, kind=kind,
-                              agg_to="10 min", et_et0=et_et0, 
+                              agg_to="10 min", et_et0=et_et0,
                               split_dates=True)
 
     def _check_period(self, period, stids, kind):
@@ -992,7 +992,7 @@ class GroupStations(object):
             return max_period
         else:
             if not period.inside(max_period):
-                raise Warning("The asked period is too large. Only {min_tstp} - {max_tstp} is returned".format(
+                warnings.warn("The asked period is too large. Only {min_tstp} - {max_tstp} is returned".format(
                     **max_period.get_sql_format_dict(format="%Y-%m-%d %H:%M")))
             return period.union(max_period)
 
@@ -1008,9 +1008,9 @@ class GroupStations(object):
                 raise ValueError(
                     "There is no station defined in the database for the IDs:\n{stids}".format(
                         stids=", ".join(
-                            [stid for stid in stids 
+                            [stid for stid in stids
                                   if stid not in stids_valid])))
-    
+
     @staticmethod
     def _check_dir(dir):
         """Checks if a directors is valid and empty.
@@ -1057,7 +1057,7 @@ class GroupStations(object):
             raise ValueError(
                 "The given directory '{dir}' is not a directory or zipfile.".format(
                     dir=dir))
-        
+
         return dir
 
 # clean station

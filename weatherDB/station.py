@@ -1,6 +1,6 @@
 """
-This module has a class for every type of station. E.g. PrecipitationStation (or StationN). 
-One object represents one Station with one parameter. 
+This module has a class for every type of station. E.g. PrecipitationStation (or StationN).
+One object represents one Station with one parameter.
 This object can get used to get the corresponding timeserie.
 There is also a StationGroup class that groups the three parameters precipitation, temperature and evapotranspiration together for one station.
 """
@@ -80,9 +80,9 @@ RICHTER_CLASSES = {
 }
 AGG_TO = { # possible aggregation periods from small to big
     None: {
-        "split":{"n": 5, "t":3, "et": 3}}, 
+        "split":{"n": 5, "t":3, "et": 3}},
     "10 min": {
-        "split":{"n": 5, "t":3, "et": 3}}, 
+        "split":{"n": 5, "t":3, "et": 3}},
     "hour": {
         "split":{"n": 4, "t":3, "et": 3}},
     "day": {
@@ -92,7 +92,7 @@ AGG_TO = { # possible aggregation periods from small to big
     "year": {
         "split":{"n": 1, "t":1, "et": 1}},
     "decade": {
-        "split":{"n": 1, "t":1, "et": 1}} 
+        "split":{"n": 1, "t":1, "et": 1}}
     }
 
 # get log
@@ -306,7 +306,7 @@ class StationBase:
 
         return period
 
-    def _check_agg_to(self, agg_to):       
+    def _check_agg_to(self, agg_to):
         agg_to_valid = list(AGG_TO.keys())
         if agg_to not in agg_to_valid:
             raise ValueError(
@@ -744,6 +744,69 @@ class StationBase:
                 why="no multi-annual data was found from 'rasters.{raster_name}'"
                 .format(raster_name=self._ma_raster["db_table"]))
 
+    def _update_last_imp_period_meta(self, period):
+        """Update the meta timestamps for a new import."""
+        #check period format
+        if type(period) != TimestampPeriod:
+            period = TimestampPeriod(*period)
+
+        # update meta file
+        # ----------------
+        # get last_imp valid kinds that are in the meta file
+        last_imp_valid_kinds = self._valid_kinds.copy()
+        last_imp_valid_kinds.remove("raw")
+        for name in ["qn", "filled_by"]:
+            if name in last_imp_valid_kinds:
+                last_imp_valid_kinds.remove(name)
+
+        # create update sql
+        sql_update_meta = '''
+            INSERT INTO meta_{para} as meta
+                (station_id, raw_von, raw_bis, last_imp_von, last_imp_bis
+                    {last_imp_cols})
+            VALUES ({stid}, '{min_tstp}', '{max_tstp}', '{min_tstp}',
+                    '{max_tstp}'{last_imp_values})
+            ON CONFLICT (station_id) DO UPDATE SET
+                raw_von = LEAST (meta.raw_von, EXCLUDED.raw_von),
+                raw_bis = GREATEST (meta.raw_bis, EXCLUDED.raw_bis),
+                last_imp_von = CASE WHEN {last_imp_test}
+                                    THEN EXCLUDED.last_imp_von
+                                    ELSE LEAST(meta.last_imp_von,
+                                            EXCLUDED.last_imp_von)
+                                    END,
+                last_imp_bis = CASE WHEN {last_imp_test}
+                                    THEN EXCLUDED.last_imp_bis
+                                    ELSE GREATEST(meta.last_imp_bis,
+                                                EXCLUDED.last_imp_bis)
+                                    END
+                {last_imp_conflicts};
+            '''.format(
+            para=self._para,
+            stid=self.id,
+            last_imp_values=(
+                ", " +
+                ", ".join(["FALSE"] * len(last_imp_valid_kinds))
+            ) if len(last_imp_valid_kinds) > 0 else "",
+            last_imp_cols=(
+                ", last_imp_" +
+                ", last_imp_".join(last_imp_valid_kinds)
+            ) if len(last_imp_valid_kinds) > 0 else "",
+            last_imp_conflicts=(
+                ", last_imp_" +
+                " = FALSE, last_imp_".join(last_imp_valid_kinds) +
+                " = FALSE"
+            ) if len(last_imp_valid_kinds) > 0 else "",
+            last_imp_test=(
+                "meta.last_imp_" +
+                " AND meta.last_imp_".join(last_imp_valid_kinds)
+            ) if len(last_imp_valid_kinds) > 0 else "true",
+            **period.get_sql_format_dict())
+
+        # execute meta update
+        with DB_ENG.connect()\
+                .execution_options(isolation_level="AUTOCOMMIT") as con:
+            con.execute(sql_update_meta)
+
     @check_superuser
     def update_raw(self, only_new=True, ftp_file_list=None):
         """Download data from CDC and upload to database.
@@ -774,6 +837,7 @@ class StationBase:
                 """raw_update of {para_long} Station {stid}:
                 No zipfile was found and therefor no new data was imported."""
                 .format(para_long=self._para_long, stid=self.id))
+            self._update_last_imp_period_meta(period=(None, None))
             return None
 
         # download raw data
@@ -824,76 +888,23 @@ class StationBase:
                 # there will never be data for this station
                 self._drop(
                     why="while updating raw data with only_new=False the df was empty even thought the station is not virtual")
-                log_msg += "\nBecause only_new was False, the station got droped from the meta file."
+                log_msg += "\nBecause only_new was False, the station got dropped from the meta file."
 
             # return empty df
             log.debug(log_msg)
+            self._update_last_imp_period_meta(period=(None, None))
             return None
 
         # update meta file
-        # -----------------
-        # get last_imp valid kinds that are in the meta file
-        last_imp_valid_kinds = self._valid_kinds.copy()
-        last_imp_valid_kinds.remove("raw")
-        for name in ["qn", "filled_by"]:
-            if name in last_imp_valid_kinds:
-                last_imp_valid_kinds.remove(name)
-
-        # create update sql
-        sql_update_meta = '''
-            INSERT INTO meta_{para} as meta
-                (station_id, raw_von, raw_bis, last_imp_von, last_imp_bis
-                    {last_imp_cols})
-            VALUES ({stid}, '{min_tstp}', '{max_tstp}', '{min_tstp}',
-                    '{max_tstp}'{last_imp_values})
-            ON CONFLICT (station_id) DO UPDATE SET
-                raw_von = LEAST (meta.raw_von, EXCLUDED.raw_von),
-                raw_bis = GREATEST (meta.raw_bis, EXCLUDED.raw_bis),
-                last_imp_von = CASE WHEN {last_imp_test}
-                                    THEN EXCLUDED.last_imp_von
-                                    ELSE LEAST(meta.last_imp_von,
-                                            EXCLUDED.last_imp_von)
-                                    END,
-                last_imp_bis = CASE WHEN {last_imp_test}
-                                    THEN EXCLUDED.last_imp_bis
-                                    ELSE GREATEST(meta.last_imp_bis,
-                                                EXCLUDED.last_imp_bis)
-                                    END
-                {last_imp_conflicts};
-            '''.format(
-            para=self._para,
-            stid=self.id,
-            min_tstp=selection.index.min().strftime("%Y%m%d %H:%M"),
-            max_tstp=selection.index.max().strftime("%Y%m%d %H:%M"),
-            last_imp_values=(
-                ", " +
-                ", ".join(["FALSE"] * len(last_imp_valid_kinds))
-            ) if len(last_imp_valid_kinds) > 0 else "",
-            last_imp_cols=(
-                ", last_imp_" +
-                ", last_imp_".join(last_imp_valid_kinds)
-            ) if len(last_imp_valid_kinds) > 0 else "",
-            last_imp_conflicts=(
-                ", last_imp_" +
-                " = FALSE, last_imp_".join(last_imp_valid_kinds) +
-                " = FALSE"
-            ) if len(last_imp_valid_kinds) > 0 else "",
-            last_imp_test=(
-                "meta.last_imp_" +
-                " AND meta.last_imp_".join(last_imp_valid_kinds)
-            ) if len(last_imp_valid_kinds) > 0 else "true")
-
-        # execute meta update
-        with DB_ENG.connect()\
-                .execution_options(isolation_level="AUTOCOMMIT") as con:
-            con.execute(sql_update_meta)
+        imp_period = TimestampPeriod(
+            selection.index.min(), selection.index.max())
+        self._update_last_imp_period_meta(period=imp_period)
 
         log.info("The raw data for {para_long} station with ID {stid} got updated for the period {min_tstp} to {max_tstp}."
                 .format(
                     para_long=self._para_long,
                     stid=self.id,
-                    min_tstp=str(selection.index.min()),
-                    max_tstp=str(selection.index.max())))
+                    **imp_period.get_sql_format_dict(format="%Y-%m-%d %H:%M")))
 
     def get_zipfiles(self, only_new=True, ftp_file_list=None):
         """Get the zipfiles on the CDC server with the raw data.
@@ -1249,17 +1260,18 @@ class StationBase:
 
     @check_superuser
     def last_imp_qc(self):
-        self._last_imp_quality_check()
+        self.last_imp_quality_check()
 
     @check_superuser
-    def last_imp_fillup(self, last_imp_period=None):
+    def last_imp_fillup(self, _last_imp_period=None):
         """Do the filling up of the last import.
         """
-        if last_imp_period is None:
-            period = self.get_last_imp_period(all=True)
-        else:
-            period = last_imp_period
         if not self.is_last_imp_done(kind="filled"):
+            if _last_imp_period is None:
+                period = self.get_last_imp_period(all=True)
+            else:
+                period = _last_imp_period
+
             self.fillup(period=period)
             self._mark_last_imp_done(kind="filled")
 
@@ -1914,11 +1926,10 @@ class StationBase:
         )
 
 
-class StationTETBase(StationBase):
-    _tstp_dtype = "date"
-    _interval = "1 day"
-    _min_agg_to = "day"
-    _tstp_format = "%Y%m%d"
+class StationCanVirtualBase(StationBase):
+    """A class to add the methods for stations that can also be virtual.
+    Virtual means, that there is no real DWD station with measurements.
+    But to have data for every parameter at every 10 min precipitation station location, it is necessary to add stations and fill them with data from neighboors."""
 
     def _check_isin_meta(self):
         """Check if the Station is in the Meta table and if not create a virtual station.
@@ -1928,7 +1939,7 @@ class StationTETBase(StationBase):
                 If the Station ID is neither a real station or in the precipitation meta table.
 
         Returns:
-            bool: True if the Station check was succesfull.
+            bool: True if the Station check was successfull.
         """
         if self.isin_meta():
             return True
@@ -1961,6 +1972,35 @@ class StationTETBase(StationBase):
 
         with DB_ENG.connect().execution_options(isolation_level="AUTOCOMMIT") as con:
             con.execute(sql)
+
+    def isin_meta_n(self):
+        """Check if Station is in the precipitation meta table.
+
+        Returns
+        -------
+        bool
+            True if Station is in the precipitation meta table.
+        """
+        with DB_ENG.connect() as con:
+            result = con.execute("""
+            SELECT {stid} in (SELECT station_id FROM meta_n);
+            """.format(stid=self.id))
+        return result.first()[0]
+
+    def quality_check(self, period=(None, None)):
+        if not self.is_virtual():
+            super().quality_check(period=period)
+
+
+class StationTETBase(StationCanVirtualBase):
+    """A base class for T and ET. 
+    
+    This class adds methods that are only used by temperatur and evapotranspiration stations.
+    """
+    _tstp_dtype = "date"
+    _interval = "1 day"
+    _min_agg_to = "day"
+    _tstp_format = "%Y%m%d"
 
     def _create_timeseries_table(self):
         """Create the timeseries table in the DB if it is not yet existing."""
@@ -2035,29 +2075,9 @@ class StationTETBase(StationBase):
             coefs=coefs,
             coef_sign=self._coef_sign,
             **period.get_sql_format_dict(format=self._tstp_format)
-            # min_tstp=period[0].strftime(self._tstp_format),
-            # max_tstp=period[1].strftime(self._tstp_format)
         )
 
         return sql_near_mean
-
-    def isin_meta_n(self):
-        """Check if Station is in the precipitation meta table.
-
-        Returns
-        -------
-        bool
-            True if Station is in the precipitation meta table.
-        """
-        with DB_ENG.connect() as con:
-            result = con.execute("""
-            SELECT {stid} in (SELECT station_id FROM meta_n);
-            """.format(stid=self.id))
-        return result.first()[0]
-
-    def quality_check(self, period=(None, None)):
-        if not self.is_virtual():
-            super().quality_check(period=period)
 
     def get_adj(self, period=(None, None)):
         # this is only the second part of the methode
@@ -2718,7 +2738,7 @@ class PrecipitationStation(StationNBase):
         return self.get_meta(infos="horizontabschirmung")
 
 
-class PrecipitationDailyStation(StationNBase):
+class PrecipitationDailyStation(StationNBase, StationCanVirtualBase):
     _ftp_folder_base = [
         "climate_environment/CDC/observations_germany/climate/daily/kl/",
         "climate_environment/CDC/observations_germany/climate/daily/more_precip/"]
@@ -3002,7 +3022,7 @@ class GroupStation(object):
     def get_name(self):
         return self.station_parts[0].get_name()
 
-    def create_roger_ts(self, dir, period=(None, None), 
+    def create_roger_ts(self, dir, period=(None, None),
                         kind="best", et_et0=1):
         """Create the timeserie files for roger as csv.
 
@@ -3034,7 +3054,7 @@ class GroupStation(object):
         return self.create_ts(dir=dir, period=period, kind=kind,
                               agg_to="10 min", et_et0=et_et0, split_date=True)
 
-    def create_ts(self, dir, period=(None, None), kind="best", 
+    def create_ts(self, dir, period=(None, None), kind="best",
                   agg_to="10 min", et_et0=None, split_date=False):
         """Create the timeserie files as csv.
 
@@ -3096,17 +3116,6 @@ class GroupStation(object):
                         period_filled=str(period_filled)))
                 period = period_new
 
-        # get the data
-        # df_et = self.get_df(
-        #     period=period, kind=kind, 
-        #     paras=["et"], agg_to=agg_to)
-        # df_t = self.get_df(
-        #     period=period, kind=kind, 
-        #     paras=["t"], agg_to=agg_to)
-        # df_n = self.get_df(
-        #     period=period, kind=kind, 
-        #     paras=["n"], agg_to=agg_to)
-
         # prepare loop
         name_suffix = "_{stid:0>4}.txt".format(stid=self.id)
         x, y = self.get_geom().split(";")[1]\
@@ -3118,7 +3127,7 @@ class GroupStation(object):
         for para in ["n", "t", "et"]:
             # get the timeserie
             df = self.get_df(
-                period=period, kind=kind, 
+                period=period, kind=kind,
                 paras=[para], agg_to=agg_to)
 
             # rename columns
@@ -3135,7 +3144,7 @@ class GroupStation(object):
                 num_col += AGG_TO[agg_to]["split"][para]
             else:
                 num_col += 1
-            
+
             # special operations for et
             if para == "et" and et_et0 is None:
                 num_col += 1
@@ -3145,7 +3154,7 @@ class GroupStation(object):
             # create header
             header = ("Name: " + name + "\t" * (num_col-1) + "\n" +
                         "Lat: " + y + "   ,Lon: " + x + "\t" * (num_col-1) + "\n")
-            
+
             # create tables
             if split_date:
                 df = self._split_date(df.index)\
@@ -3160,84 +3169,11 @@ class GroupStation(object):
             if do_zip:
                 dir.writestr(
                     "{stid}/{file}".format(
-                        stid=self.id, file=file_name), 
+                        stid=self.id, file=file_name),
                     str_df)
             else:
                 with open(dir.joinpath(file_name), "w") as f:
                     f.write(str_df)
-
-        # check for NAs
-        # if (df_et.isna().sum().sum() > 0
-        #         or df_t.isna().sum().sum() > 0
-        #         or df_n.isna().sum().sum() > 0) \
-        #     and kind in ["filled", "corr", "best"]:
-        #     warnings.warn("There were NAs in the timeserie for Station {stid}. this should not happen. Please review the code and the database.".format(
-        #         stid=self.id))
-
-        # create filepaths
-        # name_suffix = "_{stid:0>4}.txt".format(stid=self.id)
-        # file_n = "N" + name_suffix
-        # file_t = "T" + name_suffix
-        # file_et = "ET" + name_suffix
-
-        # get the number of columns
-        # agg_to = StationBase._check_agg_to(agg_to)
-        # for para, num_col_base in zip(["n", "t", "et"], )
-        # num_col_n = 1 + AGG_TO[agg_to]["split"]["n"]
-        # num_col_t = 1 + AGG_TO[agg_to]["split"]["t_et"]
-        # num_col_et = 1 if et_et0 is None else 2
-        # if split_date:
-        #     num_col_n = num_col_n + AGG_TO[agg_to]["split"]["n"]
-        #     num_col_t = num_col_t + AGG_TO[agg_to]["split"]["t"]
-        #     num_col_et = num_col_et + AGG_TO[agg_to]["split"]["t"]
-        # else:
-        #     num_col_n += 1
-        #     num_col_t += 1
-        #     num_col_et += 1
-
-        # # create headers and files
-        # x, y = self.get_geom().split(";")[1]\
-        #     .replace("POINT(", "").replace(")", "")\
-        #     .split(" ")
-        # name = self.get_name() + " (ID: {stid})".format(stid=self.id)
-
-        # header_n = ("Name: " + name + "\t" * (num_col_n-1) + "\n" +
-        #             "Lat: " + y + "   ,Lon: " + x + "\t" * (num_col_n-1) + "\n")
-        # header_t = ("Name: " + name + "\t" * (num_col_t-1) + "\n" +
-        #             "Lat: " + y + "   ,Lon: " + x + "\t" * (num_col_t-1) + "\n")
-        # header_et = ("Name: " + name + "\t" * (num_col_et-1) + "\n" +
-        #             "Lat: " + y + "   ,Lon: " + x + "\t" * (num_col_et-1) + "\n")
-
-        # # create tables
-        # str_n = header_n + self._split_date(df_n.index)\
-        #     .join(df_n)\
-        #     .to_csv(sep="\t", decimal=".", index=False, mode="a")
-        # str_t = header_t + self._split_date(df_t.index).iloc[:, 0:3]\
-        #     .join(df_t)\
-        #     .to_csv(sep="\t", decimal=".", index=False, mode="a")
-        # str_et = header_et + self._split_date(df_et.index).iloc[:, 0:3]\
-        #     .join(df_et)\
-        #     .join(pd.Series([0]*len(df_et), name="R/R0", index=df_et.index))\
-        #     .to_csv(sep="\t", decimal=".", index=False, mode="a")
-
-        # write to file
-        # if isinstance(dir, Path):
-        #     with open(dir.joinpath(file_n), "w") as f:
-        #         f.write(str_n)
-        #     with open(dir.joinpath(file_t), "w") as f:
-        #         f.write(str_t)
-        #     with open(dir.joinpath(file_et), "w") as f:
-        #         f.write(str_et)
-        # elif type(dir) == zipfile.ZipFile:
-        #     dir.writestr(
-        #         "{stid}/{file}".format(stid=self.id, file=file_n), 
-        #         str_n)
-        #     dir.writestr(
-        #         "{stid}/{file}".format(stid=self.id, file=file_t),
-        #         str_t)
-        #     dir.writestr(
-        #         "{stid}/{file}".format(stid=self.id, file=file_et), 
-                # str_et)
 
     @staticmethod
     def _check_dir(dir):
@@ -3296,7 +3232,6 @@ class GroupStation(object):
         -------
         pandas.DataFrame
             A DataFrame with 5 columns (Jahr, Monat, Tag, Stunde, Minute).
-
         """
         # if dates is not a list make it a list
         if type(dates) == datetime or type(dates) == pd.Timestamp:
