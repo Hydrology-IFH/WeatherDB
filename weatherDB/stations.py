@@ -108,20 +108,12 @@ class StationsBase:
                 .format(para_long=self._para_long))
         meta = self.download_meta()
 
-        meta["is_real"] = True
-
         # get droped stations and delete from meta file
         sql_get_droped = """
             SELECT station_id
             FROM droped_stations
             WHERE para ='{para}';
         """.format(para=self._para)
-
-        # """
-        #     SELECT split_part(station_id_para, '_', 1)::int as station_id
-        #     FROM droped_stations
-        #     WHERE station_id_para LIKE '%%\_{para}';
-        # """.format(para=self._para)
         with DB_ENG.connect() as con:
             droped_stids = con.execute(sql_get_droped).all()
         droped_stids = [row[0] for row in droped_stids]

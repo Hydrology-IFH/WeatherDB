@@ -447,7 +447,6 @@ class StationBase:
     def _drop(self, why="No reason given"):
         """Drop this station from the database. (meta table and timeseries)
         """
-
         sql = """
             DROP TABLE IF EXISTS timeseries."{stid}_{para}";
             DELETE FROM meta_{para} WHERE station_id={stid};
@@ -538,6 +537,17 @@ class StationBase:
                     desc=description)
             )
 
+    @check_superuser
+    def _set_is_real(self, state=True):
+        sql = """
+            UPDATE meta_{para}
+            SET is_real={state}
+            WHERE station_id={stid};
+        """.format(stid=self._id, para=self._para, state=state)
+
+        with DB_ENG.connect() as con:
+            con.execute(sql)
+
     def isin_db(self):
         """Check if Station is already in a timeseries table.
 
@@ -609,8 +619,21 @@ class StationBase:
         bool
             true if the station is virtual, false if it is real.
         """
+        return not self.is_virtual()
+
+    def is_real(self):
+        """Check if the station is a real station or only a virtual one.
+
+        Real means that the DWD is measuring here.
+        Virtual means, that there are no measurements here, but the station got created to have timeseries for every parameter for every precipitation station.
+
+        Returns
+        -------
+        bool
+            true if the station is real, false if it is virtual.
+        """
         sql = """
-            SELECT NOT is_real
+            SELECT is_real
             FROM meta_{para}
             WHERE station_id= {stid}
         """.format(stid=self.id, para=self._para)
@@ -869,7 +892,7 @@ class StationBase:
         # update raw_files db table
         update_values = \
             ", ".join([str(pair) for pair in zip(
-                zipfiles,
+                zipfiles.index,
                 zipfiles["modtime"].dt.strftime("%Y%m%d %H:%M").values)]
             )
         with DB_ENG.connect() as con:
@@ -895,6 +918,8 @@ class StationBase:
             log.debug(log_msg)
             self._update_last_imp_period_meta(period=(None, None))
             return None
+        else:
+            self._set_is_real()
 
         # update meta file
         imp_period = TimestampPeriod(
@@ -1528,7 +1553,7 @@ class StationBase:
                      WHERE station_id={stid}))
                 LIMIT {n}
             """.format(
-            cond_only_real="AND is_real=true" if only_real else "",
+            cond_only_real="AND is_real" if only_real else "",
             stid=self.id, para=self._para, n=n)
         with DB_ENG.connect() as con:
             result = con.execute(sql_nearest_stids)
@@ -2158,7 +2183,8 @@ class PrecipitationStation(StationNBase):
         # create sql_format_dict
         sql_format_dict = dict(
             para=self._para, stid=self.id, para_long=self._para_long,
-            **period.get_sql_format_dict(format="'{}'".format(self._tstp_format)),
+            **period.get_sql_format_dict(
+                format="'{}'".format(self._tstp_format)),
             limit=0.1*self._decimals) # don't delete values below 0.1mm/10min if they are consecutive
 
         # check if daily station is available
