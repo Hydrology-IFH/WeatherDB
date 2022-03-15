@@ -1121,7 +1121,7 @@ class StationBase:
                     ma_col=self._ma_cols[0],
                     coef_sign=self._coef_sign),
                 coef_format="i.coef",
-                filled_calc="round(nb.{base_col} * %%3$s, 0)::int"
+                filled_calc="round(nb.{base_col} {coef_sign[1]} %%3$s, 0)::int"
                 .format(**sql_format_dict)
             ))
         elif len(self._ma_cols) == 2:
