@@ -2300,7 +2300,7 @@ class PrecipitationStation(StationNBase):
         
         Some precipitation stations on the DWD CDC server have also rows outside of the normal 10 Minute frequency, e.g. 2008-09-16 01:47 for Station 662.
         Because those rows only have NAs for the measurement they are deleted."""
-        df = df[df.index.minute%10==0].copy()
+        df_raw = df_raw[df_raw.index.minute%10==0].copy()
         return df_raw
 
     @check_superuser
