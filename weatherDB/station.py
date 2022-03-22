@@ -1045,7 +1045,7 @@ class StationBase:
         pass  # define in the specific classes
 
     @check_superuser
-    def quality_check(self, period=(None, None)):
+    def quality_check(self, period=(None, None), **kwargs):
         """Quality check the raw data for a given period.
 
         Parameters
@@ -1070,6 +1070,8 @@ class StationBase:
             stid=self.id, para=self._para)
 
         # run commands
+        if "return_sql" in kwargs and kwargs["return_sql"]:
+            return sql_qc
         self._execute_long_sql(
             sql=sql_qc,
             description="quality checked for the period {min_tstp} to {max_tstp}.".format(
@@ -1083,7 +1085,7 @@ class StationBase:
             self._mark_last_imp_done(kind="qc")
 
     @check_superuser
-    def fillup(self, period=(None, None)):
+    def fillup(self, period=(None, None), **kwargs):
         """Fill up missing data with measurements from nearby stations."""
         self._expand_timeserie_to_period()
         self._check_ma()
@@ -1224,6 +1226,8 @@ class StationBase:
         """.format(**sql_format_dict)
 
         # execute
+        if "return_sql" in kwargs and kwargs["return_sql"]:
+            return sql
         self._execute_long_sql(
             sql=sql,
             description="filled for the period {min_tstp} - {max_tstp}".format(
@@ -2448,7 +2452,7 @@ class PrecipitationStation(StationNBase):
         return richter_class
 
     @check_superuser
-    def richter_correct(self, period=(None, None)):
+    def richter_correct(self, period=(None, None), **kwargs):
         """Do the richter correction on the filled data for the given period.
 
         Parameters
@@ -2583,6 +2587,8 @@ class PrecipitationStation(StationNBase):
         )
 
         # run commands
+        if "return_sql" in kwargs and kwargs["return_sql"]:
+            return sql_update
         self._execute_long_sql(
             sql_update,
             description="richter corrected for the period {min_tstp} - {max_tstp}".format(
