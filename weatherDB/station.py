@@ -1024,6 +1024,22 @@ class StationBase:
         return df_all
 
     def download_raw(self, only_new=False):
+        """Download the timeserie from the CDC Server.
+
+        This function only returns the timeserie, but is not updating the database.
+
+        Parameters
+        ----------
+        only_new : bool, optional
+            Get only the files that are not yet in the database?
+            If False all the available files are loaded again.
+            The default is False.
+
+        Returns
+        -------
+        pandas.DataFrame
+            The Timeseries as a DataFrame with a Timestamp Index.
+        """        
         return self._download_raw(zipfiles=self.get_zipfiles(only_new=only_new).index)
 
     @check_superuser
