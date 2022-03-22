@@ -549,7 +549,7 @@ class StationBase:
             UPDATE meta_{para}
             SET is_real={state}
             WHERE station_id={stid};
-        """.format(stid=self._id, para=self._para, state=state)
+        """.format(stid=self.id, para=self._para, state=state)
 
         with DB_ENG.connect() as con:
             con.execute(sql)
