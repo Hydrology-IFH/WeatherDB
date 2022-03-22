@@ -319,6 +319,12 @@ class StationBase:
         else:
             return agg_to
 
+    def _check_df_raw(self, df_raw):
+        """This is a empty function to get implemented in the subclasses if necessary.
+        
+        It applies extra checkups on the downloaded raw timeserie and returns the dataframe."""
+        return df_raw
+
     def _clean_cached_period(self):
         time_limit = datetime.now() - timedelta(minutes=1)
         for key in list(self._cached_periods):
@@ -1020,6 +1026,9 @@ class StationBase:
         df_all.set_index(self._date_col, inplace=True)
         if df_all.index.has_duplicates:
             df_all = df_all.groupby(df_all.index).mean()
+
+        # run extra checks of subclasses
+        df_all = self._check_df_raw(df_all)
 
         return df_all
 
@@ -2285,6 +2294,14 @@ class PrecipitationStation(StationNBase):
             **sql_format_dict)
 
         return sql_new_qc
+
+    def _check_df_raw(self, df_raw):
+        """This function applies extra checkups on the downloaded raw timeserie and returns the dataframe.
+        
+        Some precipitation stations on the DWD CDC server have also rows outside of the normal 10 Minute frequency, e.g. 2008-09-16 01:47 for Station 662.
+        Because those rows only have NAs for the measurement they are deleted."""
+        df = df[df.index.minute%10==0].copy()
+        return df_raw
 
     @check_superuser
     def _create_timeseries_table(self):
