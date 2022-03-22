@@ -2686,8 +2686,8 @@ class PrecipitationStation(StationNBase):
         return sql_extra
 
     @check_superuser
-    def fillup(self, period=(None, None)):
-        super().fillup(period=period)
+    def fillup(self, period=(None, None), **kwargs):
+        super().fillup(period=period, **kwargs)
 
         # check the period
         if type(period) != TimestampPeriod:
