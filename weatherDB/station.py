@@ -2666,7 +2666,7 @@ class PrecipitationStation(StationNBase):
             FROM (
                 SELECT
                     date,
-                    ts_d."raw"/ts_10."filled" AS coef
+                    ts_d."raw"/ts_10."filled"::float AS coef
                 FROM (
                     SELECT
                         date(timestamp - '5h 50min'::INTERVAL),
