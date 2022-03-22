@@ -1071,7 +1071,7 @@ class StationBase:
 
         # run commands
         if "return_sql" in kwargs and kwargs["return_sql"]:
-            return sql_qc
+            return sql_qc.replace("%%", "%")
         self._execute_long_sql(
             sql=sql_qc,
             description="quality checked for the period {min_tstp} to {max_tstp}.".format(
@@ -1227,7 +1227,7 @@ class StationBase:
 
         # execute
         if "return_sql" in kwargs and kwargs["return_sql"]:
-            return sql
+            return sql.replace("%%", "%")
         self._execute_long_sql(
             sql=sql,
             description="filled for the period {min_tstp} - {max_tstp}".format(
@@ -2588,7 +2588,7 @@ class PrecipitationStation(StationNBase):
 
         # run commands
         if "return_sql" in kwargs and kwargs["return_sql"]:
-            return sql_update
+            return sql_update.replace("%%", "%")
         self._execute_long_sql(
             sql_update,
             description="richter corrected for the period {min_tstp} - {max_tstp}".format(
@@ -2687,7 +2687,7 @@ class PrecipitationStation(StationNBase):
 
     @check_superuser
     def fillup(self, period=(None, None), **kwargs):
-        super().fillup(period=period, **kwargs)
+        super_ret = super().fillup(period=period, **kwargs)
 
         # check the period
         if type(period) != TimestampPeriod:
@@ -2715,6 +2715,9 @@ class PrecipitationStation(StationNBase):
                 WHERE station_id ={stid};
             """.format(stid=self.id, para=self._para)
 
+            #execute sql or return
+            if "return_sql" in kwargs and kwargs["return_sql"]:
+                return (str(super_ret) + "\n" + sql_diff_ma).replace("%%", "%")
             with DB_ENG.connect() as con:
                 con.execute(sql_diff_ma)
 
