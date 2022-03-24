@@ -21,6 +21,13 @@ Can get used to do actions on all the stations.
 - broker:
 This submodule has only one class Broker. This one is used to do actions on all the stations together. Mainly only used for updating the DB.
 
+Install
+-------
+To install the package use:
+`pip install https://github.com/maxschmi/WeatherDB_module/archive/refs/tags/v0.0.3.tar.gz`
+
+You can replace the version to the version you like to download.
+
 Get started
 -----------
 To get started you need to enter the credentials to access the Database. If this is an account with read only acces, than only those methodes, that read data from the Database are available.
