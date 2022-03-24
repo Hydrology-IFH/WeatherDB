@@ -21,7 +21,6 @@ if not secret_found and "RTD_documentation_import" in os.environ:
     DB_ENG = UnifiedAlchemyMagicMock()
     DB_ENG.is_superuser = True
 else:
-
     # import the secret settings
     import secretSettings as secrets
 

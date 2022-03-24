@@ -7,8 +7,8 @@ import socket
 
 __author__ = "Max Schmit"
 __email__ = "max.schmit@hydrology.uni-freiburg.de"
-__copyright__ = "Copyright 2021, Max Schmit"
-__version__ = "0.0.2"
+__copyright__ = "Copyright 2022, Max Schmit"
+__version__ = "0.0.3"
 
 # set the log
 #############
