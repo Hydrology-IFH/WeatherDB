@@ -2,11 +2,9 @@ WeatherDB - module
 ==================
 author: Max Schmit
 
-[![Documentation Status](https://readthedocs.org/projects/weatherdb-module/badge/?version=latest)](https://weatherdb-module.readthedocs.io/en/latest/?badge=latest)
+The weather-DB module offers an API to interact with the automatically filled weather Database.
 
-The weather-DB module offers an API to interact with the automaticaly filled weather Database.
-
-Depending on the Database user privileges you can use more or less methodes of the classes.
+Depending on the Database user privileges you can use more or less methods of the classes.
 
 There are 3 different sub modules with their corresponding classes.
 
@@ -14,7 +12,7 @@ There are 3 different sub modules with their corresponding classes.
 Has a class for every type of station. E.g. PrecipitationStation (or StationN). 
 One object represents one Station with one parameter. 
 This object can get used to get the corresponding timeserie.
-There is also a StationGroup class that groups the three parameters precipitation, temperature and evapotranspiration together for one station. If one parameter is not available this one won't get groupped.
+There is also a StationGroup class that groups the three parameters precipitation, temperature and evapotranspiration together for one station. If one parameter is not available this one won't get grouped.
 - stations:
 Is a grouping class for all the stations of one measurement parameter. E.G. PrecipitationStations (or StationsN).
 Can get used to do actions on all the stations.
