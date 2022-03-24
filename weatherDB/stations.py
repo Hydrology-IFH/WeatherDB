@@ -1,3 +1,7 @@
+"""
+This module has grouping classes for all the stations of one parameter. E.G. PrecipitationStations (or StationsN) groups all the Precipitation Stations available.
+Those classes can get used to do actions on all the stations.
+"""
 # libraries
 # from multiprocessing import queues
 import warnings
@@ -12,9 +16,9 @@ import progressbar as pb
 import logging
 import itertools
 import datetime
-# from pathlib import Path
-# import re
-from tempfile import TemporaryDirectory
+import socket
+import zipfile
+from pathlib import Path
 
 from .lib.connections import CDC, DB_ENG, check_superuser
 from .lib.utils import get_ftp_file_list, TimestampPeriod
@@ -104,20 +108,12 @@ class StationsBase:
                 .format(para_long=self._para_long))
         meta = self.download_meta()
 
-        meta["is_real"] = True
-
         # get droped stations and delete from meta file
         sql_get_droped = """
             SELECT station_id
             FROM droped_stations
             WHERE para ='{para}';
         """.format(para=self._para)
-
-        # """
-        #     SELECT split_part(station_id_para, '_', 1)::int as station_id
-        #     FROM droped_stations
-        #     WHERE station_id_para LIKE '%%\_{para}';
-        # """.format(para=self._para)
         with DB_ENG.connect() as con:
             droped_stids = con.execute(sql_get_droped).all()
         droped_stids = [row[0] for row in droped_stids]
@@ -714,15 +710,15 @@ class PrecipitationStations(StationsBase):
         ValueError
             If the given stids (Station_IDs) are not all valid.
         """
-        stations = self.get_stations(only_real=True)
+        stations = self.get_stations(only_real=True, stids=stids)
         period = stations[0].get_last_imp_period(all=True)
         log.info("The {para_long} Stations fillup of the last import is started for the period {min_tstp} - {max_tstp}".format(
             para_long=self._para_long,
             **period.get_sql_format_dict(format="%Y%m%d %H:%M")))
         self._run_in_mp(
             stations=stations,
-            methode="richter_correct",
-            kwargs={"period": period},
+            methode="last_imp_corr",
+            kwargs={"_last_imp_period": period},
             name="richter correction on {para}".format(para=self._para.upper()),
             do_mp=False)
 
@@ -827,28 +823,51 @@ class GroupStations(object):
 
         return stations
 
-    def create_roger_ts(self, dir, period=(None, None), kind="best", stids="all", zip=False):
-        """Create the roger weather tables.
+    def create_ts(self, dir, period=(None, None), kind="best",
+                  stids="all", agg_to="10 min", et_et0=None, split_date=False):
+        """Download and create the weather tables as csv files.
 
         Parameters
         ----------
         dir : path-like object
             The directory where to save the tables.
-        period : tuple or TimestampPeriod, optional
-            , by default (None, None)
-        kind : str, optional
-            _description_, by default "best"
+            If the directory is a ZipFile, then the output will get zipped into this.
+        period : TimestampPeriod like object, optional
+            The period for which to get the timeseries.
+            If (None, None) is entered, then the maximal possible period is computed.
+            The default is (None, None)
+        kind :  str
+            The data kind to look for filled period.
+            Must be a column in the timeseries DB.
+            Must be one of "raw", "qc", "filled", "adj".
+            If "best" is given, then depending on the parameter of the station the best kind is selected.
+            For Precipitation this is "corr" and for the other this is "filled".
+            For the precipitation also "qn" and "corr" are valid.
         stids: string or list of int, optional
             The Stations for which to compute.
             Can either be "all", for all possible stations
             or a list with the Station IDs.
             The default is "all".
-        zip : bool, optional
-            Should the outcome get zipped in one arcive.
-            The default is False.
-        """        
-        # check directory
-        dir = self._GroupStation._check_dir(dir)
+        agg_to : str, optional
+            To what aggregation level should the timeseries get aggregated to.
+            The minimum aggregation for Temperatur and ET is daily and for the precipitation it is 10 minutes.
+            If a smaller aggregation is selected the minimum possible aggregation for the respective parameter is returned.
+            So if 10 minutes is selected, than precipitation is returned in 10 minuets and T and ET as daily.
+            The default is "10 min".
+        et_et0 : int or None, optional
+            Should the ET timeserie contain a column with et_et0.
+            If None, then no column is added.
+            If int, then a ET/ET0 column is appended with this number as standard value.
+            Until now providing a serie of different values is not possible.
+            The default is None.
+        split_date : bool, optional
+            Should the timestamp get splitted into parts, so one column for year, one for month etc.?
+            If False the timestamp is saved in one column as string.
+        """
+        start_time = datetime.datetime.now()
+        # check directory and stids
+        dir = self._check_dir(dir)
+        stids = self._check_stids(stids)
 
         # check period
         period = self._check_period(
@@ -860,16 +879,98 @@ class GroupStations(object):
             max_value=len(stats),
             name="create RoGeR-TS")
         pbar.update(0)
-        for stat in stats:
-            stat.create_roger_ts(
-                dir=dir.joinpath(str(stat.id)),
-                period=period,
-                kind=kind)
-            pbar.variables["last_station"] = stat.id
-            pbar.update(pbar.value + 1)
 
-    # def create_roger_ts_tempzip(self, period=(None, None), kind="best", stids="all"):
-    #     temp_dir = TemporaryDirectory()
+        if dir.suffix == ".zip":
+            with zipfile.ZipFile(
+                    dir, "w",
+                    compression=zipfile.ZIP_DEFLATED,
+                    compresslevel=5) as zf:
+                for stat in stats:
+                    stat.create_ts(
+                        dir=zf,
+                        period=period,
+                        kind=kind,
+                        agg_to=agg_to,
+                        et_et0=et_et0,
+                        split_date=split_date)
+                    pbar.variables["last_station"] = stat.id
+                    pbar.update(pbar.value + 1)
+        else:
+            for stat in stats:
+                stat.create_ts(
+                    dir=dir.joinpath(str(stat.id)),
+                    period=period,
+                    kind=kind,
+                    agg_to=agg_to,
+                    et_et0=et_et0,
+                    split_date=split_date)
+                pbar.variables["last_station"] = stat.id
+                pbar.update(pbar.value + 1)
+
+        # get size of output file
+        if dir.suffix == ".zip":
+            out_size = dir.stat().st_size
+        else:
+            out_size = sum(
+                f.stat().st_size for f in dir.glob('**/*') if f.is_file())
+
+        # save needed time to db
+        sql_save_time = """
+            INSERT INTO needed_download_time(timestamp, quantity, aggregate, timespan, zip, pc, duration, output_size)
+            VALUES (now(), '{quantity}', '{agg_to}', '{timespan}', '{zip}', '{pc}', '{duration}', '{out_size}');
+        """.format(
+            quantity=len(stids),
+            agg_to=agg_to,
+            timespan=str(period.get_interval()),
+            duration=str(datetime.datetime.now() - start_time),
+            zip="true" if dir.suffix ==".zip" else "false",
+            pc=socket.gethostname(),
+            out_size=out_size)
+        with DB_ENG.connect() as con:
+            con.execute(sql_save_time)
+
+        # create log message
+        log.debug(
+            "The timeseries tables for {quantity} stations got created in {dir}".format(
+                quantity=len(stids), dir=dir))
+
+    def create_roger_ts(self, dir, period=(None, None),
+                        kind="best", et_et0=1):
+        """Create the timeserie files for roger as csv.
+
+        This is only a wrapper function for create_ts with some standard settings.
+
+        Parameters
+        ----------
+        dir : pathlib like object or zipfile.ZipFile
+            The directory or Zipfile to store the timeseries in.
+            If a zipfile is given a folder with the stations ID is added to the filepath.
+        period : TimestampPeriod like object, optional
+            The period for which to get the timeseries.
+            If (None, None) is entered, then the maximal possible period is computed.
+            The default is (None, None)
+        kind :  str
+            The data kind to look for filled period.
+            Must be a column in the timeseries DB.
+            Must be one of "raw", "qc", "filled", "adj".
+            If "best" is given, then depending on the parameter of the station the best kind is selected.
+            For Precipitation this is "corr" and for the other this is "filled".
+            For the precipitation also "qn" and "corr" are valid.
+        et_et0 : int or None, optional
+            Should the ET timeserie contain a column with et_et0.
+            If None, then no column is added.
+            If int, then a ET/ET0 column is appended with this number as standard value.
+            Until now providing a serie of different values is not possible.
+            The default is 1.
+
+        Raises
+        ------
+        Warning
+            If there are NAs in the timeseries or the period got changed.
+        """
+        return self.create_ts(dir=dir, period=period, kind=kind,
+                              agg_to="10 min", et_et0=et_et0,
+                              split_dates=True)
 
     def _check_period(self, period, stids, kind):
         max_period = self._GroupStation(stids[0]).get_filled_period(kind=kind)
@@ -879,20 +980,77 @@ class GroupStations(object):
 
         if type(period) != TimestampPeriod:
             period = TimestampPeriod(*period)
-        if period.empty():
+        if period.is_empty():
             return max_period
         else:
             if not period.inside(max_period):
-                raise Warning("The asked period is too large. Only {min_tstp} - {max_tstp} is returned".format(
+                warnings.warn("The asked period is too large. Only {min_tstp} - {max_tstp} is returned".format(
                     **max_period.get_sql_format_dict(format="%Y-%m-%d %H:%M")))
             return period.union(max_period)
 
-    def _check_valid_stids(self, stids):
+    def _check_stids(self, stids):
         meta = self.get_meta(columns=["Station_id"])
-        if all([stid in meta.index for stid in stids]):
-            return True
+        if stids == "all":
+            return meta["Station_id"].values.to_list()
         else:
-            return False
+            stids_valid = [stid in meta.index for stid in stids]
+            if all(stids_valid):
+                return stids
+            else:
+                raise ValueError(
+                    "There is no station defined in the database for the IDs:\n{stids}".format(
+                        stids=", ".join(
+                            [stid for stid in stids
+                                  if stid not in stids_valid])))
+
+    @staticmethod
+    def _check_dir(dir):
+        """Checks if a directors is valid and empty.
+
+        If not existing the directory is created.
+
+        Parameters
+        ----------
+        dir : pathlib object or zipfile.ZipFile
+            The directory to check.
+
+        Raises
+        ------
+        ValueError
+            If the directory is not empty.
+        ValueError
+            If the directory is not valid. E.G. it is a file path.
+        """
+        # check types
+        if type(dir) == str:
+            dir = Path(dir)
+
+        # check directory
+        if isinstance(dir, zipfile.ZipFile):
+            return dir
+        elif isinstance(dir, Path):
+            if dir.is_dir():
+                if len(list(dir.iterdir())) > 0:
+                    raise ValueError(
+                        "The given directory '{dir}' is not empty.".format(
+                            dir=str(dir)))
+            elif dir.suffix == "":
+                dir.mkdir()
+            elif dir.suffix == ".zip":
+                if not dir.parent.is_dir():
+                    raise ValueError(
+                        "The given parent directory '{dir}' of the zipfile is not a directory.".format(
+                            dir=dir.parents))
+            else:
+                raise ValueError(
+                    "The given directory '{dir}' is not a directory.".format(
+                        dir=dir))
+        else:
+            raise ValueError(
+                "The given directory '{dir}' is not a directory or zipfile.".format(
+                    dir=dir))
+
+        return dir
 
 # clean station
 del PrecipitationStation, PrecipitationDailyStation, TemperatureStation, EvapotranspirationStation, GroupStation

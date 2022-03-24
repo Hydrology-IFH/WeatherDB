@@ -24,11 +24,11 @@ from socket import gethostname
 
 # logger
 log = logging.getLogger("import_DWD")
-this_dir = os.getcwd()
+this_dir = Path(__file__).parent
 log_dir = Path(this_dir).joinpath("logs")
 if not log_dir.is_dir(): log_dir.mkdir()
-log_fh = logging.FileHandler(this_dir + "/logs/DWD_import_" +
-                             gethostname() + ".txt")
+log_fh = logging.FileHandler(
+    log_dir.joinpath("DWD_import_" + gethostname() + ".txt"))
 log.setLevel(logging.DEBUG)
 log.addHandler(log_fh)
 

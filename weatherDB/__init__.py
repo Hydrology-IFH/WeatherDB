@@ -29,13 +29,6 @@ for log_file in [
     except:
         pass
 
-# remove older filehandlers
-# for fh in log.handlers:
-#     if type(fh) == logging.FileHandler:
-#         fh_tstp = datetime.datetime.strptime(Path(fh.baseFilename).stem, "%Y%m%d")
-#         if fh_tstp != log_tstp:
-#             log.removeHandler(fh)
-
 # add filehandler if necessary
 if not log.hasHandlers():
     log.setLevel(logging.DEBUG)
@@ -45,12 +38,7 @@ if not log.hasHandlers():
             socket.gethostname().replace(".","_") + 
             ".log"), 
         when="midnight", encoding="utf-8")
-    # fh.suffix = "%Y%m%d.log"
-    # fh.extMatch = re.compile(r"^\d{8}\.log$")
     fh.setLevel(logging.DEBUG)
-    # fh = logging.FileHandler(
-    #     log_dir.joinpath("{tstp}.log".format(tstp=log_tstp)),
-    #     encoding="utf-8", mode="a")
     fh.setFormatter(
         logging.Formatter(
             '%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
