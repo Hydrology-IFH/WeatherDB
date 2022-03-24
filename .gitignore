@@ -7,3 +7,5 @@ _build
 latex
 Makefile
 make.bat
+dist
+*.egg-info
