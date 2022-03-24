@@ -8,5 +8,6 @@ latex
 Makefile
 make.bat
 dist
-*.egg-info
-*.egg-info\*
+weatherDB.egg-info
+weatherDB.egg-info/*
+dist/*
