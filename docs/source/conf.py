@@ -92,6 +92,7 @@ latex_engine = "pdflatex"
 latex_theme = "manual"
 
 # copy the readme file
+src_path.joinpath("README.md").unlink()
 shutil.copyfile(
     base_path.joinpath("README.md"),
     src_path.joinpath("README.md")
