@@ -2,6 +2,8 @@ WeatherDB - module
 ==================
 author: Max Schmit
 
+[![Documentation Status](https://readthedocs.org/projects/weatherdb-module/badge/?version=latest)](https://weatherdb-module.readthedocs.io/en/latest/?badge=latest)
+
 The weather-DB module offers an API to interact with the automatically filled weather Database.
 
 Depending on the Database user privileges you can use more or less methods of the classes.
@@ -18,6 +20,13 @@ Is a grouping class for all the stations of one measurement parameter. E.G. Prec
 Can get used to do actions on all the stations.
 - broker:
 This submodule has only one class Broker. This one is used to do actions on all the stations together. Mainly only used for updating the DB.
+
+Install
+-------
+To install the package use:
+`pip install https://github.com/maxschmi/WeatherDB_module/archive/refs/tags/v0.0.3.tar.gz`
+
+You can replace the version to the version you like to download.
 
 Get started
 -----------
