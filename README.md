@@ -23,10 +23,11 @@ This submodule has only one class Broker. This one is used to do actions on all 
 
 Install
 -------
-To install the package use:
-`pip install git+https://github.com/maxschmi/WeatherDB_module`
+To install the package use PIP to install the Github repository:
 
-You can replace the version to the version you like to download.
+```
+pip install git+https://github.com/maxschmi/WeatherDB_module
+```
 
 Get started
 -----------
