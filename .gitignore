@@ -11,6 +11,6 @@ dist
 weatherDB.egg-info
 weatherDB.egg-info/*
 dist/*
-docs/source/_static/*.html
-docs/source/_static/README.md
+docs/source/*.html
+docs/source/README.md
 README.html
