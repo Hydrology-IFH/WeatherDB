@@ -10,6 +10,9 @@ __email__ = "max.schmit@hydrology.uni-freiburg.de"
 __copyright__ = "Copyright 2022, Max Schmit"
 __version__ = "0.0.3"
 
+__all__ = ["station", "stations", "broker"]
+from . import station, stations, broker
+
 # set the log
 #############
 log = logging.getLogger(__name__)
