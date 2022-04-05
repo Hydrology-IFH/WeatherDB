@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>weatherDB package &mdash; WeatherDB 0.0.4 documentation</title>
+  <title>weatherDB.station module &mdash; WeatherDB 0.0.4 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -43,14 +43,11 @@
 <li class="toctree-l1"><a class="reference internal" href="README.html">     Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Methode.html">Method</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">     API reference</a><ul class="current">
-<li class="toctree-l2 current"><a class="current reference internal" href="#">weatherDB package</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#module-weatherDB.station">weatherDB.station module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-weatherDB.stations">weatherDB.stations module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-weatherDB.broker">weatherDB.broker module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#subpackages">Subpackages</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="weatherDB.lib.html">weatherDB.lib package</a></li>
-</ul>
-</li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">weatherDB.station module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-weatherDB.stations">weatherDB.stations module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-weatherDB.broker">weatherDB.broker module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="weatherDB.lib.html">weatherDB.lib package</a></li>
 </ul>
 </li>
 </ul>
@@ -72,7 +69,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
           <li><a href="modules.html">weatherDB</a> &raquo;</li>
-      <li>weatherDB package</li>
+      <li>weatherDB.station module</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/weatherDB.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -106,10 +103,8 @@
     text-align: unset;
 }
 </style>
-<section id="weatherdb-package">
-<h1>weatherDB package<a class="headerlink" href="#weatherdb-package" title="Permalink to this headline"></a></h1>
 <section id="module-weatherDB.station">
-<span id="weatherdb-station-module"></span><h2>weatherDB.station module<a class="headerlink" href="#module-weatherDB.station" title="Permalink to this headline"></a></h2>
+<span id="weatherdb-station-module"></span><h1>weatherDB.station module<a class="headerlink" href="#module-weatherDB.station" title="Permalink to this headline"></a></h1>
 <p>This module has a class for every type of station. E.g. StationN (or StationN).
 One object represents one Station with one parameter.
 This object can get used to get the corresponding timeserie.
@@ -1333,7 +1328,7 @@ If False the timestamp is saved in one column as string.</p></li>
 
 </section>
 <section id="module-weatherDB.stations">
-<span id="weatherdb-stations-module"></span><h2>weatherDB.stations module<a class="headerlink" href="#module-weatherDB.stations" title="Permalink to this headline"></a></h2>
+<span id="weatherdb-stations-module"></span><h1>weatherDB.stations module<a class="headerlink" href="#module-weatherDB.stations" title="Permalink to this headline"></a></h1>
 <p>This module has grouping classes for all the stations of one parameter. E.G. StationsN (or StationsN) groups all the Precipitation Stations available.
 Those classes can get used to do actions on all the stations.</p>
 <dl class="py class">
@@ -1771,7 +1766,7 @@ The default is 1.</p></li>
 
 </section>
 <section id="module-weatherDB.broker">
-<span id="weatherdb-broker-module"></span><h2>weatherDB.broker module<a class="headerlink" href="#module-weatherDB.broker" title="Permalink to this headline"></a></h2>
+<span id="weatherdb-broker-module"></span><h1>weatherDB.broker module<a class="headerlink" href="#module-weatherDB.broker" title="Permalink to this headline"></a></h1>
 <p>This submodule has only one class Broker. This one is used to do actions on all the stations together. Mainly only used for updating the DB.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="weatherDB.broker.Broker">
@@ -1944,11 +1939,10 @@ Quality checks and fills up the timeseries.</p>
 
 </section>
 <section id="subpackages">
-<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline"></a></h2>
+<h1>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline"></a></h1>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="weatherDB.lib.html">weatherDB.lib package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="weatherDB.lib.html#module-weatherDB.lib.connections">weatherDB.lib.connections module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="weatherDB.lib.html#module-weatherDB.lib.utils">weatherDB.lib.utils module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="weatherDB.lib.html#subpackages">Subpackages</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="weatherDB.lib.max_fun.html">weatherDB.lib.max_fun package</a><ul>
@@ -1961,7 +1955,6 @@ Quality checks and fills up the timeseries.</p>
 </li>
 </ul>
 </div>
-</section>
 </section>
 
 

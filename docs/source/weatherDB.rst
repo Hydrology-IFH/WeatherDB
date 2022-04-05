@@ -1,6 +1,3 @@
-weatherDB package
-=================
-
 weatherDB.station module
 ------------------------
 

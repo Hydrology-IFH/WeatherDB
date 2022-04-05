@@ -20,7 +20,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="weatherDB.lib.max_fun package" href="weatherDB.lib.max_fun.html" />
-    <link rel="prev" title="weatherDB package" href="weatherDB.html" /> 
+    <link rel="prev" title="weatherDB.station module" href="weatherDB.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -43,18 +43,14 @@
 <li class="toctree-l1"><a class="reference internal" href="README.html">     Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Methode.html">Method</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">     API reference</a><ul class="current">
-<li class="toctree-l2 current"><a class="reference internal" href="weatherDB.html">weatherDB package</a><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="weatherDB.html#module-weatherDB.station">weatherDB.station module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="weatherDB.html#module-weatherDB.stations">weatherDB.stations module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="weatherDB.html#module-weatherDB.broker">weatherDB.broker module</a></li>
-<li class="toctree-l3 current"><a class="reference internal" href="weatherDB.html#subpackages">Subpackages</a><ul class="current">
-<li class="toctree-l4 current"><a class="current reference internal" href="#">weatherDB.lib package</a><ul>
-<li class="toctree-l5"><a class="reference internal" href="#module-weatherDB.lib.connections">weatherDB.lib.connections module</a></li>
-<li class="toctree-l5"><a class="reference internal" href="#module-weatherDB.lib.utils">weatherDB.lib.utils module</a></li>
-<li class="toctree-l5"><a class="reference internal" href="#subpackages">Subpackages</a><ul>
-<li class="toctree-l6"><a class="reference internal" href="weatherDB.lib.max_fun.html">weatherDB.lib.max_fun package</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="weatherDB.html">weatherDB.station module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="weatherDB.html#module-weatherDB.stations">weatherDB.stations module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="weatherDB.html#module-weatherDB.broker">weatherDB.broker module</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="weatherDB.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">weatherDB.lib package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#module-weatherDB.lib.utils">weatherDB.lib.utils module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#subpackages">Subpackages</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="weatherDB.lib.max_fun.html">weatherDB.lib.max_fun package</a></li>
 </ul>
 </li>
 </ul>
@@ -80,7 +76,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
           <li><a href="modules.html">weatherDB</a> &raquo;</li>
-          <li><a href="weatherDB.html">weatherDB package</a> &raquo;</li>
+          <li><a href="weatherDB.html">weatherDB.station module</a> &raquo;</li>
       <li>weatherDB.lib package</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/weatherDB.lib.rst.txt" rel="nofollow"> View page source</a>
@@ -117,26 +113,6 @@
 </style>
 <section id="weatherdb-lib-package">
 <h1>weatherDB.lib package<a class="headerlink" href="#weatherdb-lib-package" title="Permalink to this headline"></a></h1>
-<section id="module-weatherDB.lib.connections">
-<span id="weatherdb-lib-connections-module"></span><h2>weatherDB.lib.connections module<a class="headerlink" href="#module-weatherDB.lib.connections" title="Permalink to this headline"></a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="weatherDB.lib.connections.check_superuser">
-<span class="sig-prename descclassname"><span class="pre">weatherDB.lib.connections.</span></span><span class="sig-name descname"><span class="pre">check_superuser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">methode</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.lib.connections.check_superuser" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="weatherDB.lib.connections.FTP">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">weatherDB.lib.connections.</span></span><span class="sig-name descname"><span class="pre">FTP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">host=''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user=''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">passwd=''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acct=''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout=&lt;object</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_address=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding='utf-8'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.lib.connections.FTP" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ftplib.FTP</span></code></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.lib.connections.FTP.login">
-<span class="sig-name descname"><span class="pre">login</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.lib.connections.FTP.login" title="Permalink to this definition"></a></dt>
-<dd><p>Login, default anonymous.</p>
-</dd></dl>
-
-</dd></dl>
-
-</section>
 <section id="module-weatherDB.lib.utils">
 <span id="weatherdb-lib-utils-module"></span><h2>weatherDB.lib.utils module<a class="headerlink" href="#module-weatherDB.lib.utils" title="Permalink to this headline"></a></h2>
 <p>Some utilities functions and classes that are used in the module.</p>
@@ -390,7 +366,7 @@ E.G. Timedelta(2 days 12:30:12)</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="weatherDB.html" class="btn btn-neutral float-left" title="weatherDB package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="weatherDB.html" class="btn btn-neutral float-left" title="weatherDB.station module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="weatherDB.lib.max_fun.html" class="btn btn-neutral float-right" title="weatherDB.lib.max_fun package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

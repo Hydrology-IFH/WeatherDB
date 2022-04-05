@@ -1,14 +1,6 @@
 weatherDB.lib package
 =====================
 
-weatherDB.lib.connections module
---------------------------------
-
-.. automodule:: weatherDB.lib.connections
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 weatherDB.lib.utils module
 --------------------------
 
