@@ -33,18 +33,20 @@ Get started
 -----------
 To get started you need to enter the credentials to access the Database. If this is an account with read only access, than only those method's, that read data from the Database are available.
 Enter those credentials in the secretSettings.py file. An example secretSettings.py file is in the source directory (see secretSettings_example.py)
-If you use the database at the hydrology department of Freiburg, please go to the [http://weather.hydro.intra.uni-freiburg.de](http://weather.hydro.intra.uni-freiburg.de). There you can create yourself an account and then download your login secretSettings file from your profile page.
+If you use the database at the hydrology department of Freiburg, please go to the [weather.hydro.intra.uni-freiburg.de](http://weather.hydro.intra.uni-freiburg.de). There you can create yourself an account and then download your login secretSettings file from your profile page.
 
 How-to install python
 ---------------------
 To use this package you obviously need Python with several packages installed.
 
-The easiest way to install python is by installing [https://www.anaconda.com/products/distribution](Anaconda).
+The easiest way to install python is by installing [Anaconda](https://www.anaconda.com/products/distribution).
 
 After the installation you should create yourself a virtual environment. This is basically a folder with all your packages installed and some definition files to set the apropriate environment variables...
 To do so use (in Anaconda Terminal): 
-`conda create --name your_environment_name python=3.8`
 
+```
+conda create --name your_environment_name python=3.8
+```
 Afterwards you need to activate your environment and then install the requirements:
 
 ```

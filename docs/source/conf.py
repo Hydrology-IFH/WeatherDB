@@ -21,7 +21,6 @@ os.environ["RTD_documentation_import"] = "YES"
 src_path = Path(__file__).parent
 base_path = src_path.parents[1]
 sys.path.insert(0, base_path.resolve().as_posix())
-# sys.path.insert(0, base_path.joinpath("WeatherDB").resolve().as_posix())
 
 import weatherDB
 
@@ -47,7 +46,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.imgconverter',
     'nbsphinx',
-    'recommonmark' 
+    'myst_parser'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -64,6 +63,14 @@ autodoc_default_options = {
 	'special-members': '__init__',
     'member-order': 'bysource'
 }
+
+source_parsers = {
+   '.md': "markdown"
+}
+
+myst_enable_extensions = [
+    "dollarmath",
+]
 
 # -- Options for HTML output -------------------------------------------------
 

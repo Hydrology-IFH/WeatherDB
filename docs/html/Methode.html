@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Method &mdash; WeatherDB 0.0.4 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="weatherDB" href="modules.html" />
+    <link rel="prev" title="WeatherDB - module" href="README.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> WeatherDB
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="README.html">     Introduction</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Method</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#downloading-the-data">downloading the data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#quality-check">quality check</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#temperature-and-evapotranspiration">Temperature and Evapotranspiration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#precipitation">Precipitation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#daily-sum-is-zero">daily sum is zero</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#consecutive-equal-values">consecutive equal values</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#filling-of-hols">Filling of hols</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#richter-correction">Richter correction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sources">sources</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">     API reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">WeatherDB</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Method</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/Methode.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<section class="tex2jax_ignore mathjax_ignore" id="method">
+<h1>Method<a class="headerlink" href="#method" title="Permalink to this headline"></a></h1>
+<p>Behind this package/website is a PostGreSQL-database. This database is build and updated with the same package, as for downloading the data. The only difference is, that the given connection in the secretSettings file needs to have write permissions for the database.
+Therefor everyone can look into the code to find out exactly how the database creation works. But as an overview this page will give basic explanations of the processes behind it.</p>
+<p>The timeseries for Temperature, Evapotranspiration and Precipitation are going through a 3-4 step process.The result of every process is saved and can get downloaded, with the corresponding abbreviation:</p>
+<ul class="simple">
+<li><p>downloading the raw data –&gt; “raw”</p></li>
+<li><p>quality check the data –&gt; “qc”</p></li>
+<li><p>fillup the data –&gt; “filled”</p></li>
+<li><p>richter correct the values –&gt; “corr”</p></li>
+</ul>
+<p>In the following chapters the processes will get explained furthermore.</p>
+<section id="downloading-the-data">
+<h2>downloading the data<a class="headerlink" href="#downloading-the-data" title="Permalink to this headline"></a></h2>
+<p>The raw data is downloaded from the <a class="reference external" href="https://opendata.dwd.de/climate_environment/CDC/">DWD-CDC server</a>. The timeseries are downloaded and saved from the 1.1.1994 on. If there are historical datas available for a measurement, they are preferred to recent values, because they are already quality checked a bit. The Temperature (T) and potential Evapotranspiration (ET) is downloaded on daily resolution. Where as the Precipitation (N) is downloaded as 10 minute and daily values, but only the 10 minute values are the basis for the downloads.</p>
+<p><strong>Table 1: The downloaded raw data, resolution and their source</strong></p>
+<table class="colwidths-auto docutils align-default">
+<thead>
+<tr class="row-odd"><th class="text-center head"><p>parameter</p></th>
+<th class="text-center head"><p>resolution</p></th>
+<th class="head"><p><div style="text-align: center">source</div></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-center"><p>Temperature</p></td>
+<td class="text-center"><p>daily</p></td>
+<td><p><ul><li>DWD Climate Data Center (CDC):<br> Historical daily station observations (temperature, pressure, precipitation, sunshine duration, etc.) for Germany, version v21.3, 2021, <br><a class="reference external" href="https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/kl/historical/">online available</a> </li><li>DWD Climate Data Center (CDC): <br>Recent daily station observations (temperature, pressure, precipitation, sunshine duration, etc.) for Germany, quality control not completed yet, version recent, <br><a class="reference external" href="https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/kl/recent/">online available</a></li></ul></p></td>
+</tr>
+<tr class="row-odd"><td class="text-center"><p>pot. Evapotranspiration</p></td>
+<td class="text-center"><p>daily</p></td>
+<td><p><ul><li>DWD Climate Data Center: <br>Calculated daily values for different characteristic elements of soil and crops., Version v19.3, 2019, parameter “VPGB”, <br><a class="reference external" href="https://opendata.dwd.de/climate_environment/CDC/derived_germany/soil/daily/historical/">online available</a> </li><li>DWD Climate Data Center: <br>Calculated daily values for different characteristic elements of soil and crops,Version v19.3, 2019, parameter “VPGB”, <br><a class="reference external" href="https://opendata.dwd.de/climate_environment/CDC/derived_germany/soil/daily/recent/">online available</a></li></ul></p></td>
+</tr>
+<tr class="row-even"><td class="text-center"><p>Precipitation</p></td>
+<td class="text-center"><p>10 minutes</p></td>
+<td><p><ul><li>DWD Climate Data Center (CDC): <br>Historical 10-minute station observations of precipitation for Germany, version V1, 2019, <br><a class="reference external" href="https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/precipitation/historical/">online available</a></li><li>DWD Climate Data Center (CDC): <br>Recent 10-minute station observations of precipitation for Germany,version recent, 2019, <br><a class="reference external" href="https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/precipitation/recent">online available</a></li></ul></p></td>
+</tr>
+<tr class="row-odd"><td class="text-center"><p>Precipitation</p></td>
+<td class="text-center"><p>daily</p></td>
+<td><p><ul><li>DWD Climate Data Center (CDC): <br>Historical daily station observations (temperature, pressure, precipitation, sunshine duration, etc.) for Germany, version v21.3, 2021, <br><a class="reference external" href="https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/kl/historical/">online available</a> </li><li>DWD Climate Data Center (CDC): <br>Recent daily station observations (temperature, pressure, precipitation, sunshine duration, etc.) for Germany, quality control not completed yet, version recent, <br><a class="reference external" href="https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/kl/recent/">online available</a></li></ul></p></td>
+</tr>
+</tbody>
+</table>
+<p>For computation improvements the downloaded files and their modification time is saved to the database, to be able to only download the updated data.</p>
+</section>
+<section id="quality-check">
+<h2>quality check<a class="headerlink" href="#quality-check" title="Permalink to this headline"></a></h2>
+<p>To quality check the data it is very dependend on which parameter is treated. Therefor this chapter is grouped into subchapters.</p>
+<p>Although every quality check can get computed for different periods:</p>
+<ul class="simple">
+<li><p>on all of the data by using e.g. <code class="docutils literal notranslate"><span class="pre">station.StationT(3).quality_check()</span></code></p></li>
+<li><p>only a specified period, with e.g. <code class="docutils literal notranslate"><span class="pre">station.StationN(3).quality_check(period=(&quot;2010-01-01&quot;,</span> <span class="pre">&quot;2020-12-31&quot;))</span></code></p></li>
+<li><p>the last imported period, with e.g. <code class="docutils literal notranslate"><span class="pre">station.StationET(3).last_imp_quality_check()</span></code></p></li>
+</ul>
+<section id="temperature-and-evapotranspiration">
+<h3>Temperature and Evapotranspiration<a class="headerlink" href="#temperature-and-evapotranspiration" title="Permalink to this headline"></a></h3>
+<p>For T and ET quality check the data is compared to the 5 nearest neighbors data. The data of every neighboor station is regionalised, based on the DWD grids (see chapter regionalisation), to the examined station. Then the mean value of those 5 values is taken to compare to the station data. If this mean value is too far away from the own value, then the measurement point is deleted.</p>
+<p><strong>Table 2: Limits for the quality check of the T and ET measurements, when compared with neighbor stations</strong></p>
+<table class="colwidths-auto docutils align-default">
+<thead>
+<tr class="row-odd"><th class="text-center head"><p>parameter</p></th>
+<th class="text-center head"><p>compare equation</p></th>
+<th class="text-center head"><p>lower limit</p></th>
+<th class="text-center head"><p>upper limit</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-center"><p>Temperature</p></td>
+<td class="text-center"><p><span class="math notranslate nohighlight">\(\Delta T = T_{Stat} - \overline{T}_{neighbors}\)</span></p></td>
+<td class="text-center"><p><span class="math notranslate nohighlight">\(\Delta T &lt; -5°C\)</span></p></td>
+<td class="text-center"><p><span class="math notranslate nohighlight">\(\Delta T &gt; 5°C\)</span></p></td>
+</tr>
+<tr class="row-odd"><td class="text-center"><p>pot. Evapotranspiration</p></td>
+<td class="text-center"><p><span class="math notranslate nohighlight">\(\delta ET = \dfrac{ET_{Stat}}{\overline{ET}_{neighbors}}\)</span></p></td>
+<td class="text-center"><p><span class="math notranslate nohighlight">\(\begin{cases}\delta ET&lt; 25\% \\ ET_{Stat}&lt; 2 \frac{mm}{d}\end{cases}\)</span></p></td>
+<td class="text-center"><p><span class="math notranslate nohighlight">\(\begin{cases}\delta ET&gt; 200\% \\ ET_{Stat}&gt; 3 \frac{mm}{d}\end{cases}\)</span></p></td>
+</tr>
+</tbody>
+</table>
+<p>For the evapotranspiration there are two rules that need to be fulfilled to be unplausible. One relative and one nominal. This is because, low measurement values tend to have high relative differences and would then get deleted too often.</p>
+</section>
+<section id="precipitation">
+<h3>Precipitation<a class="headerlink" href="#precipitation" title="Permalink to this headline"></a></h3>
+<p>The precipitation measurements must pass through multiple quality checks.</p>
+<section id="daily-sum-is-zero">
+<h4>daily sum is zero<a class="headerlink" href="#daily-sum-is-zero" title="Permalink to this headline"></a></h4>
+<p>As some precipitation station (e.g. Feldberg station) have measurements of 0mm in the 10 minutes dataset even though the daily dataset has measurements. This is especially true for the measurement points in 20th and early 21th century. This is probably the result of new measurement equipment to measure the 10 minutes values, but without a good quality control. back then the daily values are often measured with other equipments and have a better quality check they are going through, so that the values are more reliable.</p>
+<p>To filter those wrongly measurements of 0 mm out of the data, the data is compared to the daily values from the DWD at the same location. For this reason the daily measurements are first filled up (see next chapter). <br>
+The 10 minutes measurements get aggregated to daily values. If this daily sum is 0 mm, even though the daily data from the DWD is not 0, all the 10 minutes measurements of that day are deleted.</p>
+<p>This check is the only reason why the daily precipitation values were downloaded in the first place.</p>
+</section>
+<section id="consecutive-equal-values">
+<h4>consecutive equal values<a class="headerlink" href="#consecutive-equal-values" title="Permalink to this headline"></a></h4>
+<p>Sometimes there are several consecutive 10 minutes values that are exactly the same. As the accuracy of the measurement is 0.01 mm, this is very improbable to be a real measurement and is more likely the result of splitting e.g. an hourly value into 6 values.</p>
+<p>It is assumed, that filling the measurements up with values from the neighbor stations is more accurate than this dissemination. Therefor 3 consecutive same measurements are deleted, if their “Qualitätsnorm” from the DWD is not 3 (meaning that the measurements didn’t get a good quality control from the DWD).</p>
+</section>
+</section>
+</section>
+<section id="filling-of-hols">
+<h2>Filling of hols<a class="headerlink" href="#filling-of-hols" title="Permalink to this headline"></a></h2>
+<p>To have complete timeseries, the holes in the quality checked timeseries is filled with data from the neighbor stations. This is done by regionalising the neighbors measurements value to the station that is filled. Starting with the nearest neighbor station all available stations are taken until the timeserie is completely filled.</p>
+<p>For the reginalisation, the muli-annual values for every station for the climate period of 1991-2020 are computed from the corresponding DWD grid.</p>
+<p><strong>Table 3: The raster grids that are the basis for the regionalisation</strong></p>
+<table class="colwidths-auto docutils align-default">
+<thead>
+<tr class="row-odd"><th class="text-center head"><p>parameter</p></th>
+<th class="head"><p><div style="text-align: center">source</div></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-center"><p>Precipitation</p></td>
+<td><p>DWD Climate Data Center (CDC): REGNIE grids of multi-annual precipitation, period 1991-2020, <a class="reference external" href="https://opendata.dwd.de/climate_environment/CDC/grids_germany/multi_annual/regnie">online available</a></p></td>
+</tr>
+<tr class="row-odd"><td class="text-center"><p>Temperature</p></td>
+<td><p>DWD Climate Data Center (CDC): Multi-annual means of grids of air temperature (2m) over Germany, period 1991-2020, version v1.0. <a class="reference external" href="https://opendata.dwd.de/climate_environment/CDC/grids_germany/multi_annual/air_temperature_mean">online available</a></p></td>
+</tr>
+<tr class="row-even"><td class="text-center"><p>potential Evapotranspiration</p></td>
+<td><p>DWD Climate Data Center (CDC): Multi-annual grids of potential evapotranspiration over grass, 0.x, period 1991-2020, <a class="reference external" href="https://opendata.dwd.de/climate_environment/CDC/grids_germany/multi_annual/evapo_p">online available</a></p></td>
+</tr>
+</tbody>
+</table>
+<p>Then to get a regionalisation factor the multi-annual values of both stations are compared. For T and ET only the yearly mean is taken into account. For the precipitation one winter(october-march) and one summer (april-september) factor is computed. The following equation explain the calculation of the filling values for the different parameters, based on their multi-annual mean(ma).</p>
+<p><span class="math notranslate nohighlight">\(T_{fillup} = T_{neighbor} + (T_{station,ma}-T_{neighbor,ma})\)</span></p>
+<p><span class="math notranslate nohighlight">\(ET_{fillup} = ET_{neighbor} * \dfrac{ET_{station,ma}}{ET_{neighbor,ma}}\)</span></p>
+<p><span class="math notranslate nohighlight">\(N_{fillup} = \begin{cases}
+N_{neighbor} * \dfrac{N_{station,ma,winter}}{N_{neighbor,ma,winter}} \space if\space month\in[4:9]\\ 
+N_{neighbor} * \dfrac{N_{station,ma,summer}}{N_{neighbor,ma,summer}} \space if\space month\notin[4:9]
+\end{cases}\)</span></p>
+<p>For the precipitation values the 10 minutes values are furthermore adjusted to the daily measurements. Therefor the daily sum is computed. Then the quotient with the daily measurement is calculated and multiplied to every 10 minute measurement. So the difference to the daily measurement is added relatively to the measured value. In the end the filled 10 minutes precipitation values summ up to the same daily values as the daily values from the DWD.</p>
+</section>
+<section id="richter-correction">
+<h2>Richter correction<a class="headerlink" href="#richter-correction" title="Permalink to this headline"></a></h2>
+<p>This step is only done for the 10 minutes precipitation values. Here the filled precipitation values, get corrected like defined in Richter (1995).</p>
+<p>First of all, the horizon angle (“Horizontabschirmung”) is calculated from a DGM20 (aggregated from DGM5) and if the DGM20 was out of bound also from a DGM8. The DGM80 is bigger than the german border and therefor for stations around the border this is gives better results than the DGM20 which is only for the german territory. Therefore the rasters are sampled for their values on one single line of 75km, starting from the station. Then the angle to every point from the station is calculated. The Point with the biggest angle is taken as horizon angle for this line. This step is repeated for several lines ranging from north to south in 3° steps. Afterwards the Richter horizon angle is computed as:</p>
+<p><span class="math notranslate nohighlight">\(H’=0,15*H_{S-SW} + 0,35*H_{SW-W} +0,35*H_{W-NW} +0, 15*H_{NW-N}\)</span></p>
+<p>With this horizon angle the Richter exposition class is defined for every station.</p>
+<p>Afterwards the daily correction is calculated with the following table and equation, based on the filled daily temperature at the station.</p>
+<p><span class="math notranslate nohighlight">\(\Delta N = b * N^E\)</span></p>
+<p><strong>Table 4: The Richter correction coeeficients. (Richter (1995) S. 67)</strong></p>
+<table class="colwidths-auto docutils align-default">
+<thead>
+<tr class="row-odd"><th class="text-center head"><p>precipitation typ</p></th>
+<th class="text-center head"><p>temperature</p></th>
+<th class="text-center head"><p>E</p></th>
+<th class="text-center head"><p>b<br>no-protection</p></th>
+<th class="text-center head"><p>b<br>little-protection</p></th>
+<th class="text-center head"><p>b<br>protected</p></th>
+<th class="text-center head"><p>b<br>heavy-protection</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-center"><p>precip_sommer</p></td>
+<td class="text-center"><p>&gt;= 3 °C</p></td>
+<td class="text-center"><p>0,38</p></td>
+<td class="text-center"><p>0,345</p></td>
+<td class="text-center"><p>0,31</p></td>
+<td class="text-center"><p>0,28</p></td>
+<td class="text-center"><p>0,245</p></td>
+</tr>
+<tr class="row-odd"><td class="text-center"><p>precip_winter</p></td>
+<td class="text-center"><p>&gt;= 3 °C</p></td>
+<td class="text-center"><p>0,46</p></td>
+<td class="text-center"><p>0,34</p></td>
+<td class="text-center"><p>0,28</p></td>
+<td class="text-center"><p>0,24</p></td>
+<td class="text-center"><p>0,19</p></td>
+</tr>
+<tr class="row-even"><td class="text-center"><p>mix</p></td>
+<td class="text-center"><p>-0,7 °C &lt; T &lt; 3 °C</p></td>
+<td class="text-center"><p>0,55</p></td>
+<td class="text-center"><p>0,535</p></td>
+<td class="text-center"><p>0,39</p></td>
+<td class="text-center"><p>0,305</p></td>
+<td class="text-center"><p>0,185</p></td>
+</tr>
+<tr class="row-odd"><td class="text-center"><p>snow</p></td>
+<td class="text-center"><p>&lt;= -0,7°C</p></td>
+<td class="text-center"><p>0,82</p></td>
+<td class="text-center"><p>0,72</p></td>
+<td class="text-center"><p>0,51</p></td>
+<td class="text-center"><p>0,33</p></td>
+<td class="text-center"><p>0,21</p></td>
+</tr>
+</tbody>
+</table>
+<p>The daily correction (<span class="math notranslate nohighlight">\(\Delta N\)</span>) is then distributed to every 10 minute measurement where precipitation was measured. So the daily correction is applied as a block to the 10 minutes values. This results in relatively high corrections, when there was only little precipitation and relatively low corrections when the measured precipitation was high. As the systematic error is mostly due to wind and has therefor more effect, when there is low precipitation, this approach is better than adding it relatively to the measurement.</p>
+<br>
+</section>
+<hr class="docutils" />
+<section id="sources">
+<h2>sources<a class="headerlink" href="#sources" title="Permalink to this headline"></a></h2>
+<ul class="simple">
+<li><p>Richter, D. 1995. Ergebnisse methodischer Untersuchungen zur Korrektur des systematischen Meßfehlers des Hellmann-Niederschlagsmessers. Offenbach am Main: Selbstverl. des Dt. Wetterdienstes.</p></li>
+<li><p>GeoBasis-DE: Bundesamt für Kartographie und Geodäsie. 2016. Digitales Geländemodell Gitterweite 5 m. DGM5. Produktstand: 2016.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="README.html" class="btn btn-neutral float-left" title="WeatherDB - module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="modules.html" class="btn btn-neutral float-right" title="weatherDB" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright Copyright 2022, Max Schmit.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

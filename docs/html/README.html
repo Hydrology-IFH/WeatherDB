@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WeatherDB - module &mdash; WeatherDB 0.0.2 documentation</title>
+  <title>WeatherDB - module &mdash; WeatherDB 0.0.4 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -19,7 +19,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="weatherDB" href="modules.html" />
+    <link rel="next" title="Method" href="Methode.html" />
     <link rel="prev" title="Welcome to WeatherDB’s documentation!" href="index.html" /> 
 </head>
 
@@ -41,9 +41,12 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">     Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#install">Install</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#get-started">Get started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#how-to-install-python">How-to install python</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="Methode.html">Method</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">     API reference</a></li>
 </ul>
 
@@ -95,29 +98,54 @@
     text-align: unset;
 }
 </style>
-<section id="weatherdb-module">
+<section class="tex2jax_ignore mathjax_ignore" id="weatherdb-module">
 <h1>WeatherDB - module<a class="headerlink" href="#weatherdb-module" title="Permalink to this headline"></a></h1>
 <p>author: Max Schmit</p>
 <p><a class="reference external" href="https://weatherdb-module.readthedocs.io/en/latest/?badge=latest"><img alt="Documentation Status" src="https://readthedocs.org/projects/weatherdb-module/badge/?version=latest" /></a></p>
-<p>The weather-DB module offers an API to interact with the automaticaly filled weather Database.</p>
-<p>Depending on the Database user privileges you can use more or less methodes of the classes.</p>
+<p>The weather-DB module offers an API to interact with the automatically filled weather Database.</p>
+<p>Depending on the Database user privileges you can use more or less methods of the classes.</p>
 <p>There are 3 different sub modules with their corresponding classes.</p>
 <ul class="simple">
 <li><p>station:
 Has a class for every type of station. E.g. PrecipitationStation (or StationN).
 One object represents one Station with one parameter.
 This object can get used to get the corresponding timeserie.
-There is also a StationGroup class that groups the three parameters precipitation, temperature and evapotranspiration together for one station. If one parameter is not available this one won’t get groupped.</p></li>
+There is also a StationGroup class that groups the three parameters precipitation, temperature and evapotranspiration together for one station. If one parameter is not available this one won’t get grouped.</p></li>
 <li><p>stations:
 Is a grouping class for all the stations of one measurement parameter. E.G. PrecipitationStations (or StationsN).
 Can get used to do actions on all the stations.</p></li>
 <li><p>broker:
 This submodule has only one class Broker. This one is used to do actions on all the stations together. Mainly only used for updating the DB.</p></li>
 </ul>
+<section id="install">
+<h2>Install<a class="headerlink" href="#install" title="Permalink to this headline"></a></h2>
+<p>To install the package use PIP to install the Github repository:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">git</span><span class="o">+</span><span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">maxschmi</span><span class="o">/</span><span class="n">WeatherDB_module</span>
+</pre></div>
+</div>
+</section>
 <section id="get-started">
 <h2>Get started<a class="headerlink" href="#get-started" title="Permalink to this headline"></a></h2>
-<p>To get started you need to enter the credentials to access the Database. If this is an account with read only acces, than only those methodes, that read data from the Database are available.
-Enter those credentials in the secretSettings.py file.</p>
+<p>To get started you need to enter the credentials to access the Database. If this is an account with read only access, than only those method’s, that read data from the Database are available.
+Enter those credentials in the secretSettings.py file. An example secretSettings.py file is in the source directory (see secretSettings_example.py)
+If you use the database at the hydrology department of Freiburg, please go to the <a class="reference external" href="http://weather.hydro.intra.uni-freiburg.de">weather.hydro.intra.uni-freiburg.de</a>. There you can create yourself an account and then download your login secretSettings file from your profile page.</p>
+</section>
+<section id="how-to-install-python">
+<h2>How-to install python<a class="headerlink" href="#how-to-install-python" title="Permalink to this headline"></a></h2>
+<p>To use this package you obviously need Python with several packages installed.</p>
+<p>The easiest way to install python is by installing <a class="reference external" href="https://www.anaconda.com/products/distribution">Anaconda</a>.</p>
+<p>After the installation you should create yourself a virtual environment. This is basically a folder with all your packages installed and some definition files to set the apropriate environment variables…
+To do so use (in Anaconda Terminal):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">--</span><span class="n">name</span> <span class="n">your_environment_name</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.8</span>
+</pre></div>
+</div>
+<p>Afterwards you need to activate your environment and then install the requirements:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">activate</span> <span class="n">your_environment_name</span>
+<span class="n">conda</span> <span class="n">install</span> <span class="n">shapely</span> <span class="n">numpy</span> <span class="n">geopandas</span> <span class="n">pandas</span> <span class="n">sqlalchemy</span>
+<span class="n">conda</span> <span class="n">install</span> <span class="o">-</span><span class="n">c</span> <span class="n">conda</span><span class="o">-</span><span class="n">forge</span> <span class="n">rasterio</span> <span class="n">psycopg2</span> <span class="n">pip</span>
+<span class="n">pip</span> <span class="n">install</span> <span class="n">progressbar2</span>
+</pre></div>
+</div>
 </section>
 </section>
 
@@ -126,13 +154,13 @@ Enter those credentials in the secretSettings.py file.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="index.html" class="btn btn-neutral float-left" title="Welcome to WeatherDB’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="modules.html" class="btn btn-neutral float-right" title="weatherDB" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="Methode.html" class="btn btn-neutral float-right" title="Method" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright Copyright 2021, Max Schmit.</p>
+    <p>&#169; Copyright Copyright 2022, Max Schmit.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

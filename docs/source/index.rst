@@ -11,6 +11,7 @@ Welcome to WeatherDB's documentation!
    :caption: Contents:
 
 	Introduction <README.md>
+   Method <Methode.md>
 	API reference <modules>
 
 
