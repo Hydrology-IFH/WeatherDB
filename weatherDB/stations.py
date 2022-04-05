@@ -1,5 +1,5 @@
 """
-This module has grouping classes for all the stations of one parameter. E.G. PrecipitationStations (or StationsN) groups all the Precipitation Stations available.
+This module has grouping classes for all the stations of one parameter. E.G. StationsN (or StationsN) groups all the Precipitation Stations available.
 Those classes can get used to do actions on all the stations.
 """
 # libraries
@@ -24,8 +24,8 @@ from .lib.connections import CDC, DB_ENG, check_superuser
 from .lib.utils import get_ftp_file_list, TimestampPeriod
 from .lib.max_fun.import_DWD import get_dwd_meta
 from .station import (StationBase,
-    PrecipitationDailyStation,  PrecipitationStation,
-    TemperatureStation, EvapotranspirationStation,
+    StationND,  StationN,
+    StationT, StationET,
     GroupStation)
 
 # set settings
@@ -49,7 +49,7 @@ class StationsBase:
         if type(self) == StationsBase:
             raise NotImplementedError("""
             The StationsBase is only a wrapper class an is not working on its own.
-            Please use PrecipitationStation, PrecipitationDailyStation, TemperatureStation or EvapotranspirationStation instead""")
+            Please use StationN, StationND, StationT or StationET instead""")
         self._ftp_folder_base = self._StationClass._ftp_folder_base
         if type(self._ftp_folder_base) == str:
             self._ftp_folder_base = [self._ftp_folder_base]
@@ -639,8 +639,9 @@ class StationsTETBase(StationsBase):
         super().fillup(only_real=only_real,stids=stids)
 
 # Implement stations classes
-class PrecipitationStations(StationsBase):
-    _StationClass = PrecipitationStation
+class StationsN(StationsBase):
+    """A class to work with and download 10 minutes precipitation data for several stations."""
+    _StationClass = StationN
     _timeout_raw_imp = 360
 
     @check_superuser
@@ -723,9 +724,15 @@ class PrecipitationStations(StationsBase):
             do_mp=False)
 
 
-class PrecipitationDailyStations(StationsBase):
-    _StationClass = PrecipitationDailyStation
-    _StationClass_parent = PrecipitationStations
+class StationsND(StationsBase):
+    """A class to work with and download daily precipitation data for several stations.
+    
+    Those stations data are only downloaded to do some quality checks on the 10 minutes data.
+    Therefor there is no special quality check and richter correction done on this data.
+    If you want daily precipitation data, better use the 10 minutes station class (StationN) and aggregate to daily values.
+    """
+    _StationClass = StationND
+    _StationClass_parent = StationsN
     _timeout_raw_imp = 120
 
     # def download_meta(self):
@@ -735,34 +742,29 @@ class PrecipitationDailyStations(StationsBase):
     #     return meta
 
 
-class TemperatureStations(StationsTETBase):
-    _StationClass = TemperatureStation
+class StationsT(StationsTETBase):
+    """A class to work with and download temperature data for several stations."""
+    _StationClass = StationT
     _timeout_raw_imp = 120
 
 
-class EvapotranspirationStations(StationsTETBase):
-    _StationClass = EvapotranspirationStation
+class StationsET(StationsTETBase):
+    """A class to work with and download potential Evapotranspiration (VPGB) data for several stations."""
+    _StationClass = StationET
     _timeout_raw_imp = 120
 
     # def download_raw(self, only_new=True, only_real=False):
-    #     # because the evapotranspiration meta file from CDC has no date collumn
+    #     # because the evapotranspiration meta file from CDC has no date column
     #     # the default value for only_real is therefor changed to try
     #     # to download all the stations in the meta table
     #     return super().download_raw(only_new=only_new, only_real=only_real)
-
-
-# shorter names for classes
-StationsN = PrecipitationStations
-StationsND = PrecipitationDailyStations
-StationsT = TemperatureStations
-StationsET = EvapotranspirationStations
 
 
 # create a grouping class
 class GroupStations(object):
     """A class to group all possible parameters of all the stations.
     """
-    _StationN = PrecipitationStation
+    _StationN = StationN
     _GroupStation = GroupStation
 
     def __init__(self):
@@ -1053,4 +1055,4 @@ class GroupStations(object):
         return dir
 
 # clean station
-del PrecipitationStation, PrecipitationDailyStation, TemperatureStation, EvapotranspirationStation, GroupStation
+del StationN, StationND, StationT, StationET, GroupStation

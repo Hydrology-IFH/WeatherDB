@@ -6,24 +6,28 @@ from pathlib import Path
 
 # DB connection
 ###############
-# find secret settings path and insert into path
-this_dir = Path(__file__).parent.resolve()
-secret_found = False
-for dir in this_dir.parents:
-    if dir.joinpath("secretSettings.py").is_file():
-        sys.path.insert(0, dir.as_posix())
-        secret_found = True
-        break
-
-# find example settings for the documentation
-if not secret_found and "RTD_documentation_import" in os.environ:
+# check if in Sphinx creation mode
+if "RTD_documentation_import" in os.environ:
     from mock_alchemy.mocking import UnifiedAlchemyMagicMock
     DB_ENG = UnifiedAlchemyMagicMock()
     DB_ENG.is_superuser = True
 else:
     # import the secret settings
-    import secretSettings as secrets
-
+    try:
+        import secretSettings as secrets
+    except ImportError:
+        # look in parent folders for matching file and insert into path
+        this_dir = Path(__file__).parent.resolve()
+        for dir in this_dir.parents:
+            dir_fp = dir.joinpath("secretSettings.py")
+            if dir_fp.is_file():
+                with open(dir_fp, "r") as f:
+                    if any(["DB_WEA_USER" in l for l in f.readlines()]):
+                        sys.path.insert(0, dir.as_posix())
+                        break
+        import secretSettings as secrets
+    
+    # create the engine
     DB_ENG = sqlalchemy.create_engine(
         "postgresql://{user}:{pwd}@{host}:{port}/{name}".format(
             user=secrets.DB_WEA_USER,
