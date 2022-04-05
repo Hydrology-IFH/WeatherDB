@@ -84,7 +84,7 @@ N_{neighbor} * \dfrac{N_{station,ma,summer}}{N_{neighbor,ma,summer}} \space if\s
 For the precipitation values the 10 minutes values are furthermore adjusted to the daily measurements. Therefor the daily sum is computed. Then the quotient with the daily measurement is calculated and multiplied to every 10 minute measurement. So the difference to the daily measurement is added relatively to the measured value. In the end the filled 10 minutes precipitation values summ up to the same daily values as the daily values from the DWD.
 
 ## Richter correction
-This step is obviously only done for the 10 minutes precipitation values. Here the filled precipitation values, get corrected like defined in Richter (1995).  
+This step is only done for the 10 minutes precipitation values. Here the filled precipitation values, get corrected like defined in Richter (1995).  
 
 First of all, the horizon angle ("Horizontabschirmung") is calculated from a DGM20 (aggregated from DGM5) and if the DGM20 was out of bound also from a DGM8. The DGM80 is bigger than the german border and therefor for stations around the border this is gives better results than the DGM20 which is only for the german territory. Therefore the rasters are sampled for their values on one single line of 75km, starting from the station. Then the angle to every point from the station is calculated. The Point with the biggest angle is taken as horizon angle for this line. This step is repeated for several lines ranging from north to south in 3° steps. Afterwards the Richter horizon angle is computed as:
 
