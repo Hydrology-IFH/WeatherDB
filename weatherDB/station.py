@@ -1,5 +1,5 @@
 """
-This module has a class for every type of station. E.g. PrecipitationStation (or StationN).
+This module has a class for every type of station. E.g. StationN (or StationN).
 One object represents one Station with one parameter.
 This object can get used to get the corresponding timeserie.
 There is also a StationGroup class that groups the three parameters precipitation, temperature and evapotranspiration together for one station.
@@ -140,7 +140,7 @@ class StationBase:
         if type(self) == StationBase:
             raise NotImplementedError("""
             The StationBase is only a wrapper class an is not working on its own.
-            Please use PrecipitationStation, TemperatureStation or EvapotranspirationStation instead""")
+            Please use StationN, StationT or StationET instead""")
         self.id = id
         self.id_str = str(id)
 
@@ -2189,7 +2189,8 @@ class StationNBase(StationBase):
 
 
 # the different Station kinds:
-class PrecipitationStation(StationNBase):
+class StationN(StationNBase):
+    """A class to work with and download 10 minutes precipitation data for one station."""
     _ftp_folder_base = [
         "climate_environment/CDC/observations_germany/climate/10_minutes/precipitation/"]
     _para = "n"
@@ -2247,7 +2248,7 @@ class PrecipitationStation(StationNBase):
                 "For the {para_long} station with ID {stid} there is no timeserie with daily values. " +
                 "Therefor the quality check for daily values equal to 0 is not done.\n" +
                 "Please consider updating the daily stations with:\n" +
-                "stats = stations.PrecipitationDailyStations()\n" +
+                "stats = stations.StationNDs()\n" +
                 "stats.update_meta()\nstats.update_raw()"
             ).format(**sql_format_dict))
             sql_dates_failed = """
@@ -2811,7 +2812,12 @@ class PrecipitationStation(StationNBase):
         return self.get_meta(infos="horizontabschirmung")
 
 
-class PrecipitationDailyStation(StationNBase, StationCanVirtualBase):
+class StationND(StationNBase, StationCanVirtualBase):
+    """A class to work with and download daily precipitation data for one station.
+    
+    Those station data are only downloaded to do some quality checks on the 10 minute data.
+    Therefor there is no special quality check and richter correction done on this data.
+    If you want daily precipitation data, better use the 10 minutes station(StationN) and aggregate to daily values."""
     _ftp_folder_base = [
         "climate_environment/CDC/observations_germany/climate/daily/kl/",
         "climate_environment/CDC/observations_germany/climate/daily/more_precip/"]
@@ -2865,7 +2871,8 @@ class PrecipitationDailyStation(StationNBase, StationCanVirtualBase):
             con.execute(sql_add_table)
 
 
-class TemperatureStation(StationTETBase):
+class StationT(StationTETBase):
+    """A class to work with and download temperaure data for one station."""
     _ftp_folder_base = [
         "climate_environment/CDC/observations_germany/climate/daily/kl/"]
     _date_col = "MESS_DATUM"
@@ -2916,7 +2923,8 @@ class TemperatureStation(StationTETBase):
         return adj_df
 
 
-class EvapotranspirationStation(StationTETBase):
+class StationET(StationTETBase):
+    """A class to work with and download potential Evapotranspiration (VPGB) data for one station."""
     _ftp_folder_base = ["climate_environment/CDC/derived_germany/soil/daily/"]
     _date_col = "Datum"
     _para = "et"
@@ -2961,16 +2969,11 @@ class EvapotranspirationStation(StationTETBase):
         return adj_df
 
 
-# shorter names for classes
-StationN = PrecipitationStation
-StationND = PrecipitationDailyStation
-StationT = TemperatureStation
-StationET = EvapotranspirationStation
-
-
 # create a grouping class for the 3 parameters together
 class GroupStation(object):
     """A class to group all possible parameters of one station.
+
+    So if you want to create the input files for a simulation, where you need T, ET and N, use this class to download the data for one station.
     """
 
     def __init__(self, id, error_if_missing=True):
