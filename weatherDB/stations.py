@@ -826,7 +826,7 @@ class GroupStations(object):
         return stations
 
     def create_ts(self, dir, period=(None, None), kind="best",
-                  stids="all", agg_to="10 min", et_et0=None, split_date=False):
+                  stids="all", agg_to="10 min", r_r0=None, split_date=False):
         """Download and create the weather tables as csv files.
 
         Parameters
@@ -856,8 +856,8 @@ class GroupStations(object):
             If a smaller aggregation is selected the minimum possible aggregation for the respective parameter is returned.
             So if 10 minutes is selected, than precipitation is returned in 10 minuets and T and ET as daily.
             The default is "10 min".
-        et_et0 : int or None, optional
-            Should the ET timeserie contain a column with et_et0.
+        r_r0 : int or None, optional
+            Should the ET timeserie contain a column with r_r0.
             If None, then no column is added.
             If int, then a ET/ET0 column is appended with this number as standard value.
             Until now providing a serie of different values is not possible.
@@ -893,7 +893,7 @@ class GroupStations(object):
                         period=period,
                         kind=kind,
                         agg_to=agg_to,
-                        et_et0=et_et0,
+                        r_r0=r_r0,
                         split_date=split_date)
                     pbar.variables["last_station"] = stat.id
                     pbar.update(pbar.value + 1)
@@ -904,7 +904,7 @@ class GroupStations(object):
                     period=period,
                     kind=kind,
                     agg_to=agg_to,
-                    et_et0=et_et0,
+                    r_r0=r_r0,
                     split_date=split_date)
                 pbar.variables["last_station"] = stat.id
                 pbar.update(pbar.value + 1)
@@ -937,7 +937,7 @@ class GroupStations(object):
                 quantity=len(stids), dir=dir))
 
     def create_roger_ts(self, dir, period=(None, None),
-                        kind="best", et_et0=1):
+                        kind="best", r_r0=1):
         """Create the timeserie files for roger as csv.
 
         This is only a wrapper function for create_ts with some standard settings.
@@ -958,8 +958,8 @@ class GroupStations(object):
             If "best" is given, then depending on the parameter of the station the best kind is selected.
             For Precipitation this is "corr" and for the other this is "filled".
             For the precipitation also "qn" and "corr" are valid.
-        et_et0 : int or None, optional
-            Should the ET timeserie contain a column with et_et0.
+        r_r0 : int or None, optional
+            Should the ET timeserie contain a column with r_r0.
             If None, then no column is added.
             If int, then a ET/ET0 column is appended with this number as standard value.
             Until now providing a serie of different values is not possible.
@@ -971,7 +971,7 @@ class GroupStations(object):
             If there are NAs in the timeseries or the period got changed.
         """
         return self.create_ts(dir=dir, period=period, kind=kind,
-                              agg_to="10 min", et_et0=et_et0,
+                              agg_to="10 min", r_r0=r_r0,
                               split_dates=True)
 
     def _check_period(self, period, stids, kind):

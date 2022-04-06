@@ -3099,7 +3099,7 @@ class GroupStation(object):
         return self.station_parts[0].get_name()
 
     def create_roger_ts(self, dir, period=(None, None),
-                        kind="best", et_et0=1):
+                        kind="best", r_r0=1):
         """Create the timeserie files for roger as csv.
 
         This is only a wrapper function for create_ts with some standard settings.
@@ -3120,7 +3120,7 @@ class GroupStation(object):
             If "best" is given, then depending on the parameter of the station the best kind is selected.
             For Precipitation this is "corr" and for the other this is "filled".
             For the precipitation also "qn" and "corr" are valid.
-        et_et0: int or None, optional
+        r_r0: int or None, optional
 
         Raises
         ------
@@ -3128,10 +3128,10 @@ class GroupStation(object):
             If there are NAs in the timeseries or the period got changed.
         """
         return self.create_ts(dir=dir, period=period, kind=kind,
-                              agg_to="10 min", et_et0=et_et0, split_date=True)
+                              agg_to="10 min", r_r0=r_r0, split_date=True)
 
     def create_ts(self, dir, period=(None, None), kind="best",
-                  agg_to="10 min", et_et0=None, split_date=False):
+                  agg_to="10 min", r_r0=None, split_date=False):
         """Create the timeserie files as csv.
 
         Parameters
@@ -3156,8 +3156,8 @@ class GroupStation(object):
             If a smaller aggregation is selected the minimum possible aggregation for the respective parameter is returned.
             So if 10 minutes is selected, than precipitation is returned in 10 minuets and T and ET as daily.
             The default is "10 min".
-        et_et0 : int or None, optional
-            Should the ET timeserie contain a column with et_et0.
+        r_r0 : int or None, optional
+            Should the ET timeserie contain a column with r_r0.
             If None, then no column is added.
             If int, then a ET/ET0 column is appended with this number as standard value.
             Until now providing a serie of different values is not possible.
@@ -3222,10 +3222,10 @@ class GroupStation(object):
                 num_col += 1
 
             # special operations for et
-            if para == "et" and et_et0 is None:
+            if para == "et" and r_r0 is not None:
                 num_col += 1
                 df = df.join(
-                    pd.Series([et_et0]*len(df), name="R/R0", index=df.index))
+                    pd.Series([r_r0]*len(df), name="R/R0", index=df.index))
 
             # create header
             header = ("Name: " + name + "\t" * (num_col-1) + "\n" +
