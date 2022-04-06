@@ -3120,7 +3120,13 @@ class GroupStation(object):
             If "best" is given, then depending on the parameter of the station the best kind is selected.
             For Precipitation this is "corr" and for the other this is "filled".
             For the precipitation also "qn" and "corr" are valid.
-        r_r0: int or None, optional
+        r_r0 : int or float, list of int or float or None, optional
+            Should the ET timeserie contain a column with R/R0.
+            If None, then no column is added.
+            If int or float, then a R/R0 column is appended with this number as standard value.
+            If list of int or floats, then the list should have the same length as the ET-timeserie and is appanded to the Timeserie.
+            If pd.Series, then the index should be a timestamp index. The serie is then joined to the ET timeserie.
+            The default is 1.
 
         Raises
         ------
@@ -3156,11 +3162,12 @@ class GroupStation(object):
             If a smaller aggregation is selected the minimum possible aggregation for the respective parameter is returned.
             So if 10 minutes is selected, than precipitation is returned in 10 minuets and T and ET as daily.
             The default is "10 min".
-        r_r0 : int or None, optional
-            Should the ET timeserie contain a column with r_r0.
+        r_r0 : int or float or None or pd.Series or list, optional
+            Should the ET timeserie contain a column with R/R0.
             If None, then no column is added.
-            If int, then a ET/ET0 column is appended with this number as standard value.
-            Until now providing a serie of different values is not possible.
+            If int, then a R/R0 column is appended with this number as standard value.
+            If list of int or floats, then the list should have the same length as the ET-timeserie and is appanded to the Timeserie.
+            If pd.Series, then the index should be a timestamp index. The serie is then joined to the ET timeserie.
             The default is None.
         split_date : bool, optional
             Should the timestamp get splitted into parts, so one column for year, one for month etc.?
@@ -3224,8 +3231,14 @@ class GroupStation(object):
             # special operations for et
             if para == "et" and r_r0 is not None:
                 num_col += 1
-                df = df.join(
-                    pd.Series([r_r0]*len(df), name="R/R0", index=df.index))
+                if type(r_r0)==int or type(r_r0)==float:
+                    df = df.join(
+                        pd.Series([r_r0]*len(df), name="R/R0", index=df.index))
+                elif type(r_r0)==pd.Series:
+                    df = df.join(r_r0.rename("R_R0"))
+                elif type(r_r0)==list:
+                    df = df.join(
+                        pd.Series(r_r0, name="R/R0", index=df.index))
 
             # create header
             header = ("Name: " + name + "\t" * (num_col-1) + "\n" +
