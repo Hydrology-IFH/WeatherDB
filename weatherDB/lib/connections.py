@@ -14,18 +14,21 @@ if "RTD_documentation_import" in os.environ:
 else:
     # import the secret settings
     try:
-        import secretSettings as secrets
+        import secretSettings_weatherDB as secrets
     except ImportError:
         # look in parent folders for matching file and insert into path
         this_dir = Path(__file__).parent.resolve()
         for dir in this_dir.parents:
-            dir_fp = dir.joinpath("secretSettings.py")
+            dir_fp = dir.joinpath("secretSettings_weatherDB.py")
             if dir_fp.is_file():
                 with open(dir_fp, "r") as f:
                     if any(["DB_WEA_USER" in l for l in f.readlines()]):
                         sys.path.insert(0, dir.as_posix())
                         break
-        import secretSettings as secrets
+        try:
+            import secretSettings_weatherDB as secrets
+        except ImportError:
+            raise ImportError("The secretSettings_weatherDB.py file was not found on your system.\n Please put the file somewhere on your PATH directories. For more information see the docs.")
     
     # create the engine
     DB_ENG = sqlalchemy.create_engine(
@@ -37,6 +40,7 @@ else:
             port=secrets.DB_PORT
             )
         )
+    del secrets
 
     # check if user has super user privileges
     with DB_ENG.connect() as con:

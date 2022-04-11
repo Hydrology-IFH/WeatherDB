@@ -196,7 +196,7 @@ class StationsBase:
             Values {values}
             ON CONFLICT (station_id) DO UPDATE SET
             '''.format(
-                columns=", ".join(columns),
+                infos=", ".join(columns),
                 values=values,
                 para=self._para)
         for col in columns:
@@ -231,17 +231,22 @@ class StationsBase:
             name="update period in meta",
             kwargs={}
         )
+        
+    @classmethod
+    def get_meta_explanation(cls, infos="all"):
+        return cls._StationClass.get_meta_explanation(infos="all")
 
     def get_meta(self,
-            columns=["Station_id", "von_datum", "bis_datum", "geometry"],
+            infos=["Station_id", "filled_from", "filled_until", "geometry"],
+            stids="all",
             only_real=True):
         """Get the meta Dataframe from the Database.
 
         Parameters
         ----------
-        columns : list, optional
-            A list of columns from the meta file to return
-            The default is: ["Station_id", "von_datum", "bis_datum", "geometry"]
+        infos : list, optional
+            A list of information from the meta file to return
+            The default is: ["Station_id", "filled_from", "filled_until", "geometry"]
         only_real: bool, optional
             Whether only real stations are returned or also virtual ones.
             True: only stations with own data are returned.
@@ -253,45 +258,55 @@ class StationsBase:
             The meta DataFrame.
         """
         # make sure columns is of type list
-        if type(columns) == str:
-            columns = [columns]
+        if type(infos) == str:
+            infos = [infos]
 
-        # check columns
-        columns = [col.lower() for col in columns]
-        if "station_id" not in columns:
-            columns.insert(0, "station_id")
-        if "geometry" in columns and "geometry_utm" in columns:
+        # check infos
+        infos = [col.lower() for col in infos]
+        if "station_id" not in infos:
+            infos.insert(0, "station_id")
+        if "geometry" in infos and "geometry_utm" in infos:
             warnings.warn("""
             You selected 2 geometry columns.
             Only the geometry column with EPSG 4326 is returned""")
-            columns.remove("geometry_utm")
+            infos.remove("geometry_utm")
 
         # create geometry select statement
-        columns_select = []
-        for col in columns:
-            if col in ["geometry", "geometry_utm"]:
-                columns_select.append(
-                    "ST_AsText({col}) as {col}".format(col=col))
+        infos_select = []
+        for info in infos:
+            if info in ["geometry", "geometry_utm"]:
+                infos_select.append(
+                    f"ST_AsText({info}) as {info}")
             else:
-                columns_select.append(col)
+                infos_select.append(info)
 
         # create sql statement
         sql = "SELECT {cols} FROM meta_{para}"\
-            .format(cols=", ".join(columns_select), para=self._para)
+            .format(cols=", ".join(infos_select), para=self._para)
         if only_real:
-            sql += " WHERE is_real=true"
+            where_clause = " WHERE is_real=true"
+        if stids != "all":
+            if type(stids) != list:
+                stids = [stids,]
+            if "where_clause" not in locals():
+                where_clause = " WHERE "
+            else:
+                where_clause += " AND "
+            where_clause += "station_id in ({stids})".format(
+                stids=", ".join([str(stid) for stid in stids]))
+        if "where_clause" in locals():
+            sql += where_clause
 
         # execute queries to db
         with DB_ENG.connect() as con:
             meta = pd.read_sql(
                 sql, con,
-                index_col="station_id",
-                parse_dates=["von_datum", "bis_datum"])
+                index_col="station_id")
 
         # change to GeoDataFrame if geometry column was selected
         for geom_col, srid in zip(["geometry", "geometry_utm"],
                                   ["4326",     "25832"]):
-            if geom_col in columns:
+            if geom_col in infos:
                 meta[geom_col] = meta[geom_col].apply(wkt.loads)
                 meta = gpd.GeoDataFrame(meta, crs="EPSG:" + srid)
 
@@ -322,13 +337,19 @@ class StationsBase:
         ValueError
             If the given stids (Station_IDs) are not all valid.
         """
-        meta = self.get_meta(columns=["Station_id"], only_real=only_real)
+        meta = self.get_meta(
+            infos=["station_id"], only_real=only_real, stids=stids)
 
         if stids == "all":
-            stations = [self._StationClass(stid) for stid in meta.index]
+            stations = [
+                self._StationClass(stid, _skip_meta_check=True) 
+                for stid in meta.index]
         else:
             stids = list(stids)
-            stations = [self._StationClass(stid) for stid in meta.index if stid in stids]
+            stations = [
+                self._StationClass(stid, _skip_meta_check=True) 
+                for stid in meta.index 
+                if stid in stids]
             stations_ids = [stat.id for stat in stations]
             if len(stations) != len(stids):
                 raise ValueError(
@@ -473,7 +494,7 @@ class StationsBase:
             The default is True
         only_real: bool, optional
             Whether only real stations are tried to download.
-            True: only stations with a date in von_datum in meta are downloaded.
+            True: only stations with a date in raw_from in meta are downloaded.
             The default is True.
         stids: string or list of int, optional
             The Stations to return.
@@ -509,7 +530,7 @@ class StationsBase:
             con.execute("""
                 UPDATE para_variables
                 SET start_tstp_last_imp='{start_tstp}'::timestamp,
-                max_tstp_last_imp=(SELECT max(raw_bis) FROM meta_{para})
+                max_tstp_last_imp=(SELECT max(raw_until) FROM meta_{para})
                 WHERE para='{para}';
             """.format(
                 para=self._para,
@@ -621,15 +642,53 @@ class StationsBase:
             name="fillup {para} data".format(para=self._para.upper()),
             do_mp=False)
 
+    def get_df(self, stids, kind, **kwargs):
+        """Get a DataFrame with the corresponding data.
+
+        Parameters
+        ----------
+        stids: string or list of int, optional
+            The Stations for which to compute.
+            Can either be "all", for all possible stations
+            or a list with the Station IDs.
+            The default is "all".
+        kwargs: optional keyword arguments
+            Those keyword arguments are passed to the get_df function of the station class.
+            can be period, agg_to, kinds
+
+        Returns
+        -------
+        pd.Dataframe
+            A DataFrame with the timeseries for this station and the given period.
+        """
+        if "kinds" in kwargs:
+            raise ValueError("The kinds parameter is not supported for stations objects. Please use kind instead.")
+        stats = self.get_stations(only_real=False, stids=stids)
+        for stat in pb.progressbar(stats, line_breaks=False):
+            df = stat.get_df(kinds=[kind], **kwargs)
+            df.rename(
+                dict(zip(
+                    df.columns, 
+                    [str(stat.id) 
+                        for col in df.columns])), 
+                axis=1, inplace=True)
+            if "df_all" in locals():
+                df_all = df_all.join(df)
+            else:
+                df_all = df
+        
+        return df_all
+
+
 class StationsTETBase(StationsBase):
     @check_superuser
     def fillup(self, only_real=False, stids="all"):
         # create virtual stations if necessary
         if not only_real:
             meta = self.get_meta(
-                columns=["Station_id"], only_real=False)
+                infos=["Station_id"], only_real=False)
             meta_n = StationsN().get_meta(
-                columns=["Station_id"], only_real=False)
+                infos=["Station_id"], only_real=False)
             stids_missing = set(meta_n.index.values) - set(meta.index.values)
             if stids != "all":
                 stids_missing = set(stids).intersection(stids_missing)
@@ -737,7 +796,7 @@ class StationsND(StationsBase):
 
     # def download_meta(self):
     #     meta = super().download_meta()
-    #     # stids_10min = self._StationClass_parent().get_meta(columns=["station_id"]).index
+    #     # stids_10min = self._StationClass_parent().get_meta(infos=["station_id"]).index
     #     # meta = meta[meta.index.isin(stids_10min)]
     #     return meta
 
@@ -770,32 +829,173 @@ class GroupStations(object):
     def __init__(self):
         self.stationsN = StationsN()
 
-    def get_meta(self,
-            columns=["Station_id", "von_datum", "bis_datum", "geometry"]):
+    def get_valid_stids(self):
+        if not hasattr(self, "_valid_stids"):
+            sql ="""
+            SELECT station_id FROM meta_n"""
+            with DB_ENG.connect() as con:
+                res = con.execute(sql)
+            self._valid_stids = [el[0] for el in res.all()]
+        return self._valid_stids
+
+    def _check_paras(self, paras):
+        if type(paras)==str and paras != "all":
+            paras = [paras,]
+        
+        valid_paras=["n", "t", "et"]
+        if paras == "all":
+            return valid_paras
+        else:
+            paras_new = []
+            for para in paras:
+                if para in valid_paras:
+                    paras_new.append(para)
+                else:
+                    raise ValueError(
+                        f"The parameter {para} you asked for is not a valid parameter. Please enter one of {valid_paras}")
+            return paras_new
+
+    def _check_period(self, period, stids, kind):
+        max_period = self._GroupStation(stids[0]).get_filled_period(kind=kind)
+        for stid in stids[1:]:
+            max_period = max_period.union(
+                self._GroupStation(stid).get_filled_period(kind=kind))
+
+        if type(period) != TimestampPeriod:
+            period = TimestampPeriod(*period)
+        if period.is_empty():
+            return max_period
+        else:
+            if not period.inside(max_period):
+                warnings.warn("The asked period is too large. Only {min_tstp} - {max_tstp} is returned".format(
+                    **max_period.get_sql_format_dict(format="%Y-%m-%d %H:%M")))
+            return period.union(max_period)
+
+    def _check_stids(self, stids):
+        """Check if the given stids are valid Station IDs.
+
+        It checks against the Precipitation stations.
+        """
+        if stids == "all":
+            return self.get_valid_stids()
+        else:
+            valid_stids = self.get_valid_stids()
+            stids_valid = [stid in valid_stids for stid in stids]
+            if all(stids_valid):
+                return stids
+            else:
+                raise ValueError(
+                    "There is no station defined in the database for the IDs:\n{stids}".format(
+                        stids=", ".join(
+                            [stid for stid in stids
+                                  if stid not in stids_valid])))
+
+    @staticmethod
+    def _check_dir(dir):
+        """Checks if a directors is valid and empty.
+
+        If not existing the directory is created.
+
+        Parameters
+        ----------
+        dir : pathlib object or zipfile.ZipFile
+            The directory to check.
+
+        Raises
+        ------
+        ValueError
+            If the directory is not empty.
+        ValueError
+            If the directory is not valid. E.G. it is a file path.
+        """
+        # check types
+        if type(dir) == str:
+            dir = Path(dir)
+
+        # check directory
+        if isinstance(dir, zipfile.ZipFile):
+            return dir
+        elif isinstance(dir, Path):
+            if dir.is_dir():
+                if len(list(dir.iterdir())) > 0:
+                    raise ValueError(
+                        "The given directory '{dir}' is not empty.".format(
+                            dir=str(dir)))
+            elif dir.suffix == "":
+                dir.mkdir()
+            elif dir.suffix == ".zip":
+                if not dir.parent.is_dir():
+                    raise ValueError(
+                        "The given parent directory '{dir}' of the zipfile is not a directory.".format(
+                            dir=dir.parents))
+            else:
+                raise ValueError(
+                    "The given directory '{dir}' is not a directory.".format(
+                        dir=dir))
+        else:
+            raise ValueError(
+                "The given directory '{dir}' is not a directory or zipfile.".format(
+                    dir=dir))
+
+        return dir
+
+    def get_meta(self, paras="all", stids="all", **kwargs):
         """Get the meta Dataframe from the Database.
 
         Parameters
         ----------
-        columns : list, optional
-            A list of columns from the meta file to return
-            The default is: ["Station_id", "von_datum", "bis_datum", "geometry"]
+        paras : list or str, optional
+            The parameters for which to get the information.
+            If "all" then all the available parameters are requested.
+            The default is "all".
+        stids: string or list of int, optional
+            The Stations to return the meta information for.
+            Can either be "all", for all possible stations
+            or a list with the Station IDs.
+            The default is "all".
+        **kwargs: dict, optional
+            The keyword arguments are passed to the station.GroupStation().get_meta methode.
+            From there it is passed to the single station get_meta methode.
+            Can be e.g. "infos"
 
         Returns
         -------
-        pandas.DataFrame or geopandas.GeoDataFrae
+        dict of pandas.DataFrame or geopandas.GeoDataFrame 
+        or pandas.DataFrame or geopandas.GeoDataFrame
             The meta DataFrame.
-        """
-        return self.stationsN.get_meta(columns=columns, only_real=True)
+            If several parameters are asked for, then a dict with an entry per parameter is returned.
 
-    def get_stations(self, stids="all"):
-        """Get a list with all the stations as Station-objects.
+        Raises
+        ------
+        ValueError
+            If the given stids (Station_IDs) are not all valid.
+        ValueError
+            If the given paras are not all valid.
+        """
+        paras = self._check_paras(paras)
+        stats = self.get_para_stations(paras=paras)
+        
+        for stat in stats:
+            meta_para = stat.get_meta(stids=stids, **kwargs)
+            meta_para["para"] = stat._para
+            if "meta_all" not in locals():
+                meta_all = meta_para
+            else:
+                meta_all = meta_all.append(meta_para)
+        
+        if len(paras)==1:
+            return meta_all.drop("para", axis=1)
+        else:
+            return meta_all.reset_index().set_index(["station_id", "para"]).sort_index()
+
+    def get_para_stations(self, paras="all"):
+        """Get a list with all the multi parameter stations as stations.Station\{parameter\}-objects.
 
         Parameters
         ----------
-        stids: string or list of int, optional
-            The Stations to return.
-            Can either be "all", for all possible stations
-            or a list with the Station IDs.
+        paras : list or str, optional
+            The parameters for which to get the objects.
+            If "all" then all the available parameters are requested.
             The default is "all".
 
         Returns
@@ -808,13 +1008,48 @@ class GroupStations(object):
         ValueError
             If the given stids (Station_IDs) are not all valid.
         """
-        meta = self.get_meta(columns=["Station_id"])
+        paras = self._check_paras(paras)
+        if not hasattr(self, "stations"):
+            self.stations = [self.stationsN, StationsT(), StationsET()]
+        return [stats for stats in self.stations if stats._para in paras]
+
+    def get_group_stations(self, stids="all", **kwargs):
+        """Get a list with all the stations as station.GroupStation-objects.
+
+        Parameters
+        ----------
+        stids: string or list of int, optional
+            The Stations to return.
+            Can either be "all", for all possible stations
+            or a list with the Station IDs.
+            The default is "all".
+        **kwargs: optional
+            The keyword arguments are handed to the creation of the single GroupStation objects.
+            Can be e.g. "error_if_missing".
+
+        Returns
+        -------
+        Station-object
+            returns a list with the corresponding station objects.
+
+        Raises
+        ------
+        ValueError
+            If the given stids (Station_IDs) are not all valid.
+        """
+        if "error_if_missing" not in kwargs:
+            kwargs.update({"error_if_missing": False})
+        kwargs.update({"_skip_meta_check":True})
+        valid_stids = self.get_valid_stids()
 
         if stids == "all":
-            stations = [self._GroupStation(stid) for stid in meta.index]
+            stations = [
+                self._GroupStation(stid, **kwargs) 
+                for stid in valid_stids]
         else:
             stids = list(stids)
-            stations = [self._GroupStation(stid) for stid in meta.index if stid in stids]
+            stations = [self._GroupStation(stid, **kwargs) 
+                        for stid in valid_stids if stid in stids]
             stations_ids = [stat.id for stat in stations]
             if len(stations) != len(stids):
                 raise ValueError(
@@ -877,7 +1112,7 @@ class GroupStations(object):
             period=period, stids=stids, kind=kind)
 
         # create GroupStation instances
-        stats = self.get_stations(stids=stids)
+        stats = self.get_group_stations(stids=stids)
         pbar = StationsBase._get_progressbar(
             max_value=len(stats),
             name="create RoGeR-TS")
@@ -980,86 +1215,6 @@ class GroupStations(object):
         return self.create_ts(dir=dir, period=period, kind=kind,
                               agg_to="10 min", r_r0=r_r0, stids=stids,
                               split_dates=True)
-
-    def _check_period(self, period, stids, kind):
-        max_period = self._GroupStation(stids[0]).get_filled_period(kind=kind)
-        for stid in stids[1:]:
-            max_period = max_period.union(
-                self._GroupStation(stid).get_filled_period(kind=kind))
-
-        if type(period) != TimestampPeriod:
-            period = TimestampPeriod(*period)
-        if period.is_empty():
-            return max_period
-        else:
-            if not period.inside(max_period):
-                warnings.warn("The asked period is too large. Only {min_tstp} - {max_tstp} is returned".format(
-                    **max_period.get_sql_format_dict(format="%Y-%m-%d %H:%M")))
-            return period.union(max_period)
-
-    def _check_stids(self, stids):
-        meta = self.get_meta(columns=["Station_id"])
-        if stids == "all":
-            return meta["Station_id"].values.to_list()
-        else:
-            stids_valid = [stid in meta.index for stid in stids]
-            if all(stids_valid):
-                return stids
-            else:
-                raise ValueError(
-                    "There is no station defined in the database for the IDs:\n{stids}".format(
-                        stids=", ".join(
-                            [stid for stid in stids
-                                  if stid not in stids_valid])))
-
-    @staticmethod
-    def _check_dir(dir):
-        """Checks if a directors is valid and empty.
-
-        If not existing the directory is created.
-
-        Parameters
-        ----------
-        dir : pathlib object or zipfile.ZipFile
-            The directory to check.
-
-        Raises
-        ------
-        ValueError
-            If the directory is not empty.
-        ValueError
-            If the directory is not valid. E.G. it is a file path.
-        """
-        # check types
-        if type(dir) == str:
-            dir = Path(dir)
-
-        # check directory
-        if isinstance(dir, zipfile.ZipFile):
-            return dir
-        elif isinstance(dir, Path):
-            if dir.is_dir():
-                if len(list(dir.iterdir())) > 0:
-                    raise ValueError(
-                        "The given directory '{dir}' is not empty.".format(
-                            dir=str(dir)))
-            elif dir.suffix == "":
-                dir.mkdir()
-            elif dir.suffix == ".zip":
-                if not dir.parent.is_dir():
-                    raise ValueError(
-                        "The given parent directory '{dir}' of the zipfile is not a directory.".format(
-                            dir=dir.parents))
-            else:
-                raise ValueError(
-                    "The given directory '{dir}' is not a directory.".format(
-                        dir=dir))
-        else:
-            raise ValueError(
-                "The given directory '{dir}' is not a directory or zipfile.".format(
-                    dir=dir))
-
-        return dir
 
 # clean station
 del StationN, StationND, StationT, StationET, GroupStation
