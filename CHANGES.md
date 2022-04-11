@@ -11,7 +11,7 @@
 - Quickstart added to the documentation
 - option to skip the check if a station is in the meta file, this is used for computational advantages in the stations classes, because they test already before creating the objects if they are in the meta table.
 - ..._von and ..._bis columns got renamed to the english name ..._from and ..._until
-- - the quot_... fields got all normed to % as unit
+- the quot_... fields got all normed to % as unit
 
 ## Version 0.0.4
 - The method part was added to the documentation 
