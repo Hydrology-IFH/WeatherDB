@@ -136,12 +136,30 @@ class StationBase:
     _min_agg_to = None # Similar to the interval, but same format ass in AGG_TO
     _agg_fun = "sum" # the sql aggregating function to use
 
-    def __init__(self, id):
+    def __init__(self, id, _skip_meta_check=False):
+        """Create a Station object.
+
+        Parameters
+        ----------
+        id : int
+            The stations ID.
+        _skip_meta_check : bool, optional
+            Should the check if the station is in the database meta file get skiped. 
+            Pay attention, when skipping this, because it can lead to problems.
+            This is for computational reasons, because it makes the initialization faster.
+            Is used by the stations classes, because the only initialize objects that are in the meta table.
+            The default is False
+
+        Raises
+        ------
+        NotImplementedError
+            _description_
+        """        
         if type(self) == StationBase:
             raise NotImplementedError("""
             The StationBase is only a wrapper class an is not working on its own.
             Please use StationN, StationT or StationET instead""")
-        self.id = id
+        self.id = int(id)
         self.id_str = str(id)
 
         if type(self._ftp_folder_base) == str:
@@ -153,7 +171,8 @@ class StationBase:
             for base in self._ftp_folder_base]))
 
         self._db_unit = " ".join([str(self._decimals), self._unit])
-        self._check_isin_meta()
+        if not _skip_meta_check:
+            self._check_isin_meta()
 
         # initiate the dictionary to store the last checked periods
         self._cached_periods = dict()
@@ -584,7 +603,7 @@ class StationBase:
         """
         with DB_ENG.connect() as con:
             result = con.execute("""
-            select {stid} in (select station_id from meta_{para});
+            SELECT EXISTS(SELECT station_id FROM meta_{para} WHERE station_id={stid});
             """.format(stid=self.id, para=self._para))
         return result.first()[0]
 
@@ -700,8 +719,8 @@ class StationBase:
 
         sql = """
             UPDATE meta_{para}
-            SET {kind}_von={min_tstp},
-                {kind}_bis={max_tstp}
+            SET {kind}_from={min_tstp},
+                {kind}_until={max_tstp}
             WHERE station_id={stid};
         """.format(
             stid=self.id, para=self._para,
@@ -791,22 +810,22 @@ class StationBase:
         # create update sql
         sql_update_meta = '''
             INSERT INTO meta_{para} as meta
-                (station_id, raw_von, raw_bis, last_imp_von, last_imp_bis
+                (station_id, raw_from, raw_until, last_imp_from, last_imp_until
                     {last_imp_cols})
             VALUES ({stid}, {min_tstp}, {max_tstp}, {min_tstp},
                     {max_tstp}{last_imp_values})
             ON CONFLICT (station_id) DO UPDATE SET
-                raw_von = LEAST (meta.raw_von, EXCLUDED.raw_von),
-                raw_bis = GREATEST (meta.raw_bis, EXCLUDED.raw_bis),
-                last_imp_von = CASE WHEN {last_imp_test}
-                                    THEN EXCLUDED.last_imp_von
-                                    ELSE LEAST(meta.last_imp_von,
-                                            EXCLUDED.last_imp_von)
+                raw_from = LEAST (meta.raw_from, EXCLUDED.raw_from),
+                raw_until = GREATEST (meta.raw_until, EXCLUDED.raw_until),
+                last_imp_from = CASE WHEN {last_imp_test}
+                                    THEN EXCLUDED.last_imp_from
+                                    ELSE LEAST(meta.last_imp_from,
+                                            EXCLUDED.last_imp_from)
                                     END,
-                last_imp_bis = CASE WHEN {last_imp_test}
-                                    THEN EXCLUDED.last_imp_bis
-                                    ELSE GREATEST(meta.last_imp_bis,
-                                                EXCLUDED.last_imp_bis)
+                last_imp_until = CASE WHEN {last_imp_test}
+                                    THEN EXCLUDED.last_imp_until
+                                    ELSE GREATEST(meta.last_imp_until,
+                                                EXCLUDED.last_imp_until)
                                     END
                 {last_imp_conflicts};
             '''.format(
@@ -1194,7 +1213,7 @@ class StationBase:
                     WHERE "filled" IS NULL;
                     FOR i IN (
                         SELECT meta.station_id,
-                            meta.raw_von, meta.raw_bis,
+                            meta.raw_from, meta.raw_until,
                             meta.station_id || '_{para}' AS tablename,
                             {coef_calc}
                         FROM meta_{para} meta
@@ -1217,8 +1236,8 @@ class StationBase:
                             FROM meta_{para}
                             WHERE station_id={stid})) ASC)
                     LOOP
-                        CONTINUE WHEN i.raw_von > unfilled_period.max
-                                      OR i.raw_bis < unfilled_period.min;
+                        CONTINUE WHEN i.raw_from > unfilled_period.max
+                                      OR i.raw_until < unfilled_period.min;
                         EXECUTE FORMAT(
                         $$
                         UPDATE new_filled_{stid}_{para} nf
@@ -1331,22 +1350,71 @@ class StationBase:
             self.fillup(period=period)
             self._mark_last_imp_done(kind="filled")
 
+    @classmethod
+    def get_meta_explanation(cls, infos="all"):
+        """Get the explanations of the available meta fields.
+
+        Parameters
+        ----------
+        infos : list or string, optional
+            The infos you wish to get an explanation for.
+            If "all" then all the available information get returned.
+            The default is "all"
+
+        Returns
+        -------
+        pd.Series
+            a pandas Series with the information names as index and the explanation as values.
+        """        
+        # check which information to get
+        if infos == "all":
+            col_clause = ""
+        else:
+            if type(infos) == str:
+                infos = [infos]
+            col_clause =" AND column_name IN ({cols})".format(
+                cols=", ".join(list(infos)))
+        sql = """
+        SELECT cols.column_name AS info,
+            (SELECT pg_catalog.col_description(c.oid, cols.ordinal_position::int)
+             FROM pg_catalog.pg_class c
+             WHERE c.oid  = (SELECT cols.table_name::regclass::oid) 
+               AND c.relname = cols.table_name
+            ) as explanation
+        FROM information_schema.columns cols
+        WHERE cols.table_name = 'meta_{para}'{col_clause};   
+        """.format(col_clause=col_clause, para=cls._para)
+
+        # get the result
+        return pd.read_sql(sql,con=DB_ENG, index_col="info")["explanation"]
+        with DB_ENG.connect() as con:
+            res = con.execute(sql)
+        keys = res.keys()
+        values = res.all()
+        if len(values)==1:
+            return values[0]
+        else:
+            return dict(zip(keys, values))
+
     def get_meta(self, infos="all"):
-        """Get Informations from the meta table.
+        """Get Information from the meta table.
 
         Parameters
         ----------
         infos : list of str or str, optional
-            A list of the informations to get from the database.
-            If "all" then all the informations are returned.
+            A list of the information to get from the database.
+            If "all" then all the information are returned.
             The default is "all".
 
         Returns
         -------
-        list
-            list with the informations.
+        dict or int/string
+            dict with the meta information.
+            The first level has one entry per parameter.
+            The second level has one entry per information, asked for.
+            If only one information is asked for, then it is returned as single value and not as subdict.
         """
-        # check which informations to get
+        # check which information to get
         if infos == "all":
             cols = "*"
         else:
@@ -1363,8 +1431,12 @@ class StationBase:
 
         with DB_ENG.connect() as con:
             res = con.execute(sql)
-
-        return res.first()[0]
+        keys = res.keys()
+        values = res.first()
+        if len(keys)==1:
+            return values[0]
+        else:
+            return dict(zip(keys, values))
 
     def get_geom(self, format="EWKT", crs=None):
         """Get the point geometry of the station.
@@ -1467,13 +1539,13 @@ class StationBase:
         sql_format_dict = dict(para=self._para, stid=self.id, kind=kind)
         if all:
             sql = """
-                SELECT min({kind}_von) as {kind}_von,
-                    max({kind}_bis) as {kind}_bis
+                SELECT min({kind}_from) as {kind}_from,
+                    max({kind}_until) as {kind}_until
                 FROM meta_{para};
             """.format(**sql_format_dict)
         else:
             sql = """
-                SELECT {kind}_von, {kind}_bis
+                SELECT {kind}_from, {kind}_until
                 FROM meta_{para}
                 WHERE station_id = {stid};
             """.format(**sql_format_dict)
@@ -2205,8 +2277,8 @@ class StationN(StationNBase):
     _valid_kinds = ["raw", "qn", "qc", "corr", "filled", "filled_by"]
     _best_kind = "corr"
 
-    def __init__(self, id):
-        super().__init__(id)
+    def __init__(self, id, **kwargs):
+        super().__init__(id, **kwargs)
         self.id_str = dwd_id_to_str(id)
 
     def _get_sql_new_qc(self, period):
@@ -2362,7 +2434,7 @@ class StationN(StationNBase):
                     )
                 )
 
-        # get the horizontabschirmung value
+        # get the horizon value
         radius = 75000 # this value got defined because the maximum height is around 4000m for germany
         with rio.open(RASTERS["local"]["dgm5"]) as dgm5,\
              rio.open(RASTERS["local"]["dgm80"]) as dgm80:
@@ -2380,10 +2452,10 @@ class StationN(StationNBase):
                 else:
                     stat_h = stat_h[0]
 
-                # sample dgm for horizontabschirmung (hab)
+                # sample dgm for horizon angle
                 hab = pd.Series(
                     index=pd.Index([], name="angle", dtype=int),
-                    name="horizontabschirmung")
+                    name="horizon")
                 for angle in range(90, 271, 3):
                     dgm5_mask = polar_line(xy, radius, angle)
                     dgm5_np, dgm5_tr = rasterio.mask.mask(
@@ -2446,7 +2518,7 @@ class StationN(StationNBase):
 
                 # insert to meta table in db
                 self._update_meta(
-                    cols=["horizontabschirmung"],
+                    cols=["horizon"],
                     values=[horizon])
 
                 return horizon
@@ -2731,11 +2803,11 @@ class StationN(StationNBase):
         if period.is_empty() or period[0].year < pd.Timestamp.now().year:
             sql_diff_ma = """
                 UPDATE meta_n
-                SET quot_filled_regnie = quots.quot_regnie,
-                    quot_filled_dwd_grid = quots.quot_dwd
+                SET quot_filled_regnie = quots.quot_regnie*100,
+                    quot_filled_dwd_grid = quots.quot_dwd*100
                 FROM (
-                    SELECT df_ma.ys / (srv.n_regnie_year*100) AS quot_regnie,
-                        df_ma.ys / (srv.n_year*100) AS quot_dwd
+                    SELECT df_ma.ys / (srv.n_regnie_year*{decimals}) AS quot_regnie,
+                        df_ma.ys / (srv.n_year*{decimals}) AS quot_dwd
                     FROM (
                         SELECT avg(df_a.yearly_sum) as ys
                         FROM (
@@ -2747,7 +2819,10 @@ class StationN(StationNBase):
                     LEFT JOIN stations_raster_values srv
                         ON station_id={stid}) quots
                 WHERE station_id ={stid};
-            """.format(stid=self.id, para=self._para)
+            """.format(
+                stid=self.id, 
+                para=self._para, 
+                decim=self._decimals)
 
             #execute sql or return
             if "return_sql" in kwargs and kwargs["return_sql"]:
@@ -2809,7 +2884,7 @@ class StationN(StationNBase):
         float or None
             The mean western horizon angle
         """
-        return self.get_meta(infos="horizontabschirmung")
+        return self.get_meta(infos="horizon")
 
 
 class StationND(StationNBase, StationCanVirtualBase):
@@ -2840,8 +2915,8 @@ class StationND(StationNBase, StationCanVirtualBase):
     get_adj = property(doc='(!) Disallowed inherited')
     get_qc = property(doc='(!) Disallowed inherited')
 
-    def __init__(self, id):
-        super().__init__(id)
+    def __init__(self, id, **kwargs):
+        super().__init__(id, **kwargs)
         self.id_str = dwd_id_to_str(id)
 
     def _download_raw(self, zipfiles):
@@ -2885,8 +2960,8 @@ class StationT(StationTETBase):
     _coef_sign = ["-", "+"]
     _agg_fun = "avg"
 
-    def __init__(self, id):
-        super().__init__(id)
+    def __init__(self, id, **kwargs):
+        super().__init__(id, **kwargs)
         self.id_str = dwd_id_to_str(id)
 
     def _get_sql_new_qc(self, period):
@@ -2935,8 +3010,8 @@ class StationET(StationTETBase):
     _ma_cols = ["et_year"]
     _sql_add_coef_calc = "* ma.exp_fact::float/ma_stat.exp_fact::float"
 
-    def __init__(self, id):
-        super().__init__(id)
+    def __init__(self, id, **kwargs):
+        super().__init__(id, **kwargs)
         self.id_str = str(id)
 
     def _get_sql_new_qc(self, period):
@@ -2976,19 +3051,37 @@ class GroupStation(object):
     So if you want to create the input files for a simulation, where you need T, ET and N, use this class to download the data for one station.
     """
 
-    def __init__(self, id, error_if_missing=True):
+    def __init__(self, id, error_if_missing=True, **kwargs):
         self.id = id
         self.station_parts = []
+        self._error_if_missing = error_if_missing
         for StatClass in [StationN, StationT, StationET]:
             try:
                 self.station_parts.append(
-                    StatClass(id=id)
+                    StatClass(id=id, **kwargs)
                 )
             except Exception as e:
                 if error_if_missing:
                     raise e
+        self.paras_available = [stat._para for stat in self.station_parts]
 
-    def get_possible_paras(self, short=False):
+    def _check_paras(self, paras):
+        if type(paras)==str and paras != "all":
+            paras = [paras,]
+        
+        if paras == "all":
+            return self.paras_available
+        else:
+            paras_new = []
+            for para in paras:
+                if para in self.paras_available:
+                    paras_new.append(para)
+                elif self._error_if_missing:
+                    raise ValueError(
+                        f"The parameter {para} you asked for is not available for station {self.id}")
+            return paras_new
+
+    def get_available_paras(self, short=False):
         """Get the possible parameters for this station.
 
         Parameters
@@ -3041,7 +3134,7 @@ class GroupStation(object):
                 how="inner")
         return filled_period
 
-    def get_df(self, period=(None, None), kind="best", paras="all", agg_to="10 min"):
+    def get_df(self, period=(None, None), kind="best", paras="all", agg_to="day"):
         """Get a DataFrame with the corresponding data.
 
         Parameters
@@ -3092,6 +3185,55 @@ class GroupStation(object):
 
         return df_all
 
+    @classmethod
+    def get_meta_explanation(cls, infos="all"):
+        """Get the explanations of the available meta fields.
+
+        Parameters
+        ----------
+        infos : list or string, optional
+            The infos you wish to get an explanation for.
+            If "all" then all the available information get returned.
+            The default is "all"
+
+        Returns
+        -------
+        pd.Series
+            a pandas Series with the information names as index and the explanation as values.
+        """    
+        return StationBase.get_meta_explanation(infos=infos)
+
+    def get_meta(self, paras="all", **kwargs):
+        """Get the meta information for every parameter of this station.
+
+        Parameters
+        ----------
+        paras : list of str or str, optional
+            Give the parameters for which to get the meta information.
+            Can be "n", "t", "et" or "all".
+            If "all", then every available station parameter is returned.
+            The default is "all"
+        kwargs : dict, optional
+            The optional keyword arguments are handed to the single Station get_meta methodes. Can be e.g. "info".
+
+        Returns
+        -------
+        dict
+            dict with the information.
+            there is one subdict per parameter.
+            If only one parameter is asked for, then there is no subdict, but only a single value.
+        """
+        paras = self._check_paras(paras)
+        
+        for stat in self.station_parts:
+            if stat._para in paras:
+                meta_para = stat.get_meta(**kwargs)
+                if "meta_all" not in locals():
+                    meta_all = {stat._para:meta_para}
+                else:
+                    meta_all.update({stat._para:meta_para})
+        return meta_all
+
     def get_geom(self):
         return self.station_parts[0].get_geom()
 
@@ -3120,7 +3262,13 @@ class GroupStation(object):
             If "best" is given, then depending on the parameter of the station the best kind is selected.
             For Precipitation this is "corr" and for the other this is "filled".
             For the precipitation also "qn" and "corr" are valid.
-        r_r0: int or None, optional
+        r_r0 : int or float, list of int or float or None, optional
+            Should the ET timeserie contain a column with R/R0.
+            If None, then no column is added.
+            If int or float, then a R/R0 column is appended with this number as standard value.
+            If list of int or floats, then the list should have the same length as the ET-timeserie and is appanded to the Timeserie.
+            If pd.Series, then the index should be a timestamp index. The serie is then joined to the ET timeserie.
+            The default is 1.
 
         Raises
         ------
@@ -3156,11 +3304,12 @@ class GroupStation(object):
             If a smaller aggregation is selected the minimum possible aggregation for the respective parameter is returned.
             So if 10 minutes is selected, than precipitation is returned in 10 minuets and T and ET as daily.
             The default is "10 min".
-        r_r0 : int or None, optional
-            Should the ET timeserie contain a column with r_r0.
+        r_r0 : int or float or None or pd.Series or list, optional
+            Should the ET timeserie contain a column with R/R0.
             If None, then no column is added.
-            If int, then a ET/ET0 column is appended with this number as standard value.
-            Until now providing a serie of different values is not possible.
+            If int, then a R/R0 column is appended with this number as standard value.
+            If list of int or floats, then the list should have the same length as the ET-timeserie and is appanded to the Timeserie.
+            If pd.Series, then the index should be a timestamp index. The serie is then joined to the ET timeserie.
             The default is None.
         split_date : bool, optional
             Should the timestamp get splitted into parts, so one column for year, one for month etc.?
@@ -3224,8 +3373,14 @@ class GroupStation(object):
             # special operations for et
             if para == "et" and r_r0 is not None:
                 num_col += 1
-                df = df.join(
-                    pd.Series([r_r0]*len(df), name="R/R0", index=df.index))
+                if type(r_r0)==int or type(r_r0)==float:
+                    df = df.join(
+                        pd.Series([r_r0]*len(df), name="R/R0", index=df.index))
+                elif type(r_r0)==pd.Series:
+                    df = df.join(r_r0.rename("R_R0"))
+                elif type(r_r0)==list:
+                    df = df.join(
+                        pd.Series(r_r0, name="R/R0", index=df.index))
 
             # create header
             header = ("Name: " + name + "\t" * (num_col-1) + "\n" +

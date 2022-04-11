@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quick-start &mdash; WeatherDB 0.0.5 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Method" href="Methode.html" />
+    <link rel="prev" title="WeatherDB - module" href="README.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> WeatherDB
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="README.html">     Introduction</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#download">download</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#single-station">single station</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#multiple-stations">multiple stations</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#create-timeseries-files">create timeseries files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#get-meta-information">get meta information</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Methode.html">Method</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">     API reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">WeatherDB</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Quick-start</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/Quickstart.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<section class="tex2jax_ignore mathjax_ignore" id="quick-start">
+<h1>Quick-start<a class="headerlink" href="#quick-start" title="Permalink to this headline"></a></h1>
+<p>After installing and setting up the secretSettings_weatherDB.py file you are ready to use the package.
+This page should show you the basic usage of the package.</p>
+<p>The package is divided in 2 main submodules:</p>
+<ul class="simple">
+<li><p><strong>weatherDB.station:</strong><br>
+This module has a class for every type of station. E.g. StationN (or StationN).
+One object represents one Station with one parameter.
+This object can get used to get the corresponding timeserie.
+There is also a StationGroup class that groups the three parameters precipitation, temperature and evapotranspiration together for one station.</p></li>
+<li><p><strong>weatherDB.stations:</strong><br>
+This module has grouping classes for all the stations of one parameter. E.G. StationsN (or StationsN) groups all the Precipitation Stations available.
+Those classes can get used to do actions on all the stations.</p></li>
+</ul>
+<p>The basics of those modules are explained here, but every class and method has way more parameters to get exactly what you want. PLease use the API-reference for more information.</p>
+<section id="download">
+<h2>download<a class="headerlink" href="#download" title="Permalink to this headline"></a></h2>
+<section id="single-station">
+<h3>single station<a class="headerlink" href="#single-station" title="Permalink to this headline"></a></h3>
+<p>If you want to download data for a single station, you have to create an object of the respective class, by gibing the station id you are interested in. This station object can then get used to download the data from the database.</p>
+<p>If you want e.g. to download all the 10 minute, filled and Richter corrected precipitation data for the DWD station in Freiburg(station ID = 1443), then you can go like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">weatherDB</span> <span class="kn">import</span> <span class="n">station</span>
+<span class="n">stat_n</span> <span class="o">=</span> <span class="n">station</span><span class="o">.</span><span class="n">StationN</span><span class="p">(</span><span class="mi">1443</span><span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">stat_n</span><span class="o">.</span><span class="n">get_corr</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>If you are only interested in a small timespan, provide the period parameter with the upper and lower time limit. If e.g. you want the data for the years 2000-2010 do:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">df</span> <span class="o">=</span> <span class="n">stat_n</span><span class="o">.</span><span class="n">get_corr</span><span class="p">(</span><span class="n">period</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;2000-01-01&quot;</span><span class="p">,</span> <span class="s2">&quot;2010-12-31&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>If you are not interested in the filled and Richter-corrected data, but want e.g. the raw data, add the kind parameter to your query. Like e.g.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">df</span> <span class="o">=</span> <span class="n">stat_n</span><span class="o">.</span><span class="n">get_raw</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Or use the more general function with the wanted kind parameter.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">df</span> <span class="o">=</span> <span class="n">stat_n</span><span class="o">.</span><span class="n">get_df</span><span class="p">(</span><span class="n">kinds</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;raw&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>There are 3-5 different kinds of timeseries available per station object depending on the class.
+So there is:</p>
+<ul class="simple">
+<li><p>“raw” : the raw measurements as on the DWD server</p></li>
+<li><p>“qc”  : The quality checked data</p></li>
+<li><p>“filled” : The filled timeseries</p></li>
+<li><p>“filled_by” : The station ID of the station from which the data was taken to fill the measurements</p></li>
+<li><p>“corr”    : The Richter corrected timeserie.</p></li>
+</ul>
+<p>If you want more than just one kind of timeseries, e.g. the filled timeseries, together with the id from which station the respective field got filled with use:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">df</span> <span class="o">=</span> <span class="n">stat_n</span><span class="o">.</span><span class="n">get_df</span><span class="p">(</span><span class="n">kinds</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;filled&quot;</span><span class="p">,</span> <span class="s2">&quot;filled_by&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>If you only need daily values, you can hand in the agg_to parameter. This will also make your query faster, because not as much data has to get transmitted over the network.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">df</span> <span class="o">=</span> <span class="n">stat_n</span><span class="o">.</span><span class="n">get_df</span><span class="p">(</span><span class="n">agg_to</span><span class="o">=</span><span class="s2">&quot;day&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Similar to the precipitation, you can also work with the Temperature and potential Evapotranspiration data:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">stat_t</span> <span class="o">=</span> <span class="n">station</span><span class="o">.</span><span class="n">StationT</span><span class="p">(</span><span class="mi">1443</span><span class="p">)</span>
+<span class="n">stat_et</span> <span class="o">=</span> <span class="n">station</span><span class="o">.</span><span class="n">StationET</span><span class="p">(</span><span class="mi">1443</span><span class="p">)</span>
+<span class="n">period</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;2000-01-01&quot;</span><span class="p">,</span> <span class="s2">&quot;2010-12-31&quot;</span><span class="p">)</span>
+<span class="n">df_t</span> <span class="o">=</span> <span class="n">stat_t</span><span class="o">.</span><span class="n">get_df</span><span class="p">(</span>
+    <span class="n">period</span><span class="o">=</span><span class="n">period</span><span class="p">,</span> 
+    <span class="n">kinds</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;raw&quot;</span><span class="p">,</span> <span class="s2">&quot;filled&quot;</span><span class="p">])</span>
+<span class="n">df_et</span> <span class="o">=</span> <span class="n">stat_t</span><span class="o">.</span><span class="n">get_df</span><span class="p">(</span>
+    <span class="n">period</span><span class="o">=</span><span class="n">period</span><span class="p">,</span> 
+    <span class="n">kinds</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;raw&quot;</span><span class="p">,</span> <span class="s2">&quot;filled&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>So to download the 3 parameters N, T and ET from one station you could create the 3 single station objects and then have 3 different timeseries. But the better solution is to use the GroupStation class. This class groups all the available parameters for one location. Here is an example, how you could use it to get a Dataframe with the filled data:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">stat</span> <span class="o">=</span> <span class="n">station</span><span class="o">.</span><span class="n">GroupStation</span><span class="p">(</span><span class="mi">1443</span><span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">stat</span><span class="o">.</span><span class="n">get_df</span><span class="p">(</span>
+    <span class="n">period</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;2000-01-01&quot;</span><span class="p">,</span> <span class="s2">&quot;2010-12-31&quot;</span><span class="p">),</span>
+    <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;filled&quot;</span><span class="p">,</span>
+    <span class="n">agg_to</span><span class="o">=</span><span class="s2">&quot;day&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="multiple-stations">
+<h3>multiple stations<a class="headerlink" href="#multiple-stations" title="Permalink to this headline"></a></h3>
+<p>If you want to download the data for multiple stations. Like e.g. the station in Freiburg (1443) and the station on the Feldberg (1346) it is recommended to use the classes in the stations module.</p>
+<p>To use the stations-module, you first have to create an object and then hand the station ids you are interested in when downloading it:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">weatherDB</span> <span class="kn">import</span> <span class="n">stations</span>
+<span class="n">stats_n</span> <span class="o">=</span> <span class="n">stations</span><span class="o">.</span><span class="n">StationsN</span><span class="p">()</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">stats_n</span><span class="o">.</span><span class="n">get_df</span><span class="p">(</span>
+    <span class="n">stids</span><span class="o">=</span><span class="p">[</span><span class="mi">1443</span><span class="p">,</span> <span class="mi">1346</span><span class="p">],</span>
+    <span class="n">period</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;2000-01-01&quot;</span><span class="p">,</span> <span class="s2">&quot;2010-12-31&quot;</span><span class="p">),</span>
+    <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;filled&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="create-timeseries-files">
+<h2>create timeseries files<a class="headerlink" href="#create-timeseries-files" title="Permalink to this headline"></a></h2>
+<p>You can also use the module to quickly create the csv-timeseries needed by RoGeR. Either for one station:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">weatherDB</span> <span class="kn">import</span> <span class="n">station</span>
+<span class="n">stat</span> <span class="o">=</span> <span class="n">station</span><span class="o">.</span><span class="n">GroupStation</span><span class="p">(</span><span class="mi">1443</span><span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">stat</span><span class="o">.</span><span class="n">create_roger_ts</span><span class="p">(</span>
+    <span class="nb">dir</span><span class="o">=</span><span class="s2">&quot;path/to/the/directory/where/to/save&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>or for multiple stations, you can use the GroupStations. This will create a subdirectory for ever station. It is also possible to save in a zip file, by simply giving the path to a zip file. (will get created):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">weatherDB</span> <span class="kn">import</span> <span class="n">stations</span>
+<span class="n">stats</span> <span class="o">=</span> <span class="n">stations</span><span class="o">.</span><span class="n">GroupStations</span><span class="p">()</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">create_roger_ts</span><span class="p">(</span>
+    <span class="n">stids</span><span class="o">=</span><span class="p">[</span><span class="mi">1443</span><span class="p">,</span> <span class="mi">1346</span><span class="p">],</span>
+    <span class="nb">dir</span><span class="o">=</span><span class="s2">&quot;path/to/the/directory/where/to/save&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you don’t want to use the RoGeR format for the timestamp you can use the <code class="docutils literal notranslate"><span class="pre">.create_ts()</span></code> methode.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">weatherDB</span> <span class="kn">import</span> <span class="n">stations</span>
+<span class="n">stats</span> <span class="o">=</span> <span class="n">stations</span><span class="o">.</span><span class="n">GroupStations</span><span class="p">()</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">create_ts</span><span class="p">(</span>
+    <span class="n">stids</span><span class="o">=</span><span class="p">[</span><span class="mi">1443</span><span class="p">,</span> <span class="mi">1346</span><span class="p">],</span>
+    <span class="nb">dir</span><span class="o">=</span><span class="s2">&quot;path/to/the/directory/where/to/save&quot;</span><span class="p">)</span>
+
+<span class="c1"># or for one station</span>
+<span class="kn">from</span> <span class="nn">weatherDB</span> <span class="kn">import</span> <span class="n">station</span>
+<span class="n">stat</span> <span class="o">=</span> <span class="n">station</span><span class="o">.</span><span class="n">GroupStation</span><span class="p">(</span><span class="mi">1443</span><span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">stat</span><span class="o">.</span><span class="n">create_ts</span><span class="p">(</span>
+    <span class="nb">dir</span><span class="o">=</span><span class="s2">&quot;path/to/the/directory/where/to/save&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="get-meta-information">
+<h2>get meta information<a class="headerlink" href="#get-meta-information" title="Permalink to this headline"></a></h2>
+<p>If you need more information about the stations you can get the meta data for a single station:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">weatherDB</span> <span class="kn">import</span> <span class="n">station</span>
+<span class="n">stat</span> <span class="o">=</span> <span class="n">station</span><span class="o">.</span><span class="n">StationN</span><span class="p">(</span><span class="mi">1443</span><span class="p">)</span>
+<span class="n">meta_dict</span> <span class="o">=</span> <span class="n">stat</span><span class="o">.</span><span class="n">get_meta</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>or for multiple stations, you can use the Stations class and get a GeoDataFrame as output with all the stations information.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">weatherDB</span> <span class="kn">import</span> <span class="n">stations</span>
+<span class="n">stats</span> <span class="o">=</span> <span class="n">stations</span><span class="o">.</span><span class="n">StationsN</span><span class="p">(</span>
+    <span class="n">stids</span><span class="o">=</span><span class="p">[</span><span class="mi">1443</span><span class="p">,</span> <span class="mi">1346</span><span class="p">])</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">get_meta</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Furthermore you can also get all the information for every parameter of one station by using the GroupStation class:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">weatherDB</span> <span class="kn">import</span> <span class="n">station</span>
+<span class="n">gstat</span> <span class="o">=</span> <span class="n">station</span><span class="o">.</span><span class="n">GroupStation</span><span class="p">(</span><span class="mi">1443</span><span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">gstat</span><span class="o">.</span><span class="n">get_meta</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>To get an explanation about the available meta information you can use the get_meta_explanation method:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">weatherDB</span> <span class="kn">import</span> <span class="n">station</span><span class="p">,</span> <span class="n">stations</span>
+<span class="n">stat</span> <span class="o">=</span> <span class="n">station</span><span class="o">.</span><span class="n">StationN</span><span class="p">(</span><span class="mi">1443</span><span class="p">)</span>
+<span class="n">explain_df</span> <span class="o">=</span> <span class="n">stat</span><span class="o">.</span><span class="n">get_meta_explanation</span><span class="p">()</span>
+<span class="c1"># or</span>
+<span class="n">stats</span> <span class="o">=</span> <span class="n">stations</span><span class="o">.</span><span class="n">StationsN</span><span class="p">()</span>
+<span class="n">explain_df</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">get_meta_explanation</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>If you are only interested in some information you can use the infos parameter like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">weatherDB</span> <span class="kn">import</span> <span class="n">station</span>
+<span class="n">stat</span> <span class="o">=</span> <span class="n">station</span><span class="o">.</span><span class="n">StationN</span><span class="p">(</span><span class="mi">1443</span><span class="p">)</span>
+<span class="n">filled_period_1443</span> <span class="o">=</span> <span class="n">stat</span><span class="o">.</span><span class="n">get_meta</span><span class="p">(</span><span class="n">infos</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;filled_from&quot;</span><span class="p">,</span> <span class="s2">&quot;filled_until&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>but to get the filled period you can also use the get_period method, like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">weatherDB</span> <span class="kn">import</span> <span class="n">station</span>
+<span class="n">stat</span> <span class="o">=</span> <span class="n">station</span><span class="o">.</span><span class="n">StationN</span><span class="p">(</span><span class="mi">1443</span><span class="p">)</span>
+<span class="n">filled_period_1443</span> <span class="o">=</span> <span class="n">stat</span><span class="o">.</span><span class="n">get_period_meta</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s2">&quot;filled&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This should give you an first idea on how to use the package. Feel free to try out and read the API reference section to get more information.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="README.html" class="btn btn-neutral float-left" title="WeatherDB - module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="Methode.html" class="btn btn-neutral float-right" title="Method" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright Copyright 2022, Max Schmit.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

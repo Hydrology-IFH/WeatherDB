@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Index &mdash; WeatherDB 0.0.4 documentation</title>
+  <title>Index &mdash; WeatherDB 0.0.5 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -38,6 +38,7 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="README.html">     Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Methode.html">Method</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">     API reference</a></li>
 </ul>
@@ -79,7 +80,6 @@
  | <a href="#I"><strong>I</strong></a>
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
- | <a href="#P"><strong>P</strong></a>
  | <a href="#Q"><strong>Q</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
@@ -98,8 +98,6 @@
 </li>
         <li><a href="weatherDB.html#weatherDB.station.GroupStation.__init__">(weatherDB.station.GroupStation method)</a>
 </li>
-        <li><a href="weatherDB.html#weatherDB.station.StationBase.__init__">(weatherDB.station.StationBase method)</a>
-</li>
         <li><a href="weatherDB.html#weatherDB.station.StationET.__init__">(weatherDB.station.StationET method)</a>
 </li>
         <li><a href="weatherDB.html#weatherDB.station.StationN.__init__">(weatherDB.station.StationN method)</a>
@@ -109,8 +107,6 @@
         <li><a href="weatherDB.html#weatherDB.station.StationT.__init__">(weatherDB.station.StationT method)</a>
 </li>
         <li><a href="weatherDB.html#weatherDB.stations.GroupStations.__init__">(weatherDB.stations.GroupStations method)</a>
-</li>
-        <li><a href="weatherDB.html#weatherDB.stations.StationsBase.__init__">(weatherDB.stations.StationsBase method)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -155,12 +151,6 @@
 <h2 id="D">D</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="weatherDB.html#weatherDB.stations.StationsBase.download_meta">download_meta() (weatherDB.stations.StationsBase method)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="weatherDB.html#weatherDB.station.StationBase.download_raw">download_raw() (weatherDB.station.StationBase method)</a>
-</li>
       <li><a href="weatherDB.lib.max_fun.html#weatherDB.lib.max_fun.import_DWD.dwd_id_to_str">dwd_id_to_str() (in module weatherDB.lib.max_fun.import_DWD)</a>
 </li>
   </ul></td>
@@ -172,13 +162,7 @@
       <li><a href="weatherDB.html#weatherDB.broker.Broker.fillup">fillup() (weatherDB.broker.Broker method)</a>
 
       <ul>
-        <li><a href="weatherDB.html#weatherDB.station.StationBase.fillup">(weatherDB.station.StationBase method)</a>
-</li>
         <li><a href="weatherDB.html#weatherDB.station.StationN.fillup">(weatherDB.station.StationN method)</a>
-</li>
-        <li><a href="weatherDB.html#weatherDB.stations.StationsBase.fillup">(weatherDB.stations.StationsBase method)</a>
-</li>
-        <li><a href="weatherDB.html#weatherDB.stations.StationsTETBase.fillup">(weatherDB.stations.StationsTETBase method)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -193,31 +177,19 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="weatherDB.html#weatherDB.station.StationND.get_adj">get_adj (weatherDB.station.StationND property)</a>
 </li>
-      <li><a href="weatherDB.html#weatherDB.station.StationBase.get_adj">get_adj() (weatherDB.station.StationBase method)</a>
+      <li><a href="weatherDB.html#weatherDB.station.StationET.get_adj">get_adj() (weatherDB.station.StationET method)</a>
 
       <ul>
-        <li><a href="weatherDB.html#weatherDB.station.StationET.get_adj">(weatherDB.station.StationET method)</a>
-</li>
-        <li><a href="weatherDB.html#weatherDB.station.StationNBase.get_adj">(weatherDB.station.StationNBase method)</a>
-</li>
         <li><a href="weatherDB.html#weatherDB.station.StationT.get_adj">(weatherDB.station.StationT method)</a>
 </li>
-        <li><a href="weatherDB.html#weatherDB.station.StationTETBase.get_adj">(weatherDB.station.StationTETBase method)</a>
-</li>
       </ul></li>
-      <li><a href="weatherDB.html#weatherDB.station.StationBase.get_coef">get_coef() (weatherDB.station.StationBase method)</a>
+      <li><a href="weatherDB.html#weatherDB.station.GroupStation.get_available_paras">get_available_paras() (weatherDB.station.GroupStation method)</a>
 </li>
       <li><a href="weatherDB.html#weatherDB.station.StationND.get_corr">get_corr (weatherDB.station.StationND property)</a>
 </li>
       <li><a href="weatherDB.html#weatherDB.station.StationN.get_corr">get_corr() (weatherDB.station.StationN method)</a>
 </li>
       <li><a href="weatherDB.html#weatherDB.station.GroupStation.get_df">get_df() (weatherDB.station.GroupStation method)</a>
-
-      <ul>
-        <li><a href="weatherDB.html#weatherDB.station.StationBase.get_df">(weatherDB.station.StationBase method)</a>
-</li>
-      </ul></li>
-      <li><a href="weatherDB.html#weatherDB.station.StationBase.get_dist">get_dist() (weatherDB.station.StationBase method)</a>
 </li>
       <li><a href="weatherDB.lib.max_fun.html#weatherDB.lib.max_fun.import_DWD.get_dwd_data">get_dwd_data() (in module weatherDB.lib.max_fun.import_DWD)</a>
 </li>
@@ -225,83 +197,49 @@
 </li>
       <li><a href="weatherDB.lib.max_fun.html#weatherDB.lib.max_fun.import_DWD.get_dwd_meta">get_dwd_meta() (in module weatherDB.lib.max_fun.import_DWD)</a>
 </li>
-      <li><a href="weatherDB.html#weatherDB.station.StationBase.get_filled">get_filled() (weatherDB.station.StationBase method)</a>
-</li>
       <li><a href="weatherDB.html#weatherDB.station.GroupStation.get_filled_period">get_filled_period() (weatherDB.station.GroupStation method)</a>
-
-      <ul>
-        <li><a href="weatherDB.html#weatherDB.station.StationBase.get_filled_period">(weatherDB.station.StationBase method)</a>
 </li>
-      </ul></li>
       <li><a href="weatherDB.lib.html#weatherDB.lib.utils.get_ftp_file_list">get_ftp_file_list() (in module weatherDB.lib.utils)</a>
 </li>
       <li><a href="weatherDB.html#weatherDB.station.GroupStation.get_geom">get_geom() (weatherDB.station.GroupStation method)</a>
-
-      <ul>
-        <li><a href="weatherDB.html#weatherDB.station.StationBase.get_geom">(weatherDB.station.StationBase method)</a>
 </li>
-      </ul></li>
-      <li><a href="weatherDB.html#weatherDB.station.StationBase.get_geom_shp">get_geom_shp() (weatherDB.station.StationBase method)</a>
+      <li><a href="weatherDB.html#weatherDB.stations.GroupStations.get_group_stations">get_group_stations() (weatherDB.stations.GroupStations method)</a>
 </li>
       <li><a href="weatherDB.html#weatherDB.station.StationN.get_horizon">get_horizon() (weatherDB.station.StationN method)</a>
 </li>
-      <li><a href="weatherDB.lib.html#weatherDB.lib.utils.TimestampPeriod.get_interval">get_interval() (weatherDB.lib.utils.TimestampPeriod method)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="weatherDB.html#weatherDB.station.StationBase.get_last_imp_period">get_last_imp_period() (weatherDB.station.StationBase method)</a>
+      <li><a href="weatherDB.lib.html#weatherDB.lib.utils.TimestampPeriod.get_interval">get_interval() (weatherDB.lib.utils.TimestampPeriod method)</a>
 </li>
-      <li><a href="weatherDB.html#weatherDB.station.StationBase.get_ma">get_ma() (weatherDB.station.StationBase method)</a>
-</li>
-      <li><a href="weatherDB.html#weatherDB.station.StationBase.get_meta">get_meta() (weatherDB.station.StationBase method)</a>
+      <li><a href="weatherDB.html#weatherDB.station.GroupStation.get_meta">get_meta() (weatherDB.station.GroupStation method)</a>
 
       <ul>
         <li><a href="weatherDB.html#weatherDB.stations.GroupStations.get_meta">(weatherDB.stations.GroupStations method)</a>
 </li>
-        <li><a href="weatherDB.html#weatherDB.stations.StationsBase.get_meta">(weatherDB.stations.StationsBase method)</a>
-</li>
       </ul></li>
-      <li><a href="weatherDB.html#weatherDB.station.StationBase.get_multi_annual">get_multi_annual() (weatherDB.station.StationBase method)</a>
+      <li><a href="weatherDB.html#weatherDB.station.GroupStation.get_meta_explanation">get_meta_explanation() (weatherDB.station.GroupStation class method)</a>
 
       <ul>
-        <li><a href="weatherDB.html#weatherDB.station.StationT.get_multi_annual">(weatherDB.station.StationT method)</a>
+        <li><a href="weatherDB.html#weatherDB.stations.GroupStations.get_meta_explanation">(weatherDB.stations.GroupStations class method)</a>
 </li>
       </ul></li>
+      <li><a href="weatherDB.html#weatherDB.station.StationT.get_multi_annual">get_multi_annual() (weatherDB.station.StationT method)</a>
+</li>
       <li><a href="weatherDB.html#weatherDB.station.GroupStation.get_name">get_name() (weatherDB.station.GroupStation method)</a>
-
-      <ul>
-        <li><a href="weatherDB.html#weatherDB.station.StationBase.get_name">(weatherDB.station.StationBase method)</a>
 </li>
-      </ul></li>
-      <li><a href="weatherDB.html#weatherDB.station.StationBase.get_neighboor_stids">get_neighboor_stids() (weatherDB.station.StationBase method)</a>
+      <li><a href="weatherDB.html#weatherDB.stations.GroupStations.get_para_stations">get_para_stations() (weatherDB.stations.GroupStations method)</a>
 </li>
       <li><a href="weatherDB.lib.html#weatherDB.lib.utils.TimestampPeriod.get_period">get_period() (weatherDB.lib.utils.TimestampPeriod method)</a>
 </li>
-      <li><a href="weatherDB.html#weatherDB.station.StationBase.get_period_meta">get_period_meta() (weatherDB.station.StationBase method)</a>
-</li>
-      <li><a href="weatherDB.html#weatherDB.station.GroupStation.get_possible_paras">get_possible_paras() (weatherDB.station.GroupStation method)</a>
-</li>
       <li><a href="weatherDB.html#weatherDB.station.StationND.get_qc">get_qc (weatherDB.station.StationND property)</a>
 </li>
-      <li><a href="weatherDB.html#weatherDB.station.StationBase.get_qc">get_qc() (weatherDB.station.StationBase method)</a>
-</li>
       <li><a href="weatherDB.html#weatherDB.station.StationN.get_qn">get_qn() (weatherDB.station.StationN method)</a>
-</li>
-      <li><a href="weatherDB.html#weatherDB.station.StationBase.get_raster_value">get_raster_value() (weatherDB.station.StationBase method)</a>
-</li>
-      <li><a href="weatherDB.html#weatherDB.station.StationBase.get_raw">get_raw() (weatherDB.station.StationBase method)</a>
 </li>
       <li><a href="weatherDB.html#weatherDB.station.StationN.get_richter_class">get_richter_class() (weatherDB.station.StationN method)</a>
 </li>
       <li><a href="weatherDB.lib.html#weatherDB.lib.utils.TimestampPeriod.get_sql_format_dict">get_sql_format_dict() (weatherDB.lib.utils.TimestampPeriod method)</a>
 </li>
-      <li><a href="weatherDB.html#weatherDB.stations.GroupStations.get_stations">get_stations() (weatherDB.stations.GroupStations method)</a>
-
-      <ul>
-        <li><a href="weatherDB.html#weatherDB.stations.StationsBase.get_stations">(weatherDB.stations.StationsBase method)</a>
-</li>
-      </ul></li>
-      <li><a href="weatherDB.html#weatherDB.station.StationBase.get_zipfiles">get_zipfiles() (weatherDB.station.StationBase method)</a>
+      <li><a href="weatherDB.html#weatherDB.stations.GroupStations.get_valid_stids">get_valid_stids() (weatherDB.stations.GroupStations method)</a>
 </li>
       <li><a href="weatherDB.html#weatherDB.station.GroupStation">GroupStation (class in weatherDB.station)</a>
 </li>
@@ -327,25 +265,11 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="weatherDB.html#weatherDB.broker.Broker.initiate_db">initiate_db() (weatherDB.broker.Broker method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="weatherDB.lib.html#weatherDB.lib.utils.TimestampPeriod.inside">inside() (weatherDB.lib.utils.TimestampPeriod method)</a>
 </li>
       <li><a href="weatherDB.lib.html#weatherDB.lib.utils.TimestampPeriod.is_empty">is_empty() (weatherDB.lib.utils.TimestampPeriod method)</a>
-</li>
-      <li><a href="weatherDB.html#weatherDB.station.StationBase.is_last_imp_done">is_last_imp_done() (weatherDB.station.StationBase method)</a>
-</li>
-      <li><a href="weatherDB.html#weatherDB.station.StationBase.is_real">is_real() (weatherDB.station.StationBase method)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="weatherDB.html#weatherDB.station.StationBase.is_virtual">is_virtual() (weatherDB.station.StationBase method)</a>
-</li>
-      <li><a href="weatherDB.html#weatherDB.station.StationBase.isin_db">isin_db() (weatherDB.station.StationBase method)</a>
-</li>
-      <li><a href="weatherDB.html#weatherDB.station.StationBase.isin_ma">isin_ma() (weatherDB.station.StationBase method)</a>
-</li>
-      <li><a href="weatherDB.html#weatherDB.station.StationBase.isin_meta">isin_meta() (weatherDB.station.StationBase method)</a>
-</li>
-      <li><a href="weatherDB.html#weatherDB.station.StationCanVirtualBase.isin_meta_n">isin_meta_n() (weatherDB.station.StationCanVirtualBase method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -362,27 +286,13 @@
 </li>
       </ul></li>
       <li><a href="weatherDB.html#weatherDB.broker.Broker.last_imp_fillup">last_imp_fillup() (weatherDB.broker.Broker method)</a>
-
-      <ul>
-        <li><a href="weatherDB.html#weatherDB.station.StationBase.last_imp_fillup">(weatherDB.station.StationBase method)</a>
 </li>
-        <li><a href="weatherDB.html#weatherDB.stations.StationsBase.last_imp_fillup">(weatherDB.stations.StationsBase method)</a>
-</li>
-      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="weatherDB.html#weatherDB.station.StationBase.last_imp_qc">last_imp_qc() (weatherDB.station.StationBase method)</a>
-</li>
       <li><a href="weatherDB.html#weatherDB.station.StationND.last_imp_quality_check">last_imp_quality_check (weatherDB.station.StationND property)</a>
 </li>
       <li><a href="weatherDB.html#weatherDB.broker.Broker.last_imp_quality_check">last_imp_quality_check() (weatherDB.broker.Broker method)</a>
-
-      <ul>
-        <li><a href="weatherDB.html#weatherDB.station.StationBase.last_imp_quality_check">(weatherDB.station.StationBase method)</a>
 </li>
-        <li><a href="weatherDB.html#weatherDB.stations.StationsBase.last_imp_quality_check">(weatherDB.stations.StationsBase method)</a>
-</li>
-      </ul></li>
       <li><a href="weatherDB.html#weatherDB.station.StationN.last_imp_richter_correct">last_imp_richter_correct() (weatherDB.station.StationN method)</a>
 </li>
       <li><a href="weatherDB.lib.max_fun.html#weatherDB.lib.max_fun.import_DWD.FTP.login">login() (weatherDB.lib.max_fun.import_DWD.FTP method)</a>
@@ -411,29 +321,15 @@
   </ul></td>
 </tr></table>
 
-<h2 id="P">P</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="weatherDB.html#weatherDB.station.StationBase.plot">plot() (weatherDB.station.StationBase method)</a>
-</li>
-  </ul></td>
-</tr></table>
-
 <h2 id="Q">Q</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="weatherDB.html#weatherDB.station.StationND.quality_check">quality_check (weatherDB.station.StationND property)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="weatherDB.html#weatherDB.broker.Broker.quality_check">quality_check() (weatherDB.broker.Broker method)</a>
-
-      <ul>
-        <li><a href="weatherDB.html#weatherDB.station.StationBase.quality_check">(weatherDB.station.StationBase method)</a>
 </li>
-        <li><a href="weatherDB.html#weatherDB.station.StationCanVirtualBase.quality_check">(weatherDB.station.StationCanVirtualBase method)</a>
-</li>
-        <li><a href="weatherDB.html#weatherDB.stations.StationsBase.quality_check">(weatherDB.stations.StationsBase method)</a>
-</li>
-      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -454,35 +350,23 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="weatherDB.html#weatherDB.station.StationBase">StationBase (class in weatherDB.station)</a>
-</li>
-      <li><a href="weatherDB.html#weatherDB.station.StationCanVirtualBase">StationCanVirtualBase (class in weatherDB.station)</a>
-</li>
       <li><a href="weatherDB.html#weatherDB.station.StationET">StationET (class in weatherDB.station)</a>
 </li>
       <li><a href="weatherDB.html#weatherDB.station.StationN">StationN (class in weatherDB.station)</a>
 </li>
-      <li><a href="weatherDB.html#weatherDB.station.StationNBase">StationNBase (class in weatherDB.station)</a>
-</li>
       <li><a href="weatherDB.html#weatherDB.station.StationND">StationND (class in weatherDB.station)</a>
 </li>
-      <li><a href="weatherDB.html#weatherDB.stations.StationsBase">StationsBase (class in weatherDB.stations)</a>
+      <li><a href="weatherDB.html#weatherDB.stations.StationsET">StationsET (class in weatherDB.stations)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="weatherDB.html#weatherDB.stations.StationsET">StationsET (class in weatherDB.stations)</a>
-</li>
       <li><a href="weatherDB.html#weatherDB.stations.StationsN">StationsN (class in weatherDB.stations)</a>
 </li>
       <li><a href="weatherDB.html#weatherDB.stations.StationsND">StationsND (class in weatherDB.stations)</a>
 </li>
       <li><a href="weatherDB.html#weatherDB.stations.StationsT">StationsT (class in weatherDB.stations)</a>
 </li>
-      <li><a href="weatherDB.html#weatherDB.stations.StationsTETBase">StationsTETBase (class in weatherDB.stations)</a>
-</li>
       <li><a href="weatherDB.html#weatherDB.station.StationT">StationT (class in weatherDB.station)</a>
-</li>
-      <li><a href="weatherDB.html#weatherDB.station.StationTETBase">StationTETBase (class in weatherDB.station)</a>
 </li>
       <li><a href="weatherDB.lib.html#weatherDB.lib.utils.TimestampPeriod.strftime">strftime() (weatherDB.lib.utils.TimestampPeriod method)</a>
 </li>
@@ -507,37 +391,15 @@
       <li><a href="weatherDB.html#weatherDB.station.StationN.update_horizon">update_horizon() (weatherDB.station.StationN method)</a>
 </li>
       <li><a href="weatherDB.html#weatherDB.broker.Broker.update_ma">update_ma() (weatherDB.broker.Broker method)</a>
-
-      <ul>
-        <li><a href="weatherDB.html#weatherDB.station.StationBase.update_ma">(weatherDB.station.StationBase method)</a>
 </li>
-        <li><a href="weatherDB.html#weatherDB.stations.StationsBase.update_ma">(weatherDB.stations.StationsBase method)</a>
-</li>
-      </ul></li>
-      <li><a href="weatherDB.html#weatherDB.broker.Broker.update_meta">update_meta() (weatherDB.broker.Broker method)</a>
-
-      <ul>
-        <li><a href="weatherDB.html#weatherDB.stations.StationsBase.update_meta">(weatherDB.stations.StationsBase method)</a>
-</li>
-      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="weatherDB.html#weatherDB.broker.Broker.update_meta">update_meta() (weatherDB.broker.Broker method)</a>
+</li>
       <li><a href="weatherDB.html#weatherDB.broker.Broker.update_period_meta">update_period_meta() (weatherDB.broker.Broker method)</a>
-
-      <ul>
-        <li><a href="weatherDB.html#weatherDB.station.StationBase.update_period_meta">(weatherDB.station.StationBase method)</a>
 </li>
-        <li><a href="weatherDB.html#weatherDB.stations.StationsBase.update_period_meta">(weatherDB.stations.StationsBase method)</a>
-</li>
-      </ul></li>
       <li><a href="weatherDB.html#weatherDB.broker.Broker.update_raw">update_raw() (weatherDB.broker.Broker method)</a>
-
-      <ul>
-        <li><a href="weatherDB.html#weatherDB.station.StationBase.update_raw">(weatherDB.station.StationBase method)</a>
 </li>
-        <li><a href="weatherDB.html#weatherDB.stations.StationsBase.update_raw">(weatherDB.stations.StationsBase method)</a>
-</li>
-      </ul></li>
       <li><a href="weatherDB.html#weatherDB.station.StationN.update_richter_class">update_richter_class() (weatherDB.station.StationN method)</a>
 
       <ul>

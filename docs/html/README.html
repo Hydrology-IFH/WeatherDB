@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WeatherDB - module &mdash; WeatherDB 0.0.4 documentation</title>
+  <title>WeatherDB - module &mdash; WeatherDB 0.0.5 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -19,7 +19,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Method" href="Methode.html" />
+    <link rel="next" title="Quick-start" href="Quickstart.html" />
     <link rel="prev" title="Welcome to WeatherDB’s documentation!" href="index.html" /> 
 </head>
 
@@ -46,6 +46,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#how-to-install-python">How-to install python</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="Quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Methode.html">Method</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">     API reference</a></li>
 </ul>
@@ -110,7 +111,7 @@
 Has a class for every type of station. E.g. PrecipitationStation (or StationN).
 One object represents one Station with one parameter.
 This object can get used to get the corresponding timeserie.
-There is also a StationGroup class that groups the three parameters precipitation, temperature and evapotranspiration together for one station. If one parameter is not available this one won’t get grouped.</p></li>
+There is also a GroupStation class that groups the three parameters precipitation, temperature and evapotranspiration together for one station. If one parameter is not available this one won’t get grouped.</p></li>
 <li><p>stations:
 Is a grouping class for all the stations of one measurement parameter. E.G. PrecipitationStations (or StationsN).
 Can get used to do actions on all the stations.</p></li>
@@ -127,14 +128,20 @@ This submodule has only one class Broker. This one is used to do actions on all 
 <section id="get-started">
 <h2>Get started<a class="headerlink" href="#get-started" title="Permalink to this headline"></a></h2>
 <p>To get started you need to enter the credentials to access the Database. If this is an account with read only access, than only those method’s, that read data from the Database are available.
-Enter those credentials in the secretSettings.py file. An example secretSettings.py file is in the source directory (see secretSettings_example.py)
-If you use the database at the hydrology department of Freiburg, please go to the <a class="reference external" href="http://weather.hydro.intra.uni-freiburg.de">weather.hydro.intra.uni-freiburg.de</a>. There you can create yourself an account and then download your login secretSettings file from your profile page.</p>
+Enter those credentials in the secretSettings_weatherDB.py file. An example secretSettings_weatherDB.py file is in the source directory (see secretSettings_weatherDB_example.py)</p>
+<p>If you use the database at the hydrology department of Freiburg, please go to the <a class="reference external" href="http://weather.hydro.intra.uni-freiburg.de">weather.hydro.intra.uni-freiburg.de</a>. There you can create yourself an account and then download your login secretSettings file from your profile page, next to the “API Password”.</p>
+<p>The secretSettings_weatherDB.py file needs to be placed either:</p>
+<ul class="simple">
+<li><p>in a parent folder of the package (e.g. in the main folder of your virtual environment folder)</p></li>
+<li><p>some other directory that is in the PATH environment variable. (You can also create a new directory and add it to the PATH environment)</p></li>
+<li><p>in the package source folder (e.g. ../path_to_venv/Lib/site-packages/weatherDB) !This might not be the best method, because an upgrade of the package could delete the file again!</p></li>
+</ul>
 </section>
 <section id="how-to-install-python">
 <h2>How-to install python<a class="headerlink" href="#how-to-install-python" title="Permalink to this headline"></a></h2>
 <p>To use this package you obviously need Python with several packages installed.</p>
 <p>The easiest way to install python is by installing <a class="reference external" href="https://www.anaconda.com/products/distribution">Anaconda</a>.</p>
-<p>After the installation you should create yourself a virtual environment. This is basically a folder with all your packages installed and some definition files to set the apropriate environment variables…
+<p>After the installation you should create yourself a virtual environment. This is basically a folder with all your packages installed and some definition files to set the appropriate environment variables…
 To do so use (in Anaconda Terminal):</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">--</span><span class="n">name</span> <span class="n">your_environment_name</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.8</span>
 </pre></div>
@@ -154,7 +161,7 @@ To do so use (in Anaconda Terminal):</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="index.html" class="btn btn-neutral float-left" title="Welcome to WeatherDB’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="Methode.html" class="btn btn-neutral float-right" title="Method" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="Quickstart.html" class="btn btn-neutral float-right" title="Quick-start" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
