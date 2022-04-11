@@ -1,6 +1,8 @@
 # Change-log
 
-## Version 0.0.4 (upcoming)
+## Version 0.0.6 (upcoming)
+
+## Version 0.0.5
 - The et_et0 parameter gor renamed to r_r0 in the create_ts method
 - The r_r0 is now possible to add as pd.Serie or list, when creating a timeserie file
 - get_meta method of single stations updated
