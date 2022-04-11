@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome to WeatherDB’s documentation! &mdash; WeatherDB 0.0.4 documentation</title>
+  <title>Welcome to WeatherDB’s documentation! &mdash; WeatherDB 0.0.5 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -40,6 +40,7 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="README.html">     Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Methode.html">Method</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">     API reference</a></li>
 </ul>
@@ -103,6 +104,16 @@
 <li class="toctree-l2"><a class="reference internal" href="README.html#how-to-install-python">How-to install python</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="Quickstart.html">Quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Quickstart.html#download">download</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Quickstart.html#single-station">single station</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Quickstart.html#multiple-stations">multiple stations</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Quickstart.html#create-timeseries-files">create timeseries files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Quickstart.html#get-meta-information">get meta information</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="Methode.html">Method</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="Methode.html#downloading-the-data">downloading the data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Methode.html#quality-check">quality check</a><ul>
@@ -120,15 +131,32 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">     API reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="weatherDB.html">weatherDB.station module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="weatherDB.html#module-weatherDB.stations">weatherDB.stations module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="weatherDB.html#module-weatherDB.broker">weatherDB.broker module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="weatherDB.html#subpackages">Subpackages</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="weatherDB.lib.html">weatherDB.lib package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="weatherDB.lib.html#module-weatherDB.lib.utils">weatherDB.lib.utils module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="weatherDB.lib.html#subpackages">Subpackages</a><ul>
-<li class="toctree-l5"><a class="reference internal" href="weatherDB.lib.max_fun.html">weatherDB.lib.max_fun package</a><ul>
-<li class="toctree-l6"><a class="reference internal" href="weatherDB.lib.max_fun.html#module-weatherDB.lib.max_fun.import_DWD">weatherDB.lib.max_fun.import_DWD module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="weatherDB.html">weatherDB</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="weatherDB.html#module-weatherDB.station">station</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="weatherDB.html#stationn">StationN</a></li>
+<li class="toctree-l4"><a class="reference internal" href="weatherDB.html#stationt">StationT</a></li>
+<li class="toctree-l4"><a class="reference internal" href="weatherDB.html#stationet">StationET</a></li>
+<li class="toctree-l4"><a class="reference internal" href="weatherDB.html#stationnd">StationND</a></li>
+<li class="toctree-l4"><a class="reference internal" href="weatherDB.html#groupstation">GroupStation</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="weatherDB.html#module-weatherDB.stations">stations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="weatherDB.html#stationsn">StationsN</a></li>
+<li class="toctree-l4"><a class="reference internal" href="weatherDB.html#stationst">StationsT</a></li>
+<li class="toctree-l4"><a class="reference internal" href="weatherDB.html#stationset">StationsET</a></li>
+<li class="toctree-l4"><a class="reference internal" href="weatherDB.html#stationsnd">StationsND</a></li>
+<li class="toctree-l4"><a class="reference internal" href="weatherDB.html#groupstations">GroupStations</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="weatherDB.html#module-weatherDB.broker">broker</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="weatherDB.html#id1">Broker</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="weatherDB.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="weatherDB.lib.html">weatherDB.lib package</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="weatherDB.lib.html#module-weatherDB.lib.utils">weatherDB.lib.utils module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="weatherDB.lib.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="weatherDB.lib.max_fun.html">weatherDB.lib.max_fun package</a></li>
 </ul>
 </li>
 </ul>

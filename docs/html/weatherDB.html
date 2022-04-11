@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>weatherDB.station module &mdash; WeatherDB 0.0.4 documentation</title>
+  <title>weatherDB &mdash; WeatherDB 0.0.5 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -41,13 +41,34 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="README.html">     Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Methode.html">Method</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">     API reference</a><ul class="current">
-<li class="toctree-l2 current"><a class="current reference internal" href="#">weatherDB.station module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-weatherDB.stations">weatherDB.stations module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-weatherDB.broker">weatherDB.broker module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#subpackages">Subpackages</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="weatherDB.lib.html">weatherDB.lib package</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">weatherDB</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-weatherDB.station">station</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#stationn">StationN</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stationt">StationT</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stationet">StationET</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stationnd">StationND</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#groupstation">GroupStation</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-weatherDB.stations">stations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#stationsn">StationsN</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stationst">StationsT</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stationset">StationsET</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stationsnd">StationsND</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#groupstations">GroupStations</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-weatherDB.broker">broker</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id1">Broker</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="weatherDB.lib.html">weatherDB.lib package</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -69,7 +90,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
           <li><a href="modules.html">weatherDB</a> &raquo;</li>
-      <li>weatherDB.station module</li>
+      <li>weatherDB</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/weatherDB.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -103,784 +124,41 @@
     text-align: unset;
 }
 </style>
+<section id="weatherdb">
+<h1>weatherDB<a class="headerlink" href="#weatherdb" title="Permalink to this headline"></a></h1>
 <section id="module-weatherDB.station">
-<span id="weatherdb-station-module"></span><h1>weatherDB.station module<a class="headerlink" href="#module-weatherDB.station" title="Permalink to this headline"></a></h1>
+<span id="station"></span><h2>station<a class="headerlink" href="#module-weatherDB.station" title="Permalink to this headline"></a></h2>
 <p>This module has a class for every type of station. E.g. StationN (or StationN).
 One object represents one Station with one parameter.
 This object can get used to get the corresponding timeserie.
 There is also a StationGroup class that groups the three parameters precipitation, temperature and evapotranspiration together for one station.</p>
-<dl class="py class">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">weatherDB.station.</span></span><span class="sig-name descname"><span class="pre">StationBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>This is the Base class for one Station.
-It is not working on it’s own, because those parameters need to get defined in the real classes</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.__init__" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.isin_db">
-<span class="sig-name descname"><span class="pre">isin_db</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.isin_db" title="Permalink to this definition"></a></dt>
-<dd><p>Check if Station is already in a timeseries table.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>True if Station has a table in DB, no matter if it is filled or not.</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.isin_meta">
-<span class="sig-name descname"><span class="pre">isin_meta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.isin_meta" title="Permalink to this definition"></a></dt>
-<dd><p>Check if Station is already in the meta table.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>True if Station is in meta table.</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.isin_ma">
-<span class="sig-name descname"><span class="pre">isin_ma</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.isin_ma" title="Permalink to this definition"></a></dt>
-<dd><p>Check if Station is already in the multi annual table.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>True if Station is in multi annual table.</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.is_virtual">
-<span class="sig-name descname"><span class="pre">is_virtual</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.is_virtual" title="Permalink to this definition"></a></dt>
-<dd><p>Check if the station is a real station or only a virtual one.</p>
-<p>Real means that the DWD is measuring here.
-Virtual means, that there are no measurements here, but the station got created to have timeseries for every parameter for every precipitation station.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>true if the station is virtual, false if it is real.</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.is_real">
-<span class="sig-name descname"><span class="pre">is_real</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.is_real" title="Permalink to this definition"></a></dt>
-<dd><p>Check if the station is a real station or only a virtual one.</p>
-<p>Real means that the DWD is measuring here.
-Virtual means, that there are no measurements here, but the station got created to have timeseries for every parameter for every precipitation station.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>true if the station is real, false if it is virtual.</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.is_last_imp_done">
-<span class="sig-name descname"><span class="pre">is_last_imp_done</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.is_last_imp_done" title="Permalink to this definition"></a></dt>
-<dd><p>Is the last import for the given kind already worked in?</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>kind</strong> (<em>str</em>) – The data kind to look for filled period.
-Must be a column in the timeseries DB.
-Must be one of “raw”, “qc”, “filled”, “adj”, “best”.
-If “best” is given, then depending on the parameter of the station the best kind is selected.
-For Precipitation this is “corr” and for the other this is “filled”.
-For the precipitation also “qn” and “corr” are valid.</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>True if the last import of the given kind is already treated.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.update_period_meta">
-<span class="sig-name descname"><span class="pre">update_period_meta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.update_period_meta" title="Permalink to this definition"></a></dt>
-<dd><p>Update the time period in the meta file.</p>
-<p>Compute teh filled period of a timeserie and save in the meta table.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>kind</strong> (<em>str</em>) – The data kind to look for filled period.
-Must be a column in the timeseries DB.
-Must be one of “raw”, “qc”, “filled”.
-If “best” is given, then depending on the parameter of the station the best kind is selected.
-For Precipitation this is “corr” and for the other this is “filled”.
-For the precipitation also “corr” are valid.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.update_ma">
-<span class="sig-name descname"><span class="pre">update_ma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">skip_if_exist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.update_ma" title="Permalink to this definition"></a></dt>
-<dd><p>Update the multi annual values in the stations_raster_values table.</p>
-<p>Get new values from the raster and put in the table.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.update_raw">
-<span class="sig-name descname"><span class="pre">update_raw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">only_new</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ftp_file_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.update_raw" title="Permalink to this definition"></a></dt>
-<dd><p>Download data from CDC and upload to database.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>only_new</strong> (<em>bool</em><em>, </em><em>optional</em>) – Get only the files that are not yet in the database?
-If False all the available files are loaded again.
-The default is True</p></li>
-<li><p><strong>ftp_file_list</strong> (<em>list of</em><em> (</em><em>strings</em><em>, </em><em>datetime</em><em>)</em><em>, </em><em>optional</em>) – A list of files on the FTP server together with their modification time.
-If None, then the list is fetched from the server.
-The default is None</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>The raw Dataframe of the Stations data.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>pandas.DataFrame</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.get_zipfiles">
-<span class="sig-name descname"><span class="pre">get_zipfiles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">only_new</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ftp_file_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.get_zipfiles" title="Permalink to this definition"></a></dt>
-<dd><p>Get the zipfiles on the CDC server with the raw data.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>only_new</strong> (<em>bool</em><em>, </em><em>optional</em>) – Get only the files that are not yet in the database?
-If False all the available files are loaded again.
-The default is True</p></li>
-<li><p><strong>ftp_file_list</strong> (<em>list of</em><em> (</em><em>strings</em><em>, </em><em>datetime</em><em>)</em><em>, </em><em>optional</em>) – A list of files on the FTP server together with their modification time.
-If None, then the list is fetched from the server.
-The default is None</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A DataFrame of zipfiles and the corresponding modification time on the CDC server to import.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>pandas.DataFrame or None</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.download_raw">
-<span class="sig-name descname"><span class="pre">download_raw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">only_new</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.download_raw" title="Permalink to this definition"></a></dt>
-<dd><p>Download the timeserie from the CDC Server.</p>
-<p>This function only returns the timeserie, but is not updating the database.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>only_new</strong> (<em>bool</em><em>, </em><em>optional</em>) – Get only the files that are not yet in the database?
-If False all the available files are loaded again.
-The default is False.</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>The Timeseries as a DataFrame with a Timestamp Index.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>pandas.DataFrame</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.quality_check">
-<span class="sig-name descname"><span class="pre">quality_check</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(None,</span> <span class="pre">None)</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.quality_check" title="Permalink to this definition"></a></dt>
-<dd><p>Quality check the raw data for a given period.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>period</strong> (<em>util.TimestampPeriod</em><em> or </em><em>(</em><em>tuple</em><em> or </em><em>list of datetime.datetime</em><em> or </em><em>None</em><em>)</em><em>, </em><em>optional</em>) – The minimum and maximum Timestamp for which to get the timeseries.
-If None is given, the maximum or minimal possible Timestamp is taken.
-The default is (None, None).</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.fillup">
-<span class="sig-name descname"><span class="pre">fillup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(None,</span> <span class="pre">None)</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.fillup" title="Permalink to this definition"></a></dt>
-<dd><p>Fill up missing data with measurements from nearby stations.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.last_imp_quality_check">
-<span class="sig-name descname"><span class="pre">last_imp_quality_check</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.last_imp_quality_check" title="Permalink to this definition"></a></dt>
-<dd><p>Do the quality check of the last import.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.last_imp_qc">
-<span class="sig-name descname"><span class="pre">last_imp_qc</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.last_imp_qc" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.last_imp_fillup">
-<span class="sig-name descname"><span class="pre">last_imp_fillup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_last_imp_period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.last_imp_fillup" title="Permalink to this definition"></a></dt>
-<dd><p>Do the filling up of the last import.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.get_meta">
-<span class="sig-name descname"><span class="pre">get_meta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">infos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.get_meta" title="Permalink to this definition"></a></dt>
-<dd><p>Get Informations from the meta table.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>infos</strong> (<em>list of str</em><em> or </em><em>str</em><em>, </em><em>optional</em>) – A list of the informations to get from the database.
-If “all” then all the informations are returned.
-The default is “all”.</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>list with the informations.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>list</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.get_geom">
-<span class="sig-name descname"><span class="pre">get_geom</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'EWKT'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.get_geom" title="Permalink to this definition"></a></dt>
-<dd><p>Get the point geometry of the station.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>format</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – The format of the geometry to return.
-Needs to be a format that is understood by Postgresql.
-ST_AsXXXXX function needs to exist in postgresql language.
-If None, then the binary representation is returned.
-the default is “EWKT”.</p></li>
-<li><p><strong>crs</strong> (<em>str</em><em>, </em><em>int</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – If None, then the geometry is returned in WGS84 (EPSG:4326).
-If string, then it should be one of “WGS84” or “UTM”.
-If int, then it should be the EPSG code.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>string or bytes representation of the geometry,
-depending on the selected format.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>str or bytes</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.get_geom_shp">
-<span class="sig-name descname"><span class="pre">get_geom_shp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.get_geom_shp" title="Permalink to this definition"></a></dt>
-<dd><p>Get the geometry of the station as a shapely Point object.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>crs</strong> (<em>str</em><em>, </em><em>int</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – If None, then the geometry is returned in WGS84 (EPSG:4326).
-If string, then it should be one of “WGS84” or “UTM”.
-If int, then it should be the EPSG code.</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>The location of the station as shapely Point.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>shapely.geometries.Point</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.get_name">
-<span class="sig-name descname"><span class="pre">get_name</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.get_name" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.get_period_meta">
-<span class="sig-name descname"><span class="pre">get_period_meta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.get_period_meta" title="Permalink to this definition"></a></dt>
-<dd><p>Get a specific period from the meta information table.</p>
-<p>This functions returns the information from the meta table.
-In this table there are several periods saved, like the period of the last import.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>kind</strong> (<em>str</em>) – The kind of period to return.
-Should be one of [‘filled’, ‘raw’, ‘last_imp’].
-filled: the maximum filled period of the filled timeserie.
-raw: the maximum filled timeperiod of the raw data.
-last_imp: the maximum filled timeperiod of the last import.</p></li>
-<li><p><strong>all</strong> (<em>bool</em><em>, </em><em>optional</em>) – Should the maximum Timespan for all the filled periods be returned.
-If False only the period for this station is returned.
-The default is False.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>The TimespanPeriod of the station or of all the stations if all=True.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>TimespanPeriod</p>
-</dd>
-<dt class="field-even">Raises</dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If a wrong kind is handed in.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.get_filled_period">
-<span class="sig-name descname"><span class="pre">get_filled_period</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">from_meta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.get_filled_period" title="Permalink to this definition"></a></dt>
-<dd><p>Get the min and max Timestamp for which there is data in the corresponding timeserie.</p>
-<p>Computes the period from the timeserie or meta table.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>kind</strong> (<em>str</em>) – The data kind to look for filled period.
-Must be a column in the timeseries DB.
-Must be one of “raw”, “qc”, “filled”, “adj”.
-If “best” is given, then depending on the parameter of the station the best kind is selected.
-For Precipitation this is “corr” and for the other this is “filled”.
-For the precipitation also “qn” and “corr” are valid.</p></li>
-<li><p><strong>from_meta</strong> (<em>bool</em><em>, </em><em>optional</em>) – Should the period be from the meta table?
-If False: the period is returned from the timeserie. In this case this function is only a wrapper for .get_period_meta.
-The default is False.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Raises</dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>NotImplementedError</strong> – If the given kind is not valid.</p></li>
-<li><p><strong>ValueError</strong> – If the given kind is not a string.</p></li>
-</ul>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A TimestampPeriod of the filled timeserie.
-(NaT, NaT) if the timeserie is all empty or not defined.</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>util.TimestampPeriod</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.get_last_imp_period">
-<span class="sig-name descname"><span class="pre">get_last_imp_period</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">all</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.get_last_imp_period" title="Permalink to this definition"></a></dt>
-<dd><p>Get the last imported Period for this Station.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>all</strong> (<em>bool</em><em>, </em><em>optional</em>) – Should the maximum Timespan for all the last imports be returned.
-If False only the period for this station is returned.
-The default is False.</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>(minimal datetime, maximal datetime)</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>TimespanPeriod or tuple of datetime.datetime</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.get_neighboor_stids">
-<span class="sig-name descname"><span class="pre">get_neighboor_stids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">only_real</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.get_neighboor_stids" title="Permalink to this definition"></a></dt>
-<dd><p>Get a list with Station Ids of the nearest neighboor stations.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>n</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of stations to return.
-If None, then all the possible stations are returned.
-The default is 5.</p></li>
-<li><p><strong>only_real</strong> (<em>bool</em><em>, </em><em>optional</em>) – Should only real station get considered?
-If false also virtual stations are part of the result.
-The default is True.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A list of station Ids in order of distance.
-The closest station is the first in the list.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>list of int</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.get_multi_annual">
-<span class="sig-name descname"><span class="pre">get_multi_annual</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.get_multi_annual" title="Permalink to this definition"></a></dt>
-<dd><p>Get the multi annual value(s) for this station.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>The corresponding multi annual value.
-For T en ET the yearly value is returned.
-For N the winter and summer half yearly sum is returned in tuple.</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>list or number</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.get_ma">
-<span class="sig-name descname"><span class="pre">get_ma</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.get_ma" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.get_raster_value">
-<span class="sig-name descname"><span class="pre">get_raster_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raster</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.get_raster_value" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.get_coef">
-<span class="sig-name descname"><span class="pre">get_coef</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other_stid</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.get_coef" title="Permalink to this definition"></a></dt>
-<dd><p>Get the regionalisation coefficients due to the height.</p>
-<p>Those are the values from the dwd grid or regnie grids.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>other_stid</strong> (<em>int</em>) – The Station Id of the other station from wich to regionalise for own station.</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A list of</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>list of floats or None</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.get_df">
-<span class="sig-name descname"><span class="pre">get_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kinds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(None,</span> <span class="pre">None)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">agg_to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">db_unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.get_df" title="Permalink to this definition"></a></dt>
-<dd><p>Get a timeseries DataFrame from the database.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>kinds</strong> (<em>str</em><em> or </em><em>list of str</em>) – The data kinds to update.
-Must be a column in the timeseries DB.
-Must be one of “raw”, “qc”, “filled”, “adj”.
-For the precipitation also “qn” and “corr” are valid.</p></li>
-<li><p><strong>period</strong> (<a class="reference internal" href="weatherDB.lib.html#weatherDB.lib.utils.TimestampPeriod" title="weatherDB.lib.utils.TimestampPeriod"><em>TimestampPeriod</em></a><em> or </em><em>(</em><em>tuple</em><em> or </em><em>list of datetime.datetime</em><em> or </em><em>None</em><em>)</em><em>, </em><em>optional</em>) – The minimum and maximum Timestamp for which to get the timeseries.
-If None is given, the maximum or minimal possible Timestamp is taken.
-The default is (None, None).</p></li>
-<li><p><strong>agg_to</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Aggregate to a given timespan.
-Can be anything smaller than the maximum timespan of the saved data.
-If a Timeperiod smaller than the saved data is given, than the maximum possible timeperiod is returned.
-For T and ET it can be “month”, “year”.
-For N it can also be “hour”.
-If None than the maximum timeperiod is taken.
-The default is None.</p></li>
-<li><p><strong>db_unit</strong> (<em>bool</em><em>, </em><em>optional</em>) – Should the result be in the Database unit.
-If False the unit is getting converted to normal unit, like mm or °C.
-The numbers are saved as integer in the database and got therefor multiplied by 10 or 100 to get to an integer.
-The default is False.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>The timeserie Dataframe with a DatetimeIndex.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>pandas.DataFrame</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.get_raw">
-<span class="sig-name descname"><span class="pre">get_raw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(None,</span> <span class="pre">None)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">agg_to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.get_raw" title="Permalink to this definition"></a></dt>
-<dd><p>Get the raw timeserie.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>period</strong> (<a class="reference internal" href="weatherDB.lib.html#weatherDB.lib.utils.TimestampPeriod" title="weatherDB.lib.utils.TimestampPeriod"><em>TimestampPeriod</em></a><em> or </em><em>(</em><em>tuple</em><em> or </em><em>list of datetime.datetime</em><em> or </em><em>None</em><em>)</em><em>, </em><em>optional</em>) – The minimum and maximum Timestamp for which to get the timeserie.
-If None is given, the maximum or minimal possible Timestamp is taken.
-The default is (None, None).</p></li>
-<li><p><strong>agg_to</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Aggregate to a given timespan.
-Can be anything smaller than the maximum timespan of the saved data.
-If a Timeperiod smaller than the saved data is given, than the maximum possible timeperiod is returned.
-For T and ET it can be “month”, “year”.
-For N it can also be “hour”.
-If None than the maximum timeperiod is taken.
-The default is None.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>The raw timeserie for this station and the given period.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>pd.DataFrame</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.get_qc">
-<span class="sig-name descname"><span class="pre">get_qc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(None,</span> <span class="pre">None)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">agg_to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.get_qc" title="Permalink to this definition"></a></dt>
-<dd><p>Get the quality checked timeserie.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>period</strong> (<a class="reference internal" href="weatherDB.lib.html#weatherDB.lib.utils.TimestampPeriod" title="weatherDB.lib.utils.TimestampPeriod"><em>TimestampPeriod</em></a><em> or </em><em>(</em><em>tuple</em><em> or </em><em>list of datetime.datetime</em><em> or </em><em>None</em><em>)</em><em>, </em><em>optional</em>) – The minimum and maximum Timestamp for which to get the timeserie.
-If None is given, the maximum or minimal possible Timestamp is taken.
-The default is (None, None).</p></li>
-<li><p><strong>agg_to</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Aggregate to a given timespan.
-Can be anything smaller than the maximum timespan of the saved data.
-If a Timeperiod smaller than the saved data is given, than the maximum possible timeperiod is returned.
-For T and ET it can be “month”, “year”.
-For N it can also be “hour”.
-If None than the maximum timeperiod is taken.
-The default is None.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>The quality checked timeserie for this station and the given period.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>pd.DataFrame</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.get_dist">
-<span class="sig-name descname"><span class="pre">get_dist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(None,</span> <span class="pre">None)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.get_dist" title="Permalink to this definition"></a></dt>
-<dd><p>Get the timeserie with the infomation from which station the data got filled and the corresponding distance to this station.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>period</strong> (<a class="reference internal" href="weatherDB.lib.html#weatherDB.lib.utils.TimestampPeriod" title="weatherDB.lib.utils.TimestampPeriod"><em>TimestampPeriod</em></a><em> or </em><em>(</em><em>tuple</em><em> or </em><em>list of datetime.datetime</em><em> or </em><em>None</em><em>)</em><em>, </em><em>optional</em>) – The minimum and maximum Timestamp for which to get the timeserie.
-If None is given, the maximum or minimal possible Timestamp is taken.
-The default is (None, None).</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>The timeserie for this station and the given period with the station_id and the distance in meters from which the data got filled from.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>pd.DataFrame</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.get_filled">
-<span class="sig-name descname"><span class="pre">get_filled</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(None,</span> <span class="pre">None)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.get_filled" title="Permalink to this definition"></a></dt>
-<dd><p>Get the filled timeserie.</p>
-<p>Either only the timeserie is returned or also the id of the station from which the station data got filled, together with the distance to this station in m.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>period</strong> (<a class="reference internal" href="weatherDB.lib.html#weatherDB.lib.utils.TimestampPeriod" title="weatherDB.lib.utils.TimestampPeriod"><em>TimestampPeriod</em></a><em> or </em><em>(</em><em>tuple</em><em> or </em><em>list of datetime.datetime</em><em> or </em><em>None</em><em>)</em><em>, </em><em>optional</em>) – The minimum and maximum Timestamp for which to get the timeserie.
-If None is given, the maximum or minimal possible Timestamp is taken.
-The default is (None, None).</p></li>
-<li><p><strong>with_dist</strong> (<em>bool</em><em>, </em><em>optional</em>) – Should the distance to the stations from which the timeseries got filled be added.
-The default is False.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>The filled timeserie for this station and the given period.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>pd.DataFrame</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.get_adj">
-<span class="sig-name descname"><span class="pre">get_adj</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(None,</span> <span class="pre">None)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">agg_to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.get_adj" title="Permalink to this definition"></a></dt>
-<dd><p>Get the adjusted timeserie.</p>
-<p>The timeserie is adjusted to the multi annual mean.
-So the overall mean of the given period will be the same as the multi annual mean.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>period</strong> (<a class="reference internal" href="weatherDB.lib.html#weatherDB.lib.utils.TimestampPeriod" title="weatherDB.lib.utils.TimestampPeriod"><em>TimestampPeriod</em></a><em> or </em><em>(</em><em>tuple</em><em> or </em><em>list of datetime.datetime</em><em> or </em><em>None</em><em>)</em><em>, </em><em>optional</em>) – The minimum and maximum Timestamp for which to get the timeseries.
-If None is given, the maximum or minimal possible Timestamp is taken.
-The default is (None, None).</p></li>
-<li><p><strong>agg_to</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Aggregate to a given timespan.
-Can be anything smaller than the maximum timespan of the saved data.
-If a Timeperiod smaller than the saved data is given, than the maximum possible timeperiod is returned.
-For T and ET it can be “month”, “year”.
-For N it can also be “hour”.
-If None than the maximum timeperiod is taken.
-The default is None.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A timeserie with the adjusted data.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>pandas.DataFrame</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationBase.plot">
-<span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(None,</span> <span class="pre">None)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'filled'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">agg_to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationBase.plot" title="Permalink to this definition"></a></dt>
-<dd><p>Plot the data of this station.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>period</strong> (<a class="reference internal" href="weatherDB.lib.html#weatherDB.lib.utils.TimestampPeriod" title="weatherDB.lib.utils.TimestampPeriod"><em>TimestampPeriod</em></a><em> or </em><em>(</em><em>tuple</em><em> or </em><em>list of datetime.datetime</em><em> or </em><em>None</em><em>)</em><em>, </em><em>optional</em>) – The minimum and maximum Timestamp for which to get the timeseries.
-If None is given, the maximum or minimal possible Timestamp is taken.
-The default is (None, None).</p></li>
-<li><p><strong>kind</strong> (<em>str</em><em>, </em><em>optional</em>) – The data kind to plot.
-Must be a column in the timeseries DB.
-Must be one of “raw”, “qc”, “filled”, “adj”.
-For the precipitation also “qn” and “corr” are valid.
-The default is “filled.</p></li>
-<li><p><strong>agg_to</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Aggregate to a given timespan.
-Can be anything smaller than the maximum timespan of the saved data.
-If a Timeperiod smaller than the saved data is given, than the maximum possible timeperiod is returned.
-For T and ET it can be “month”, “year”.
-For N it can also be “hour”.
-If None than the maximum timeperiod is taken.
-The default is None.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="weatherDB.station.StationCanVirtualBase">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">weatherDB.station.</span></span><span class="sig-name descname"><span class="pre">StationCanVirtualBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationCanVirtualBase" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#weatherDB.station.StationBase" title="weatherDB.station.StationBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">weatherDB.station.StationBase</span></code></a></p>
-<p>A class to add the methods for stations that can also be virtual.
-Virtual means, that there is no real DWD station with measurements.
-But to have data for every parameter at every 10 min precipitation station location, it is necessary to add stations and fill them with data from neighboors.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationCanVirtualBase.isin_meta_n">
-<span class="sig-name descname"><span class="pre">isin_meta_n</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationCanVirtualBase.isin_meta_n" title="Permalink to this definition"></a></dt>
-<dd><p>Check if Station is in the precipitation meta table.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>True if Station is in the precipitation meta table.</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationCanVirtualBase.quality_check">
-<span class="sig-name descname"><span class="pre">quality_check</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(None,</span> <span class="pre">None)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationCanVirtualBase.quality_check" title="Permalink to this definition"></a></dt>
-<dd><p>Quality check the raw data for a given period.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>period</strong> (<em>util.TimestampPeriod</em><em> or </em><em>(</em><em>tuple</em><em> or </em><em>list of datetime.datetime</em><em> or </em><em>None</em><em>)</em><em>, </em><em>optional</em>) – The minimum and maximum Timestamp for which to get the timeseries.
-If None is given, the maximum or minimal possible Timestamp is taken.
-The default is (None, None).</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="weatherDB.station.StationTETBase">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">weatherDB.station.</span></span><span class="sig-name descname"><span class="pre">StationTETBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationTETBase" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#weatherDB.station.StationCanVirtualBase" title="weatherDB.station.StationCanVirtualBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">weatherDB.station.StationCanVirtualBase</span></code></a></p>
-<p>A base class for T and ET.</p>
-<p>This class adds methods that are only used by temperatur and evapotranspiration stations.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationTETBase.get_adj">
-<span class="sig-name descname"><span class="pre">get_adj</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(None,</span> <span class="pre">None)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationTETBase.get_adj" title="Permalink to this definition"></a></dt>
-<dd><p>Get the adjusted timeserie.</p>
-<p>The timeserie is adjusted to the multi annual mean.
-So the overall mean of the given period will be the same as the multi annual mean.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>period</strong> (<a class="reference internal" href="weatherDB.lib.html#weatherDB.lib.utils.TimestampPeriod" title="weatherDB.lib.utils.TimestampPeriod"><em>TimestampPeriod</em></a><em> or </em><em>(</em><em>tuple</em><em> or </em><em>list of datetime.datetime</em><em> or </em><em>None</em><em>)</em><em>, </em><em>optional</em>) – The minimum and maximum Timestamp for which to get the timeseries.
-If None is given, the maximum or minimal possible Timestamp is taken.
-The default is (None, None).</p></li>
-<li><p><strong>agg_to</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Aggregate to a given timespan.
-Can be anything smaller than the maximum timespan of the saved data.
-If a Timeperiod smaller than the saved data is given, than the maximum possible timeperiod is returned.
-For T and ET it can be “month”, “year”.
-For N it can also be “hour”.
-If None than the maximum timeperiod is taken.
-The default is None.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A timeserie with the adjusted data.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>pandas.DataFrame</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="weatherDB.station.StationNBase">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">weatherDB.station.</span></span><span class="sig-name descname"><span class="pre">StationNBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationNBase" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#weatherDB.station.StationBase" title="weatherDB.station.StationBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">weatherDB.station.StationBase</span></code></a></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationNBase.get_adj">
-<span class="sig-name descname"><span class="pre">get_adj</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(None,</span> <span class="pre">None)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationNBase.get_adj" title="Permalink to this definition"></a></dt>
-<dd><p>Get the adjusted timeserie.</p>
-<p>The timeserie is adjusted to the multi annual mean.
-So the overall mean of the given period will be the same as the multi annual mean.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>period</strong> (<a class="reference internal" href="weatherDB.lib.html#weatherDB.lib.utils.TimestampPeriod" title="weatherDB.lib.utils.TimestampPeriod"><em>TimestampPeriod</em></a><em> or </em><em>(</em><em>tuple</em><em> or </em><em>list of datetime.datetime</em><em> or </em><em>None</em><em>)</em><em>, </em><em>optional</em>) – The minimum and maximum Timestamp for which to get the timeseries.
-If None is given, the maximum or minimal possible Timestamp is taken.
-The default is (None, None).</p></li>
-<li><p><strong>agg_to</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Aggregate to a given timespan.
-Can be anything smaller than the maximum timespan of the saved data.
-If a Timeperiod smaller than the saved data is given, than the maximum possible timeperiod is returned.
-For T and ET it can be “month”, “year”.
-For N it can also be “hour”.
-If None than the maximum timeperiod is taken.
-The default is None.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A timeserie with the adjusted data.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>pandas.DataFrame</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
+<section id="stationn">
+<h3>StationN<a class="headerlink" href="#stationn" title="Permalink to this headline"></a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="weatherDB.station.StationN">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">weatherDB.station.</span></span><span class="sig-name descname"><span class="pre">StationN</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationN" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#weatherDB.station.StationNBase" title="weatherDB.station.StationNBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">weatherDB.station.StationNBase</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">weatherDB.station.</span></span><span class="sig-name descname"><span class="pre">StationN</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationN" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">weatherDB.station.StationNBase</span></code></p>
 <p>A class to work with and download 10 minutes precipitation data for one station.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="weatherDB.station.StationN.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationN.__init__" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationN.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>Create a Station object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<em>int</em>) – The stations ID.</p></li>
+<li><p><strong>_skip_meta_check</strong> (<em>bool</em><em>, </em><em>optional</em>) – Should the check if the station is in the database meta file get skiped.
+Pay attention, when skipping this, because it can lead to problems.
+This is for computational reasons, because it makes the initialization faster.
+Is used by the stations classes, because the only initialize objects that are in the meta table.
+The default is False</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>NotImplementedError</strong> – _description_</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="weatherDB.station.StationN.update_horizon">
@@ -1014,60 +292,34 @@ H’=0,15H(S-SW) +0,35H(SW-W) +0,35H(W-NW) +0, 15H(NW-N)</p>
 
 </dd></dl>
 
-<dl class="py class">
-<dt class="sig sig-object py" id="weatherDB.station.StationND">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">weatherDB.station.</span></span><span class="sig-name descname"><span class="pre">StationND</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationND" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#weatherDB.station.StationNBase" title="weatherDB.station.StationNBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">weatherDB.station.StationNBase</span></code></a>, <a class="reference internal" href="#weatherDB.station.StationCanVirtualBase" title="weatherDB.station.StationCanVirtualBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">weatherDB.station.StationCanVirtualBase</span></code></a></p>
-<p>A class to work with and download daily precipitation data for one station.</p>
-<p>Those station data are only downloaded to do some quality checks on the 10 minute data.
-Therefor there is no special quality check and richter correction done on this data.
-If you want daily precipitation data, better use the 10 minutes station(StationN) and aggregate to daily values.</p>
-<dl class="py property">
-<dt class="sig sig-object py" id="weatherDB.station.StationND.quality_check">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">quality_check</span></span><a class="headerlink" href="#weatherDB.station.StationND.quality_check" title="Permalink to this definition"></a></dt>
-<dd><p>(!) Disallowed inherited</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="weatherDB.station.StationND.last_imp_quality_check">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">last_imp_quality_check</span></span><a class="headerlink" href="#weatherDB.station.StationND.last_imp_quality_check" title="Permalink to this definition"></a></dt>
-<dd><p>(!) Disallowed inherited</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="weatherDB.station.StationND.get_corr">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_corr</span></span><a class="headerlink" href="#weatherDB.station.StationND.get_corr" title="Permalink to this definition"></a></dt>
-<dd><p>(!) Disallowed inherited</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="weatherDB.station.StationND.get_adj">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_adj</span></span><a class="headerlink" href="#weatherDB.station.StationND.get_adj" title="Permalink to this definition"></a></dt>
-<dd><p>(!) Disallowed inherited</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="weatherDB.station.StationND.get_qc">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_qc</span></span><a class="headerlink" href="#weatherDB.station.StationND.get_qc" title="Permalink to this definition"></a></dt>
-<dd><p>(!) Disallowed inherited</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.StationND.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationND.__init__" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+</section>
+<section id="stationt">
+<h3>StationT<a class="headerlink" href="#stationt" title="Permalink to this headline"></a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="weatherDB.station.StationT">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">weatherDB.station.</span></span><span class="sig-name descname"><span class="pre">StationT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationT" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#weatherDB.station.StationTETBase" title="weatherDB.station.StationTETBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">weatherDB.station.StationTETBase</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">weatherDB.station.</span></span><span class="sig-name descname"><span class="pre">StationT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationT" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">weatherDB.station.StationTETBase</span></code></p>
 <p>A class to work with and download temperaure data for one station.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="weatherDB.station.StationT.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationT.__init__" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationT.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>Create a Station object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<em>int</em>) – The stations ID.</p></li>
+<li><p><strong>_skip_meta_check</strong> (<em>bool</em><em>, </em><em>optional</em>) – Should the check if the station is in the database meta file get skiped.
+Pay attention, when skipping this, because it can lead to problems.
+This is for computational reasons, because it makes the initialization faster.
+Is used by the stations classes, because the only initialize objects that are in the meta table.
+The default is False</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>NotImplementedError</strong> – _description_</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="weatherDB.station.StationT.get_multi_annual">
@@ -1117,15 +369,34 @@ The default is None.</p></li>
 
 </dd></dl>
 
+</section>
+<section id="stationet">
+<h3>StationET<a class="headerlink" href="#stationet" title="Permalink to this headline"></a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="weatherDB.station.StationET">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">weatherDB.station.</span></span><span class="sig-name descname"><span class="pre">StationET</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationET" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#weatherDB.station.StationTETBase" title="weatherDB.station.StationTETBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">weatherDB.station.StationTETBase</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">weatherDB.station.</span></span><span class="sig-name descname"><span class="pre">StationET</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationET" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">weatherDB.station.StationTETBase</span></code></p>
 <p>A class to work with and download potential Evapotranspiration (VPGB) data for one station.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="weatherDB.station.StationET.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationET.__init__" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationET.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>Create a Station object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<em>int</em>) – The stations ID.</p></li>
+<li><p><strong>_skip_meta_check</strong> (<em>bool</em><em>, </em><em>optional</em>) – Should the check if the station is in the database meta file get skiped.
+Pay attention, when skipping this, because it can lead to problems.
+This is for computational reasons, because it makes the initialization faster.
+Is used by the stations classes, because the only initialize objects that are in the meta table.
+The default is False</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>NotImplementedError</strong> – _description_</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="weatherDB.station.StationET.get_adj">
@@ -1159,20 +430,87 @@ The default is None.</p></li>
 
 </dd></dl>
 
+</section>
+<section id="stationnd">
+<h3>StationND<a class="headerlink" href="#stationnd" title="Permalink to this headline"></a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="weatherDB.station.StationND">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">weatherDB.station.</span></span><span class="sig-name descname"><span class="pre">StationND</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationND" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">weatherDB.station.StationNBase</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">weatherDB.station.StationCanVirtualBase</span></code></p>
+<p>A class to work with and download daily precipitation data for one station.</p>
+<p>Those station data are only downloaded to do some quality checks on the 10 minute data.
+Therefor there is no special quality check and richter correction done on this data.
+If you want daily precipitation data, better use the 10 minutes station(StationN) and aggregate to daily values.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="weatherDB.station.StationND.quality_check">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">quality_check</span></span><a class="headerlink" href="#weatherDB.station.StationND.quality_check" title="Permalink to this definition"></a></dt>
+<dd><p>(!) Disallowed inherited</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="weatherDB.station.StationND.last_imp_quality_check">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">last_imp_quality_check</span></span><a class="headerlink" href="#weatherDB.station.StationND.last_imp_quality_check" title="Permalink to this definition"></a></dt>
+<dd><p>(!) Disallowed inherited</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="weatherDB.station.StationND.get_corr">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_corr</span></span><a class="headerlink" href="#weatherDB.station.StationND.get_corr" title="Permalink to this definition"></a></dt>
+<dd><p>(!) Disallowed inherited</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="weatherDB.station.StationND.get_adj">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_adj</span></span><a class="headerlink" href="#weatherDB.station.StationND.get_adj" title="Permalink to this definition"></a></dt>
+<dd><p>(!) Disallowed inherited</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="weatherDB.station.StationND.get_qc">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_qc</span></span><a class="headerlink" href="#weatherDB.station.StationND.get_qc" title="Permalink to this definition"></a></dt>
+<dd><p>(!) Disallowed inherited</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="weatherDB.station.StationND.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.StationND.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>Create a Station object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<em>int</em>) – The stations ID.</p></li>
+<li><p><strong>_skip_meta_check</strong> (<em>bool</em><em>, </em><em>optional</em>) – Should the check if the station is in the database meta file get skiped.
+Pay attention, when skipping this, because it can lead to problems.
+This is for computational reasons, because it makes the initialization faster.
+Is used by the stations classes, because the only initialize objects that are in the meta table.
+The default is False</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>NotImplementedError</strong> – _description_</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="groupstation">
+<h3>GroupStation<a class="headerlink" href="#groupstation" title="Permalink to this headline"></a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="weatherDB.station.GroupStation">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">weatherDB.station.</span></span><span class="sig-name descname"><span class="pre">GroupStation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">error_if_missing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.GroupStation" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">weatherDB.station.</span></span><span class="sig-name descname"><span class="pre">GroupStation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">error_if_missing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.GroupStation" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A class to group all possible parameters of one station.</p>
 <p>So if you want to create the input files for a simulation, where you need T, ET and N, use this class to download the data for one station.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="weatherDB.station.GroupStation.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">error_if_missing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.GroupStation.__init__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">error_if_missing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.GroupStation.__init__" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.station.GroupStation.get_possible_paras">
-<span class="sig-name descname"><span class="pre">get_possible_paras</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">short</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.GroupStation.get_possible_paras" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="weatherDB.station.GroupStation.get_available_paras">
+<span class="sig-name descname"><span class="pre">get_available_paras</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">short</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.GroupStation.get_available_paras" title="Permalink to this definition"></a></dt>
 <dd><p>Get the possible parameters for this station.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1218,7 +556,7 @@ The default is True.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="weatherDB.station.GroupStation.get_df">
-<span class="sig-name descname"><span class="pre">get_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(None,</span> <span class="pre">None)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'best'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">paras</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">agg_to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'10</span> <span class="pre">min'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.GroupStation.get_df" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(None,</span> <span class="pre">None)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'best'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">paras</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">agg_to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'day'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.GroupStation.get_df" title="Permalink to this definition"></a></dt>
 <dd><p>Get a DataFrame with the corresponding data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1249,6 +587,50 @@ The default is “10 min”.</p></li>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="weatherDB.station.GroupStation.get_meta_explanation">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_meta_explanation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">infos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.GroupStation.get_meta_explanation" title="Permalink to this definition"></a></dt>
+<dd><p>Get the explanations of the available meta fields.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>infos</strong> (<em>list</em><em> or </em><em>string</em><em>, </em><em>optional</em>) – The infos you wish to get an explanation for.
+If “all” then all the available information get returned.
+The default is “all”</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a pandas Series with the information names as index and the explanation as values.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pd.Series</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="weatherDB.station.GroupStation.get_meta">
+<span class="sig-name descname"><span class="pre">get_meta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">paras</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.GroupStation.get_meta" title="Permalink to this definition"></a></dt>
+<dd><p>Get the meta information for every parameter of this station.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>paras</strong> (<em>list of str</em><em> or </em><em>str</em><em>, </em><em>optional</em>) – Give the parameters for which to get the meta information.
+Can be “n”, “t”, “et” or “all”.
+If “all”, then every available station parameter is returned.
+The default is “all”</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – The optional keyword arguments are handed to the single Station get_meta methodes. Can be e.g. “info”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>dict with the information.
+there is one subdict per parameter.
+If only one parameter is asked for, then there is no subdict, but only a single value.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="weatherDB.station.GroupStation.get_geom">
 <span class="sig-name descname"><span class="pre">get_geom</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.GroupStation.get_geom" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
@@ -1260,7 +642,7 @@ The default is “10 min”.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="weatherDB.station.GroupStation.create_roger_ts">
-<span class="sig-name descname"><span class="pre">create_roger_ts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(None,</span> <span class="pre">None)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'best'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">et_et0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.GroupStation.create_roger_ts" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">create_roger_ts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(None,</span> <span class="pre">None)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'best'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_r0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.GroupStation.create_roger_ts" title="Permalink to this definition"></a></dt>
 <dd><p>Create the timeserie files for roger as csv.</p>
 <p>This is only a wrapper function for create_ts with some standard settings.</p>
 <dl class="field-list simple">
@@ -1277,7 +659,12 @@ Must be one of “raw”, “qc”, “filled”, “adj”.
 If “best” is given, then depending on the parameter of the station the best kind is selected.
 For Precipitation this is “corr” and for the other this is “filled”.
 For the precipitation also “qn” and “corr” are valid.</p></li>
-<li><p><strong>et_et0</strong> (<em>int</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – </p></li>
+<li><p><strong>r_r0</strong> (<em>int</em><em> or </em><em>float</em><em>, </em><em>list of int</em><em> or </em><em>float</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Should the ET timeserie contain a column with R/R0.
+If None, then no column is added.
+If int or float, then a R/R0 column is appended with this number as standard value.
+If list of int or floats, then the list should have the same length as the ET-timeserie and is appanded to the Timeserie.
+If pd.Series, then the index should be a timestamp index. The serie is then joined to the ET timeserie.
+The default is 1.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises</dt>
@@ -1288,7 +675,7 @@ For the precipitation also “qn” and “corr” are valid.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="weatherDB.station.GroupStation.create_ts">
-<span class="sig-name descname"><span class="pre">create_ts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(None,</span> <span class="pre">None)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'best'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">agg_to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'10</span> <span class="pre">min'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">et_et0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.GroupStation.create_ts" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">create_ts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(None,</span> <span class="pre">None)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'best'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">agg_to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'10</span> <span class="pre">min'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_r0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.station.GroupStation.create_ts" title="Permalink to this definition"></a></dt>
 <dd><p>Create the timeserie files as csv.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1309,10 +696,11 @@ The minimum aggregation for Temperatur and ET is daily and for the precipitation
 If a smaller aggregation is selected the minimum possible aggregation for the respective parameter is returned.
 So if 10 minutes is selected, than precipitation is returned in 10 minuets and T and ET as daily.
 The default is “10 min”.</p></li>
-<li><p><strong>et_et0</strong> (<em>int</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Should the ET timeserie contain a column with et_et0.
+<li><p><strong>r_r0</strong> (<em>int</em><em> or </em><em>float</em><em> or </em><em>None</em><em> or </em><em>pd.Series</em><em> or </em><em>list</em><em>, </em><em>optional</em>) – Should the ET timeserie contain a column with R/R0.
 If None, then no column is added.
-If int, then a ET/ET0 column is appended with this number as standard value.
-Until now providing a serie of different values is not possible.
+If int, then a R/R0 column is appended with this number as standard value.
+If list of int or floats, then the list should have the same length as the ET-timeserie and is appanded to the Timeserie.
+If pd.Series, then the index should be a timestamp index. The serie is then joined to the ET timeserie.
 The default is None.</p></li>
 <li><p><strong>split_date</strong> (<em>bool</em><em>, </em><em>optional</em>) – Should the timestamp get splitted into parts, so one column for year, one for month etc.?
 If False the timestamp is saved in one column as string.</p></li>
@@ -1327,240 +715,17 @@ If False the timestamp is saved in one column as string.</p></li>
 </dd></dl>
 
 </section>
+</section>
 <section id="module-weatherDB.stations">
-<span id="weatherdb-stations-module"></span><h1>weatherDB.stations module<a class="headerlink" href="#module-weatherDB.stations" title="Permalink to this headline"></a></h1>
+<span id="stations"></span><h2>stations<a class="headerlink" href="#module-weatherDB.stations" title="Permalink to this headline"></a></h2>
 <p>This module has grouping classes for all the stations of one parameter. E.G. StationsN (or StationsN) groups all the Precipitation Stations available.
 Those classes can get used to do actions on all the stations.</p>
-<dl class="py class">
-<dt class="sig sig-object py" id="weatherDB.stations.StationsBase">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">weatherDB.stations.</span></span><span class="sig-name descname"><span class="pre">StationsBase</span></span><a class="headerlink" href="#weatherDB.stations.StationsBase" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.stations.StationsBase.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.stations.StationsBase.__init__" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.stations.StationsBase.download_meta">
-<span class="sig-name descname"><span class="pre">download_meta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.stations.StationsBase.download_meta" title="Permalink to this definition"></a></dt>
-<dd><p>Download the meta file(s) from the CDC server.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>The meta file from the CDC server.
-If there are several meta files on the server, they are joined together.</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>geopandas.GeoDataFrame</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.stations.StationsBase.update_meta">
-<span class="sig-name descname"><span class="pre">update_meta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.stations.StationsBase.update_meta" title="Permalink to this definition"></a></dt>
-<dd><p>Update the meta table by comparing to the CDC server.</p>
-<p>The “von_datum” and “bis_datum” is ignored because it is better to set this by the filled period of the stations in the database.
-Often the CDC period is not correct.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.stations.StationsBase.update_period_meta">
-<span class="sig-name descname"><span class="pre">update_period_meta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.stations.StationsBase.update_period_meta" title="Permalink to this definition"></a></dt>
-<dd><p>Update the period in the meta table of the raw data.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>stids</strong> (<em>string</em><em>  or </em><em>list of int</em><em>, </em><em>optional</em>) – The Stations for which to compute.
-Can either be “all”, for all possible stations
-or a list with the Station IDs.
-The default is “all”.</p>
-</dd>
-<dt class="field-even">Raises</dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the given stids (Station_IDs) are not all valid.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.stations.StationsBase.get_meta">
-<span class="sig-name descname"><span class="pre">get_meta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">columns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['Station_id',</span> <span class="pre">'von_datum',</span> <span class="pre">'bis_datum',</span> <span class="pre">'geometry']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">only_real</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.stations.StationsBase.get_meta" title="Permalink to this definition"></a></dt>
-<dd><p>Get the meta Dataframe from the Database.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>columns</strong> (<em>list</em><em>, </em><em>optional</em>) – A list of columns from the meta file to return
-The default is: [“Station_id”, “von_datum”, “bis_datum”, “geometry”]</p></li>
-<li><p><strong>only_real</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether only real stations are returned or also virtual ones.
-True: only stations with own data are returned.
-The default is True.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>The meta DataFrame.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>pandas.DataFrame or geopandas.GeoDataFrae</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.stations.StationsBase.get_stations">
-<span class="sig-name descname"><span class="pre">get_stations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">only_real</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.stations.StationsBase.get_stations" title="Permalink to this definition"></a></dt>
-<dd><p>Get a list with all the stations as Station-objects.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>only_real</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether only real stations are returned or also virtual ones.
-True: only stations with own data are returned.
-The default is True.</p></li>
-<li><p><strong>stids</strong> (<em>string</em><em> or </em><em>list of int</em><em>, </em><em>optional</em>) – The Stations to return.
-Can either be “all”, for all possible stations
-or a list with the Station IDs.
-The default is “all”.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>returns a list with the corresponding station objects.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>Station-object</p>
-</dd>
-<dt class="field-even">Raises</dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the given stids (Station_IDs) are not all valid.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.stations.StationsBase.update_raw">
-<span class="sig-name descname"><span class="pre">update_raw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">only_new</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">only_real</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.stations.StationsBase.update_raw" title="Permalink to this definition"></a></dt>
-<dd><p>Download all stations data from CDC and upload to database.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>only_new</strong> (<em>bool</em><em>, </em><em>optional</em>) – Get only the files that are not yet in the database?
-If False all the available files are loaded again.
-The default is True</p></li>
-<li><p><strong>only_real</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether only real stations are tried to download.
-True: only stations with a date in von_datum in meta are downloaded.
-The default is True.</p></li>
-<li><p><strong>stids</strong> (<em>string</em><em> or </em><em>list of int</em><em>, </em><em>optional</em>) – The Stations to return.
-Can either be “all”, for all possible stations
-or a list with the Station IDs.
-The default is “all”.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Raises</dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the given stids (Station_IDs) are not all valid.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.stations.StationsBase.last_imp_quality_check">
-<span class="sig-name descname"><span class="pre">last_imp_quality_check</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.stations.StationsBase.last_imp_quality_check" title="Permalink to this definition"></a></dt>
-<dd><p>Do the quality check of the last import.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.stations.StationsBase.last_imp_fillup">
-<span class="sig-name descname"><span class="pre">last_imp_fillup</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.stations.StationsBase.last_imp_fillup" title="Permalink to this definition"></a></dt>
-<dd><p>Do the filling of the last import.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.stations.StationsBase.quality_check">
-<span class="sig-name descname"><span class="pre">quality_check</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(None,</span> <span class="pre">None)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">only_real</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.stations.StationsBase.quality_check" title="Permalink to this definition"></a></dt>
-<dd><p>Quality check the raw data for a given period.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>period</strong> (<em>tuple</em><em> or </em><em>list of datetime.datetime</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – The minimum and maximum Timestamp for which to get the timeseries.
-If None is given, the maximum or minimal possible Timestamp is taken.
-The default is (None, None).</p></li>
-<li><p><strong>stids</strong> (<em>string</em><em> or </em><em>list of int</em><em>, </em><em>optional</em>) – The Stations for which to compute.
-Can either be “all”, for all possible stations
-or a list with the Station IDs.
-The default is “all”.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.stations.StationsBase.update_ma">
-<span class="sig-name descname"><span class="pre">update_ma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.stations.StationsBase.update_ma" title="Permalink to this definition"></a></dt>
-<dd><p>Update the multi annual values for the stations.</p>
-<p>Get a multi annual value from the corresponding raster and save to the multi annual table in the database.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>stids</strong> (<em>string</em><em> or </em><em>list of int</em><em>, </em><em>optional</em>) – The Stations for which to compute.
-Can either be “all”, for all possible stations
-or a list with the Station IDs.
-The default is “all”.</p>
-</dd>
-<dt class="field-even">Raises</dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the given stids (Station_IDs) are not all valid.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.stations.StationsBase.fillup">
-<span class="sig-name descname"><span class="pre">fillup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">only_real</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.stations.StationsBase.fillup" title="Permalink to this definition"></a></dt>
-<dd><p>Fill up the quality checked data with data from nearby stations to get complete timeseries.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>only_real</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether only real stations are computed or also virtual ones.
-True: only stations with own data are returned.
-The default is True.</p></li>
-<li><p><strong>stids</strong> (<em>string</em><em> or </em><em>list of int</em><em>, </em><em>optional</em>) – The Stations for which to compute.
-Can either be “all”, for all possible stations
-or a list with the Station IDs.
-The default is “all”.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Raises</dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the given stids (Station_IDs) are not all valid.</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="weatherDB.stations.StationsTETBase">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">weatherDB.stations.</span></span><span class="sig-name descname"><span class="pre">StationsTETBase</span></span><a class="headerlink" href="#weatherDB.stations.StationsTETBase" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#weatherDB.stations.StationsBase" title="weatherDB.stations.StationsBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">weatherDB.stations.StationsBase</span></code></a></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.stations.StationsTETBase.fillup">
-<span class="sig-name descname"><span class="pre">fillup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">only_real</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.stations.StationsTETBase.fillup" title="Permalink to this definition"></a></dt>
-<dd><p>Fill up the quality checked data with data from nearby stations to get complete timeseries.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>only_real</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether only real stations are computed or also virtual ones.
-True: only stations with own data are returned.
-The default is True.</p></li>
-<li><p><strong>stids</strong> (<em>string</em><em> or </em><em>list of int</em><em>, </em><em>optional</em>) – The Stations for which to compute.
-Can either be “all”, for all possible stations
-or a list with the Station IDs.
-The default is “all”.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Raises</dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the given stids (Station_IDs) are not all valid.</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
+<section id="stationsn">
+<h3>StationsN<a class="headerlink" href="#stationsn" title="Permalink to this headline"></a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="weatherDB.stations.StationsN">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">weatherDB.stations.</span></span><span class="sig-name descname"><span class="pre">StationsN</span></span><a class="headerlink" href="#weatherDB.stations.StationsN" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#weatherDB.stations.StationsBase" title="weatherDB.stations.StationsBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">weatherDB.stations.StationsBase</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">weatherDB.stations.StationsBase</span></code></p>
 <p>A class to work with and download 10 minutes precipitation data for several stations.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="weatherDB.stations.StationsN.update_richter_class">
@@ -1616,30 +781,42 @@ The default is “all”.</p>
 
 </dd></dl>
 
+</section>
+<section id="stationst">
+<h3>StationsT<a class="headerlink" href="#stationst" title="Permalink to this headline"></a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="weatherDB.stations.StationsT">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">weatherDB.stations.</span></span><span class="sig-name descname"><span class="pre">StationsT</span></span><a class="headerlink" href="#weatherDB.stations.StationsT" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">weatherDB.stations.StationsTETBase</span></code></p>
+<p>A class to work with and download temperature data for several stations.</p>
+</dd></dl>
+
+</section>
+<section id="stationset">
+<h3>StationsET<a class="headerlink" href="#stationset" title="Permalink to this headline"></a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="weatherDB.stations.StationsET">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">weatherDB.stations.</span></span><span class="sig-name descname"><span class="pre">StationsET</span></span><a class="headerlink" href="#weatherDB.stations.StationsET" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">weatherDB.stations.StationsTETBase</span></code></p>
+<p>A class to work with and download potential Evapotranspiration (VPGB) data for several stations.</p>
+</dd></dl>
+
+</section>
+<section id="stationsnd">
+<h3>StationsND<a class="headerlink" href="#stationsnd" title="Permalink to this headline"></a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="weatherDB.stations.StationsND">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">weatherDB.stations.</span></span><span class="sig-name descname"><span class="pre">StationsND</span></span><a class="headerlink" href="#weatherDB.stations.StationsND" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#weatherDB.stations.StationsBase" title="weatherDB.stations.StationsBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">weatherDB.stations.StationsBase</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">weatherDB.stations.StationsBase</span></code></p>
 <p>A class to work with and download daily precipitation data for several stations.</p>
 <p>Those stations data are only downloaded to do some quality checks on the 10 minutes data.
 Therefor there is no special quality check and richter correction done on this data.
 If you want daily precipitation data, better use the 10 minutes station class (StationN) and aggregate to daily values.</p>
 </dd></dl>
 
-<dl class="py class">
-<dt class="sig sig-object py" id="weatherDB.stations.StationsT">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">weatherDB.stations.</span></span><span class="sig-name descname"><span class="pre">StationsT</span></span><a class="headerlink" href="#weatherDB.stations.StationsT" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#weatherDB.stations.StationsTETBase" title="weatherDB.stations.StationsTETBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">weatherDB.stations.StationsTETBase</span></code></a></p>
-<p>A class to work with and download temperature data for several stations.</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="weatherDB.stations.StationsET">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">weatherDB.stations.</span></span><span class="sig-name descname"><span class="pre">StationsET</span></span><a class="headerlink" href="#weatherDB.stations.StationsET" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="#weatherDB.stations.StationsTETBase" title="weatherDB.stations.StationsTETBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">weatherDB.stations.StationsTETBase</span></code></a></p>
-<p>A class to work with and download potential Evapotranspiration (VPGB) data for several stations.</p>
-</dd></dl>
-
+</section>
+<section id="groupstations">
+<h3>GroupStations<a class="headerlink" href="#groupstations" title="Permalink to this headline"></a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="weatherDB.stations.GroupStations">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">weatherDB.stations.</span></span><span class="sig-name descname"><span class="pre">GroupStations</span></span><a class="headerlink" href="#weatherDB.stations.GroupStations" title="Permalink to this definition"></a></dt>
@@ -1651,32 +828,73 @@ If you want daily precipitation data, better use the 10 minutes station class (S
 <dd></dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.stations.GroupStations.get_meta">
-<span class="sig-name descname"><span class="pre">get_meta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">columns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['Station_id',</span> <span class="pre">'von_datum',</span> <span class="pre">'bis_datum',</span> <span class="pre">'geometry']</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.stations.GroupStations.get_meta" title="Permalink to this definition"></a></dt>
-<dd><p>Get the meta Dataframe from the Database.</p>
+<dt class="sig sig-object py" id="weatherDB.stations.GroupStations.get_valid_stids">
+<span class="sig-name descname"><span class="pre">get_valid_stids</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.stations.GroupStations.get_valid_stids" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="weatherDB.stations.GroupStations.get_meta_explanation">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_meta_explanation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">infos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.stations.GroupStations.get_meta_explanation" title="Permalink to this definition"></a></dt>
+<dd><p>Get the explanations of the available meta fields.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>columns</strong> (<em>list</em><em>, </em><em>optional</em>) – A list of columns from the meta file to return
-The default is: [“Station_id”, “von_datum”, “bis_datum”, “geometry”]</p>
+<dd class="field-odd"><p><strong>infos</strong> (<em>list</em><em> or </em><em>string</em><em>, </em><em>optional</em>) – The infos you wish to get an explanation for.
+If “all” then all the available information get returned.
+The default is “all”</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>The meta DataFrame.</p>
+<dd class="field-even"><p>a pandas Series with the information names as index and the explanation as values.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>pandas.DataFrame or geopandas.GeoDataFrae</p>
+<dd class="field-odd"><p>pd.Series</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="weatherDB.stations.GroupStations.get_stations">
-<span class="sig-name descname"><span class="pre">get_stations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.stations.GroupStations.get_stations" title="Permalink to this definition"></a></dt>
-<dd><p>Get a list with all the stations as Station-objects.</p>
+<dt class="sig sig-object py" id="weatherDB.stations.GroupStations.get_meta">
+<span class="sig-name descname"><span class="pre">get_meta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">paras</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.stations.GroupStations.get_meta" title="Permalink to this definition"></a></dt>
+<dd><p>Get the meta Dataframe from the Database.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>stids</strong> (<em>string</em><em> or </em><em>list of int</em><em>, </em><em>optional</em>) – The Stations to return.
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>paras</strong> (<em>list</em><em> or </em><em>str</em><em>, </em><em>optional</em>) – The parameters for which to get the information.
+If “all” then all the available parameters are requested.
+The default is “all”.</p></li>
+<li><p><strong>stids</strong> (<em>string</em><em> or </em><em>list of int</em><em>, </em><em>optional</em>) – The Stations to return the meta information for.
 Can either be “all”, for all possible stations
 or a list with the Station IDs.
+The default is “all”.</p></li>
+<li><p><strong>**kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – The keyword arguments are passed to the station.GroupStation().get_meta methode.
+From there it is passed to the single station get_meta methode.
+Can be e.g. “infos”</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>dict of pandas.DataFrame or geopandas.GeoDataFrame</em></p></li>
+<li><p><em>or pandas.DataFrame or geopandas.GeoDataFrame</em> – The meta DataFrame.
+If several parameters are asked for, then a dict with an entry per parameter is returned.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ValueError</strong> – If the given stids (Station_IDs) are not all valid.</p></li>
+<li><p><strong>ValueError</strong> – If the given paras are not all valid.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="weatherDB.stations.GroupStations.get_para_stations">
+<span class="sig-name descname"><span class="pre">get_para_stations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">paras</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.stations.GroupStations.get_para_stations" title="Permalink to this definition"></a></dt>
+<dd><p>Get a list with all the multi parameter stations as stations.Station{parameter}-objects.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>paras</strong> (<em>list</em><em> or </em><em>str</em><em>, </em><em>optional</em>) – The parameters for which to get the objects.
+If “all” then all the available parameters are requested.
 The default is “all”.</p>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1692,8 +910,35 @@ The default is “all”.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="weatherDB.stations.GroupStations.get_group_stations">
+<span class="sig-name descname"><span class="pre">get_group_stations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.stations.GroupStations.get_group_stations" title="Permalink to this definition"></a></dt>
+<dd><p>Get a list with all the stations as station.GroupStation-objects.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>stids</strong> (<em>string</em><em> or </em><em>list of int</em><em>, </em><em>optional</em>) – The Stations to return.
+Can either be “all”, for all possible stations
+or a list with the Station IDs.
+The default is “all”.</p></li>
+<li><p><strong>**kwargs</strong> (<em>optional</em>) – The keyword arguments are handed to the creation of the single GroupStation objects.
+Can be e.g. “error_if_missing”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>returns a list with the corresponding station objects.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Station-object</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the given stids (Station_IDs) are not all valid.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="weatherDB.stations.GroupStations.create_ts">
-<span class="sig-name descname"><span class="pre">create_ts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(None,</span> <span class="pre">None)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'best'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">agg_to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'10</span> <span class="pre">min'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">et_et0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.stations.GroupStations.create_ts" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">create_ts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(None,</span> <span class="pre">None)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'best'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">agg_to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'10</span> <span class="pre">min'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_r0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.stations.GroupStations.create_ts" title="Permalink to this definition"></a></dt>
 <dd><p>Download and create the weather tables as csv files.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1718,10 +963,11 @@ The minimum aggregation for Temperatur and ET is daily and for the precipitation
 If a smaller aggregation is selected the minimum possible aggregation for the respective parameter is returned.
 So if 10 minutes is selected, than precipitation is returned in 10 minuets and T and ET as daily.
 The default is “10 min”.</p></li>
-<li><p><strong>et_et0</strong> (<em>int</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Should the ET timeserie contain a column with et_et0.
+<li><p><strong>r_r0</strong> (<em>int</em><em> or </em><em>float</em><em> or </em><em>None</em><em> or </em><em>pd.Series</em><em> or </em><em>list</em><em>, </em><em>optional</em>) – Should the ET timeserie contain a column with R/R0.
 If None, then no column is added.
-If int, then a ET/ET0 column is appended with this number as standard value.
-Until now providing a serie of different values is not possible.
+If int, then a R/R0 column is appended with this number as standard value.
+If list of int or floats, then the list should have the same length as the ET-timeserie and is appanded to the Timeserie.
+If pd.Series, then the index should be a timestamp index. The serie is then joined to the ET timeserie.
 The default is None.</p></li>
 <li><p><strong>split_date</strong> (<em>bool</em><em>, </em><em>optional</em>) – Should the timestamp get splitted into parts, so one column for year, one for month etc.?
 If False the timestamp is saved in one column as string.</p></li>
@@ -1732,7 +978,7 @@ If False the timestamp is saved in one column as string.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="weatherDB.stations.GroupStations.create_roger_ts">
-<span class="sig-name descname"><span class="pre">create_roger_ts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(None,</span> <span class="pre">None)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'best'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">et_et0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.stations.GroupStations.create_roger_ts" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">create_roger_ts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(None,</span> <span class="pre">None)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'best'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_r0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#weatherDB.stations.GroupStations.create_roger_ts" title="Permalink to this definition"></a></dt>
 <dd><p>Create the timeserie files for roger as csv.</p>
 <p>This is only a wrapper function for create_ts with some standard settings.</p>
 <dl class="field-list simple">
@@ -1743,16 +989,21 @@ If a zipfile is given a folder with the stations ID is added to the filepath.</p
 <li><p><strong>period</strong> (<em>TimestampPeriod like object</em><em>, </em><em>optional</em>) – The period for which to get the timeseries.
 If (None, None) is entered, then the maximal possible period is computed.
 The default is (None, None)</p></li>
+<li><p><strong>stids</strong> (<em>string</em><em> or </em><em>list of int</em><em>, </em><em>optional</em>) – The Stations for which to compute.
+Can either be “all”, for all possible stations
+or a list with the Station IDs.
+The default is “all”.</p></li>
 <li><p><strong>kind</strong> (<em>str</em>) – The data kind to look for filled period.
 Must be a column in the timeseries DB.
 Must be one of “raw”, “qc”, “filled”, “adj”.
 If “best” is given, then depending on the parameter of the station the best kind is selected.
 For Precipitation this is “corr” and for the other this is “filled”.
 For the precipitation also “qn” and “corr” are valid.</p></li>
-<li><p><strong>et_et0</strong> (<em>int</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Should the ET timeserie contain a column with et_et0.
+<li><p><strong>r_r0</strong> (<em>int</em><em> or </em><em>float</em><em> or </em><em>None</em><em> or </em><em>pd.Series</em><em> or </em><em>list</em><em>, </em><em>optional</em>) – Should the ET timeserie contain a column with R_R0.
 If None, then no column is added.
-If int, then a ET/ET0 column is appended with this number as standard value.
-Until now providing a serie of different values is not possible.
+If int, then a R/R0 column is appended with this number as standard value.
+If list of int or floats, then the list should have the same length as the ET-timeserie and is appanded to the Timeserie.
+If pd.Series, then the index should be a timestamp index. The serie is then joined to the ET timeserie.
 The default is 1.</p></li>
 </ul>
 </dd>
@@ -1765,9 +1016,12 @@ The default is 1.</p></li>
 </dd></dl>
 
 </section>
+</section>
 <section id="module-weatherDB.broker">
-<span id="weatherdb-broker-module"></span><h1>weatherDB.broker module<a class="headerlink" href="#module-weatherDB.broker" title="Permalink to this headline"></a></h1>
+<span id="broker"></span><h2>broker<a class="headerlink" href="#module-weatherDB.broker" title="Permalink to this headline"></a></h2>
 <p>This submodule has only one class Broker. This one is used to do actions on all the stations together. Mainly only used for updating the DB.</p>
+<section id="id1">
+<h3>Broker<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="weatherDB.broker.Broker">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">weatherDB.broker.</span></span><span class="sig-name descname"><span class="pre">Broker</span></span><a class="headerlink" href="#weatherDB.broker.Broker" title="Permalink to this definition"></a></dt>
@@ -1938,8 +1192,9 @@ Quality checks and fills up the timeseries.</p>
 </dd></dl>
 
 </section>
+</section>
 <section id="subpackages">
-<h1>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline"></a></h1>
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline"></a></h2>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="weatherDB.lib.html">weatherDB.lib package</a><ul>
@@ -1955,6 +1210,7 @@ Quality checks and fills up the timeseries.</p>
 </li>
 </ul>
 </div>
+</section>
 </section>
 
 

@@ -3185,6 +3185,24 @@ class GroupStation(object):
 
         return df_all
 
+    @classmethod
+    def get_meta_explanation(cls, infos="all"):
+        """Get the explanations of the available meta fields.
+
+        Parameters
+        ----------
+        infos : list or string, optional
+            The infos you wish to get an explanation for.
+            If "all" then all the available information get returned.
+            The default is "all"
+
+        Returns
+        -------
+        pd.Series
+            a pandas Series with the information names as index and the explanation as values.
+        """    
+        return StationBase.get_meta_explanation(infos=infos)
+
     def get_meta(self, paras="all", **kwargs):
         """Get the meta information for every parameter of this station.
 

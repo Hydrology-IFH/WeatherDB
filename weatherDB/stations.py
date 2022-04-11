@@ -231,10 +231,24 @@ class StationsBase:
             name="update period in meta",
             kwargs={}
         )
-        
+
     @classmethod
     def get_meta_explanation(cls, infos="all"):
-        return cls._StationClass.get_meta_explanation(infos="all")
+        """Get the explanations of the available meta fields.
+
+        Parameters
+        ----------
+        infos : list or string, optional
+            The infos you wish to get an explanation for.
+            If "all" then all the available information get returned.
+            The default is "all"
+
+        Returns
+        -------
+        pd.Series
+            a pandas Series with the information names as index and the explanation as values.
+        """    
+        return cls._StationClass.get_meta_explanation(infos=infos)
 
     def get_meta(self,
             infos=["Station_id", "filled_from", "filled_until", "geometry"],
@@ -938,6 +952,24 @@ class GroupStations(object):
                     dir=dir))
 
         return dir
+    
+    @classmethod
+    def get_meta_explanation(cls, infos="all"):
+        """Get the explanations of the available meta fields.
+
+        Parameters
+        ----------
+        infos : list or string, optional
+            The infos you wish to get an explanation for.
+            If "all" then all the available information get returned.
+            The default is "all"
+
+        Returns
+        -------
+        pd.Series
+            a pandas Series with the information names as index and the explanation as values.
+        """    
+        return cls._GroupStation.get_meta_explanation(infos=infos)
 
     def get_meta(self, paras="all", stids="all", **kwargs):
         """Get the meta Dataframe from the Database.
