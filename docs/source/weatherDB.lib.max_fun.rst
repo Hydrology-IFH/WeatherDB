@@ -1,6 +1,3 @@
-max\_fun
-========
-
 import\_DWD
 -----------
 
@@ -8,5 +5,4 @@ import\_DWD
    :members:
    :undoc-members:
    :show-inheritance:
-   :no-inherited-members:
-   :exclude-members:: ftplib.FTP.connect, ftplib.FTP.ntransfercmd
+   :exclude-members: FTP
