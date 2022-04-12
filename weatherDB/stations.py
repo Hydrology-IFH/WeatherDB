@@ -138,7 +138,7 @@ class StationsBase:
         Parameters
         ----------
         meta : pandas.DataFrame
-            A DataFrame with stations_id as index.
+            A DataFrame with station_id as index.
         """
         # get the columns of meta
         meta = meta.rename_axis("station_id").reset_index()
@@ -197,7 +197,7 @@ class StationsBase:
             Values {values}
             ON CONFLICT (station_id) DO UPDATE SET
             '''.format(
-                infos=", ".join(columns),
+                columns=", ".join(columns),
                 values=values,
                 para=self._para)
         for col in columns:
@@ -252,7 +252,7 @@ class StationsBase:
         return cls._StationClass.get_meta_explanation(infos=infos)
 
     def get_meta(self,
-            infos=["Station_id", "filled_from", "filled_until", "geometry"],
+            infos=["station_id", "filled_from", "filled_until", "geometry"],
             stids="all",
             only_real=True):
         """Get the meta Dataframe from the Database.
@@ -809,12 +809,6 @@ class StationsND(StationsBase):
     _StationClass_parent = StationsN
     _timeout_raw_imp = 120
 
-    # def download_meta(self):
-    #     meta = super().download_meta()
-    #     # stids_10min = self._StationClass_parent().get_meta(infos=["station_id"]).index
-    #     # meta = meta[meta.index.isin(stids_10min)]
-    #     return meta
-
 
 class StationsT(StationsTETBase):
     """A class to work with and download temperature data for several stations."""
@@ -826,12 +820,6 @@ class StationsET(StationsTETBase):
     """A class to work with and download potential Evapotranspiration (VPGB) data for several stations."""
     _StationClass = StationET
     _timeout_raw_imp = 120
-
-    # def download_raw(self, only_new=True, only_real=False):
-    #     # because the evapotranspiration meta file from CDC has no date column
-    #     # the default value for only_real is therefor changed to try
-    #     # to download all the stations in the meta table
-    #     return super().download_raw(only_new=only_new, only_real=only_real)
 
 
 # create a grouping class
