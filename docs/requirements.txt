@@ -2,3 +2,4 @@ nbsphinx
 recommonmark
 mock_alchemy
 myst-parser
+autoclasstoc
