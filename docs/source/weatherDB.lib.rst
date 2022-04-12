@@ -5,10 +5,6 @@ utils
 -----
 
 .. automodule:: weatherDB.lib.utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 
 max_fun
 -------
