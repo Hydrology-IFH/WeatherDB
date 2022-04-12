@@ -450,7 +450,7 @@ def get_dwd_meta(ftp_folder, min_years=0, max_hole_d=9999):
                 last_from_date = from_date
                 last_sid = sid
 
-    # delete entries that do not exceed the minimum amout of years
+    # delete entries that do not exceed the minimum amount of years
     if "bis_datum" and "von_datum" in meta:
         days = meta.bis_datum - meta.von_datum
         meta = meta[days >= pd.Timedelta(str(min_years * 365.25) + " d")]
