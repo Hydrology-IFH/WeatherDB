@@ -44,9 +44,12 @@ extensions = [
     'sphinx.ext.napoleon', 
     'sphinx_rtd_theme',
     'sphinx.ext.autodoc',
-    'sphinx.ext.imgconverter',
+    # 'sphinx.ext.imgconverter',
     'nbsphinx',
-    'myst_parser'
+    'myst_parser',
+    'sphinx.ext.viewcode',
+    'autoclasstoc',
+    'sphinx.ext.autosummary',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -58,11 +61,6 @@ templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'sync.ffs_db']
 
 source_suffix = [".rst", ".md"]
-
-autodoc_default_options = {
-	'special-members': '__init__',
-    'member-order': 'bysource'
-}
 
 source_parsers = {
    '.md': "markdown"
@@ -105,5 +103,20 @@ shutil.copyfile(
     base_path.joinpath("README.md"),
     readme_src
 )
+
+# Autodoc options
+autodoc_default_options = {
+    'member-order': 'alphabetical',
+    'undoc-members': True,
+    'show-inheritance': True,
+    'inherited-members':True,
+}
+autodoc_default_flags=["show-inheritance"]
+autoclass_content= "both"
+autodoc_inherit_docstrings= True
+
+autoclasstoc_sections = [
+        'public-methods',
+]
 
 # run in command: sphinx-build -b html .\source .\html

@@ -116,7 +116,8 @@ class StationsBase:
         """.format(para=self._para)
         with DB_ENG.connect() as con:
             droped_stids = con.execute(sql_get_droped).all()
-        droped_stids = [row[0] for row in droped_stids]
+        droped_stids = [row[0] for row in droped_stids
+                        if row[0] in meta.index]
         meta.drop(droped_stids, inplace=True)
 
         # to have a meta entry for every station before looping over them

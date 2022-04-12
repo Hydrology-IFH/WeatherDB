@@ -1,8 +1,8 @@
-weatherDB.lib package
-=====================
+lib package
+===========
 
-weatherDB.lib.utils module
---------------------------
+utils
+-----
 
 .. automodule:: weatherDB.lib.utils
    :members:
@@ -10,8 +10,8 @@ weatherDB.lib.utils module
    :show-inheritance:
 
 
-Subpackages
------------
+max_fun
+-------
 
 .. toctree::
    :maxdepth: 4

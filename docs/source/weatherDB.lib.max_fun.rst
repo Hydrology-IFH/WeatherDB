@@ -1,10 +1,12 @@
-weatherDB.lib.max\_fun package
-==============================
+max\_fun
+========
 
-weatherDB.lib.max\_fun.import\_DWD module
------------------------------------------
+import\_DWD
+-----------
 
 .. automodule:: weatherDB.lib.max_fun.import_DWD
    :members:
    :undoc-members:
    :show-inheritance:
+   :no-inherited-members:
+   :exclude-members:: ftplib.FTP.connect, ftplib.FTP.ntransfercmd
