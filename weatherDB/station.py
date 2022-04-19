@@ -3484,7 +3484,8 @@ class GroupStation(object):
                 df.reset_index(inplace=True)
 
             # write table out
-            str_df = header + df.to_csv(sep="\t", decimal=".", index=False)
+            str_df = header + df.to_csv(
+                sep="\t", decimal=".", index=False, line_terminator="\n")
             file_name = para.upper() + name_suffix
             if do_zip:
                 dir.writestr(
