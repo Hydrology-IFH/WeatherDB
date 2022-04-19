@@ -3368,6 +3368,7 @@ class GroupStation(object):
             If "best" is given, then depending on the parameter of the station the best kind is selected.
             For precipitation this is "corr" and for the other this is "filled".
             For the precipitation also "qn" and "corr" are valid.
+            If only one kind is asked for, then the columns get renamed to only have the parameter name as column name.
         paras : list of str or str, optional
             Give the parameters for which to get the meta information.
             Can be "n", "t", "et" or "all".
@@ -3444,7 +3445,19 @@ class GroupStation(object):
                 nas_allowed=nas_allowed)
 
             # rename columns
-            df.rename(dict(zip(df.columns, para.upper())), axis=1, inplace=True)
+            if len(kinds)==1:
+                df.rename(
+                    dict(zip(df.columns, para.upper())), 
+                    axis=1, inplace=True)
+            elif "filled_by" in kinds and len(kinds)==2:
+                df.rename(
+                    {f"{para}_" + kinds[1-(kinds.index("filled_by"))]: para.upper()},
+                    axis=1, inplace=True)
+            df.rename(
+                dict(zip(df.columns, 
+                        [col.replace(f"{para}_", f"{para.upper()}_") 
+                         for col in df.columns])),
+                axis=1, inplace=True)
 
             # check for NAs
             filled_cols = [col for col in df.columns if "filled_by" in col]

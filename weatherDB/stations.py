@@ -858,11 +858,15 @@ class GroupStations(object):
                         f"The parameter {para} you asked for is not a valid parameter. Please enter one of {valid_paras}")
             return paras_new
 
-    def _check_period(self, period, stids, kind):
-        max_period = self._GroupStation(stids[0]).get_filled_period(kind=kind)
+    def _check_period(self, period, stids, kinds, join_how="outer"):
+        # join_how = "outer" -> maximum range returned
+        # join_how = "inner" -> minimal range returned, if station missing, then empty Period returned
+        max_period = self._GroupStation(stids[0]).get_filled_period(
+            kinds=kinds, join_how=join_how)
         for stid in stids[1:]:
             max_period = max_period.union(
-                self._GroupStation(stid).get_filled_period(kind=kind))
+                self._GroupStation(stid).get_filled_period(
+                    kinds=kinds, join_how=join_how))
 
         if type(period) != TimestampPeriod:
             period = TimestampPeriod(*period)
@@ -870,9 +874,10 @@ class GroupStations(object):
             return max_period
         else:
             if not period.inside(max_period):
+                period = period.union(max_period, how="inner")
                 warnings.warn("The asked period is too large. Only {min_tstp} - {max_tstp} is returned".format(
-                    **max_period.get_sql_format_dict(format="%Y-%m-%d %H:%M")))
-            return period.union(max_period)
+                    **period.get_sql_format_dict(format="%Y-%m-%d %H:%M")))
+            return period
 
     def _check_stids(self, stids):
         """Check if the given stids are valid Station IDs.
@@ -1081,8 +1086,9 @@ class GroupStations(object):
 
         return stations
 
-    def create_ts(self, dir, period=(None, None), kind="best",
-                  stids="all", agg_to="10 min", r_r0=None, split_date=False):
+    def create_ts(self, dir, period=(None, None), kinds="best",
+                  stids="all", agg_to="10 min", r_r0=None, split_date=False, 
+                  nas_allowed=True):
         """Download and create the weather tables as csv files.
 
         Parameters
@@ -1094,7 +1100,7 @@ class GroupStations(object):
             The period for which to get the timeseries.
             If (None, None) is entered, then the maximal possible period is computed.
             The default is (None, None)
-        kind :  str
+        kinds :  str or list of str
             The data kind to look for filled period.
             Must be a column in the timeseries DB.
             Must be one of "raw", "qc", "filled", "adj".
@@ -1117,11 +1123,16 @@ class GroupStations(object):
             If None, then no column is added.
             If int, then a R/R0 column is appended with this number as standard value.
             If list of int or floats, then the list should have the same length as the ET-timeserie and is appended to the Timeserie.
-            If pd.Series, then the index should be a timestamp index. The serie is then joined to the ET timeserie.
+            If pd.Series, then the index should be a timestamp index. The series is then joined to the ET timeserie.
             The default is None.
         split_date : bool, optional
             Should the timestamp get splitted into parts, so one column for year, one for month etc.?
             If False the timestamp is saved in one column as string.
+        nas_allowed : bool, optional
+            Should NAs be allowed?
+            If True, then the maximum possible period is returned, even if there are NAs in the timeserie.
+            If False, then the minimal filled period is returned.
+            The default is True.
         """
         start_time = datetime.datetime.now()
         # check directory and stids
@@ -1130,7 +1141,10 @@ class GroupStations(object):
 
         # check period
         period = self._check_period(
-            period=period, stids=stids, kind=kind)
+            period=period, stids=stids, kinds=kinds,
+            join_how="outer" if nas_allowed else "inner")
+        if period.is_empty():
+            raise ValueError("For the given settings, no timeseries could get extracted from the database.\nMaybe try to change the nas_allowed parameter to True, to see, where the problem comes from.")
 
         # create GroupStation instances
         stats = self.get_group_stations(stids=stids)
@@ -1148,10 +1162,11 @@ class GroupStations(object):
                     stat.create_ts(
                         dir=zf,
                         period=period,
-                        kind=kind,
+                        kinds=kinds,
                         agg_to=agg_to,
                         r_r0=r_r0,
-                        split_date=split_date)
+                        split_date=split_date,
+                        nas_allowed=nas_allowed)
                     pbar.variables["last_station"] = stat.id
                     pbar.update(pbar.value + 1)
         else:
@@ -1159,10 +1174,11 @@ class GroupStations(object):
                 stat.create_ts(
                     dir=dir.joinpath(str(stat.id)),
                     period=period,
-                    kind=kind,
+                    kinds=kinds,
                     agg_to=agg_to,
                     r_r0=r_r0,
-                    split_date=split_date)
+                    split_date=split_date,
+                    nas_allowed=nas_allowed)
                 pbar.variables["last_station"] = stat.id
                 pbar.update(pbar.value + 1)
 
@@ -1235,7 +1251,7 @@ class GroupStations(object):
         """
         return self.create_ts(dir=dir, period=period, kind=kind,
                               agg_to="10 min", r_r0=r_r0, stids=stids,
-                              split_dates=True)
+                              split_dates=True, nas_allowed=False)
 
 # clean station
 del StationN, StationND, StationT, StationET, GroupStation
