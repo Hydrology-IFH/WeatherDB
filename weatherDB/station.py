@@ -145,7 +145,7 @@ class StationBase:
         id : int
             The stations ID.
         _skip_meta_check : bool, optional
-            Should the check if the station is in the database meta file get skiped. 
+            Should the check if the station is in the database meta file get skiped.
             Pay attention, when skipping this, because it can lead to problems.
             This is for computational reasons, because it makes the initialization faster.
             Is used by the stations classes, because the only initialize objects that are in the meta table.
@@ -155,7 +155,7 @@ class StationBase:
         ------
         NotImplementedError
             _description_
-        """        
+        """
         if type(self) == StationBase:
             raise NotImplementedError("""
             The StationBase is only a wrapper class an is not working on its own.
@@ -225,7 +225,7 @@ class StationBase:
         return kind
 
     def _check_kind_tstp_meta(self, kind):
-        """Check if the kind has a timestamp von and bis in the meta table."""
+        """Check if the kind has a timestamp from and until in the meta table."""
         if kind != "last_imp":
             kind = self._check_kind(kind)
 
@@ -264,12 +264,15 @@ class StationBase:
         # check kinds
         if type(kinds) == str:
             kinds = [kinds]
+        else:
+            kinds = kinds.copy() # because else the original variable is changed
+
         for i, kind_i in enumerate(kinds):
             if kind_i not in self._valid_kinds:
                 kinds[i] = self._check_kind(kind_i)
         return kinds
 
-    def _check_period(self, period, kinds):
+    def _check_period(self, period, kinds, nas_allowed=False):
         """Correct a given period to a valid format.
 
         If the given Timestamp is none the maximum or minimum possible is given.
@@ -285,6 +288,11 @@ class StationBase:
             Must be a column in the timeseries DB.
             Must be one of "raw", "qc", "filled", "adj".
             For the precipitation also "qn" and "corr" are valid.
+        nas_allowed : bool, optional
+            Should NAs be allowed?
+            If True, then the maximum possible period is returned, even if there are NAs in the timeserie.
+            If False, then the minimal filled period is returned.
+            The default is False.
 
         Returns
         -------
@@ -293,30 +301,56 @@ class StationBase:
         """
         # check if period gor recently checked
         self._clean_cached_period()
-        cache_key = str((kinds, period))
+        cache_key = str((kinds, period, nas_allowed))
         if cache_key in self._cached_periods:
             return self._cached_periods[cache_key]["return"]
 
-        # get filled period
-        filled_period = self.get_filled_period(kind=kinds[0])
-        for kind in kinds[1:]:
-            filled_period = filled_period.union(
-                self.get_filled_period(kind=kind),
-                how="outer")
+        # remove filled_by kinds
+        if "filled_by" in kinds:
+            kinds = kinds.copy()
+            kinds.remove("filled_by")
+            if len(kinds)==0:
+                nas_allowed=True
 
-        if filled_period.has_only_NaT():
-            raise ValueError(
-                "No filled period was found for {para_long} Station with ID {stid} and kinds '{kinds}'."
-                .format(
-                    para_long=self._para_long, stid=self.id, kinds="', '".join(kinds)))
+        # get filled period
+        if len(kinds)>0:
+            filled_period = self.get_filled_period(kind=kinds[0])
+            for kind in kinds[1:]:
+                filled_period = filled_period.union(
+                    self.get_filled_period(kind=kind),
+                    how="outer" if nas_allowed else "inner")
+        else:
+            filled_period = TimestampPeriod(None, None)
+        
+        # check if filled_period is empty and replace or throw error
+        if filled_period.is_empty():
+            if nas_allowed:
+                sql_max_tstp = """
+                    SELECT LEAST(timestamp), GREATEST(timestamp) 
+                    FROM timeseries."{stid}_{para}";
+                    """.format(
+                        stid=self.id, para=self._para)
+                with DB_ENG.connect() as con:
+                    res = con.execute(sql_max_tstp)
+                filled_period = TimestampPeriod(*res.first())
+            else:
+                raise ValueError(
+                    "No filled period was found for the {para_long} Station with ID {stid} and kinds '{kinds}'."
+                    .format(
+                        para_long=self._para_long, stid=self.id, kinds="', '".join(kinds)))
 
         # get period if None providen and compare with filled_period
         if type(period) != TimestampPeriod:
             period = TimestampPeriod(*period)
+        else:
+            period = period.copy()
+
         if period.is_empty():
             period = filled_period
         else:
-            period = period.union(filled_period, how="inner")
+            period = period.union(
+                filled_period, 
+                how="outer" if nas_allowed else "inner")
 
         # save for later
         self._cached_periods.update({
@@ -340,8 +374,8 @@ class StationBase:
             return agg_to
 
     def _check_df_raw(self, df_raw):
-        """This is a empty function to get implemented in the subclasses if necessary.
-        
+        """This is an empty function to get implemented in the subclasses if necessary.
+
         It applies extra checkups on the downloaded raw timeserie and returns the dataframe."""
         return df_raw
 
@@ -1068,7 +1102,7 @@ class StationBase:
         -------
         pandas.DataFrame
             The Timeseries as a DataFrame with a Timestamp Index.
-        """        
+        """
         return self._download_raw(zipfiles=self.get_zipfiles(only_new=only_new).index)
 
     @check_superuser
@@ -1372,7 +1406,7 @@ class StationBase:
         -------
         pd.Series
             a pandas Series with the information names as index and the explanation as values.
-        """        
+        """
         # check which information to get
         if infos == "all":
             col_clause = ""
@@ -1385,11 +1419,11 @@ class StationBase:
         SELECT cols.column_name AS info,
             (SELECT pg_catalog.col_description(c.oid, cols.ordinal_position::int)
              FROM pg_catalog.pg_class c
-             WHERE c.oid  = (SELECT cols.table_name::regclass::oid) 
+             WHERE c.oid  = (SELECT cols.table_name::regclass::oid)
                AND c.relname = cols.table_name
             ) as explanation
         FROM information_schema.columns cols
-        WHERE cols.table_name = 'meta_{para}'{col_clause};   
+        WHERE cols.table_name = 'meta_{para}'{col_clause};
         """.format(col_clause=col_clause, para=cls._para)
 
         # get the result
@@ -1757,7 +1791,7 @@ class StationBase:
             else:
                 return None
 
-    def get_df(self, kinds, period=(None, None), agg_to=None, db_unit=False):
+    def get_df(self, kinds, period=(None, None), agg_to=None, db_unit=False, nas_allowed=True):
         """Get a timeseries DataFrame from the database.
 
         Parameters
@@ -1765,7 +1799,7 @@ class StationBase:
         kinds : str or list of str
             The data kinds to update.
             Must be a column in the timeseries DB.
-            Must be one of "raw", "qc", "filled", "adj".
+            Must be one of "raw", "qc", "filled", "adj", "filled_by".
             For the precipitation also "qn" and "corr" are valid.
         period : TimestampPeriod or (tuple or list of datetime.datetime or None), optional
             The minimum and maximum Timestamp for which to get the timeseries.
@@ -1784,6 +1818,11 @@ class StationBase:
             If False the unit is getting converted to normal unit, like mm or °C.
             The numbers are saved as integer in the database and got therefor multiplied by 10 or 100 to get to an integer.
             The default is False.
+        nas_allowed : bool, optional
+            Should NAs be allowed?
+            If True, then the maximum possible period is returned, even if there are NAs in the timeserie.
+            If False, then the minimal filled period is returned.
+            The default is True.
 
         Returns
         -------
@@ -1804,9 +1843,10 @@ class StationBase:
 
         # check kinds and period
         kinds = self._check_kinds(kinds=kinds)
-        period = self._check_period(period=period, kinds=kinds)
+        period = self._check_period(
+            period=period, kinds=kinds, nas_allowed=nas_allowed)
 
-        if period.is_empty():
+        if period.is_empty() and not nas_allowed:
             return None
 
         # aggregating?
@@ -1840,6 +1880,10 @@ class StationBase:
         )
 
         df = pd.read_sql(sql, con=DB_ENG, index_col="timestamp")
+
+        # convert filled_by to Int16, pandas Integer with NA support
+        if "filled_by" in kinds:
+            df["filled_by"] = df["filled_by"].astype("Int16")
 
         # change index to pandas DatetimeIndex if necessary
         if type(df.index) != pd.DatetimeIndex:
@@ -1963,7 +2007,7 @@ class StationBase:
 
         # should the distance information get added
         if with_dist:
-            df = df.join(self.get_dist())
+            df = df.join(self.get_dist(period=period))
 
         return df
 
@@ -2350,7 +2394,7 @@ class StationN(StationNBase):
 
     def _check_df_raw(self, df_raw):
         """This function applies extra checkups on the downloaded raw timeserie and returns the dataframe.
-        
+
         Some precipitation stations on the DWD CDC server have also rows outside of the normal 10 Minute frequency, e.g. 2008-09-16 01:47 for Station 662.
         Because those rows only have NAs for the measurement they are deleted."""
         df_raw = df_raw[df_raw.index.minute%10==0].copy()
@@ -2797,8 +2841,8 @@ class StationN(StationNBase):
                         ON station_id={stid}) quots
                 WHERE station_id ={stid};
             """.format(
-                stid=self.id, 
-                para=self._para, 
+                stid=self.id,
+                para=self._para,
                 decimals=self._decimals)
 
             #execute sql or return
@@ -2870,7 +2914,7 @@ class StationN(StationNBase):
 
 class StationND(StationNBase, StationCanVirtualBase):
     """A class to work with and download daily precipitation data for one station.
-    
+
     Those station data are only downloaded to do some quality checks on the 10 minute data.
     Therefor there is no special quality check and richter correction done on this data.
     If you want daily precipitation data, better use the 10 minutes station(StationN) and aggregate to daily values."""
@@ -3050,7 +3094,7 @@ class GroupStation(object):
     def _check_paras(self, paras):
         if type(paras)==str and paras != "all":
             paras = [paras,]
-        
+
         if paras == "all":
             return self.paras_available
         else:
@@ -3141,7 +3185,8 @@ class GroupStation(object):
 
         return filled_period
 
-    def get_df(self, period=(None, None), kind="best", paras="all", agg_to="day"):
+    def get_df(self, period=(None, None), kinds="best", paras="all", 
+               agg_to="day", nas_allowed=True):
         """Get a DataFrame with the corresponding data.
 
         Parameters
@@ -3150,10 +3195,10 @@ class GroupStation(object):
             The minimum and maximum Timestamp for which to get the timeseries.
             If None is given, the maximum or minimal possible Timestamp is taken.
             The default is (None, None).
-        kind :  str
+        kinds :  str or list of str
             The data kind to look for filled period.
             Must be a column in the timeseries DB.
-            Must be one of "raw", "qc", "filled", "adj".
+            Must be one of "raw", "qc", "filled", "adj", "filled_by", "best"("corr" for N and "filled" for T and ET).
             If "best" is given, then depending on the parameter of the station the best kind is selected.
             For Precipitation this is "corr" and for the other this is "filled".
             For the precipitation also "qn" and "corr" are valid.
@@ -3163,20 +3208,36 @@ class GroupStation(object):
             If a smaller aggregation is selected the minimum possible aggregation for the respective parameter is returned.
             So if 10 minutes is selected, than precipitation is returned in 10 minuets and T and ET as daily.
             The default is "10 min".
+        nas_allowed : bool, optional
+            Should NAs be allowed?
+            If True, then the maximum possible period is returned, even if there are NAs in the timeserie.
+            If False, then the minimal filled period is returned.
+            The default is True.
+        paras : list of str or str, optional
+            Give the parameters for which to get the meta information.
+            Can be "n", "t", "et" or "all".
+            If "all", then every available station parameter is returned.
+            The default is "all"
 
         Returns
         -------
         pd.Dataframe
             A DataFrame with the timeseries for this station and the given period.
         """
+        paras = self._check_paras(paras)
+
+        # download dataframes
         dfs = []
         for stat in self.station_parts:
-            if paras == "all" or stat._para in paras:
+            if stat._para in paras:
                 df = stat.get_df(
-                    period=period, kinds=[kind], agg_to=agg_to)
+                    period=period, 
+                    kinds=kinds, 
+                    agg_to=agg_to, 
+                    nas_allowed=nas_allowed)
                 df = df.rename(dict(zip(
                     df.columns,
-                    [stat._para + "_" + kind])),
+                    [stat._para + "_" + col for col in df.columns])),
                     axis=1)
                 dfs.append(df)
 
@@ -3207,7 +3268,7 @@ class GroupStation(object):
         -------
         pd.Series
             a pandas Series with the information names as index and the explanation as values.
-        """    
+        """
         return StationBase.get_meta_explanation(infos=infos)
 
     def get_meta(self, paras="all", **kwargs):
@@ -3231,7 +3292,7 @@ class GroupStation(object):
             If only one parameter is asked for, then there is no subdict, but only a single value.
         """
         paras = self._check_paras(paras)
-        
+
         for stat in self.station_parts:
             if stat._para in paras:
                 meta_para = stat.get_meta(**kwargs)
@@ -3282,11 +3343,13 @@ class GroupStation(object):
         Warning
             If there are NAs in the timeseries or the period got changed.
         """
-        return self.create_ts(dir=dir, period=period, kind=kind,
-                              agg_to="10 min", r_r0=r_r0, split_date=True)
+        return self.create_ts(dir=dir, period=period, kinds=kind,
+                              agg_to="10 min", r_r0=r_r0, split_date=True,
+                              nas_allowed=False)
 
-    def create_ts(self, dir, period=(None, None), kind="best",
-                  agg_to="10 min", r_r0=None, split_date=False):
+    def create_ts(self, dir, period=(None, None), kinds="best", paras="all",
+                  agg_to="10 min", r_r0=None, split_date=False, 
+                  nas_allowed=True):
         """Create the timeserie files as csv.
 
         Parameters
@@ -3298,13 +3361,18 @@ class GroupStation(object):
             The period for which to get the timeseries.
             If (None, None) is entered, then the maximal possible period is computed.
             The default is (None, None)
-        kind :  str
-            The data kind to look for filled period.
+        kinds :  str or list of str
+            The data kinds to look for filled period.
             Must be a column in the timeseries DB.
-            Must be one of "raw", "qc", "filled", "adj".
+            Must be one of "raw", "qc", "filled", "adj", "filled_by", "best".
             If "best" is given, then depending on the parameter of the station the best kind is selected.
-            For Precipitation this is "corr" and for the other this is "filled".
+            For precipitation this is "corr" and for the other this is "filled".
             For the precipitation also "qn" and "corr" are valid.
+        paras : list of str or str, optional
+            Give the parameters for which to get the meta information.
+            Can be "n", "t", "et" or "all".
+            If "all", then every available station parameter is returned.
+            The default is "all"
         agg_to : str, optional
             To what aggregation level should the timeseries get aggregated to.
             The minimum aggregation for Temperatur and ET is daily and for the precipitation it is 10 minutes.
@@ -3321,25 +3389,37 @@ class GroupStation(object):
         split_date : bool, optional
             Should the timestamp get splitted into parts, so one column for year, one for month etc.?
             If False the timestamp is saved in one column as string.
+        nas_allowed : bool, optional
+            Should NAs be allowed?
+            If True, then the maximum possible period is returned, even if there are NAs in the timeserie.
+            If False, then the minimal filled period is returned.
+            The default is True.
 
         Raises
         ------
         Warning
-            If there are NAs in the timeseries or the period got changed.
+            If there are NAs in the timeseries and nas_allowed is False
+            or the period got changed.
         """
         # check directory
         dir = self._check_dir(dir)
 
+        # type cast kinds
+        kinds = self._check_kinds(kinds)
+        paras = self._check_paras(paras)
+    
         # get the period
+        join_how = "outer" if nas_allowed else "inner"    
+            
         period = TimestampPeriod._check_period(period)
-        period_filled = self.get_filled_period(kind=kind)
+        period_filled = self.get_filled_period(kinds=kinds, join_how=join_how)
 
         if period.is_empty():
             period = period_filled
         else:
             period_new = period_filled.union(
                 period,
-                how="inner")
+                how=join_how)
             if period_new != period:
                 warnings.warn(
                     "The Period for Station {stid} got changed from {period} to {period_filled}.".format(
@@ -3356,17 +3436,19 @@ class GroupStation(object):
         name = self.get_name() + " (ID: {stid})".format(stid=self.id)
         do_zip = type(dir) == zipfile.ZipFile
 
-        for para in ["n", "t", "et"]:
+        for para in paras:
             # get the timeserie
             df = self.get_df(
-                period=period, kind=kind,
-                paras=[para], agg_to=agg_to)
+                period=period, kinds=kinds,
+                paras=[para], agg_to=agg_to,
+                nas_allowed=nas_allowed)
 
             # rename columns
             df.rename(dict(zip(df.columns, para.upper())), axis=1, inplace=True)
 
-             # check for NAs
-            if df.isna().sum().sum() > 0 and kind in ["filled", "corr", "best"]:
+            # check for NAs
+            filled_cols = [col for col in df.columns if "filled_by" in col]
+            if not nas_allowed and df.drop(filled_cols, axis=1).isna().sum().sum() > 0:
                 warnings.warn("There were NAs in the timeserie for Station {stid}. this should not happen. Please review the code and the database.".format(
                     stid=self.id))
 
