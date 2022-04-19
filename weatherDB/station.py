@@ -1331,7 +1331,6 @@ class StationBase:
         """
         if not self.is_last_imp_done(kind="qc"):
             self.quality_check(period=self.get_last_imp_period())
-            self._mark_last_imp_done(kind="qc")
 
     @check_superuser
     def last_imp_qc(self):
@@ -1348,7 +1347,6 @@ class StationBase:
                 period = _last_imp_period
 
             self.fillup(period=period)
-            self._mark_last_imp_done(kind="filled")
 
     @classmethod
     def get_meta_explanation(cls, infos="all"):
@@ -2751,9 +2749,6 @@ class StationN(StationNBase):
             self.richter_correct(
                 period=period)
 
-            if self.is_last_imp_done(kind="qc") \
-                    and self.is_last_imp_done(kind="filled"):
-                self._mark_last_imp_done(kind="corr")
         else:
             log.info("The last import of {para_long} Station {stid} was already richter corrected and is therefor skiped".format(
                 stid=self.id, para_long=self._para_long
