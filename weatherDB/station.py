@@ -1858,55 +1858,37 @@ class StationBase:
 
         return df
 
-    def get_raw(self, period=(None, None), agg_to=None):
+    def get_raw(self, **kwargs):
         """Get the raw timeserie.
 
         Parameters
         ----------
-        period : TimestampPeriod or (tuple or list of datetime.datetime or None), optional
-            The minimum and maximum Timestamp for which to get the timeserie.
-            If None is given, the maximum or minimal possible Timestamp is taken.
-            The default is (None, None).
-        agg_to : str or None, optional
-            Aggregate to a given timespan.
-            Can be anything smaller than the maximum timespan of the saved data.
-            If a Timeperiod smaller than the saved data is given, than the maximum possible timeperiod is returned.
-            For T and ET it can be "month", "year".
-            For N it can also be "hour".
-            If None than the maximum timeperiod is taken.
-            The default is None.
+        kwargs : dict, optional
+            The keyword arguments get passed to the get_df function.
+            Possible parameters are "period", "agg_to" or "nas_allowed"
 
         Returns
         -------
         pd.DataFrame
             The raw timeserie for this station and the given period.
         """
-        return self.get_df(period=period, kinds="raw", agg_to=agg_to)
+        return self.get_df(kinds="raw",**kwargs)
 
-    def get_qc(self, period=(None, None), agg_to=None):
+    def get_qc(self, **kwargs):
         """Get the quality checked timeserie.
 
         Parameters
         ----------
-        period : TimestampPeriod or (tuple or list of datetime.datetime or None), optional
-            The minimum and maximum Timestamp for which to get the timeserie.
-            If None is given, the maximum or minimal possible Timestamp is taken.
-            The default is (None, None).
-        agg_to : str or None, optional
-            Aggregate to a given timespan.
-            Can be anything smaller than the maximum timespan of the saved data.
-            If a Timeperiod smaller than the saved data is given, than the maximum possible timeperiod is returned.
-            For T and ET it can be "month", "year".
-            For N it can also be "hour".
-            If None than the maximum timeperiod is taken.
-            The default is None.
+        kwargs : dict, optional
+            The keyword arguments get passed to the get_df function.
+            Possible parameters are "period", "agg_to" or "nas_allowed"
 
         Returns
         -------
         pd.DataFrame
             The quality checked timeserie for this station and the given period.
         """
-        return self.get_df(period=period, kinds="qc", agg_to=agg_to)
+        return self.get_df(kinds="qc", **kwargs)
 
     def get_dist(self, period=(None, None)):
         """Get the timeserie with the infomation from which station the data got filled and the corresponding distance to this station.
@@ -1985,7 +1967,7 @@ class StationBase:
 
         return df
 
-    def get_adj(self, period=(None, None), agg_to=None):
+    def get_adj(self, **kwargs):
         """Get the adjusted timeserie.
 
         The timeserie is adjusted to the multi annual mean.
@@ -1993,18 +1975,9 @@ class StationBase:
 
         Parameters
         ----------
-        period : TimestampPeriod or (tuple or list of datetime.datetime or None), optional
-            The minimum and maximum Timestamp for which to get the timeseries.
-            If None is given, the maximum or minimal possible Timestamp is taken.
-            The default is (None, None).
-        agg_to : str or None, optional
-            Aggregate to a given timespan.
-            Can be anything smaller than the maximum timespan of the saved data.
-            If a Timeperiod smaller than the saved data is given, than the maximum possible timeperiod is returned.
-            For T and ET it can be "month", "year".
-            For N it can also be "hour".
-            If None than the maximum timeperiod is taken.
-            The default is None.
+        kwargs : dict, optional
+            The keyword arguments get passed to the get_df function.
+            Possible parameters are "period", "agg_to" or "nas_allowed".
 
         Returns
         -------
@@ -2014,9 +1987,8 @@ class StationBase:
         # this is only the first part of the methode
         # get basic values
         main_df = self.get_df(
-            period=period,
             kinds=[self._best_kind],
-            agg_to=agg_to)
+            **kwargs)
         ma = self.get_multi_annual()
 
         # create empty adj_df
@@ -2216,9 +2188,9 @@ class StationTETBase(StationCanVirtualBase):
 
         return sql_near_mean
 
-    def get_adj(self, period=(None, None)):
+    def get_adj(self, **kwargs):
         # this is only the second part of the methode
-        main_df, adj_df, ma = super().get_adj(period=period)
+        main_df, adj_df, ma = super().get_adj(**kwargs)
 
         # truncate to full years
         tstp_min = main_df.index.min()
@@ -2243,8 +2215,8 @@ class StationNBase(StationBase):
     _ma_cols = ["n_regnie_wihj", "n_regnie_sohj"]
     _ma_raster = RASTERS["regnie_grid"]
 
-    def get_adj(self, period=(None, None)):
-        main_df, adj_df, ma = super().get_adj(period=period)
+    def get_adj(self, **kwargs):
+        main_df, adj_df, ma = super().get_adj(**kwargs)
 
         # calculate the half yearly mean
         # sohj
@@ -2835,11 +2807,11 @@ class StationN(StationNBase):
             with DB_ENG.connect() as con:
                 con.execute(sql_diff_ma)
 
-    def get_corr(self, period=(None, None)):
-        return self.get_df(period=period, kinds=["corr"])
+    def get_corr(self, **kwargs):
+        return self.get_df(kinds=["corr"], **kwargs)
 
-    def get_qn(self, period=(None, None)):
-        return self.get_df(period=period, kinds=["qn"])
+    def get_qn(self, **kwargs):
+        return self.get_df(kinds=["qn"], **kwargs)
 
     def get_richter_class(self, update_if_fails=True):
         """Get the richter class for this station.
