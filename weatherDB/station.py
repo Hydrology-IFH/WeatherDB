@@ -350,7 +350,7 @@ class StationBase:
         else:
             period = period.union(
                 filled_period, 
-                how="outer" if nas_allowed else "inner")
+                how="inner")
 
         # save for later
         self._cached_periods.update({
