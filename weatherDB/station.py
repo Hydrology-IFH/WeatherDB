@@ -644,7 +644,7 @@ class StationBase:
         bool
             true if the station is virtual, false if it is real.
         """
-        return not self.is_virtual()
+        return not self.is_real()
 
     def is_real(self):
         """Check if the station is a real station or only a virtual one.
