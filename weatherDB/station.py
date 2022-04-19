@@ -1131,7 +1131,15 @@ class StationBase:
 
     @check_superuser
     def fillup(self, period=(None, None), **kwargs):
-        """Fill up missing data with measurements from nearby stations."""
+        """Fill up missing data with measurements from nearby stations.
+
+        Parameters
+        ----------
+        period : util.TimestampPeriod or (tuple or list of datetime.datetime or None), optional
+            The minimum and maximum Timestamp for which to gap fill the timeseries.
+            If None is given, the maximum or minimal possible Timestamp is taken.
+            The default is (None, None).
+        """
         self._expand_timeserie_to_period()
         self._check_ma()
 
@@ -1339,7 +1347,7 @@ class StationBase:
 
     @check_superuser
     def last_imp_fillup(self, _last_imp_period=None):
-        """Do the filling up of the last import.
+        """Do the gap filling of the last import.
         """
         if not self.is_last_imp_done(kind="filled"):
             if _last_imp_period is None:
@@ -2057,7 +2065,7 @@ class StationBase:
 class StationCanVirtualBase(StationBase):
     """A class to add the methods for stations that can also be virtual.
     Virtual means, that there is no real DWD station with measurements.
-    But to have data for every parameter at every 10 min precipitation station location, it is necessary to add stations and fill them with data from neighboors."""
+    But to have data for every parameter at every 10 min precipitation station location, it is necessary to add stations and fill the gaps with data from neighboors."""
 
     def _check_isin_meta(self):
         """Check if the Station is in the Meta table and if not create a virtual station.

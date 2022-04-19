@@ -564,7 +564,7 @@ class StationsBase:
 
     @check_superuser
     def last_imp_fillup(self):
-        """Do the filling of the last import.
+        """Do the gap filling of the last import.
         """
         stations = self.get_stations(only_real=True)
         period = stations[0].get_last_imp_period(all=True)
@@ -1101,7 +1101,7 @@ class GroupStations(object):
             If "best" is given, then depending on the parameter of the station the best kind is selected.
             For Precipitation this is "corr" and for the other this is "filled".
             For the precipitation also "qn" and "corr" are valid.
-        stids: string or list of int, optional
+        stids : string or list of int, optional
             The Stations for which to compute.
             Can either be "all", for all possible stations
             or a list with the Station IDs.
@@ -1116,7 +1116,7 @@ class GroupStations(object):
             Should the ET timeserie contain a column with R/R0.
             If None, then no column is added.
             If int, then a R/R0 column is appended with this number as standard value.
-            If list of int or floats, then the list should have the same length as the ET-timeserie and is appanded to the Timeserie.
+            If list of int or floats, then the list should have the same length as the ET-timeserie and is appended to the Timeserie.
             If pd.Series, then the index should be a timestamp index. The serie is then joined to the ET timeserie.
             The default is None.
         split_date : bool, optional
