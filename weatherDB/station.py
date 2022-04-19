@@ -3063,6 +3063,15 @@ class GroupStation(object):
                         f"The parameter {para} you asked for is not available for station {self.id}")
             return paras_new
 
+    @staticmethod
+    def _check_kinds(kinds):
+        # type cast kinds
+        if type(kinds) == str:
+            kinds = [kinds]
+        else:
+            kinds = kinds.copy()
+        return kinds
+
     def get_available_paras(self, short=False):
         """Get the possible parameters for this station.
 
