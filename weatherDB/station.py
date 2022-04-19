@@ -3093,7 +3093,7 @@ class GroupStation(object):
 
         return paras
 
-    def get_filled_period(self, kind="best", from_meta=True):
+    def get_filled_period(self, kinds="best", from_meta=True, join_how="inner"):
         """Get the combined filled period for all 3 stations.
 
         This is the maximum possible timerange for these stations.
@@ -3111,18 +3111,34 @@ class GroupStation(object):
             Should the period be from the meta table?
             If False: the period is returned from the timeserie. In this case this function is only a wrapper for .get_period_meta.
             The default is True.
+        join_how : str, optional
+            How should the different periods get joined.
+            If "inner" then the minimal period that is inside of all the filled_periods is returned.
+            If "outer" then the maximal possible period is returned.
+            The default is "inner".
 
         Returns
         -------
         TimestampPeriod
             The maximum filled period for the 3 parameters for this station.
         """
-        filled_period = self.station_parts[0].get_filled_period(
-            kind=kind, from_meta=from_meta)
-        for stat in self.station_parts[1:]:
-            filled_period = filled_period.union(
-                stat.get_filled_period(kind=kind, from_meta=from_meta),
-                how="inner")
+        kinds = self._check_kinds(kinds)
+        for kind in ["filled_by", "adj"]:
+            if kind in kinds:
+                kinds.remove(kind)
+
+        # get filled_period
+        for kind in kinds:
+            for stat in self.station_parts:
+                new_filled_period =  stat.get_filled_period(
+                    kind=kind, from_meta=from_meta)
+
+                if "filled_period" not in locals():
+                    filled_period = new_filled_period.copy()
+                else:
+                    filled_period = filled_period.union(
+                        new_filled_period, how=join_how)
+
         return filled_period
 
     def get_df(self, period=(None, None), kind="best", paras="all", agg_to="day"):
