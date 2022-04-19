@@ -2870,9 +2870,13 @@ class StationN(StationNBase):
         # check result
         if res is None:
             if update_if_fails:
-                self.update_richter_class()
-                # update_if_fails is False to not get an endless loop
-                return self.get_richter_class(update_if_fails=False)
+                if DB_ENG.is_superuser:
+                    self.update_richter_class()
+                    # update_if_fails is False to not get an endless loop
+                    return self.get_richter_class(update_if_fails=False)
+                else:
+                    warnings.warn("You don't have the permissions to change something on the database.\nTherefor an update of the richter_class is not possible.")
+                    return None
             else:
                 return None
         else:
