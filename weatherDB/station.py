@@ -2819,7 +2819,7 @@ class StationN(StationNBase):
             """.format(
                 stid=self.id, 
                 para=self._para, 
-                decim=self._decimals)
+                decimals=self._decimals)
 
             #execute sql or return
             if "return_sql" in kwargs and kwargs["return_sql"]:
