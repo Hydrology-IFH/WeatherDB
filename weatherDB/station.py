@@ -119,7 +119,8 @@ class StationBase:
     _db_col_names_imp = ["raw"]
     # the kinds that should not get multiplied with the amount of decimals, e.g. "qn"
     _kinds_not_decimal = ["qn", "filled_by"]
-    _tstp_format = None  # The format string for the strftime
+    _tstp_format_db = None  # The format string for the strftime for the database to be readable
+    _tstp_format_human = "%Y-%m-%d %H:%M" # the format of the timestamp to be human readable
     _unit = "None"  # The Unit as str
     _decimals = 1  # the factor to change data to integers for the database
     # The valid kinds to use. Must be a column in the timeseries tables.
@@ -726,7 +727,7 @@ class StationBase:
             stid=self.id, para=self._para,
             kind=kind,
             **period.get_sql_format_dict(
-                format="'{}'".format(self._tstp_format))
+                format="'{}'".format(self._tstp_format_db))
         )
 
         with DB_ENG.connect() as con:
@@ -849,7 +850,7 @@ class StationBase:
                 " AND meta.last_imp_".join(last_imp_valid_kinds)
             ) if len(last_imp_valid_kinds) > 0 else "true",
             **period.get_sql_format_dict(
-                format="'{}'".format(self._tstp_format)))
+                format="'{}'".format(self._tstp_format_db)))
 
         # execute meta update
         with DB_ENG.connect()\
@@ -955,7 +956,7 @@ class StationBase:
                 .format(
                     para_long=self._para_long,
                     stid=self.id,
-                    **imp_period.get_sql_format_dict(format="%Y-%m-%d %H:%M")))
+                    **imp_period.get_sql_format_dict(format=self._tstp_format_human)))
 
     def get_zipfiles(self, only_new=True, ftp_file_list=None):
         """Get the zipfiles on the CDC server with the raw data.
@@ -1120,7 +1121,7 @@ class StationBase:
             sql=sql_qc,
             description="quality checked for the period {min_tstp} to {max_tstp}.".format(
                 **period.get_sql_format_dict(
-                    format=self._tstp_format)
+                    format=self._tstp_format_human)
                 ))
 
         # mark last import as done if in period
@@ -1152,7 +1153,7 @@ class StationBase:
             sql_format_dict.update(dict(
                 cond_period=" WHERE ts.timestamp BETWEEN {min_tstp} AND {max_tstp}".format(
                     **period.get_sql_format_dict(
-                        format="'{}'".format(self._tstp_format)))
+                        format="'{}'".format(self._tstp_format_db)))
             ))
         else:
             sql_format_dict.update(dict(
@@ -1275,7 +1276,7 @@ class StationBase:
         self._execute_long_sql(
             sql=sql,
             description="filled for the period {min_tstp} - {max_tstp}".format(
-                **period.get_sql_format_dict()))
+                **period.get_sql_format_dict(format=self._tstp_format_human)))
 
         # update timespan in meta table
         self.update_period_meta(kind="filled")
@@ -1827,7 +1828,7 @@ class StationBase:
             group_by=group_by,
             timestamp_col=timestamp_col,
             **period.get_sql_format_dict(
-                format="'{}'".format(self._tstp_format))
+                format="'{}'".format(self._tstp_format_db))
         )
 
         df = pd.read_sql(sql, con=DB_ENG, index_col="timestamp")
@@ -1935,7 +1936,7 @@ class StationBase:
             stid=self.id,
             para=self._para,
             **period.get_sql_format_dict(
-                format="'{}'".format(self._tstp_format)
+                format="'{}'".format(self._tstp_format_db)
             )
         )
 
@@ -2127,7 +2128,8 @@ class StationTETBase(StationCanVirtualBase):
     _tstp_dtype = "date"
     _interval = "1 day"
     _min_agg_to = "day"
-    _tstp_format = "%Y%m%d"
+    _tstp_format_db = "%Y%m%d"
+    _tstp_format_human = "%Y-%m-%d"
 
     def _create_timeseries_table(self):
         """Create the timeseries table in the DB if it is not yet existing."""
@@ -2267,7 +2269,7 @@ class StationN(StationNBase):
     _para_long = "Precipitation"
     _cdc_col_names_imp = ["RWS_10", "QN"]
     _db_col_names_imp = ["raw", "qn"]
-    _tstp_format = "%Y%m%d %H:%M"
+    _tstp_format_db = "%Y%m%d %H:%M"
     _tstp_dtype = "timestamp"
     _interval = "10 min"
     _min_agg_to = "10 min"
@@ -2284,7 +2286,7 @@ class StationN(StationNBase):
         sql_format_dict = dict(
             para=self._para, stid=self.id, para_long=self._para_long,
             **period.get_sql_format_dict(
-                format="'{}'".format(self._tstp_format)),
+                format="'{}'".format(self._tstp_format_db)),
             limit=0.1*self._decimals) # don't delete values below 0.1mm/10min if they are consecutive
 
         # check if daily station is available
@@ -2582,7 +2584,7 @@ class StationN(StationNBase):
                 WHERE timestamp BETWEEN {min_tstp} AND {max_tstp}
             """.format(
                 **period.get_sql_format_dict(
-                    format="'{}'".format(self._tstp_format)
+                    format="'{}'".format(self._tstp_format_db)
                 )
             )
         else:
@@ -2696,7 +2698,7 @@ class StationN(StationNBase):
         self._execute_long_sql(
             sql_update,
             description="richter corrected for the period {min_tstp} - {max_tstp}".format(
-                **period.get_sql_format_dict(format="%Y-%m-%d %H:%M")
+                **period.get_sql_format_dict(format=self._tstp_format_human)
             ))
 
         # mark last import as done, if previous are ok
@@ -2895,7 +2897,8 @@ class StationND(StationNBase, StationCanVirtualBase):
     _para_long = "daily Precipitation"
     _cdc_col_names_imp = ["RSK"]
     _db_col_names_imp = ["raw"]
-    _tstp_format = "%Y%m%d"
+    _tstp_format_db = "%Y%m%d"
+    _tstp_format_human = "%Y-%m-%d"
     _tstp_dtype = "date"
     _interval = "1 day"
     _min_agg_to = "day"
