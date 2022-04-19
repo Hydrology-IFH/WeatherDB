@@ -3419,7 +3419,7 @@ class GroupStation(object):
         else:
             period_new = period_filled.union(
                 period,
-                how=join_how)
+                how="inner")
             if period_new != period:
                 warnings.warn(
                     "The Period for Station {stid} got changed from {period} to {period_filled}.".format(
@@ -3449,7 +3449,7 @@ class GroupStation(object):
             # check for NAs
             filled_cols = [col for col in df.columns if "filled_by" in col]
             if not nas_allowed and df.drop(filled_cols, axis=1).isna().sum().sum() > 0:
-                warnings.warn("There were NAs in the timeserie for Station {stid}. this should not happen. Please review the code and the database.".format(
+                warnings.warn("There were NAs in the timeserie for Station {stid}.".format(
                     stid=self.id))
 
             # get the number of columns
