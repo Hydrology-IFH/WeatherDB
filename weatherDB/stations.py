@@ -858,16 +858,21 @@ class GroupStations(object):
                         f"The parameter {para} you asked for is not a valid parameter. Please enter one of {valid_paras}")
             return paras_new
 
-    def _check_period(self, period, stids, kinds, join_how="outer"):
+    def _check_period(self, period, stids, kinds, nas_allowed=True, join_how="outer"):
         # join_how = "outer" -> maximum range returned
         # join_how = "inner" -> minimal range returned, if station missing, then empty Period returned
-        max_period = self._GroupStation(stids[0]).get_filled_period(
-            kinds=kinds, join_how=join_how)
-        for stid in stids[1:]:
-            max_period = max_period.union(
-                self._GroupStation(stid).get_filled_period(
-                    kinds=kinds, join_how=join_how))
-
+        # get max_period of stations
+        for stid in stids:
+            max_period_i = self._GroupStation(stid).get_max_period(
+                kinds=kinds, nas_allowed=nas_allowed)
+            if "max_period" in locals():
+                max_period = max_period.union(
+                    max_period_i, 
+                    how="outer" if nas_allowed else "inner"
+                )
+            else:
+                max_period=max_period_i
+        
         if type(period) != TimestampPeriod:
             period = TimestampPeriod(*period)
         if period.is_empty():
@@ -1088,7 +1093,7 @@ class GroupStations(object):
 
     def create_ts(self, dir, period=(None, None), kinds="best",
                   stids="all", agg_to="10 min", r_r0=None, split_date=False, 
-                  nas_allowed=True):
+                  nas_allowed=True, add_na_share=False):
         """Download and create the weather tables as csv files.
 
         Parameters
@@ -1133,6 +1138,12 @@ class GroupStations(object):
             If True, then the maximum possible period is returned, even if there are NAs in the timeserie.
             If False, then the minimal filled period is returned.
             The default is True.
+        add_na_share : bool, optional
+            Should one or several columns be added to the Dataframe with the share of NAs in the data.
+            This is especially important, when the stations data get aggregated, because the aggregation doesn't make sense if there are a lot of NAs in the original data.
+            If True, one column per asked kind is added with the respective share of NAs, if the aggregation step is not the smallest.
+            The "kind"_na_share column is in percentage.
+            The default is False.
         """
         start_time = datetime.datetime.now()
         # check directory and stids
@@ -1166,7 +1177,8 @@ class GroupStations(object):
                         agg_to=agg_to,
                         r_r0=r_r0,
                         split_date=split_date,
-                        nas_allowed=nas_allowed)
+                        nas_allowed=nas_allowed,
+                        add_na_share=add_na_share)
                     pbar.variables["last_station"] = stat.id
                     pbar.update(pbar.value + 1)
         else:
@@ -1178,7 +1190,8 @@ class GroupStations(object):
                     agg_to=agg_to,
                     r_r0=r_r0,
                     split_date=split_date,
-                    nas_allowed=nas_allowed)
+                    nas_allowed=nas_allowed,
+                    add_na_share=add_na_share)
                 pbar.variables["last_station"] = stat.id
                 pbar.update(pbar.value + 1)
 

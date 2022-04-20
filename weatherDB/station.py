@@ -118,7 +118,7 @@ class StationBase:
     # the corresponding column name in the DB of the raw import
     _db_col_names_imp = ["raw"]
     # the kinds that should not get multiplied with the amount of decimals, e.g. "qn"
-    _kinds_not_decimal = ["qn", "filled_by"]
+    _kinds_not_decimal = ["qn", "filled_by", "filled_share"]
     _tstp_format_db = None  # The format string for the strftime for the database to be readable
     _tstp_format_human = "%Y-%m-%d %H:%M" # the format of the timestamp to be human readable
     _unit = "None"  # The Unit as str
@@ -312,32 +312,15 @@ class StationBase:
             if len(kinds)==0:
                 nas_allowed=True
 
-        # get filled period
-        if len(kinds)>0:
-            filled_period = self.get_filled_period(kind=kinds[0])
-            for kind in kinds[1:]:
-                filled_period = filled_period.union(
-                    self.get_filled_period(kind=kind),
-                    how="outer" if nas_allowed else "inner")
-        else:
-            filled_period = TimestampPeriod(None, None)
-        
-        # check if filled_period is empty and replace or throw error
-        if filled_period.is_empty():
-            if nas_allowed:
-                sql_max_tstp = """
-                    SELECT LEAST(timestamp), GREATEST(timestamp) 
-                    FROM timeseries."{stid}_{para}";
-                    """.format(
-                        stid=self.id, para=self._para)
-                with DB_ENG.connect() as con:
-                    res = con.execute(sql_max_tstp)
-                filled_period = TimestampPeriod(*res.first())
-            else:
-                raise ValueError(
-                    "No filled period was found for the {para_long} Station with ID {stid} and kinds '{kinds}'."
-                    .format(
-                        para_long=self._para_long, stid=self.id, kinds="', '".join(kinds)))
+        # get filled period or max period
+        max_period = self.get_max_period(kinds=kinds, nas_allowed=nas_allowed)
+
+        # check if filled_period is empty and throw error
+        if max_period.is_empty():
+            raise ValueError(
+                "No maximum period was found for the {para_long} Station with ID {stid} and kinds '{kinds}'."
+                .format(
+                    para_long=self._para_long, stid=self.id, kinds="', '".join(kinds)))
 
         # get period if None providen and compare with filled_period
         if type(period) != TimestampPeriod:
@@ -346,10 +329,10 @@ class StationBase:
             period = period.copy()
 
         if period.is_empty():
-            period = filled_period
+            period = max_period
         else:
             period = period.union(
-                filled_period, 
+                max_period,
                 how="inner")
 
         # save for later
@@ -1646,6 +1629,52 @@ class StationBase:
         else:
             return TimestampPeriod(None, None)
 
+    def get_max_period(self, kinds, nas_allowed=False):
+        """Get the maximum available period for this stations timeseries.
+
+        If nas_allowed is True, then the maximum range of the timeserie is returned.
+        Else the minimal filled period is returned
+
+        Parameters
+        ----------
+        kinds : str or list of str
+            The data kinds to update.
+            Must be a column in the timeseries DB.
+            Must be one of "raw", "qc", "filled", "adj".
+            For the precipitation also "qn" and "corr" are valid.
+        nas_allowed : bool, optional
+            Should NAs be allowed?
+            If True, then the maximum possible period is returned, even if there are NAs in the timeserie.
+            If False, then the minimal filled period is returned.
+            The default is False.
+
+        Returns
+        -------
+        utils.TimestampPeriod
+            The maximum Timestamp Period
+        """
+        if nas_allowed:
+            sql_max_tstp = """
+                SELECT MIN("timestamp"), MAX("timestamp")
+                FROM timeseries."{stid}_{para}";
+                """.format(
+                    stid=self.id, para=self._para)
+            with DB_ENG.connect() as con:
+                res = con.execute(sql_max_tstp)
+            max_period = TimestampPeriod(*res.first())
+        else:
+            kinds = self._check_kinds(kinds)
+            if len(kinds)>0:
+                max_period = self.get_filled_period(kind=kinds[0])
+                for kind in kinds[1:]:
+                    max_period = max_period.union(
+                        self.get_filled_period(kind=kind),
+                        how="outer" if nas_allowed else "inner")
+            else:
+                max_period = TimestampPeriod(None, None)
+
+        return max_period
+
     def get_last_imp_period(self, all=False):
         """Get the last imported Period for this Station.
 
@@ -1791,7 +1820,8 @@ class StationBase:
             else:
                 return None
 
-    def get_df(self, kinds, period=(None, None), agg_to=None, db_unit=False, nas_allowed=True):
+    def get_df(self, kinds, period=(None, None), agg_to=None,
+               db_unit=False, nas_allowed=True, add_na_share=False):
         """Get a timeseries DataFrame from the database.
 
         Parameters
@@ -1801,6 +1831,8 @@ class StationBase:
             Must be a column in the timeseries DB.
             Must be one of "raw", "qc", "filled", "adj", "filled_by".
             For the precipitation also "qn" and "corr" are valid.
+            If "filled_by" is given together with an aggregation step, the "filled_by" is replaced by the "filled_share".
+            The "filled_share" gives the share of filled values in the aggregation group in percent.
         period : TimestampPeriod or (tuple or list of datetime.datetime or None), optional
             The minimum and maximum Timestamp for which to get the timeseries.
             If None is given, the maximum or minimal possible Timestamp is taken.
@@ -1823,6 +1855,12 @@ class StationBase:
             If True, then the maximum possible period is returned, even if there are NAs in the timeserie.
             If False, then the minimal filled period is returned.
             The default is True.
+        add_na_share : bool, optional
+            Should one or several columns be added to the Dataframe with the share of NAs in the data.
+            This is especially important, when the stations data get aggregated, because the aggregation doesn't make sense if there are a lot of NAs in the original data.
+            If True, one column per asked kind is added with the respective share of NAs, if the aggregation step is not the smallest.
+            The "kind"_na_share column is in percentage.
+            The default is False.
 
         Returns
         -------
@@ -1854,13 +1892,42 @@ class StationBase:
         group_by = ""
         agg_to = self._check_agg_to(agg_to)
         if agg_to is not None:
+            if "filled_by" in kinds:
+                warnings.warn(f"""
+You selected a filled_by column, but did not select the smallest aggregation (agg_to={self._min_agg_to}).
+The filled_by information is only reasonable when using the original time frequency.
+Therefor the filled_by column is not returned, but instead the filled_share.
+This column gives the percentage of the filled fields in the aggregation group.""")
+                kinds.remove("filled_by")
+                add_filled_share = True
+            else:
+                add_filled_share = False
+
             # create sql parts
+            kinds_before = kinds.copy()
             kinds = [
                 "{agg_fun}({kind}) AS {kind}".format(
                     agg_fun=self._agg_fun, kind=kind) for kind in kinds]
             timestamp_col = "date_trunc('{agg_to}', timestamp)".format(
                 agg_to=agg_to)
             group_by = "GROUP BY " + timestamp_col
+
+            # add the filled_share if needed
+            if add_filled_share:
+                kinds.append(
+                    'COUNT("filled_by")::float/COUNT(*)::float*100 as filled_share')
+
+            # raise warning, when NA_share should get added
+            if any([kind in ["raw", "qc"] for kind in kinds] ) and not add_na_share:
+                warnings.warn(
+                "You aggregate a column that can contain NAs (e.g. \"raw\" or \"qc\")\n" +
+                "This can result in strange values, because in one aggregation group can be many NAs.\n"+
+                "To suppress this warning and to consider this effect please use add_na_share=True in the parameters.")
+
+            # create na_share columns
+            if add_na_share:
+                for kind in kinds_before:
+                    kinds.append(f"(COUNT(*)-COUNT(\"{kind}\"))/COUNT(*)::float * 100 AS {kind}_na_share")
 
         # create base sql
         sql = """
@@ -1870,14 +1937,14 @@ class StationBase:
             {group_by}
             ORDER BY timestamp ASC;
             """.format(
-            stid=self.id,
-            para=self._para,
-            kinds=', '.join(kinds),
-            group_by=group_by,
-            timestamp_col=timestamp_col,
-            **period.get_sql_format_dict(
-                format="'{}'".format(self._tstp_format_db))
-        )
+                stid=self.id,
+                para=self._para,
+                kinds=', '.join(kinds),
+                group_by=group_by,
+                timestamp_col=timestamp_col,
+                **period.get_sql_format_dict(
+                    format="'{}'".format(self._tstp_format_db))
+            )
 
         df = pd.read_sql(sql, con=DB_ENG, index_col="timestamp")
 
@@ -1893,7 +1960,7 @@ class StationBase:
         if not db_unit:
             change_cols = [
                 col for col in df.columns
-                if col not in self._kinds_not_decimal]
+                if col not in self._kinds_not_decimal and "_na_share" not in col]
             df[change_cols] = df[change_cols] / self._decimals
 
         # check if adj should be added:
@@ -3185,8 +3252,8 @@ class GroupStation(object):
 
         return filled_period
 
-    def get_df(self, period=(None, None), kinds="best", paras="all", 
-               agg_to="day", nas_allowed=True):
+    def get_df(self, period=(None, None), kinds="best", paras="all",
+               agg_to="day", nas_allowed=True, add_na_share=False):
         """Get a DataFrame with the corresponding data.
 
         Parameters
@@ -3218,6 +3285,12 @@ class GroupStation(object):
             Can be "n", "t", "et" or "all".
             If "all", then every available station parameter is returned.
             The default is "all"
+        add_na_share : bool, optional
+            Should one or several columns be added to the Dataframe with the share of NAs in the data.
+            This is especially important, when the stations data get aggregated, because the aggregation doesn't make sense if there are a lot of NAs in the original data.
+            If True, one column per asked kind is added with the respective share of NAs, if the aggregation step is not the smallest.
+            The "kind"_na_share column is in percentage.
+            The default is False.
 
         Returns
         -------
@@ -3231,13 +3304,14 @@ class GroupStation(object):
         for stat in self.station_parts:
             if stat._para in paras:
                 df = stat.get_df(
-                    period=period, 
-                    kinds=kinds, 
-                    agg_to=agg_to, 
-                    nas_allowed=nas_allowed)
+                    period=period,
+                    kinds=kinds,
+                    agg_to=agg_to,
+                    nas_allowed=nas_allowed,
+                    add_na_share=add_na_share)
                 df = df.rename(dict(zip(
                     df.columns,
-                    [stat._para + "_" + col for col in df.columns])),
+                    [stat._para.upper() + "_" + col for col in df.columns])),
                     axis=1)
                 dfs.append(df)
 
@@ -3270,6 +3344,43 @@ class GroupStation(object):
             a pandas Series with the information names as index and the explanation as values.
         """
         return StationBase.get_meta_explanation(infos=infos)
+
+    def get_max_period(self, kinds, nas_allowed=False):
+        """Get the maximum available period for this stations timeseries.
+
+        If nas_allowed is True, then the maximum range of the timeserie is returned.
+        Else the minimal filled period is returned
+
+        Parameters
+        ----------
+        kinds : str or list of str
+            The data kinds to update.
+            Must be a column in the timeseries DB.
+            Must be one of "raw", "qc", "filled", "adj".
+            For the precipitation also "qn" and "corr" are valid.
+        nas_allowed : bool, optional
+            Should NAs be allowed?
+            If True, then the maximum possible period is returned, even if there are NAs in the timeserie.
+            If False, then the minimal filled period is returned.
+            The default is False.
+
+        Returns
+        -------
+        utils.TimestampPeriod
+            The maximum Timestamp Period
+        """
+        kinds = self._check_kinds(kinds)
+        for stat in self.station_parts:
+            max_period_i = stat.get_max_period(
+                kinds=kinds, nas_allowed=nas_allowed)
+            if "max_period" in locals():
+                max_period = max_period.union(
+                    max_period_i,
+                    how="outer" if nas_allowed else "inner")
+            else:
+                max_period = max_period_i
+
+        return max_period
 
     def get_meta(self, paras="all", **kwargs):
         """Get the meta information for every parameter of this station.
@@ -3348,8 +3459,8 @@ class GroupStation(object):
                               nas_allowed=False)
 
     def create_ts(self, dir, period=(None, None), kinds="best", paras="all",
-                  agg_to="10 min", r_r0=None, split_date=False, 
-                  nas_allowed=True):
+                  agg_to="10 min", r_r0=None, split_date=False,
+                  nas_allowed=True, add_na_share=False):
         """Create the timeserie files as csv.
 
         Parameters
@@ -3395,6 +3506,12 @@ class GroupStation(object):
             If True, then the maximum possible period is returned, even if there are NAs in the timeserie.
             If False, then the minimal filled period is returned.
             The default is True.
+        add_na_share : bool, optional
+            Should one or several columns be added to the Dataframe with the share of NAs in the data.
+            This is especially important, when the stations data get aggregated, because the aggregation doesn't make sense if there are a lot of NAs in the original data.
+            If True, one column per asked kind is added with the respective share of NAs, if the aggregation step is not the smallest.
+            The "kind"_na_share column is in percentage.
+            The default is False.
 
         Raises
         ------
@@ -3408,10 +3525,10 @@ class GroupStation(object):
         # type cast kinds
         kinds = self._check_kinds(kinds)
         paras = self._check_paras(paras)
-    
+
         # get the period
-        join_how = "outer" if nas_allowed else "inner"    
-            
+        join_how = "outer" if nas_allowed else "inner"
+
         period = TimestampPeriod._check_period(period)
         period_filled = self.get_filled_period(kinds=kinds, join_how=join_how)
 
@@ -3442,22 +3559,24 @@ class GroupStation(object):
             df = self.get_df(
                 period=period, kinds=kinds,
                 paras=[para], agg_to=agg_to,
-                nas_allowed=nas_allowed)
+                nas_allowed=nas_allowed,
+                add_na_share=add_na_share)
 
             # rename columns
             if len(kinds)==1:
                 df.rename(
-                    dict(zip(df.columns, para.upper())), 
+                    {df.columns[0]: para.upper()},
                     axis=1, inplace=True)
             elif "filled_by" in kinds and len(kinds)==2:
                 df.rename(
-                    {f"{para}_" + kinds[1-(kinds.index("filled_by"))]: para.upper()},
+                    {f"{para.upper()}_" + kinds[1-(kinds.index("filled_by"))]: para.upper()},
                     axis=1, inplace=True)
-            df.rename(
-                dict(zip(df.columns, 
-                        [col.replace(f"{para}_", f"{para.upper()}_") 
-                         for col in df.columns])),
-                axis=1, inplace=True)
+            else:
+                df.rename(
+                    dict(zip(df.columns,
+                            [col.replace(f"{para}_", f"{para.upper()}_")
+                            for col in df.columns])),
+                    axis=1, inplace=True)
 
             # check for NAs
             filled_cols = [col for col in df.columns if "filled_by" in col]
