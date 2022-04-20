@@ -888,15 +888,15 @@ class GroupStations(object):
             return self.get_valid_stids()
         else:
             valid_stids = self.get_valid_stids()
-            stids_valid = [stid in valid_stids for stid in stids]
-            if all(stids_valid):
+            mask_stids_valid = [stid in valid_stids for stid in stids]
+            if all(mask_stids_valid):
                 return stids
             else:
                 raise ValueError(
-                    "There is no station defined in the database for the IDs:\n{stids}".format(
+                    "There is no station defined in the database for the IDs: {stids}".format(
                         stids=", ".join(
-                            [stid for stid in stids
-                                  if stid not in stids_valid])))
+                            [str(stid) for stid, valid in zip(stids, mask_stids_valid)
+                                  if not valid])))
 
     @staticmethod
     def _check_dir(dir):
