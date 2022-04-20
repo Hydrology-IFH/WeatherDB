@@ -388,7 +388,7 @@ class StationBase:
     @check_superuser
     def _check_ma(self):
         if not self.isin_ma():
-            self._update_ma()
+            self.update_ma()
 
     @check_superuser
     def _check_isin_db(self):
