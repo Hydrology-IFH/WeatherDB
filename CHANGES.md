@@ -1,6 +1,8 @@
 # Change-log
 
-## Version 0.0.6 (upcoming)
+## Version 0.0.7 (upcoming)
+
+## Version 0.0.6
 - error fixed with is_virtual (!important error!)
 - human readable format for the period in log message added
 - some spelling errors fixed in documentation
