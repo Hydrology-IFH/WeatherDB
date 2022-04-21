@@ -11,7 +11,7 @@ The timeseries for Temperature, Evapotranspiration and Precipitation are going t
 In the following chapters the processes will get explained furthermore.
 
 ## downloading the data
-The raw data is downloaded from the [DWD-CDC server](https://opendata.dwd.de/climate_environment/CDC/). The timeseries are downloaded and saved from the 1.1.1994 on. If there are historical datas available for a measurement, they are preferred to recent values, because they are already quality checked a bit. The Temperature (T) and potential Evapotranspiration (ET) is downloaded on daily resolution. Where as the Precipitation (N) is downloaded as 10 minute and daily values, but only the 10 minute values are the basis for the downloads.
+The raw data is downloaded from the [DWD-CDC server](https://opendata.dwd.de/climate_environment/CDC/). The timeseries are downloaded and saved from the 1.1.1994 on. If there is historical data available for a measurement, they are preferred over recent values, because they are already quality checked a bit. The Temperature (T) and potential Evapotranspiration (ET) is downloaded on daily resolution. Where as the Precipitation (N) is downloaded as 10 minute and daily values, but only the 10 minute values are the basis for the downloads.
 
 **Table 1: The downloaded raw data, resolution and their source**
 | parameter | resolution | <div style="text-align: center">source</div> |
@@ -24,7 +24,7 @@ The raw data is downloaded from the [DWD-CDC server](https://opendata.dwd.de/cli
 For computation improvements the downloaded files and their modification time is saved to the database, to be able to only download the updated data.
 
 ## quality check
-To quality check the data it is very dependend on which parameter is treated. Therefor this chapter is grouped into subchapters.
+To quality check the data it is very dependent on which parameter is treated. Therefor this chapter is grouped into subchapters.
 
 Although every quality check can get computed for different periods:
 - on all of the data by using e.g. `station.StationT(3).quality_check()`
@@ -58,10 +58,10 @@ Sometimes there are several consecutive 10 minutes values that are exactly the s
 
 It is assumed, that filling the measurements up with values from the neighbor stations is more accurate than this dissemination. Therefor 3 consecutive same measurements are deleted, if their "Qualitätsnorm" from the DWD is not 3 (meaning that the measurements didn't get a good quality control from the DWD).
 
-## Filling of hols
-To have complete timeseries, the holes in the quality checked timeseries is filled with data from the neighbor stations. This is done by regionalising the neighbors measurements value to the station that is filled. Starting with the nearest neighbor station all available stations are taken until the timeserie is completely filled.
+## gap filling
+To have complete timeseries, the gaps in the quality checked timeseries are filled with data from the neighbor stations. This is done by regionalising the neighbors measurements value to the station that is gap filled. Starting with the nearest neighbor station all available stations are taken until the timeserie is completely filled.
 
-For the reginalisation, the muli-annual values for every station for the climate period of 1991-2020 are computed from the corresponding DWD grid.
+For the reginalisation, the multi-annual values for every station for the climate period of 1991-2020 are computed from the corresponding DWD grid.
 
 **Table 3: The raster grids that are the basis for the regionalisation**
 | parameter |  <div style="text-align: center">source</div> |
@@ -70,7 +70,7 @@ For the reginalisation, the muli-annual values for every station for the climate
 | Temperature | DWD Climate Data Center (CDC): <br>Multi-annual means of grids of air temperature (2m) over Germany, period 1991-2020, version v1.0. <br>[online available](https://opendata.dwd.de/climate_environment/CDC/grids_germany/multi_annual/air_temperature_mean)|
 | potential Evapotranspiration | DWD Climate Data Center (CDC): <br>Multi-annual grids of potential evapotranspiration over grass, 0.x, period 1991-2020, <br>[online available](https://opendata.dwd.de/climate_environment/CDC/grids_germany/multi_annual/evapo_p)|
 
-Then to get a regionalisation factor the multi-annual values of both stations are compared. For T and ET only the yearly mean is taken into account. For the precipitation one winter(october-march) and one summer (april-september) factor is computed. The following equation explain the calculation of the filling values for the different parameters, based on their multi-annual mean(ma).
+Then to get a regionalisation factor the multi-annual values of both stations are compared. For T and ET only the yearly mean is taken into account. For the precipitation one winter(October-March) and one summer (April-September) factor is computed. The following equation explain the calculation of the filling values for the different parameters, based on their multi-annual mean(ma).
 
 $T_{fillup} = T_{neighbor} + (T_{station,ma}-T_{neighbor,ma})$
 
@@ -81,7 +81,7 @@ N_{neighbor} * \dfrac{N_{station,ma,winter}}{N_{neighbor,ma,winter}} \space if\s
 N_{neighbor} * \dfrac{N_{station,ma,summer}}{N_{neighbor,ma,summer}} \space if\space month\notin[4:9]
 \end{cases}$
 
-For the precipitation values the 10 minutes values are furthermore adjusted to the daily measurements. Therefor the daily sum is computed. Then the quotient with the daily measurement is calculated and multiplied to every 10 minute measurement. So the difference to the daily measurement is added relatively to the measured value. In the end the filled 10 minutes precipitation values summ up to the same daily values as the daily values from the DWD.
+For the precipitation values the 10 minutes values are furthermore adjusted to the daily measurements. Therefor the daily sum is computed. Then the quotient with the daily measurement is calculated and multiplied to every 10 minute measurement. So the difference to the daily measurement is added relatively to the measured value. In the end the gap filled 10 minutes precipitation values sum up to the same daily values as the daily values from the DWD.
 
 ## Richter correction
 This step is only done for the 10 minutes precipitation values. Here the filled precipitation values, get corrected like defined in Richter (1995).  

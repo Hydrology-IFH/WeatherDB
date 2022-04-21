@@ -144,6 +144,10 @@ class TimestampPeriod(object):
             if len(comp_list) > 0:
                 period[i] = self.COMPARE[how][i](comp_list)
 
+        # check if end < start
+        if period[0]>=period[1]:
+            period = (None, None)
+
         # return the period
         if self.is_date and other.is_date:
             # if both were data periods, then the result should also be a date period

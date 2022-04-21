@@ -1,6 +1,21 @@
 # Change-log
 
-## Version 0.0.6 (upcoming)
+## Version 0.0.7 (upcoming)
+
+## Version 0.0.6
+- error fixed with is_virtual (!important error!)
+- human readable format for the period in log message added
+- some spelling errors fixed in documentation
+- kwargs added to child methods of get_df (like get_raw...)
+- in get_df and consecutive methods: 
+  - filled_share column added if aggregating and filled_by selected
+  - possibility to download filled_by added
+  - nas_allowed option added
+  - add_na_share option added. (give the share of NAs if aggregating) 
+- in create_ts option to save several kinds added
+- get_max_period method
+- error in check_stids fixed
+- error in ma_update fixed
 
 ## Version 0.0.5
 - The et_et0 parameter gor renamed to r_r0 in the create_ts method

@@ -113,7 +113,7 @@ df = stats.create_roger_ts(
     stids=[1443, 1346],
     dir="path/to/the/directory/where/to/save")
 ```
-If you don't want to use the RoGeR format for the timestamp you can use the `.create_ts()` methode.
+If you don't want to use the RoGeR format for the timestamp you can use the `.create_ts()` method. This method also offers you way more possibilities to define the output, like e.g. adding the share of NAs in the aggregation step or adding the filled_by column.
 
 ```
 from weatherDB import stations

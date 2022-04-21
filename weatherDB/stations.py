@@ -564,7 +564,7 @@ class StationsBase:
 
     @check_superuser
     def last_imp_fillup(self):
-        """Do the filling of the last import.
+        """Do the gap filling of the last import.
         """
         stations = self.get_stations(only_real=True)
         period = stations[0].get_last_imp_period(all=True)
@@ -858,21 +858,31 @@ class GroupStations(object):
                         f"The parameter {para} you asked for is not a valid parameter. Please enter one of {valid_paras}")
             return paras_new
 
-    def _check_period(self, period, stids, kind):
-        max_period = self._GroupStation(stids[0]).get_filled_period(kind=kind)
-        for stid in stids[1:]:
-            max_period = max_period.union(
-                self._GroupStation(stid).get_filled_period(kind=kind))
-
+    def _check_period(self, period, stids, kinds, nas_allowed=True, join_how="outer"):
+        # join_how = "outer" -> maximum range returned
+        # join_how = "inner" -> minimal range returned, if station missing, then empty Period returned
+        # get max_period of stations
+        for stid in stids:
+            max_period_i = self._GroupStation(stid).get_max_period(
+                kinds=kinds, nas_allowed=nas_allowed)
+            if "max_period" in locals():
+                max_period = max_period.union(
+                    max_period_i, 
+                    how="outer" if nas_allowed else "inner"
+                )
+            else:
+                max_period=max_period_i
+        
         if type(period) != TimestampPeriod:
             period = TimestampPeriod(*period)
         if period.is_empty():
             return max_period
         else:
             if not period.inside(max_period):
+                period = period.union(max_period, how="inner")
                 warnings.warn("The asked period is too large. Only {min_tstp} - {max_tstp} is returned".format(
-                    **max_period.get_sql_format_dict(format="%Y-%m-%d %H:%M")))
-            return period.union(max_period)
+                    **period.get_sql_format_dict(format="%Y-%m-%d %H:%M")))
+            return period
 
     def _check_stids(self, stids):
         """Check if the given stids are valid Station IDs.
@@ -883,15 +893,15 @@ class GroupStations(object):
             return self.get_valid_stids()
         else:
             valid_stids = self.get_valid_stids()
-            stids_valid = [stid in valid_stids for stid in stids]
-            if all(stids_valid):
+            mask_stids_valid = [stid in valid_stids for stid in stids]
+            if all(mask_stids_valid):
                 return stids
             else:
                 raise ValueError(
-                    "There is no station defined in the database for the IDs:\n{stids}".format(
+                    "There is no station defined in the database for the IDs: {stids}".format(
                         stids=", ".join(
-                            [stid for stid in stids
-                                  if stid not in stids_valid])))
+                            [str(stid) for stid, valid in zip(stids, mask_stids_valid)
+                                  if not valid])))
 
     @staticmethod
     def _check_dir(dir):
@@ -1081,8 +1091,9 @@ class GroupStations(object):
 
         return stations
 
-    def create_ts(self, dir, period=(None, None), kind="best",
-                  stids="all", agg_to="10 min", r_r0=None, split_date=False):
+    def create_ts(self, dir, period=(None, None), kinds="best",
+                  stids="all", agg_to="10 min", r_r0=None, split_date=False, 
+                  nas_allowed=True, add_na_share=False):
         """Download and create the weather tables as csv files.
 
         Parameters
@@ -1094,14 +1105,14 @@ class GroupStations(object):
             The period for which to get the timeseries.
             If (None, None) is entered, then the maximal possible period is computed.
             The default is (None, None)
-        kind :  str
+        kinds :  str or list of str
             The data kind to look for filled period.
             Must be a column in the timeseries DB.
             Must be one of "raw", "qc", "filled", "adj".
             If "best" is given, then depending on the parameter of the station the best kind is selected.
             For Precipitation this is "corr" and for the other this is "filled".
             For the precipitation also "qn" and "corr" are valid.
-        stids: string or list of int, optional
+        stids : string or list of int, optional
             The Stations for which to compute.
             Can either be "all", for all possible stations
             or a list with the Station IDs.
@@ -1116,12 +1127,23 @@ class GroupStations(object):
             Should the ET timeserie contain a column with R/R0.
             If None, then no column is added.
             If int, then a R/R0 column is appended with this number as standard value.
-            If list of int or floats, then the list should have the same length as the ET-timeserie and is appanded to the Timeserie.
-            If pd.Series, then the index should be a timestamp index. The serie is then joined to the ET timeserie.
+            If list of int or floats, then the list should have the same length as the ET-timeserie and is appended to the Timeserie.
+            If pd.Series, then the index should be a timestamp index. The series is then joined to the ET timeserie.
             The default is None.
         split_date : bool, optional
             Should the timestamp get splitted into parts, so one column for year, one for month etc.?
             If False the timestamp is saved in one column as string.
+        nas_allowed : bool, optional
+            Should NAs be allowed?
+            If True, then the maximum possible period is returned, even if there are NAs in the timeserie.
+            If False, then the minimal filled period is returned.
+            The default is True.
+        add_na_share : bool, optional
+            Should one or several columns be added to the Dataframe with the share of NAs in the data.
+            This is especially important, when the stations data get aggregated, because the aggregation doesn't make sense if there are a lot of NAs in the original data.
+            If True, one column per asked kind is added with the respective share of NAs, if the aggregation step is not the smallest.
+            The "kind"_na_share column is in percentage.
+            The default is False.
         """
         start_time = datetime.datetime.now()
         # check directory and stids
@@ -1130,7 +1152,10 @@ class GroupStations(object):
 
         # check period
         period = self._check_period(
-            period=period, stids=stids, kind=kind)
+            period=period, stids=stids, kinds=kinds,
+            join_how="outer" if nas_allowed else "inner")
+        if period.is_empty():
+            raise ValueError("For the given settings, no timeseries could get extracted from the database.\nMaybe try to change the nas_allowed parameter to True, to see, where the problem comes from.")
 
         # create GroupStation instances
         stats = self.get_group_stations(stids=stids)
@@ -1148,10 +1173,12 @@ class GroupStations(object):
                     stat.create_ts(
                         dir=zf,
                         period=period,
-                        kind=kind,
+                        kinds=kinds,
                         agg_to=agg_to,
                         r_r0=r_r0,
-                        split_date=split_date)
+                        split_date=split_date,
+                        nas_allowed=nas_allowed,
+                        add_na_share=add_na_share)
                     pbar.variables["last_station"] = stat.id
                     pbar.update(pbar.value + 1)
         else:
@@ -1159,10 +1186,12 @@ class GroupStations(object):
                 stat.create_ts(
                     dir=dir.joinpath(str(stat.id)),
                     period=period,
-                    kind=kind,
+                    kinds=kinds,
                     agg_to=agg_to,
                     r_r0=r_r0,
-                    split_date=split_date)
+                    split_date=split_date,
+                    nas_allowed=nas_allowed,
+                    add_na_share=add_na_share)
                 pbar.variables["last_station"] = stat.id
                 pbar.update(pbar.value + 1)
 
@@ -1235,7 +1264,7 @@ class GroupStations(object):
         """
         return self.create_ts(dir=dir, period=period, kind=kind,
                               agg_to="10 min", r_r0=r_r0, stids=stids,
-                              split_dates=True)
+                              split_dates=True, nas_allowed=False)
 
 # clean station
 del StationN, StationND, StationT, StationET, GroupStation
