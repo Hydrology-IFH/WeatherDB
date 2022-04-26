@@ -2161,7 +2161,11 @@ class StationCanVirtualBase(StationBase):
             bool: True if the Station check was successfull.
         """
         if self.isin_meta():
-            return True
+            if self.isin_db():
+                return True
+            else:
+                self._create_timeseries_table()
+                return True
         elif self.isin_meta_n():
             self._create_meta_virtual()
             self._create_timeseries_table()
