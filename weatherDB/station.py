@@ -357,11 +357,11 @@ class StationBase:
         else:
             return agg_to
 
-    def _check_df_raw(self, df_raw):
+    def _check_df_raw(self, df):
         """This is an empty function to get implemented in the subclasses if necessary.
 
-        It applies extra checkups on the downloaded raw timeserie and returns the dataframe."""
-        return df_raw
+        It applies extra checkups on the downloaded raw timeseries and returns the dataframe."""
+        return df
 
     def _clean_cached_period(self):
         time_limit = datetime.now() - timedelta(minutes=1)
@@ -1055,25 +1055,23 @@ class StationBase:
     def _download_raw(self, zipfiles):
         # download raw data
         # import every file and merge data
-        for zipfile in zipfiles:
+        for zf in zipfiles:
+            df_new = get_dwd_file(zf)
+            df_new.set_index(self._date_col, inplace=True)
+            df_new = self._check_df_raw(df_new)
+
+            # merge with df_all
             if "df_all" not in locals():
-                df_all = get_dwd_file(zipfile)
+                df_all = df_new.copy()
             else:
-                df_new = get_dwd_file(zipfile)
                 # cut out if already in previous file
-                df_new = df_new[~df_new[self._date_col].isin(
-                    df_all[self._date_col])]
-                # concatenat the dfs
+                df_new = df_new[~df_new.index.isin(df_all.index)]
+                # concatenate the dfs
                 df_all = pd.concat([df_all, df_new])
-                df_all.reset_index(drop=True, inplace=True)
 
         # check for duplicates in date column
-        df_all.set_index(self._date_col, inplace=True)
         if df_all.index.has_duplicates:
             df_all = df_all.groupby(df_all.index).mean()
-
-        # run extra checks of subclasses
-        df_all = self._check_df_raw(df_all)
 
         return df_all
 
@@ -1901,11 +1899,11 @@ class StationBase:
         agg_to = self._check_agg_to(agg_to)
         if agg_to is not None:
             if "filled_by" in kinds:
-                warnings.warn(f"""
-You selected a filled_by column, but did not select the smallest aggregation (agg_to={self._min_agg_to}).
-The filled_by information is only reasonable when using the original time frequency.
-Therefor the filled_by column is not returned, but instead the filled_share.
-This column gives the percentage of the filled fields in the aggregation group.""")
+                warnings.warn(
+                    f"""You selected a filled_by column, but did not select the smallest aggregation (agg_to={self._min_agg_to}).
+                    The filled_by information is only reasonable when using the original time frequency.
+                    Therefor the filled_by column is not returned, but instead the filled_share.
+                    This column gives the percentage of the filled fields in the aggregation group.""")
                 kinds.remove("filled_by")
                 add_filled_share = True
             else:
@@ -2467,13 +2465,30 @@ class StationN(StationNBase):
 
         return sql_new_qc
 
-    def _check_df_raw(self, df_raw):
-        """This function applies extra checkups on the downloaded raw timeserie and returns the dataframe.
+    def _check_df_raw(self, df):
+        """This function is used in the Base class on the single dataframe that is downloaded from the CDC Server before loading it in the database.
 
+        Here the function adapts the timezone relative to the date.
+        As the data on the CDC server is in MEZ before 200 and in UTC after 2000
+        
         Some precipitation stations on the DWD CDC server have also rows outside of the normal 10 Minute frequency, e.g. 2008-09-16 01:47 for Station 662.
         Because those rows only have NAs for the measurement they are deleted."""
-        df_raw = df_raw[df_raw.index.minute%10==0].copy()
-        return df_raw
+        # correct Timezone before 2000 MEZ after UTC
+        mask_before_2000 = df.index < pd.Timestamp(2000,1,1,0,0)
+        if any(mask_before_2000):
+            dfb = df[mask_before_2000].copy()
+            dfb.index = dfb.index.tz_localize("Etc/GMT+1")\
+                                    .tz_convert("UTC")
+            dfa = df[~mask_before_2000].copy()
+            dfa.index = dfa.index.tz_localize("UTC")
+            df = pd.concat([dfb, dfa])
+        else:
+            df.index = df.index.tz_localize("UTC")
+
+        # delete measurements outside of the 10 minutes frequency
+        df = df[df.index.minute%10==0].copy()
+
+        return df
 
     @check_superuser
     def _create_timeseries_table(self):
@@ -2539,7 +2554,7 @@ class StationN(StationNBase):
              rio.open(RASTERS["local"]["dgm80"]) as dgm80:
                 geom = self.get_geom_shp(crs="utm")
                 xy = [geom.x, geom.y]
-                # sample station height
+                # sample station heght
                 stat_h = list(dgm5.sample(
                     xy=[xy],
                     indexes=1,
@@ -2554,7 +2569,7 @@ class StationN(StationNBase):
                 # sample dgm for horizon angle
                 hab = pd.Series(
                     index=pd.Index([], name="angle", dtype=int),
-                    name="horizon", dtype=float)
+                    name="horizon")
                 for angle in range(90, 271, 3):
                     dgm5_mask = polar_line(xy, radius, angle)
                     dgm5_np, dgm5_tr = rasterio.mask.mask(
@@ -2578,31 +2593,31 @@ class StationN(StationNBase):
                     # look for missing values at the end
                     dgm5_max_dist = dgm_gpd.iloc[-1]["dist"]
                     if dgm5_max_dist < (radius - 5):
-                        line_parts = line_parts.append(
-                            {"Start_point": dgm_gpd.iloc[-1]["geometry"],
-                                "radius": radius - dgm5_max_dist},
-                            ignore_index=True)
+                            line_parts = line_parts.append(
+                                {"Start_point": dgm_gpd.iloc[-1]["geometry"],
+                                 "radius": radius - dgm5_max_dist},
+                                ignore_index=True)
 
                     # check if parts are missing and fill
                     if len(line_parts) > 0:
-                        # create the lines
-                        for i, row in line_parts.iterrows():
-                            line_parts.loc[i, "line"] = polar_line(
-                                [el[0] for el in row["Start_point"].xy],
-                                row["radius"],
-                                angle
-                            )
-                        dgm80_mask = MultiLineString(
-                            line_parts["line"].tolist())
-                        dgm80_np, dgm80_tr = rasterio.mask.mask(
-                            dgm80, [dgm80_mask], crop=True)
-                        dgm80_np[dgm80_np==dgm80.profile["nodata"]] = np.nan
-                        dgm80_gpd = raster2points(
-                            dgm80_np, dgm80_tr, crs=dgm80.crs
-                            ).to_crs(dgm5.crs)
-                        dgm80_gpd["dist"] = dgm80_gpd.distance(Point(xy))
-                        dgm_gpd = dgm_gpd.append(
-                            dgm80_gpd, ignore_index=True)
+                            # create the lines
+                            for i, row in line_parts.iterrows():
+                                line_parts.loc[i, "line"] = polar_line(
+                                    [el[0] for el in row["Start_point"].xy],
+                                    row["radius"],
+                                    angle
+                                )
+                            dgm80_mask = MultiLineString(
+                                line_parts["line"].tolist())
+                            dgm80_np, dgm80_tr = rasterio.mask.mask(
+                                dgm80, [dgm80_mask], crop=True)
+                            dgm80_np[dgm80_np==dgm80.profile["nodata"]] = np.nan
+                            dgm80_gpd = raster2points(
+                                dgm80_np, dgm80_tr, crs=dgm80.crs
+                                ).to_crs(dgm5.crs)
+                            dgm80_gpd["dist"] = dgm80_gpd.distance(Point(xy))
+                            dgm_gpd = dgm_gpd.append(
+                                dgm80_gpd, ignore_index=True)
 
                     hab[angle] = np.max(np.degrees(np.arctan(
                             (dgm_gpd["data"]-stat_h) / dgm_gpd["dist"])))
@@ -2710,7 +2725,7 @@ class StationN(StationNBase):
         # get the richter exposition class
         richter_class = self.update_richter_class(skip_if_exist=True)
         if richter_class is None:
-            raise Exception("No richter class was found for the precipitation station {stid} and therefor no richter correction was possible."
+            raise Exception("No richter class was found for the precipitation station {stid} and therefor no richter correction was possible."\
                             .format(stid=self.id))
 
         # create the sql queries
@@ -2724,12 +2739,12 @@ class StationN(StationNBase):
         )
         # daily precipitation
         sql_n_daily = """
-            SELECT (timestamp - INTERVAL '5h 50min')::date AS date,
+            SELECT timestamp::date AS date,
                    sum("filled") AS "filled",
                    count(*) FILTER (WHERE "filled" > 0) AS "count_n"
             FROM timeseries."{stid}_{para}"
             {period_clause}
-            GROUP BY (timestamp - INTERVAL '5h 50min')::date
+            GROUP BY timestamp::date
         """.format(**sql_format_dict)
 
         # add is_winter
@@ -2754,9 +2769,9 @@ class StationN(StationNBase):
                     WHEN (tst."filled" IS NULL) THEN NULL
                     ELSE 'mix'
                 END AS precipitation_typ
-            FROM ({sql_n_daily_winter}) tsn_d
+            FROM ({sql_n_daily_winter}) tsn_d_wi
             LEFT JOIN timeseries."{stid}_t" tst
-                ON tst.timestamp=tsn_d.date
+                ON tst.timestamp=tsn_d_wi.date
         """.format(
             sql_n_daily_winter=sql_n_daily_winter,
             **sql_format_dict
@@ -2785,7 +2800,7 @@ class StationN(StationNBase):
                             ELSE ts."filled"
                             END
             FROM ({sql_delta_n}) ts_delta_n
-            WHERE (ts.timestamp - INTERVAL '5h 50min')::date = ts_delta_n.date;
+            WHERE (ts.timestamp)::date = ts_delta_n.date;
         """.format(
             sql_delta_n=sql_delta_n,
             **sql_format_dict
@@ -2794,6 +2809,7 @@ class StationN(StationNBase):
         # run commands
         if "return_sql" in kwargs and kwargs["return_sql"]:
             return sql_update.replace("%%", "%")
+
         self._execute_long_sql(
             sql_update,
             description="richter corrected for the period {min_tstp} - {max_tstp}".format(
@@ -2827,8 +2843,8 @@ class StationN(StationNBase):
         self.update_period_meta(kind="corr")
 
     @check_superuser
-    def corr(self, period=(None, None)):
-        self.richter_correct(period=period)
+    def corr(self, *args, **kwargs):
+        return self.richter_correct(*args, **kwargs)
 
     @check_superuser
     def last_imp_richter_correct(self, _last_imp_period=None):
