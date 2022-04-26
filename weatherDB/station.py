@@ -756,7 +756,7 @@ class StationBase:
 
         Get new values from the raster and put in the table.
         """
-        if self.isin_ma() and skip_if_exist:
+        if skip_if_exist and self.isin_ma():
             return None
 
         sql_new_mas = """
@@ -2163,20 +2163,16 @@ class StationCanVirtualBase(StationBase):
         if self.isin_meta():
             if self.isin_db():
                 return True
-            else:
+            elif self.isin_meta_n():
                 self._create_timeseries_table()
                 return True
         elif self.isin_meta_n():
             self._create_meta_virtual()
             self._create_timeseries_table()
             return True
-        else:
-            raise NotImplementedError("""
-                The given {para_long} station with id {stid}
-                is not in the corresponding meta table
-                and not in the precipitation meta table in the DB""".format(
-                stid=self.id, para_long=self._para_long
-            ))
+        raise NotImplementedError(f"""
+The given {self._para_long} station with id {self.id} is not in the corresponding meta table
+and not in the precipitation meta table in the DB""")
 
     def _create_meta_virtual(self):
         """Create a virtual station in the meta table, for stations that have no real data.
