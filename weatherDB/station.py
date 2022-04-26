@@ -2539,7 +2539,7 @@ class StationN(StationNBase):
              rio.open(RASTERS["local"]["dgm80"]) as dgm80:
                 geom = self.get_geom_shp(crs="utm")
                 xy = [geom.x, geom.y]
-                # sample station heght
+                # sample station height
                 stat_h = list(dgm5.sample(
                     xy=[xy],
                     indexes=1,
@@ -2554,7 +2554,7 @@ class StationN(StationNBase):
                 # sample dgm for horizon angle
                 hab = pd.Series(
                     index=pd.Index([], name="angle", dtype=int),
-                    name="horizon")
+                    name="horizon", dtype=float)
                 for angle in range(90, 271, 3):
                     dgm5_mask = polar_line(xy, radius, angle)
                     dgm5_np, dgm5_tr = rasterio.mask.mask(
@@ -2578,31 +2578,31 @@ class StationN(StationNBase):
                     # look for missing values at the end
                     dgm5_max_dist = dgm_gpd.iloc[-1]["dist"]
                     if dgm5_max_dist < (radius - 5):
-                            line_parts = line_parts.append(
-                                {"Start_point": dgm_gpd.iloc[-1]["geometry"],
-                                 "radius": radius - dgm5_max_dist},
-                                ignore_index=True)
+                        line_parts = line_parts.append(
+                            {"Start_point": dgm_gpd.iloc[-1]["geometry"],
+                                "radius": radius - dgm5_max_dist},
+                            ignore_index=True)
 
                     # check if parts are missing and fill
                     if len(line_parts) > 0:
-                            # create the lines
-                            for i, row in line_parts.iterrows():
-                                line_parts.loc[i, "line"] = polar_line(
-                                    [el[0] for el in row["Start_point"].xy],
-                                    row["radius"],
-                                    angle
-                                )
-                            dgm80_mask = MultiLineString(
-                                line_parts["line"].tolist())
-                            dgm80_np, dgm80_tr = rasterio.mask.mask(
-                                dgm80, [dgm80_mask], crop=True)
-                            dgm80_np[dgm80_np==dgm80.profile["nodata"]] = np.nan
-                            dgm80_gpd = raster2points(
-                                dgm80_np, dgm80_tr, crs=dgm80.crs
-                                ).to_crs(dgm5.crs)
-                            dgm80_gpd["dist"] = dgm80_gpd.distance(Point(xy))
-                            dgm_gpd = dgm_gpd.append(
-                                dgm80_gpd, ignore_index=True)
+                        # create the lines
+                        for i, row in line_parts.iterrows():
+                            line_parts.loc[i, "line"] = polar_line(
+                                [el[0] for el in row["Start_point"].xy],
+                                row["radius"],
+                                angle
+                            )
+                        dgm80_mask = MultiLineString(
+                            line_parts["line"].tolist())
+                        dgm80_np, dgm80_tr = rasterio.mask.mask(
+                            dgm80, [dgm80_mask], crop=True)
+                        dgm80_np[dgm80_np==dgm80.profile["nodata"]] = np.nan
+                        dgm80_gpd = raster2points(
+                            dgm80_np, dgm80_tr, crs=dgm80.crs
+                            ).to_crs(dgm5.crs)
+                        dgm80_gpd["dist"] = dgm80_gpd.distance(Point(xy))
+                        dgm_gpd = dgm_gpd.append(
+                            dgm80_gpd, ignore_index=True)
 
                     hab[angle] = np.max(np.degrees(np.arctan(
                             (dgm_gpd["data"]-stat_h) / dgm_gpd["dist"])))
