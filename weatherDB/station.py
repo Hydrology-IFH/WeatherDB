@@ -35,6 +35,7 @@ DATA_DIR = THIS_DIR.parents[2].joinpath("data")
 RASTERS = {
     "dwd_grid": {
         "srid": 31467,
+        "proj4":"+proj=tmerc +lat_0=0 +lon_0=9 +k=1 +x_0=3500000 +y_0=0 +ellps=bessel +towgs84=598.1,73.7,418.2,0.202,0.045,-2.455,6.7 +units=m +no_defs",
         "db_table": "dwd_grid_1991_2020",
         "bands": {
             1: "n_wihj",
@@ -759,9 +760,16 @@ class StationBase:
         if skip_if_exist and self.isin_ma():
             return None
 
+        # get the srid or proj4
+        if "proj4" in self._ma_raster:
+            sql_geom = f"ST_SETSRID(ST_TRANSFORM(geometry, '{self._ma_raster['proj4']}'), {self._ma_raster['srid']})"
+        else:
+            sql_geom = f"ST_TRANSFORM(geometry, {self._ma_raster['srid']})"
+
+        # create sql statement
         sql_new_mas = """
             WITH stat_geom AS (
-                SELECT ST_TRANSFORM(geometry, {raster_srid}) AS geom
+                SELECT {sql_geom} AS geom
                 FROM meta_{para}
                 WHERE station_id={stid}
             )
@@ -770,7 +778,7 @@ class StationBase:
         """.format(
             stid=self.id, para=self._para,
             raster_name=self._ma_raster["db_table"],
-            raster_srid=self._ma_raster["srid"],
+            sql_geom=sql_geom,
             calc_line=", ".join(
                 ["ST_VALUE(rast, {i}, (SELECT geom FROM stat_geom)) as {name}"
                     .format(
