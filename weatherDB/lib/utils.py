@@ -93,7 +93,7 @@ class TimestampPeriod(object):
 
             # check timezone
             if tzinfo is not None:
-                if tstp.tzinfo is None:
+                if period[i].tzinfo is None:
                     period[i] = period[i].tz_localize(tzinfo)
                 else:
                     period[i] = period[i].tz_convert(tzinfo)
