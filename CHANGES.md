@@ -6,6 +6,7 @@
   - Rasters now also have proj4 code, if necessary. Because the postgis database is not supporting transformation to EPSG:31467 
   - small speed improvement
 - StationCanVirtual._check_meta updated to check separately if station is in meta table and if it has a timeseries table
+- Added timezone support. The database timezone is UTC.
 
 ## Version 0.0.6
 - error fixed with is_virtual (!important error!)
