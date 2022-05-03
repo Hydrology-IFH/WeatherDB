@@ -9,7 +9,7 @@ import itertools
 import logging
 import re
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import warnings
 import zipfile
@@ -29,7 +29,8 @@ from .lib.utils import TimestampPeriod, get_ftp_file_list
 from .lib.max_fun.geometry import polar_line, raster2points
 
 # Variables
-MIN_TSTP = datetime.strptime("19940101", "%Y%m%d")
+MIN_TSTP = datetime.strptime("19940101", "%Y%m%d").replace(tzinfo=timezone.utc)
+# all timestamps in the database are in UTC
 THIS_DIR = Path(__file__).parent.resolve()
 DATA_DIR = THIS_DIR.parents[2].joinpath("data")
 RASTERS = {
@@ -360,7 +361,10 @@ class StationBase:
     def _check_df_raw(self, df):
         """This is an empty function to get implemented in the subclasses if necessary.
 
-        It applies extra checkups on the downloaded raw timeseries and returns the dataframe."""
+        It applies extra checkups, like adjusting the timezone on the downloaded raw timeseries and returns the dataframe."""
+        # add Timezone as UTC
+        df.index = df.index.tz_localize("UTC")
+
         return df
 
     def _clean_cached_period(self):
@@ -1961,6 +1965,9 @@ class StationBase:
         # change index to pandas DatetimeIndex if necessary
         if type(df.index) != pd.DatetimeIndex:
             df.set_index(pd.DatetimeIndex(df.index), inplace=True)
+
+        # set Timezone to UTC
+        df.index = df.index.tz_localize("UTC")
 
         # change to normal unit
         if not db_unit:
