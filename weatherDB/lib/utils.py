@@ -64,7 +64,7 @@ class TimestampPeriod(object):
             0: min,
             1: max}}
 
-    def __init__(self, start, end):
+    def __init__(self, start, end, tzinfo="UTC"):
         """Initiate a TimestampPeriod.
 
         Parameters
@@ -73,16 +73,30 @@ class TimestampPeriod(object):
             The start of the Period.
         end : pd.Timestamp or similar
             The end of the Period.
+        tzinfo : str or datetime.timezone object or None, optional
+            The timezone to set to the timestamps.
+            If the timestamps already have a timezone they will get converted.
+            If None, then the timezone is not changed or set.
+            The default is "UTC".
         """
+        # check if input is a date or a timestamp
         if type(start) == datetime.date and type(end) == datetime.date:
             self.is_date = True
         else:
             self.is_date = False
 
+        # convert to correct timestamp format
         period = list([start, end])
         for i, tstp in enumerate(period):
             if type(tstp) != Timestamp:
                 period[i] = Timestamp(tstp)
+
+            # check timezone
+            if tzinfo is not None:
+                if period[i].tzinfo is None:
+                    period[i] = period[i].tz_localize(tzinfo)
+                else:
+                    period[i] = period[i].tz_convert(tzinfo)
 
         self.start = period[0]
         self.end = period[1]
