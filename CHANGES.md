@@ -1,6 +1,6 @@
 # Change-log
 
-## Version 0.0.7 (upcoming)
+## Version 0.0.7
 - convert timezone of downloaded precipitation data, because (before 200 the data is in "MEZ" afterwards in "UTC")
 - update_ma: 
   - Rasters now also have proj4 code, if necessary. Because the postgis database is not supporting transformation to EPSG:31467 
