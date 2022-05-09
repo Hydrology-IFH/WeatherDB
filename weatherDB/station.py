@@ -2483,12 +2483,12 @@ class StationN(StationNBase):
         # correct Timezone before 2000 MEZ after UTC
         mask_before_2000 = df.index < pd.Timestamp(2000,1,1,0,0)
         if any(mask_before_2000):
-            dfb = df[mask_before_2000].copy()
-            dfb.index = dfb.index.tz_localize("Etc/GMT+1")\
+            df_before_2000 = df[mask_before_2000].copy()
+            df_before_2000.index = df_before_2000.index.tz_localize("Etc/GMT+1")\
                                     .tz_convert("UTC")
-            dfa = df[~mask_before_2000].copy()
-            dfa.index = dfa.index.tz_localize("UTC")
-            df = pd.concat([dfb, dfa])
+            df_after_2000 = df[~mask_before_2000].copy()
+            df_after_2000.index = df_after_2000.index.tz_localize("UTC")
+            df = pd.concat([df_before_2000, df_after_2000])
         else:
             df.index = df.index.tz_localize("UTC")
 
