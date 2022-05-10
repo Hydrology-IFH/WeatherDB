@@ -858,9 +858,7 @@ class GroupStations(object):
                         f"The parameter {para} you asked for is not a valid parameter. Please enter one of {valid_paras}")
             return paras_new
 
-    def _check_period(self, period, stids, kinds, nas_allowed=True, join_how="outer"):
-        # join_how = "outer" -> maximum range returned
-        # join_how = "inner" -> minimal range returned, if station missing, then empty Period returned
+    def _check_period(self, period, stids, kinds, nas_allowed=True):
         # get max_period of stations
         for stid in stids:
             max_period_i = self._GroupStation(stid).get_max_period(
@@ -889,7 +887,7 @@ class GroupStations(object):
 
         It checks against the Precipitation stations.
         """
-        if stids == "all":
+        if type(stids) == str and stids == "all":
             return self.get_valid_stids()
         else:
             valid_stids = self.get_valid_stids()
@@ -951,7 +949,7 @@ class GroupStations(object):
                     dir=dir))
 
         return dir
-    
+
     @classmethod
     def get_meta_explanation(cls, infos="all"):
         """Get the explanations of the available meta fields.
@@ -1153,7 +1151,7 @@ class GroupStations(object):
         # check period
         period = self._check_period(
             period=period, stids=stids, kinds=kinds,
-            join_how="outer" if nas_allowed else "inner")
+            nas_allowed=nas_allowed)
         if period.is_empty():
             raise ValueError("For the given settings, no timeseries could get extracted from the database.\nMaybe try to change the nas_allowed parameter to True, to see, where the problem comes from.")
 
@@ -1262,9 +1260,9 @@ class GroupStations(object):
         Warning
             If there are NAs in the timeseries or the period got changed.
         """
-        return self.create_ts(dir=dir, period=period, kind=kind,
+        return self.create_ts(dir=dir, period=period, kinds=kind,
                               agg_to="10 min", r_r0=r_r0, stids=stids,
-                              split_dates=True, nas_allowed=False)
+                              split_date=True, nas_allowed=False)
 
 # clean station
 del StationN, StationND, StationT, StationET, GroupStation
