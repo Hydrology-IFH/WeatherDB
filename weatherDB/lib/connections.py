@@ -12,8 +12,7 @@ if "RTD_documentation_import" in os.environ:
     DB_ENG = UnifiedAlchemyMagicMock()
     DB_ENG.is_superuser = True
 elif "WEATHERDB_MODULE_INSTALLING" in os.environ:
-    DB_ENG = {}
-    DB_ENG.is_superuser = True
+    DB_ENG = type("test", (), {"is_superuser":False})()
 else:
     # import the secret settings
     try:
