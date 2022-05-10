@@ -889,7 +889,7 @@ class GroupStations(object):
 
         It checks against the Precipitation stations.
         """
-        if stids == "all":
+        if type(stids) == str and stids == "all":
             return self.get_valid_stids()
         else:
             valid_stids = self.get_valid_stids()
