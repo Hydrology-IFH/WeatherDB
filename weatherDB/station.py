@@ -2113,7 +2113,7 @@ class StationBase:
         # this is only the first part of the methode
         # get basic values
         main_df = self.get_df(
-            kinds=[self._best_kind],
+            kinds=["filled"], # not best, as the ma values are not richter corrected
             **kwargs)
         ma = self.get_multi_annual()
 
@@ -2352,6 +2352,19 @@ class StationNBase(StationBase):
     _ma_raster = RASTERS["regnie_grid"]
 
     def get_adj(self, **kwargs):
+        """Get the adjusted timeserie.
+
+        The timeserie get adjusted to match the multi-annual value over the given period.
+        So the yearly variability is kept and only the whole period is adjusted.
+
+        The basis for the adjusted timeseries is the filled data and not the richter corrected data,
+        as the ma values are also uncorrected vallues.
+
+        Returns
+        -------
+        pd.DataFrame
+            The adjusted timeserie with the timestamp as index.
+        """  
         main_df, adj_df, ma = super().get_adj(**kwargs)
 
         # calculate the half yearly mean
