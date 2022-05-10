@@ -2,6 +2,8 @@
 
 ## Version 0.0.9 (upcoming)
 - fixed future warning in stations.GroupStations().create_ts
+- stations.GroupStations().create_roger_ts fixed
+- removed join_how from _check_period as it was not used
   
 # Version 0.0.8
 - fixed installation (psycopg2 problem and DB_ENG creation)
