@@ -1,5 +1,9 @@
 # Change-log
 
+# Version 0.0.8
+- fixed installation (psycopg2 problem and DB_ENG creation)
+- fixed imnporting module when not super user
+
 ## Version 0.0.7
 - convert timezone of downloaded precipitation data, because (before 200 the data is in "MEZ" afterwards in "UTC")
 - update_ma: 
