@@ -12,7 +12,7 @@ if "RTD_documentation_import" in os.environ:
     DB_ENG = UnifiedAlchemyMagicMock()
     DB_ENG.is_superuser = True
 elif "WEATHERDB_MODULE_INSTALLING" in os.environ:
-    DB_ENG = sqlalchemy.create_engine("postgresql://localhost")
+    DB_ENG = {}
     DB_ENG.is_superuser = True
 else:
     # import the secret settings
