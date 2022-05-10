@@ -2361,9 +2361,18 @@ class StationNBase(StationBase):
 
         main_df_sohj = main_df[mask_sohj]
 
-        min_count = (365//2 - 10)
-        if self._interval == "10 min":
-            min_count = min_count * 24 * 6
+        # get the minimum count of elements in the half year
+        min_count = (365//2 - 10) # days
+        if "agg_to" not in kwargs:
+            if self._interval == "10 min":
+                min_count = min_count * 24 * 6 # 10 minutes
+        else:
+            if kwargs["agg_to"] == "month":
+                min_count=6
+            elif kwargs["agg_to"] == "hour":
+                min_count = min_count * 24
+            elif kwargs["agg_to"] == "year" or kwargs["agg_to"] == "decade":
+                raise ValueError("The get_adj methode does not work on decade values.")
 
         main_df_sohj_y = main_df_sohj.groupby(main_df_sohj.index.year)\
             .sum(min_count=min_count).mean()
