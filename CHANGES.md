@@ -1,6 +1,6 @@
 # Change-log
 
-## Version 0.0.9 (upcoming)
+## Version 0.0.9
 - fixed future warning in stations.GroupStations().create_ts
 - stations.GroupStations().create_roger_ts fixed
 - removed join_how from _check_period as it was not used
@@ -8,7 +8,7 @@
   
 # Version 0.0.8
 - fixed installation (psycopg2 problem and DB_ENG creation)
-- fixed imnporting module when not super user
+- fixed importing module when not super user
 
 ## Version 0.0.7
 - convert timezone of downloaded precipitation data, because (before 200 the data is in "MEZ" afterwards in "UTC")
