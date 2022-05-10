@@ -1,5 +1,7 @@
 # Change-log
 
+## Version 0.0.10
+- fixed get_adj compare Timestamp with timezone 
 ## Version 0.0.9
 - fixed future warning in stations.GroupStations().create_ts
 - stations.GroupStations().create_roger_ts fixed
@@ -7,7 +9,7 @@
 - fixed StationND().get_adj, because the StationNBase.get_adj was only for 10 minute resolution
 - get_adj always based on "filled" data
   
-# Version 0.0.8
+## Version 0.0.8
 - fixed installation (psycopg2 problem and DB_ENG creation)
 - fixed importing module when not super user
 

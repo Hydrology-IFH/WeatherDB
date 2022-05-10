@@ -2330,14 +2330,14 @@ class StationTETBase(StationCanVirtualBase):
 
         # truncate to full years
         tstp_min = main_df.index.min()
-        if tstp_min > pd.Timestamp(year=tstp_min.year, month=1, day=15):
+        if tstp_min > pd.Timestamp(year=tstp_min.year, month=1, day=15, tz="UTC"):
             tstp_min = pd.Timestamp(
-                year=tstp_min.year+1, month=1, day=1)
+                year=tstp_min.year+1, month=1, day=1,  tz="UTC")
 
         tstp_max = main_df.index.max()
-        if tstp_max < pd.Timestamp(year=tstp_min.year, month=12, day=15):
+        if tstp_max < pd.Timestamp(year=tstp_min.year, month=12, day=15, tz="UTC"):
             tstp_min = pd.Timestamp(
-                year=tstp_min.year-1, month=12, day=31)
+                year=tstp_min.year-1, month=12, day=31, tz="UTC")
 
         main_df_tr = main_df.truncate(tstp_min, tstp_max)
 
