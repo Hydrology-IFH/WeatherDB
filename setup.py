@@ -1,5 +1,8 @@
 from setuptools import setup, find_packages
+import os
+os.environ["WEATHERDB_MODULE_INSTALLING"] = True
 import weatherDB
+os.environ.pop("WEATHERDB_MODULE_INSTALLING")
 
 def readme():
     with open('README.md') as f:
