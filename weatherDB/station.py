@@ -3194,8 +3194,8 @@ class StationET(StationTETBase):
 
         return sql_new_qc
 
-    def get_adj(self, period=(None, None)):
-        main_df, adj_df, ma, main_df_tr = super().get_adj(period=period)
+    def get_adj(self, **kwargs):
+        main_df, adj_df, ma, main_df_tr = super().get_adj(**kwargs)
 
         # calculate the yearly
         main_df_y = main_df.groupby(main_df_tr.index.year)\
