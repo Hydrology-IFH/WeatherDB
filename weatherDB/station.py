@@ -2121,7 +2121,7 @@ class StationBase:
         adj_df = pd.DataFrame(
             columns=["adj"],
             index=main_df.index,
-            dtype=main_df[self._best_kind].dtype)
+            dtype=main_df["filled"].dtype)
 
         return main_df, adj_df, ma  # the rest must get implemented in the subclasses
 
