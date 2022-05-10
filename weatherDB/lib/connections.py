@@ -7,7 +7,7 @@ from pathlib import Path
 # DB connection
 ###############
 # check if in Sphinx creation mode
-if "RTD_documentation_import" in os.environ:
+if "RTD_documentation_import" in os.environ or "WEATHERDB_MODULE_INSTALLING" in os.environ:
     from mock_alchemy.mocking import UnifiedAlchemyMagicMock
     DB_ENG = UnifiedAlchemyMagicMock()
     DB_ENG.is_superuser = True
