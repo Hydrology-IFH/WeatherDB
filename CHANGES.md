@@ -4,6 +4,7 @@
 - fixed future warning in stations.GroupStations().create_ts
 - stations.GroupStations().create_roger_ts fixed
 - removed join_how from _check_period as it was not used
+- fixed StationND().get_adj, because the StationNBase.get_adj was only for 10 minute resolution
   
 # Version 0.0.8
 - fixed installation (psycopg2 problem and DB_ENG creation)

@@ -1831,7 +1831,7 @@ class StationBase:
                 return None
 
     def get_df(self, kinds, period=(None, None), agg_to=None,
-               db_unit=False, nas_allowed=True, add_na_share=False):
+               nas_allowed=True, add_na_share=False, db_unit=False):
         """Get a timeseries DataFrame from the database.
 
         Parameters
@@ -1855,11 +1855,6 @@ class StationBase:
             For N it can also be "hour".
             If None than the maximum timeperiod is taken.
             The default is None.
-        db_unit : bool, optional
-            Should the result be in the Database unit.
-            If False the unit is getting converted to normal unit, like mm or °C.
-            The numbers are saved as integer in the database and got therefor multiplied by 10 or 100 to get to an integer.
-            The default is False.
         nas_allowed : bool, optional
             Should NAs be allowed?
             If True, then the maximum possible period is returned, even if there are NAs in the timeserie.
@@ -1870,6 +1865,11 @@ class StationBase:
             This is especially important, when the stations data get aggregated, because the aggregation doesn't make sense if there are a lot of NAs in the original data.
             If True, one column per asked kind is added with the respective share of NAs, if the aggregation step is not the smallest.
             The "kind"_na_share column is in percentage.
+            The default is False.
+        db_unit : bool, optional
+            Should the result be in the Database unit.
+            If False the unit is getting converted to normal unit, like mm or °C.
+            The numbers are saved as integer in the database and got therefor multiplied by 10 or 100 to get to an integer.
             The default is False.
 
         Returns
@@ -1883,7 +1883,9 @@ class StationBase:
 
         # check if adj
         if "adj" in kinds:
-            adj_df = self.get_adj(period=period)
+            adj_df = self.get_adj(
+                period=period, agg_to=agg_to, 
+                nas_allowed=nas_allowed, add_na_share=add_na_share)
             if len(kinds) == 1:
                 return adj_df
             else:
@@ -2100,7 +2102,7 @@ class StationBase:
         Parameters
         ----------
         kwargs : dict, optional
-            The keyword arguments get passed to the get_df function.
+            The keyword arguments are passed to the get_df function.
             Possible parameters are "period", "agg_to" or "nas_allowed".
 
         Returns
@@ -2313,6 +2315,16 @@ class StationTETBase(StationCanVirtualBase):
         return sql_near_mean
 
     def get_adj(self, **kwargs):
+        """Get the adjusted timeserie.
+
+        The timeserie get adjusted to match the multi-annual value over the given period.
+        So the yearly variability is kept and only the whole period is adjusted.
+
+        Returns
+        -------
+        pd.DataFrame
+            The adjusted timeserie with the timestamp as index.
+        """        
         # this is only the second part of the methode
         main_df, adj_df, ma = super().get_adj(**kwargs)
 
@@ -2349,8 +2361,12 @@ class StationNBase(StationBase):
 
         main_df_sohj = main_df[mask_sohj]
 
+        min_count = (365//2 - 10)
+        if self._interval == "10 min":
+            min_count = min_count * 24 * 6
+
         main_df_sohj_y = main_df_sohj.groupby(main_df_sohj.index.year)\
-            .sum(min_count=(183 - 10) * 24 * 6).mean()
+            .sum(min_count=min_count).mean()
 
         adj_df[mask_sohj] = (main_df_sohj * (ma[1] / main_df_sohj_y)).round(2)
 
@@ -2358,7 +2374,7 @@ class StationNBase(StationBase):
         mask_wihj = ~mask_sohj
         main_df_wihj = main_df[mask_wihj]
         main_df_wihj_y = main_df_wihj.groupby(main_df_wihj.index.year)\
-            .sum(min_count=(183 - 10) * 24 * 6).mean()
+            .sum(min_count=min_count).mean()
         adj_df[mask_wihj] = (main_df_wihj * (ma[0] / main_df_wihj_y)).round(2)
 
         return adj_df
@@ -3110,8 +3126,8 @@ class StationT(StationTETBase):
         else:
             return None
 
-    def get_adj(self, period=(None, None)):
-        main_df, adj_df, ma, main_df_tr = super().get_adj(period=period)
+    def get_adj(self, **kwargs):
+        main_df, adj_df, ma, main_df_tr = super().get_adj(**kwargs)
 
         # calculate the yearly
         main_df_y = main_df.groupby(main_df_tr.index.year)\
