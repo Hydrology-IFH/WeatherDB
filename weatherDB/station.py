@@ -23,9 +23,9 @@ import rasterio.mask
 from shapely.geometry import Point, MultiLineString
 import shapely.wkt
 
-from .lib.connections import CDC, DB_ENG, check_superuser
+from .lib.connections import DB_ENG, check_superuser
 from .lib.max_fun.import_DWD import dwd_id_to_str, get_dwd_file
-from .lib.utils import TimestampPeriod, get_ftp_file_list
+from .lib.utils import TimestampPeriod, get_cdc_file_list
 from .lib.max_fun.geometry import polar_line, raster2points
 
 # Variables
@@ -1007,12 +1007,13 @@ class StationBase:
             A DataFrame of zipfiles and the corresponding modification time on the CDC server to import.
         """
         # login to CDC FTP server
-        CDC.login()
+        # CDC.login()
+        # CDC = get_cdc_con()
 
         # check if file list providen
         if ftp_file_list is None:
-            ftp_file_list = get_ftp_file_list(
-                CDC,
+            ftp_file_list = get_cdc_file_list(
+                # CDC,
                 self._ftp_folders
             )
 

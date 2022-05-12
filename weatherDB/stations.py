@@ -20,8 +20,8 @@ import socket
 import zipfile
 from pathlib import Path
 
-from .lib.connections import CDC, DB_ENG, check_superuser
-from .lib.utils import get_ftp_file_list, TimestampPeriod
+from .lib.connections import DB_ENG, check_superuser
+from .lib.utils import TimestampPeriod, get_cdc_file_list
 from .lib.max_fun.import_DWD import get_dwd_meta
 from .station import (StationBase,
     StationND,  StationN,
@@ -401,7 +401,7 @@ class StationsBase:
 
         return pbar
 
-    def _run_methode(self, stations, methode, name, m_kwargs=dict(), 
+    def _run_methode(self, stations, methode, name, kwds=dict(), 
             do_mp=True, processes=mp.cpu_count()-1):
         """Run methods of the given stations objects in multiprocessing/threading mode.
 
@@ -413,7 +413,7 @@ class StationsBase:
             The name of the methode to call.
         name : str
             A descriptive name of the method to show in the progressbar.
-        m_kwargs : dict
+        kwds : dict
             The keyword arguments to give to the methodes
         do_mp : bool, optional
             Should the methode be done in multiprocessing mode?
@@ -433,7 +433,7 @@ class StationsBase:
         if processes<=1:
             log.info(f"Ass the number of processes is 1 or lower, the methode '{methode}' is started as a simple loop.")
             self._run_simple_loop(
-                stations=stations, methode=methode, name=name, m_kwargs=m_kwargs)
+                stations=stations, methode=methode, name=name, kwds=kwds)
         else:
             # progressbar
             num_stations = len(stations)
@@ -443,10 +443,12 @@ class StationsBase:
             if do_mp:
                 try:
                     pool = mp.Pool(processes=processes)
+                    log.debug("the multiprocessing Pool is started")
                 except AssertionError:
                     log.debug('daemonic processes are not allowed to have children, therefor threads are used')
                     pool = ThreadPool(processes=processes)
             else:
+                log.debug("the threading Pool is started")
                 pool = ThreadPool(processes=processes)
 
             # start processes
@@ -455,7 +457,7 @@ class StationsBase:
                 results.append(
                     pool.apply_async(
                         getattr(stat, methode),
-                        kwds=m_kwargs))
+                        kwds=kwds))
             pool.close()
 
             # check results until all finished
@@ -492,7 +494,7 @@ class StationsBase:
             pool.join()
             pool.terminate()
 
-    def _run_simple_loop(self, stations, methode, name, m_kwargs=dict()):
+    def _run_simple_loop(self, stations, methode, name, kwds=dict()):
         log.info("-"*79 +
         "\n{para_long} Stations simple loop over methode '{methode}' started.".format(
             para_long=self._para_long,
@@ -506,7 +508,7 @@ class StationsBase:
         # start processes
         results = []
         for stat in stations:
-            getattr(stat, methode)(**m_kwargs)
+            getattr(stat, methode)(**kwds)
             pbar.variables["last_station"] = stat.id
             pbar.update(pbar.value + 1)
 
@@ -547,9 +549,10 @@ class StationsBase:
         start_tstp = datetime.datetime.now()
 
         # get FTP file list
-        CDC.login()
-        ftp_file_list = get_ftp_file_list(
-            ftp_conn=CDC,
+        # CDC.login()
+
+        ftp_file_list = get_cdc_file_list(
+            # ftp_conn=get_cdc_con(), #CDC,
             ftp_folders=self._ftp_folders)
 
         # run the tasks in multiprocessing mode
@@ -557,7 +560,7 @@ class StationsBase:
             stations=self.get_stations(only_real=only_real, stids=stids),
             methode="update_raw",
             name="download raw {para} data".format(para=self._para.upper()),
-            m_kwargs=dict(
+            kwds=dict(
                 only_new=only_new,
                 ftp_file_list=ftp_file_list),
             do_mp=do_mp, **kwargs)
@@ -620,7 +623,7 @@ class StationsBase:
             stations=stations,
             methode="last_imp_fillup",
             name="fillup {para} data".format(para=self._para.upper()),
-            m_kwargs=dict(_last_imp_period=period),
+            kwds=dict(_last_imp_period=period),
             do_mp=do_mp, **kwargs)
 
     @check_superuser
@@ -652,7 +655,7 @@ class StationsBase:
             stations=self.get_stations(only_real=only_real, stids=stids),
             methode="quality_check",
             name="quality check {para} data".format(para=self._para.upper()),
-            m_kwargs=dict(period=period),
+            kwds=dict(period=period),
             do_mp=do_mp, **kwargs)
 
     @check_superuser
@@ -866,7 +869,7 @@ class StationsN(StationsBase):
         self._run_methode(
             stations=stations,
             methode="last_imp_corr",
-            m_kwargs={"_last_imp_period": period},
+            kwds={"_last_imp_period": period},
             name="richter correction on {para}".format(para=self._para.upper()),
             do_mp=do_mp, **kwargs)
 

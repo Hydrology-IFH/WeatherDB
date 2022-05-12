@@ -6,7 +6,6 @@ __author__ = "Max Schmit"
 __copyright__ = "Copyright 2021, Max Schmit"
 
 # libraries
-import os
 import geopandas as gpd
 import pandas as pd
 from datetime import datetime
@@ -23,29 +22,17 @@ import random
 from socket import gethostname
 
 # logger
-log = logging.getLogger("import_DWD")
-this_dir = Path(__file__).parent
-log_dir = Path(this_dir).joinpath("logs")
-if not log_dir.is_dir(): log_dir.mkdir()
-log_fh = logging.FileHandler(
-    log_dir.joinpath("DWD_import_" + gethostname() + ".txt"))
-log.setLevel(logging.DEBUG)
-log.addHandler(log_fh)
+log = logging.getLogger(__name__)
+if not log.hasHandlers():
+    this_dir = Path(__file__).parent
+    log_dir = Path(this_dir).joinpath("logs")
+    if not log_dir.is_dir(): log_dir.mkdir()
+    log_fh = logging.FileHandler(
+        log_dir.joinpath("DWD_import_" + gethostname() + ".txt"))
+    log_fh.setLevel(logging.DEBUG)
+    log.addHandler(log_fh)
 
-# ftp connection
-class FTP(ftplib.FTP):
-    def login(self, **kwargs):
-        # this prevents an error message if the user is already logged in
-        try:
-            super().login(**kwargs)
-        except (ConnectionAbortedError, ftplib.error_temp, BrokenPipeError):
-            self.__init__(self.host)
-            self.login()
-        except (ftplib.error_perm, EOFError, ftplib.error_reply):
-            pass # this means the connection is already logged in
-
-FTP_CDC = FTP("opendata.dwd.de")
-FTP_CDC.login()
+CDC_HOST = "opendata.dwd.de"
 
 # basic functions
 # ----------------
@@ -124,20 +111,22 @@ def get_dwd_file(zip_filepath):
 
     """
     # get the compressed folder from dwd
-    ftp = FTP_CDC
-    ftp.login()
-    compressed_bin = BytesIO()
-    num_tried = 0
-    while num_tried < 10:
-        try:
-            ftp.retrbinary("RETR " + zip_filepath, compressed_bin.write)
-            break
-        except Exception as e:
-            if num_tried < 9:
-                num_tried += 1
-                time.sleep(random.randint(0,400)/100)
-            else:
-                raise e
+    with ftplib.FTP(CDC_HOST) as ftp:
+        ftp.login()
+
+        # download file
+        compressed_bin = BytesIO()
+        num_tried = 0
+        while num_tried < 10:
+            try:
+                ftp.retrbinary("RETR " + zip_filepath, compressed_bin.write)
+                break
+            except Exception as e:
+                if num_tried < 9:
+                    num_tried += 1
+                    time.sleep(random.randint(0,400)/100)
+                else:
+                    raise e
 
     # check folder to be derived or observation type import the data
     if re.search("observations", zip_filepath):
@@ -171,7 +160,7 @@ def get_dwd_file(zip_filepath):
                                  na_values=[-999, "####", "#####", "######"])
 
     elif re.search("derived", zip_filepath):
-        return pd.read_table("ftp://opendata.dwd.de/" + zip_filepath,
+        return pd.read_table(f"ftp://{CDC_HOST}/{zip_filepath}",
                              compression="gzip",
                              sep=";",
                              parse_dates=["Datum"],
@@ -210,8 +199,8 @@ def get_dwd_data(station_id, ftp_folder):
         date_col = "Datum"
 
     # open ftp-server connection
-    ftp = FTP_CDC
-    ftp.login()
+    # ftp = FTP_CDC
+    # ftp.login()
 
     # test if recent or historical specified
     if re.search(r"((observations)|(derived))(?!.*((historical)|(recent))[\/]*$)", ftp_folder):
@@ -224,8 +213,10 @@ def get_dwd_data(station_id, ftp_folder):
     # test if station is in folder or even several times
     comp = re.compile(r".*_" + station_id + r"[_\.].*")
     zipfilenames = []
-    for ftp_folder in ftp_folders:
-        zipfilenames.extend(list(filter(comp.match, ftp.nlst(ftp_folder))))
+    with ftplib.FTP(CDC_HOST) as ftp:
+        ftp.login()
+        for ftp_folder in ftp_folders:
+            zipfilenames.extend(list(filter(comp.match, ftp.nlst(ftp_folder))))
 
     if len(zipfilenames) == 0:
         log.debug("There is no file for the Station " + station_id + " in " +
