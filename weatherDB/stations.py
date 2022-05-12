@@ -432,7 +432,11 @@ class StationsBase:
 
         # create pool
         if do_mp:
-            pool = mp.Pool(processes=processes)
+            try:
+                pool = mp.Pool(processes=processes)
+            except AssertionError:
+                log.debug('daemonic processes are not allowed to have children, therefor threads are used')
+                pool = ThreadPool(processes=processes)
         else:
             pool = ThreadPool(processes=processes)
 
@@ -684,8 +688,7 @@ class StationsBase:
             df.rename(
                 dict(zip(
                     df.columns, 
-                    [str(stat.id) 
-                        for col in df.columns])), 
+                    [str(stat.id) for col in df.columns])), 
                 axis=1, inplace=True)
             if "df_all" in locals():
                 df_all = df_all.join(df)

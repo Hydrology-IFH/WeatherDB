@@ -2,6 +2,7 @@
 
 ## Version 0.0.10
 - fixed get_adj compare Timestamp with timezone 
+
 ## Version 0.0.9
 - fixed future warning in stations.GroupStations().create_ts
 - stations.GroupStations().create_roger_ts fixed

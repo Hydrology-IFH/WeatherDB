@@ -44,6 +44,7 @@ if not log.hasHandlers():
             '%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
     log.addHandler(fh)
 
+# import classes
 from . import station, stations
 try:
     from . import broker
