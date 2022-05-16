@@ -1315,7 +1315,8 @@ class StationBase:
                         filled_by = new.filled_by
                     FROM new_filled_{stid}_{para} new
                     WHERE ts.timestamp = new.timestamp
-                        AND ts."filled" IS DISTINCT FROM new."filled";
+                        AND (ts."filled" IS DISTINCT FROM new."filled" 
+                             OR ts."filled_by" IS DISTINCT FROM new."filled_by") ;
                 END
             $do$;
         """.format(**sql_format_dict)

@@ -1,5 +1,9 @@
 # Change-log
 
+## Version 0.0.12 (upcoming)
+- add quality check for precipitation stations: delete values were the aggregated daily sum is more than double of the daily measurement
+- when filling up also replace the filled_by column if it got changed
+  
 ## Version 0.0.11
 - add fallback on thread if multiprocessing is not working
 - cleaning up ftplib use. allways recreate a new instance and don't try to reuse the instance.
