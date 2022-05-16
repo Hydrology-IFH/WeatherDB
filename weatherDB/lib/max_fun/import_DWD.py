@@ -198,10 +198,6 @@ def get_dwd_data(station_id, ftp_folder):
         station_id = str(int(station_id))
         date_col = "Datum"
 
-    # open ftp-server connection
-    # ftp = FTP_CDC
-    # ftp.login()
-
     # test if recent or historical specified
     if re.search(r"((observations)|(derived))(?!.*((historical)|(recent))[\/]*$)", ftp_folder):
         if (ftp_folder[-1] != "/"):
