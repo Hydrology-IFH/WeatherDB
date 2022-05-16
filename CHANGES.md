@@ -1,5 +1,11 @@
 # Change-log
 
+## Version 0.0.11 (upcoming)
+- add fallback on thread if multiprocessing is not working
+- cleaning up ftplib use. allways recreate a new instance and don't try to reuse the instance.
+  This resolves some problems with the threading of the instances.
+- clean raw updates of only recent files by the maximum timestamp of the historical data.
+
 ## Version 0.0.10
 - fixed get_adj compare Timestamp with timezone 
 

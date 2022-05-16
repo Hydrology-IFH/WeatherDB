@@ -920,10 +920,16 @@ class StationBase:
             return None
 
         # download raw data
-        df_all = self._download_raw(zipfiles=zipfiles.index)
+        df_all, max_hist_tstp_new = self._download_raw(zipfiles=zipfiles.index)
 
         # cut out valid time period
         df_all = df_all.loc[df_all.index >= MIN_TSTP]
+        max_hist_tstp_old = self.get_meta(infos=["hist_until"])
+        if max_hist_tstp_new is None:
+            if max_hist_tstp_old is not None:
+                df_all = df_all.loc[df_all.index >= max_hist_tstp_old]
+        elif max_hist_tstp_old is None or max_hist_tstp_old <= max_hist_tstp_new:
+            self._update_meta(cols=["hist_until"], values=[max_hist_tstp_new])
 
         # change to db format
         dict_cdc_db = dict(
@@ -981,11 +987,11 @@ class StationBase:
             selection.index.min(), selection.index.max())
         self._update_last_imp_period_meta(period=imp_period)
 
-        log.info("The raw data for {para_long} station with ID {stid} got updated for the period {min_tstp} to {max_tstp}."
-                .format(
-                    para_long=self._para_long,
-                    stid=self.id,
-                    **imp_period.get_sql_format_dict(format=self._tstp_format_human)))
+        log.info(("The raw data for {para_long} station with ID {stid} got "+ 
+             "updated for the period {min_tstp} to {max_tstp}.").format(
+                para_long=self._para_long,
+                stid=self.id,
+                **imp_period.get_sql_format_dict(format=self._tstp_format_human)))
 
     def get_zipfiles(self, only_new=True, ftp_file_list=None):
         """Get the zipfiles on the CDC server with the raw data.
@@ -1060,10 +1066,18 @@ class StationBase:
     def _download_raw(self, zipfiles):
         # download raw data
         # import every file and merge data
+        max_hist_tstp = None
         for zf in zipfiles:
             df_new = get_dwd_file(zf)
             df_new.set_index(self._date_col, inplace=True)
             df_new = self._check_df_raw(df_new)
+            # check if hist in query and get max tstp of it ##########
+            if "historical" in zf:
+                max_hist_tstp_new = df_new.index.max()
+                if max_hist_tstp is not None:
+                    max_hist_tstp = np.max([max_hist_tstp, max_hist_tstp_new])
+                else:
+                    max_hist_tstp = max_hist_tstp_new
 
             # merge with df_all
             if "df_all" not in locals():
@@ -1078,7 +1092,7 @@ class StationBase:
         if df_all.index.has_duplicates:
             df_all = df_all.groupby(df_all.index).mean()
 
-        return df_all
+        return df_all, max_hist_tstp
 
     def download_raw(self, only_new=False):
         """Download the timeserie from the CDC Server.
@@ -1097,7 +1111,7 @@ class StationBase:
         pandas.DataFrame
             The Timeseries as a DataFrame with a Timestamp Index.
         """
-        return self._download_raw(zipfiles=self.get_zipfiles(only_new=only_new).index)
+        return self._download_raw(zipfiles=self.get_zipfiles(only_new=only_new).index)[0]
 
     @check_superuser
     def _get_sql_new_qc(self, period=(None, None)):
