@@ -2442,6 +2442,7 @@ class StationN(StationNBase):
         # create sql_format_dict
         sql_format_dict = dict(
             para=self._para, stid=self.id, para_long=self._para_long,
+            decim=self._decimals,
             **period.get_sql_format_dict(
                 format="'{}'".format(self._tstp_format_db)),
             limit=0.1*self._decimals) # don't delete values below 0.1mm/10min if they are consecutive
@@ -2459,6 +2460,7 @@ class StationN(StationNBase):
 
         # create sql for dates where the aggregated 10 minutes measurements are 0
         # althought the daily measurements are not 0
+        # or where the aggregated daily sum is more than the double of the daily measurement, when the daily measurement is more than 10 mm
         if daily_exists:
             sql_dates_failed = """
                 WITH ts_10min_d AS (
@@ -2470,7 +2472,8 @@ class StationN(StationNBase):
                 FROM timeseries."{stid}_{para}_d" ts_d
                 LEFT JOIN ts_10min_d ON ts_d.timestamp::date=ts_10min_d.date
                 WHERE ts_d.timestamp BETWEEN {min_tstp}::date AND {max_tstp}::date
-                    AND ts_10min_d.raw = 0 AND ts_d.raw <> 0
+                    AND ((ts_10min_d.raw = 0 AND ts_d.raw <> 0) OR 
+                         (ts_10min_d.raw >= 10*{decim} AND ts_10min_d.raw >= (ts_d.raw*2)))
             """.format(**sql_format_dict)
         else:
             log.warn((
