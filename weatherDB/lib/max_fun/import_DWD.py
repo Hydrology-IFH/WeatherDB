@@ -334,13 +334,13 @@ def get_dwd_meta(ftp_folder, min_years=0, max_hole_d=9999):
 
     """
     # open ftp connection and get list of files in folder
-    ftp = FTP_CDC
-    ftp.login()
+    with ftplib.FTP(CDC_HOST) as ftp:
+        ftp.login()
 
-    # get and check the meta_file name
-    ftp_files = ftp.nlst(ftp_folder)
-    pattern = ".+[(_stations_list)(_Beschreibung_Stationen)].txt"
-    meta_file = list(filter(re.compile(pattern).match, ftp_files))
+        # get and check the meta_file name
+        ftp_files = ftp.nlst(ftp_folder)
+        pattern = ".+[(_stations_list)(_Beschreibung_Stationen)].txt"
+        meta_file = list(filter(re.compile(pattern).match, ftp_files))
 
     if len(meta_file) == 0:
         log.info("There is no file matching the pattern: " + pattern +
