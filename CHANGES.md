@@ -1,6 +1,6 @@
 # Change-log
 
-## Version 0.0.11 (upcoming)
+## Version 0.0.11
 - add fallback on thread if multiprocessing is not working
 - cleaning up ftplib use. allways recreate a new instance and don't try to reuse the instance.
   This resolves some problems with the threading of the instances.
