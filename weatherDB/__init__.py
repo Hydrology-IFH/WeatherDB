@@ -8,7 +8,7 @@ import socket
 __author__ = "Max Schmit"
 __email__ = "max.schmit@hydrology.uni-freiburg.de"
 __copyright__ = "Copyright 2022, Max Schmit"
-__version__ = "0.0.10"
+__version__ = "0.0.11"
 
 # set the log
 #############
@@ -44,6 +44,7 @@ if not log.hasHandlers():
             '%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
     log.addHandler(fh)
 
+# import classes
 from . import station, stations
 try:
     from . import broker

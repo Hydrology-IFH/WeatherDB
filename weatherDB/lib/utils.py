@@ -8,6 +8,7 @@ import pathlib
 
 from pandas import Timestamp, NaT, Timedelta
 import datetime
+from .connections import CDC_HOST
 
 
 # functions
@@ -50,6 +51,12 @@ def get_ftp_file_list(ftp_conn, ftp_folders):
             modtime = dateutil.parser.parse(parts[5] + " " + parts[6] + " " + parts[7])
             files.append((filepath, modtime))
 
+    return files
+
+def get_cdc_file_list(ftp_folders):
+    with ftplib.FTP(CDC_HOST) as ftp_con:
+        ftp_con.login()
+        files = get_ftp_file_list(ftp_con, ftp_folders)
     return files
 
 # classes

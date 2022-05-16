@@ -1,5 +1,4 @@
 # libraries
-import ftplib
 import sqlalchemy
 import sys, os
 from pathlib import Path
@@ -63,17 +62,5 @@ def check_superuser(methode):
         return no_super_user
 
 # DWD - CDC FTP Server
-class FTP(ftplib.FTP):
-    def login(self, **kwargs):
-        # this prevents an error message if the user is already logged in
-        try:
-            super().login(**kwargs)
-        except (ConnectionAbortedError, ftplib.error_temp, BrokenPipeError):
-            self.__init__(self.host)
-            self.login()
-        except (ftplib.error_perm, EOFError):
-            pass # this means the connection is already logged in
-
-CDC = FTP("opendata.dwd.de")
-CDC.login()
+CDC_HOST = "opendata.dwd.de"
 

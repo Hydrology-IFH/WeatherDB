@@ -20,8 +20,8 @@ import socket
 import zipfile
 from pathlib import Path
 
-from .lib.connections import CDC, DB_ENG, check_superuser
-from .lib.utils import get_ftp_file_list, TimestampPeriod
+from .lib.connections import DB_ENG, check_superuser
+from .lib.utils import TimestampPeriod, get_cdc_file_list
 from .lib.max_fun.import_DWD import get_dwd_meta
 from .station import (StationBase,
     StationND,  StationN,
@@ -401,7 +401,8 @@ class StationsBase:
 
         return pbar
 
-    def _run_in_mp(self, stations, methode, name, kwargs=dict(), do_mp=True, processes=mp.cpu_count()-1):
+    def _run_methode(self, stations, methode, name, kwds=dict(), 
+            do_mp=True, processes=mp.cpu_count()-1):
         """Run methods of the given stations objects in multiprocessing/threading mode.
 
         Parameters
@@ -412,7 +413,7 @@ class StationsBase:
             The name of the methode to call.
         name : str
             A descriptive name of the method to show in the progressbar.
-        kwargs : dict
+        kwds : dict
             The keyword arguments to give to the methodes
         do_mp : bool, optional
             Should the methode be done in multiprocessing mode?
@@ -420,66 +421,80 @@ class StationsBase:
             Multiprocessing needs more memory and a bit more initiating time. Therefor it is only usefull for methods with a lot of computation effort in the python code.
             If the most computation of a methode is done in the postgresql database, then threading is enough to speed the process up.
             The default is True.
+        processes : int, optional
+            The number of processes that should get started simultaneously.
+            If 1 or less, then the process is computed as a simple loop, so there is no multiprocessing or threading done.
+            The default is the cpu count -1.
         """
         log.info("-"*79 +
-        "\n{para_long} Stations async loop over methode '{methode}' started.".format(
-            para_long=self._para_long,
-            methode=methode
-        ))
-        # progressbar
-        num_stations = len(stations)
-        pbar = self._get_progressbar(max_value=num_stations, name=name)
+            f"\n{self._para_long} Stations async loop over methode '{methode}' started."
+            )
 
-        # create pool
-        if do_mp:
-            pool = mp.Pool(processes=processes)
+        if processes<=1:
+            log.info(f"Ass the number of processes is 1 or lower, the methode '{methode}' is started as a simple loop.")
+            self._run_simple_loop(
+                stations=stations, methode=methode, name=name, kwds=kwds)
         else:
-            pool = ThreadPool(processes=processes)
+            # progressbar
+            num_stations = len(stations)
+            pbar = self._get_progressbar(max_value=num_stations, name=name)
 
-        # start processes
-        results = []
-        for stat in stations:
-            results.append(
-                pool.apply_async(
-                    getattr(stat, methode),
-                    kwds=kwargs))
-        pool.close()
+            # create pool
+            if do_mp:
+                try:
+                    pool = mp.Pool(processes=processes)
+                    log.debug("the multiprocessing Pool is started")
+                except AssertionError:
+                    log.debug('daemonic processes are not allowed to have children, therefor threads are used')
+                    pool = ThreadPool(processes=processes)
+            else:
+                log.debug("the threading Pool is started")
+                pool = ThreadPool(processes=processes)
 
-        # check results until all finished
-        finished = [False] * num_stations
-        while (True):
-            if all(finished): break
+            # start processes
+            results = []
+            for stat in stations:
+                results.append(
+                    pool.apply_async(
+                        getattr(stat, methode),
+                        kwds=kwds))
+            pool.close()
 
-            for result in [result for i, result in enumerate(results)
-                                  if not finished[i]]:
-                if result.ready():
-                    index = results.index(result)
-                    finished[index] = True
-                    pbar.variables["last_station"] = stations[index].id
-                    # get stdout and log
-                    try:
-                        stdout = "stdout: " + str(result.get(10))
-                    except:
-                        stdout = "stderr: " + traceback.format_exc()
-                    if stdout != "stdout: None":
-                        log.debug((
-                            "The {name} of the {para_long} Station " +
-                            "with ID {stid} finished with:\n" +
-                            "{stdout}"
-                            ).format(
-                                name=name,
-                                para_long=self._para_long,
-                                stid=stations[index].id,
-                                stdout=stdout))
+            # check results until all finished
+            finished = [False] * num_stations
+            while (True):
+                if all(finished): break
 
-                    pbar.update(sum(finished))
-            time.sleep(2)
+                for result in [result for i, result in enumerate(results)
+                                    if not finished[i]]:
+                    if result.ready():
+                        index = results.index(result)
+                        finished[index] = True
+                        pbar.variables["last_station"] = stations[index].id
+                        # get stdout and log
+                        try:
+                            stdout = "stdout: " + str(result.get(10))
+                        except:
+                            stdout = "stderr: " + traceback.format_exc()
+                        if stdout != "stdout: None":
+                            log.debug((
+                                "The {name} of the {para_long} Station " +
+                                "with ID {stid} finished with:\n" +
+                                "{stdout}"
+                                ).format(
+                                    name=name,
+                                    para_long=self._para_long,
+                                    stid=stations[index].id,
+                                    stdout=stdout))
 
-        pbar.update(sum(finished))
-        pool.join()
-        pool.terminate()
+                        pbar.update(sum(finished))
+                time.sleep(2)
 
-    def _run_simple_loop(self, stations, methode, name, kwargs=dict()):
+            pbar.update(sum(finished))
+            pool.join()
+            pool.terminate()
+
+    def _run_simple_loop(self, stations, methode, name, kwds=dict()):
         log.info("-"*79 +
         "\n{para_long} Stations simple loop over methode '{methode}' started.".format(
             para_long=self._para_long,
@@ -493,12 +508,13 @@ class StationsBase:
         # start processes
         results = []
         for stat in stations:
-            getattr(stat, methode)(**kwargs)
+            getattr(stat, methode)(**kwds)
             pbar.variables["last_station"] = stat.id
             pbar.update(pbar.value + 1)
 
     @check_superuser
-    def update_raw(self, only_new=True, only_real=True, stids="all"):
+    def update_raw(self, only_new=True, only_real=True, stids="all", 
+            do_mp=True, **kwargs):
         """Download all stations data from CDC and upload to database.
 
         Parameters
@@ -515,7 +531,15 @@ class StationsBase:
             The Stations to return.
             Can either be "all", for all possible stations
             or a list with the Station IDs.
-            The default is "all".
+            The default is "all".  
+        do_mp : bool, optional
+            Should the methode be done in multiprocessing mode?
+            If False the methods will be called in threading mode.
+            Multiprocessing needs more memory and a bit more initiating time. Therefor it is only usefull for methods with a lot of computation effort in the python code.
+            If the most computation of a methode is done in the postgresql database, then threading is enough to speed the process up.
+            The default is True.      
+        kwargs : dict, optional
+            The additional keyword arguments for the _run_methode methode
 
         Raises
         ------
@@ -525,20 +549,21 @@ class StationsBase:
         start_tstp = datetime.datetime.now()
 
         # get FTP file list
-        CDC.login()
-        ftp_file_list = get_ftp_file_list(
-            ftp_conn=CDC,
+        # CDC.login()
+
+        ftp_file_list = get_cdc_file_list(
+            # ftp_conn=get_cdc_con(), #CDC,
             ftp_folders=self._ftp_folders)
 
         # run the tasks in multiprocessing mode
-        self._run_in_mp(
+        self._run_methode(
             stations=self.get_stations(only_real=only_real, stids=stids),
             methode="update_raw",
             name="download raw {para} data".format(para=self._para.upper()),
-            kwargs=dict(
+            kwds=dict(
                 only_new=only_new,
                 ftp_file_list=ftp_file_list),
-            do_mp=True)
+            do_mp=do_mp, **kwargs)
 
         # save start time as variable to db
         with DB_ENG.connect() as con:
@@ -552,19 +577,40 @@ class StationsBase:
                 start_tstp=start_tstp.strftime("%Y%m%d %H:%M")))
 
     @check_superuser
-    def last_imp_quality_check(self):
+    def last_imp_quality_check(self, do_mp=False, **kwargs):
         """Do the quality check of the last import.
+
+        Parameters
+        ----------
+        do_mp : bool, optional
+            Should the methode be done in multiprocessing mode?
+            If False the methods will be called in threading mode.
+            Multiprocessing needs more memory and a bit more initiating time. Therefor it is only usefull for methods with a lot of computation effort in the python code.
+            If the most computation of a methode is done in the postgresql database, then threading is enough to speed the process up.
+            The default is False.
+        kwargs : dict, optional
+            The additional keyword arguments for the _run_methode methode
         """
-        self._run_in_mp(
+        self._run_methode(
             stations=self.get_stations(only_real=True),
             methode="last_imp_quality_check",
             name="quality check {para} data".format(para=self._para.upper()),
-            kwargs=dict(),
-            do_mp=False)
+            do_mp=do_mp, **kwargs)
 
     @check_superuser
-    def last_imp_fillup(self):
+    def last_imp_fillup(self, do_mp=False, **kwargs):
         """Do the gap filling of the last import.
+
+        Parameters
+        ----------
+        do_mp : bool, optional
+            Should the methode be done in multiprocessing mode?
+            If False the methods will be called in threading mode.
+            Multiprocessing needs more memory and a bit more initiating time. Therefor it is only usefull for methods with a lot of computation effort in the python code.
+            If the most computation of a methode is done in the postgresql database, then threading is enough to speed the process up.
+            The default is False.
+        kwargs : dict, optional
+            The additional keyword arguments for the _run_methode methode
         """
         stations = self.get_stations(only_real=True)
         period = stations[0].get_last_imp_period(all=True)
@@ -573,15 +619,16 @@ class StationsBase:
             para_long=self._para_long,
             min_tstp=period_log[0],
             max_tstp=period_log[1]))
-        self._run_in_mp(
+        self._run_methode(
             stations=stations,
             methode="last_imp_fillup",
             name="fillup {para} data".format(para=self._para.upper()),
-            kwargs=dict(_last_imp_period=period),
-            do_mp=False)
+            kwds=dict(_last_imp_period=period),
+            do_mp=do_mp, **kwargs)
 
     @check_superuser
-    def quality_check(self, period=(None, None), only_real=True, stids="all"):
+    def quality_check(self, period=(None, None), only_real=True, stids="all",
+            do_mp=False, **kwargs):
         """Quality check the raw data for a given period.
 
         Parameters
@@ -595,16 +642,24 @@ class StationsBase:
             Can either be "all", for all possible stations
             or a list with the Station IDs.
             The default is "all".
+        do_mp : bool, optional
+            Should the methode be done in multiprocessing mode?
+            If False the methods will be called in threading mode.
+            Multiprocessing needs more memory and a bit more initiating time. Therefor it is only usefull for methods with a lot of computation effort in the python code.
+            If the most computation of a methode is done in the postgresql database, then threading is enough to speed the process up.
+            The default is False.
+        kwargs : dict, optional
+            The additional keyword arguments for the _run_methode methode
         """
-        self._run_in_mp(
-            stations=self.get_stations(only_real=only_real),
+        self._run_methode(
+            stations=self.get_stations(only_real=only_real, stids=stids),
             methode="quality_check",
             name="quality check {para} data".format(para=self._para.upper()),
-            kwargs=dict(period=period),
-            do_mp=False)
+            kwds=dict(period=period),
+            do_mp=do_mp, **kwargs)
 
     @check_superuser
-    def update_ma(self, stids="all"):
+    def update_ma(self, stids="all", do_mp=False, **kwargs):
         """Update the multi annual values for the stations.
 
         Get a multi annual value from the corresponding raster and save to the multi annual table in the database.
@@ -616,21 +671,28 @@ class StationsBase:
             Can either be "all", for all possible stations
             or a list with the Station IDs.
             The default is "all".
+        do_mp : bool, optional
+            Should the methode be done in multiprocessing mode?
+            If False the methods will be called in threading mode.
+            Multiprocessing needs more memory and a bit more initiating time. Therefor it is only usefull for methods with a lot of computation effort in the python code.
+            If the most computation of a methode is done in the postgresql database, then threading is enough to speed the process up.
+            The default is False.
+        kwargs : dict, optional
+            The additional keyword arguments for the _run_methode methode
 
         Raises
         ------
         ValueError
             If the given stids (Station_IDs) are not all valid.
         """
-        self._run_in_mp(
+        self._run_methode(
             stations=self.get_stations(only_real=False, stids=stids),
             methode="update_ma",
             name="update ma-values for {para}".format(para=self._para.upper()),
-            kwargs=dict(),
-            do_mp=False)
+            do_mp=do_mp, **kwargs)
 
     @check_superuser
-    def fillup(self, only_real=False, stids="all"):
+    def fillup(self, only_real=False, stids="all", do_mp=False, **kwargs):
         """Fill up the quality checked data with data from nearby stations to get complete timeseries.
 
         Parameters
@@ -644,18 +706,25 @@ class StationsBase:
             Can either be "all", for all possible stations
             or a list with the Station IDs.
             The default is "all".
+        do_mp : bool, optional
+            Should the methode be done in multiprocessing mode?
+            If False the methods will be called in threading mode.
+            Multiprocessing needs more memory and a bit more initiating time. Therefor it is only usefull for methods with a lot of computation effort in the python code.
+            If the most computation of a methode is done in the postgresql database, then threading is enough to speed the process up.
+            The default is False.
+        kwargs : dict, optional
+            The additional keyword arguments for the _run_methode methode
 
         Raises
         ------
         ValueError
             If the given stids (Station_IDs) are not all valid.
         """
-        self._run_in_mp(
+        self._run_methode(
             stations=self.get_stations(only_real=only_real, stids=stids),
             methode="fillup",
-            kwargs={},
             name="fillup {para} data".format(para=self._para.upper()),
-            do_mp=False)
+            do_mp=do_mp, **kwargs)
 
     def get_df(self, stids, kind, **kwargs):
         """Get a DataFrame with the corresponding data.
@@ -684,8 +753,7 @@ class StationsBase:
             df.rename(
                 dict(zip(
                     df.columns, 
-                    [str(stat.id) 
-                        for col in df.columns])), 
+                    [str(stat.id) for col in df.columns])), 
                 axis=1, inplace=True)
             if "df_all" in locals():
                 df_all = df_all.join(df)
@@ -737,15 +805,14 @@ class StationsN(StationsBase):
         ValueError
             If the given stids (Station_IDs) are not all valid.
         """
-        self._run_in_mp(
+        self._run_methode(
             stations=self.get_stations(only_real=True, stids=stids),
             methode="update_richter_class",
             name="update richter class for {para}".format(para=self._para.upper()),
-            kwargs=dict(),
             do_mp=False)
 
     @check_superuser
-    def richter_correct(self, stids="all"):
+    def richter_correct(self, stids="all", **kwargs):
         """Richter correct the filled data.
 
         Parameters
@@ -755,21 +822,22 @@ class StationsN(StationsBase):
             Can either be "all", for all possible stations
             or a list with the Station IDs.
             The default is "all".
+        kwargs : dict, optional
+            The additional keyword arguments for the _run_methode methode
 
         Raises
         ------
         ValueError
             If the given stids (Station_IDs) are not all valid.
         """
-        self._run_in_mp(
+        self._run_methode(
             stations=self.get_stations(only_real=False, stids=stids),
             methode="richter_correct",
-            kwargs={},
             name="richter correction on {para}".format(para=self._para.upper()),
-            do_mp=False)
+            do_mp=False, **kwargs)
 
     @check_superuser
-    def last_imp_corr(self, stids="all"):
+    def last_imp_corr(self, stids="all", do_mp=False, **kwargs):
         """Richter correct the filled data for the last imported period.
 
         Parameters
@@ -779,6 +847,14 @@ class StationsN(StationsBase):
             Can either be "all", for all possible stations
             or a list with the Station IDs.
             The default is "all".
+        do_mp : bool, optional
+            Should the methode be done in multiprocessing mode?
+            If False the methods will be called in threading mode.
+            Multiprocessing needs more memory and a bit more initiating time. Therefor it is only usefull for methods with a lot of computation effort in the python code.
+            If the most computation of a methode is done in the postgresql database, then threading is enough to speed the process up.
+            The default is False.
+        kwargs : dict, optional
+            The additional keyword arguments for the _run_methode methode
 
         Raises
         ------
@@ -790,12 +866,12 @@ class StationsN(StationsBase):
         log.info("The {para_long} Stations fillup of the last import is started for the period {min_tstp} - {max_tstp}".format(
             para_long=self._para_long,
             **period.get_sql_format_dict(format="%Y%m%d %H:%M")))
-        self._run_in_mp(
+        self._run_methode(
             stations=stations,
             methode="last_imp_corr",
-            kwargs={"_last_imp_period": period},
+            kwds={"_last_imp_period": period},
             name="richter correction on {para}".format(para=self._para.upper()),
-            do_mp=False)
+            do_mp=do_mp, **kwargs)
 
 
 class StationsND(StationsBase):
