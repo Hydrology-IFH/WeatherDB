@@ -2586,7 +2586,7 @@ class StationN(StationNBase):
     def _check_period_extra(period): 
         """Additional checks on period used in StationBase class _check_period methode."""   
         # add time to period if given as date
-        return period.to_timestamp()
+        return period.expand_to_timestamp()
 
     @staticmethod
     def _richter_class_from_horizon(horizon):

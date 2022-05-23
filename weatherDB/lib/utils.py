@@ -370,7 +370,7 @@ class TimestampPeriod(object):
         new.is_date = self.is_date
         return new
 
-    def to_timestamp(self):
+    def expand_to_timestamp(self):
         if self.is_date:
             return TimestampPeriod(
                 start=self.start,
