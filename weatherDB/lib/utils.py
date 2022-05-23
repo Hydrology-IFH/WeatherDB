@@ -5,6 +5,7 @@ Some utilities functions and classes that are used in the module.
 import dateutil
 import ftplib
 import pathlib
+import re
 
 from pandas import Timestamp, NaT, Timedelta
 import datetime
@@ -63,13 +64,18 @@ def get_cdc_file_list(ftp_folders):
 class TimestampPeriod(object):
     """A class to save a Timespan with a minimal and maximal Timestamp.
     """    
-    COMPARE = {
+    _COMPARE = {
         "inner": {
             0: max,
             1: min},
         "outer": {
             0: min,
             1: max}}
+    _REGEX_HAS_TIME = re.compile(
+        r"((^\d{6}[ \-\.]+)"+ # 991231
+        r"|(^\d{8}[ \-\.]*)|" + # 19991231
+        r"(^\d{1,4}[ \-\.]\d{1,2}[ \-\.]\d{1,4}[ \-\.]+))" + # 1999-12-31
+        r"+(\d+)") # has additional numbers -> time
 
     def __init__(self, start, end, tzinfo="UTC"):
         """Initiate a TimestampPeriod.
@@ -87,7 +93,9 @@ class TimestampPeriod(object):
             The default is "UTC".
         """
         # check if input is a date or a timestamp
-        if type(start) == datetime.date and type(end) == datetime.date:
+        if ((type(start) == datetime.date and type(end) == datetime.date) or
+            (type(start) == str and not self._REGEX_HAS_TIME.match(start) and 
+             type(end) == str and not self._REGEX_HAS_TIME.match(end))):
             self.is_date = True
         else:
             self.is_date = False
@@ -163,7 +171,7 @@ class TimestampPeriod(object):
                                    [tdsself[i], tdsother[i]])
                 if type(val) == Timestamp]
             if len(comp_list) > 0:
-                period[i] = self.COMPARE[how][i](comp_list)
+                period[i] = self._COMPARE[how][i](comp_list)
 
         # check if end < start
         if period[0]>=period[1]:

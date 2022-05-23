@@ -3,6 +3,7 @@
 ## Version 0.0.12 (upcoming)
 - add quality check for precipitation stations: delete values were the aggregated daily sum is more than double of the daily measurement
 - when filling up also replace the filled_by column if it got changed
+- TimestampPeriod class now also detects string inputs as date
   
 ## Version 0.0.11
 - add fallback on thread if multiprocessing is not working
