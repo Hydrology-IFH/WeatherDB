@@ -934,8 +934,6 @@ class StationBase:
         # cut out valid time period
         df_all = df_all.loc[df_all.index >= MIN_TSTP]
         max_hist_tstp_old = self.get_meta(infos=["hist_until"])
-        # if max_hist_tstp_old is not None:
-        #     max_hist_tstp_old = max_hist_tstp_old.to_localize("UTC")
         if max_hist_tstp_new is None:
             if max_hist_tstp_old is not None:
                 df_all = df_all.loc[df_all.index >= max_hist_tstp_old]
