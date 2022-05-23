@@ -1950,6 +1950,8 @@ class StationBase:
             timestamp_col = "date_trunc('{agg_to}', timestamp)".format(
                 agg_to=agg_to)
             group_by = "GROUP BY " + timestamp_col
+            if agg_to in ["day", "month", "year", "decade"]:
+                timestamp_col += "::date"
 
             # add the filled_share if needed
             if add_filled_share:
