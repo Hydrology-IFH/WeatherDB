@@ -1224,7 +1224,7 @@ class StationBase:
         if len(self._ma_cols) == 1:
             sql_format_dict.update(dict(
                 is_winter_col="",
-                coef_calc="ma_other.{ma_col}{coef_sign[0]}ma_stat.{ma_col}::float AS coef"
+                coef_calc="ma_stat.{ma_col}{coef_sign[0]}ma_other.{ma_col}::float AS coef"
                 .format(
                     ma_col=self._ma_cols[0],
                     coef_sign=self._coef_sign),
@@ -1240,8 +1240,8 @@ class StationBase:
                         ELSE false::bool
                     END AS is_winter""",
                 coef_calc=(
-                    "ma_other.{ma_col[0]}{coef_sign[0]}ma_stat.{ma_col[0]}::float AS coef_wi, \n" + " "*24 +
-                    "ma_other.{ma_col[1]}{coef_sign[0]}ma_stat.{ma_col[1]}::float AS coef_so"
+                    "ma_stat.{ma_col[0]}{coef_sign[0]}ma_other.{ma_col[0]}::float AS coef_wi, \n" + " "*24 +
+                    "ma_stat.{ma_col[1]}{coef_sign[0]}ma_other.{ma_col[1]}::float AS coef_so"
                 ).format(
                     ma_col=self._ma_cols,
                     coef_sign=self._coef_sign),
