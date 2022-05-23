@@ -1341,4 +1341,4 @@ class GroupStations(object):
                               split_date=True, nas_allowed=False)
 
 # clean station
-del StationN, StationND, StationT, StationET, GroupStation
+del StationN, StationND, StationT, StationET, GroupStation, StationBase

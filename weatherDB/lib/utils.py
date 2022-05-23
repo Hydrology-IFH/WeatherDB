@@ -370,3 +370,13 @@ class TimestampPeriod(object):
         new.is_date = self.is_date
         return new
 
+    def to_timestamp(self):
+        if self.is_date:
+            return TimestampPeriod(
+                start=self.start,
+                end=self.end + Timedelta(
+                    hours=23, minutes=59, seconds=59, milliseconds=999))
+        else:
+            return self
+
+
