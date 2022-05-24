@@ -5,6 +5,8 @@
 - when filling up also replace the filled_by column if it got changed
 - TimestampPeriod class now also detects string inputs as date
 - major error fixed: the coefficients calculation in the fillup methode was the wrong way around
+- for daily parameters the expand_timeseries_to_period ads now 23:50 to max_tstp_last_imp to get the period
+- add vacuum cleanup in Broker after every update
   
 ## Version 0.0.11
 - add fallback on thread if multiprocessing is not working
