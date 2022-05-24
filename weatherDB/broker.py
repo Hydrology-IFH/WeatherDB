@@ -225,7 +225,7 @@ class Broker(object):
         self.last_imp_quality_check(paras=paras)
         self.last_imp_fillup(paras=paras)
         self.last_imp_corr()
-        self.vacuum()
+        # self.vacuum()
 
     def initiate_db(self):
         """Initiate the Database.
@@ -246,7 +246,7 @@ class Broker(object):
         self.quality_check(paras=["n", "t", "et"])
         self.fillup(paras=["n", "t", "et"])
         self.richter_correct()
-        self.vacuum()
+        # self.vacuum()
 
     def vacuum(self, do_analyze=True):
         sql = "VACUUM {anlyze};".format(
