@@ -414,7 +414,9 @@ class StationBase:
                                 'day',
                                 min(start_tstp_last_imp) - '9h 30min'::INTERVAL
                             ) - '10 min'::INTERVAL,
-                            min(max_tstp_last_imp))
+                            min(CASE WHEN para='n' THEN max_tstp_last_imp 
+                                     ELSE max_tstp_last_imp + '23h 50min'::INTERVAL 
+                                END))
                     FROM para_variables)::{tstp_dtype},
                     '{interval}'::INTERVAL)::{tstp_dtype} AS timestamp)
             INSERT INTO timeseries."{stid}_{para}"(timestamp)
