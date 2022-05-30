@@ -1,6 +1,6 @@
 # Change-log
 
-## Version 0.0.12 (upcoming)
+## Version 0.0.12
 - add quality check for precipitation stations: delete values were the aggregated daily sum is more than double of the daily measurement
 - when filling up also replace the filled_by column if it got changed
 - TimestampPeriod class now also detects string inputs as date
