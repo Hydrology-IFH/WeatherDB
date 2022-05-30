@@ -566,18 +566,19 @@ class StationsBase:
             do_mp=do_mp, **kwargs)
 
         # save start time as variable to db
-        with DB_ENG.connect() as con:
-            con.execute("""
-                UPDATE para_variables
-                SET start_tstp_last_imp='{start_tstp}'::timestamp,
-                max_tstp_last_imp=(SELECT max(raw_until) FROM meta_{para})
-                WHERE para='{para}';
-            """.format(
-                para=self._para,
-                start_tstp=start_tstp.strftime("%Y%m%d %H:%M")))
+        if stids == "all":
+            with DB_ENG.connect() as con:
+                con.execute("""
+                    UPDATE para_variables
+                    SET start_tstp_last_imp='{start_tstp}'::timestamp,
+                    max_tstp_last_imp=(SELECT max(raw_until) FROM meta_{para})
+                    WHERE para='{para}';
+                """.format(
+                    para=self._para,
+                    start_tstp=start_tstp.strftime("%Y%m%d %H:%M")))
 
     @check_superuser
-    def last_imp_quality_check(self, do_mp=False, **kwargs):
+    def last_imp_quality_check(self, stids="all", do_mp=False, **kwargs):
         """Do the quality check of the last import.
 
         Parameters
@@ -588,17 +589,22 @@ class StationsBase:
             Multiprocessing needs more memory and a bit more initiating time. Therefor it is only usefull for methods with a lot of computation effort in the python code.
             If the most computation of a methode is done in the postgresql database, then threading is enough to speed the process up.
             The default is False.
+        stids: string or list of int, optional
+            The Stations for which to compute.
+            Can either be "all", for all possible stations
+            or a list with the Station IDs.
+            The default is "all".
         kwargs : dict, optional
             The additional keyword arguments for the _run_methode methode
         """
         self._run_methode(
-            stations=self.get_stations(only_real=True),
+            stations=self.get_stations(only_real=True, stids=stids),
             methode="last_imp_quality_check",
             name="quality check {para} data".format(para=self._para.upper()),
             do_mp=do_mp, **kwargs)
 
     @check_superuser
-    def last_imp_fillup(self, do_mp=False, **kwargs):
+    def last_imp_fillup(self, stids="all", do_mp=False, **kwargs):
         """Do the gap filling of the last import.
 
         Parameters
@@ -609,10 +615,15 @@ class StationsBase:
             Multiprocessing needs more memory and a bit more initiating time. Therefor it is only usefull for methods with a lot of computation effort in the python code.
             If the most computation of a methode is done in the postgresql database, then threading is enough to speed the process up.
             The default is False.
+        stids: string or list of int, optional
+            The Stations for which to compute.
+            Can either be "all", for all possible stations
+            or a list with the Station IDs.
+            The default is "all".
         kwargs : dict, optional
             The additional keyword arguments for the _run_methode methode
         """
-        stations = self.get_stations(only_real=True)
+        stations = self.get_stations(only_real=False, stids=stids)
         period = stations[0].get_last_imp_period(all=True)
         period_log = period.strftime("%Y-%m-%d %H:%M")
         log.info("The {para_long} Stations fillup of the last import is started for the period {min_tstp} - {max_tstp}".format(
@@ -725,6 +736,28 @@ class StationsBase:
             methode="fillup",
             name="fillup {para} data".format(para=self._para.upper()),
             do_mp=do_mp, **kwargs)
+    
+    @check_superuser
+    def update(self, only_new=True, **kwargs):
+        """Make a complete update of the stations.
+
+        Does the update_raw, quality check and fillup of the stations.
+
+        Parameters
+        ----------
+        only_new : bool, optional
+            Should a only new values be computed?
+            If False: The stations are updated for the whole possible period.
+            If True, the stations are only updated for new values.
+            The default is True.
+        """        
+        self.update_raw(only_new=only_new, **kwargs)
+        if only_new:
+            self.last_imp_quality_check(**kwargs)
+            self.last_imp_fillup(**kwargs)
+        else:
+            self.quality_check(**kwargs)
+            self.fillup(**kwargs)
 
     def get_df(self, stids, kind, **kwargs):
         """Get a DataFrame with the corresponding data.
@@ -873,6 +906,25 @@ class StationsN(StationsBase):
             name="richter correction on {para}".format(para=self._para.upper()),
             do_mp=do_mp, **kwargs)
 
+    @check_superuser
+    def update(self, only_new=True, **kwargs):
+        """Make a complete update of the stations.
+
+        Does the update_raw, quality check, fillup and richter correction of the stations.
+
+        Parameters
+        ----------
+        only_new : bool, optional
+            Should a only new values be computed?
+            If False: The stations are updated for the whole possible period.
+            If True, the stations are only updated for new values.
+            The default is True.
+        """    
+        super().update(only_new=only_new, **kwargs)    
+        if only_new:
+            self.last_imp_richter_correct(**kwargs)
+        else:
+            self.richter_correct(**kwargs)
 
 class StationsND(StationsBase):
     """A class to work with and download daily precipitation data for several stations.
@@ -1341,4 +1393,4 @@ class GroupStations(object):
                               split_date=True, nas_allowed=False)
 
 # clean station
-del StationN, StationND, StationT, StationET, GroupStation
+del StationN, StationND, StationT, StationET, GroupStation, StationBase

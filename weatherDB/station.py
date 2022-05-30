@@ -302,7 +302,7 @@ class StationBase:
             The minimum and maximum Timestamp.
         """
         # check if period gor recently checked
-        self._clean_cached_period()
+        self._clean_cached_periods()
         cache_key = str((kinds, period, nas_allowed))
         if cache_key in self._cached_periods:
             return self._cached_periods[cache_key]["return"]
@@ -324,12 +324,16 @@ class StationBase:
                 .format(
                     para_long=self._para_long, stid=self.id, kinds="', '".join(kinds)))
 
-        # get period if None providen and compare with filled_period
+        # get period if None providen
         if type(period) != TimestampPeriod:
             period = TimestampPeriod(*period)
         else:
             period = period.copy()
 
+        # do additional period checks in subclasses
+        period = self._check_period_extra(period)
+
+        # compare with filled_period
         if period.is_empty():
             period = max_period
         else:
@@ -344,6 +348,11 @@ class StationBase:
                 "return": period}})
 
         return period
+
+    @staticmethod
+    def _check_period_extra(period): 
+        """Additional checks on period to define in subclasses"""
+        return period  
 
     def _check_agg_to(self, agg_to):
         agg_to_valid = list(AGG_TO.keys())
@@ -367,7 +376,7 @@ class StationBase:
 
         return df
 
-    def _clean_cached_period(self):
+    def _clean_cached_periods(self):
         time_limit = datetime.now() - timedelta(minutes=1)
         for key in list(self._cached_periods):
             if self._cached_periods[key]["time"] < time_limit:
@@ -405,7 +414,9 @@ class StationBase:
                                 'day',
                                 min(start_tstp_last_imp) - '9h 30min'::INTERVAL
                             ) - '10 min'::INTERVAL,
-                            min(max_tstp_last_imp))
+                            min(CASE WHEN para='n' THEN max_tstp_last_imp 
+                                     ELSE max_tstp_last_imp + '23h 50min'::INTERVAL 
+                                END))
                     FROM para_variables)::{tstp_dtype},
                     '{interval}'::INTERVAL)::{tstp_dtype} AS timestamp)
             INSERT INTO timeseries."{stid}_{para}"(timestamp)
@@ -452,7 +463,7 @@ class StationBase:
 
         # check if df is empty
         if len(df) == 0:
-            log.debug(("The _update_db_timeserie methode got an empty df " +
+            log.debug(("The _update_db_timeserie method got an empty df " +
                     "for the {para_long} Station with ID {stid}"
                     ).format(
                 para_long=self._para_long,
@@ -1213,7 +1224,7 @@ class StationBase:
         if len(self._ma_cols) == 1:
             sql_format_dict.update(dict(
                 is_winter_col="",
-                coef_calc="ma_other.{ma_col}{coef_sign[0]}ma_stat.{ma_col}::float AS coef"
+                coef_calc="ma_stat.{ma_col}{coef_sign[0]}ma_other.{ma_col}::float AS coef"
                 .format(
                     ma_col=self._ma_cols[0],
                     coef_sign=self._coef_sign),
@@ -1229,8 +1240,8 @@ class StationBase:
                         ELSE false::bool
                     END AS is_winter""",
                 coef_calc=(
-                    "ma_other.{ma_col[0]}{coef_sign[0]}ma_stat.{ma_col[0]}::float AS coef_wi, \n" + " "*24 +
-                    "ma_other.{ma_col[1]}{coef_sign[0]}ma_stat.{ma_col[1]}::float AS coef_so"
+                    "ma_stat.{ma_col[0]}{coef_sign[0]}ma_other.{ma_col[0]}::float AS coef_wi, \n" + " "*24 +
+                    "ma_stat.{ma_col[1]}{coef_sign[0]}ma_other.{ma_col[1]}::float AS coef_so"
                 ).format(
                     ma_col=self._ma_cols,
                     coef_sign=self._coef_sign),
@@ -1243,7 +1254,7 @@ class StationBase:
             ))
         else:
             raise ValueError(
-                "There were too many multi annual columns selected. The fillup methode is only implemented for yearly or half yearly regionalisations")
+                "There were too many multi annual columns selected. The fillup method is only implemented for yearly or half yearly regionalisations")
 
         # Make SQL statement to fill the missing values with values from nearby stations
         sql = """
@@ -1315,7 +1326,8 @@ class StationBase:
                         filled_by = new.filled_by
                     FROM new_filled_{stid}_{para} new
                     WHERE ts.timestamp = new.timestamp
-                        AND ts."filled" IS DISTINCT FROM new."filled";
+                        AND (ts."filled" IS DISTINCT FROM new."filled" 
+                             OR ts."filled_by" IS DISTINCT FROM new."filled_by") ;
                 END
             $do$;
         """.format(**sql_format_dict)
@@ -1481,7 +1493,7 @@ class StationBase:
         with DB_ENG.connect() as con:
             res = con.execute(sql)
         keys = res.keys()
-        values = res.first()
+        values = [val.replace(tzinfo=timezone.utc) if type(val) == datetime else val for val in res.first()]
         if len(keys)==1:
             return values[0]
         else:
@@ -1938,6 +1950,8 @@ class StationBase:
             timestamp_col = "date_trunc('{agg_to}', timestamp)".format(
                 agg_to=agg_to)
             group_by = "GROUP BY " + timestamp_col
+            if agg_to in ["day", "month", "year", "decade"]:
+                timestamp_col += "::date"
 
             # add the filled_share if needed
             if add_filled_share:
@@ -2125,7 +2139,7 @@ class StationBase:
         pandas.DataFrame
             A timeserie with the adjusted data.
         """
-        # this is only the first part of the methode
+        # this is only the first part of the method
         # get basic values
         main_df = self.get_df(
             kinds=["filled"], # not best, as the ma values are not richter corrected
@@ -2340,7 +2354,7 @@ class StationTETBase(StationCanVirtualBase):
         pd.DataFrame
             The adjusted timeserie with the timestamp as index.
         """        
-        # this is only the second part of the methode
+        # this is only the second part of the method
         main_df, adj_df, ma = super().get_adj(**kwargs)
 
         # truncate to full years
@@ -2400,7 +2414,7 @@ class StationNBase(StationBase):
             elif kwargs["agg_to"] == "hour":
                 min_count = min_count * 24
             elif kwargs["agg_to"] == "year" or kwargs["agg_to"] == "decade":
-                raise ValueError("The get_adj methode does not work on decade values.")
+                raise ValueError("The get_adj method does not work on decade values.")
 
         main_df_sohj_y = main_df_sohj.groupby(main_df_sohj.index.year)\
             .sum(min_count=min_count).mean()
@@ -2442,6 +2456,7 @@ class StationN(StationNBase):
         # create sql_format_dict
         sql_format_dict = dict(
             para=self._para, stid=self.id, para_long=self._para_long,
+            decim=self._decimals,
             **period.get_sql_format_dict(
                 format="'{}'".format(self._tstp_format_db)),
             limit=0.1*self._decimals) # don't delete values below 0.1mm/10min if they are consecutive
@@ -2459,6 +2474,7 @@ class StationN(StationNBase):
 
         # create sql for dates where the aggregated 10 minutes measurements are 0
         # althought the daily measurements are not 0
+        # or where the aggregated daily sum is more than the double of the daily measurement, when the daily measurement is more than 10 mm
         if daily_exists:
             sql_dates_failed = """
                 WITH ts_10min_d AS (
@@ -2470,7 +2486,8 @@ class StationN(StationNBase):
                 FROM timeseries."{stid}_{para}_d" ts_d
                 LEFT JOIN ts_10min_d ON ts_d.timestamp::date=ts_10min_d.date
                 WHERE ts_d.timestamp BETWEEN {min_tstp}::date AND {max_tstp}::date
-                    AND ts_10min_d.raw = 0 AND ts_d.raw <> 0
+                    AND ((ts_10min_d.raw = 0 AND ts_d.raw <> 0) OR 
+                         (ts_10min_d.raw >= 10*{decim} AND ts_10min_d.raw >= (ts_d.raw*2)))
             """.format(**sql_format_dict)
         else:
             log.warn((
@@ -2548,6 +2565,10 @@ class StationN(StationNBase):
         # delete measurements outside of the 10 minutes frequency
         df = df[df.index.minute%10==0].copy()
 
+        # delete measurements below 0
+        n_col = self._cdc_col_names_imp[self._db_col_names_imp.index("raw")]
+        df.loc[df[n_col]<0, n_col] = np.nan
+
         return df
 
     @check_superuser
@@ -2566,6 +2587,12 @@ class StationN(StationNBase):
         '''.format(stid=self.id, para=self._para)
         with DB_ENG.connect() as con:
             con.execute(sql_add_table)
+
+    @staticmethod
+    def _check_period_extra(period): 
+        """Additional checks on period used in StationBase class _check_period methode."""   
+        # add time to period if given as date
+        return period.expand_to_timestamp()
 
     @staticmethod
     def _richter_class_from_horizon(horizon):
@@ -2914,7 +2941,7 @@ class StationN(StationNBase):
         ----------
         _last_imp_period : _type_, optional
             Give the overall period of the last import.
-            This is only for intern use of the stationsN methode to not compute over and over again the period.
+            This is only for intern use of the stationsN method to not compute over and over again the period.
             The default is None.
         """
         if not self.is_last_imp_done(kind="corr"):
@@ -3477,7 +3504,7 @@ class GroupStation(object):
             If "all", then every available station parameter is returned.
             The default is "all"
         kwargs : dict, optional
-            The optional keyword arguments are handed to the single Station get_meta methodes. Can be e.g. "info".
+            The optional keyword arguments are handed to the single Station get_meta methods. Can be e.g. "info".
 
         Returns
         -------
