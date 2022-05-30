@@ -566,15 +566,16 @@ class StationsBase:
             do_mp=do_mp, **kwargs)
 
         # save start time as variable to db
-        with DB_ENG.connect() as con:
-            con.execute("""
-                UPDATE para_variables
-                SET start_tstp_last_imp='{start_tstp}'::timestamp,
-                max_tstp_last_imp=(SELECT max(raw_until) FROM meta_{para})
-                WHERE para='{para}';
-            """.format(
-                para=self._para,
-                start_tstp=start_tstp.strftime("%Y%m%d %H:%M")))
+        if stids == "all":
+            with DB_ENG.connect() as con:
+                con.execute("""
+                    UPDATE para_variables
+                    SET start_tstp_last_imp='{start_tstp}'::timestamp,
+                    max_tstp_last_imp=(SELECT max(raw_until) FROM meta_{para})
+                    WHERE para='{para}';
+                """.format(
+                    para=self._para,
+                    start_tstp=start_tstp.strftime("%Y%m%d %H:%M")))
 
     @check_superuser
     def last_imp_quality_check(self, stids="all", do_mp=False, **kwargs):
