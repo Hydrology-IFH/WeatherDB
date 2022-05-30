@@ -2550,17 +2550,13 @@ class StationN(StationNBase):
         
         Some precipitation stations on the DWD CDC server have also rows outside of the normal 10 Minute frequency, e.g. 2008-09-16 01:47 for Station 662.
         Because those rows only have NAs for the measurement they are deleted."""
-        # correct Timezone before 2000 MEZ after UTC
-        mask_before_2000 = df.index < pd.Timestamp(2000,1,1,0,0)
-        if any(mask_before_2000):
-            df_before_2000 = df[mask_before_2000].copy()
-            df_before_2000.index = df_before_2000.index.tz_localize("Etc/GMT+1")\
-                                    .tz_convert("UTC")
-            df_after_2000 = df[~mask_before_2000].copy()
-            df_after_2000.index = df_after_2000.index.tz_localize("UTC")
-            df = pd.concat([df_before_2000, df_after_2000])
-        else:
+        # correct Timezone before 2000 -> MEZ after 2000 -> UTC
+        if df.index.min() >= pd.Timestamp(1999,12,31,23,0):
             df.index = df.index.tz_localize("UTC")
+        elif df.index.max() < pd.Timestamp(2000,1,1,0,0):
+            df.index = df.index.tz_localize("Etc/GMT+1").tz_convert("UTC")
+        else:
+            raise ValueError("The timezone could not get defined for the given import." + str(df))
 
         # delete measurements outside of the 10 minutes frequency
         df = df[df.index.minute%10==0].copy()
