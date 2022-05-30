@@ -736,6 +736,28 @@ class StationsBase:
             methode="fillup",
             name="fillup {para} data".format(para=self._para.upper()),
             do_mp=do_mp, **kwargs)
+    
+    @check_superuser
+    def update(self, only_new=True, **kwargs):
+        """Make a complete update of the stations.
+
+        Does the update_raw, quality check and fillup of the stations.
+
+        Parameters
+        ----------
+        only_new : bool, optional
+            Should a only new values be computed?
+            If False: The stations are updated for the whole possible period.
+            If True, the stations are only updated for new values.
+            The default is True.
+        """        
+        self.update_raw(only_new=only_new, **kwargs)
+        if only_new:
+            self.last_imp_quality_check(**kwargs)
+            self.last_imp_fillup(**kwargs)
+        else:
+            self.quality_check(**kwargs)
+            self.fillup(**kwargs)
 
     def get_df(self, stids, kind, **kwargs):
         """Get a DataFrame with the corresponding data.
@@ -884,6 +906,25 @@ class StationsN(StationsBase):
             name="richter correction on {para}".format(para=self._para.upper()),
             do_mp=do_mp, **kwargs)
 
+    @check_superuser
+    def update(self, only_new=True, **kwargs):
+        """Make a complete update of the stations.
+
+        Does the update_raw, quality check, fillup and richter correction of the stations.
+
+        Parameters
+        ----------
+        only_new : bool, optional
+            Should a only new values be computed?
+            If False: The stations are updated for the whole possible period.
+            If True, the stations are only updated for new values.
+            The default is True.
+        """    
+        super().update(only_new=only_new, **kwargs)    
+        if only_new:
+            self.last_imp_richter_correct(**kwargs)
+        else:
+            self.richter_correct(**kwargs)
 
 class StationsND(StationsBase):
     """A class to work with and download daily precipitation data for several stations.

@@ -4,9 +4,13 @@
 - add quality check for precipitation stations: delete values were the aggregated daily sum is more than double of the daily measurement
 - when filling up also replace the filled_by column if it got changed
 - TimestampPeriod class now also detects string inputs as date
-- major error fixed: the coefficients calculation in the fillup methode was the wrong way around
+- major error fixed: the coefficients calculation in the fillup method was the wrong way around
 - for daily parameters the expand_timeseries_to_period ads now 23:50 to max_tstp_last_imp to get the period
-- add vacuum cleanup in Broker after every update
+- add vacuum cleanup method in Broker
+- check precipitation df_raw for values below 0
+- add stids parameter to last_imp methods of stations classes
+- add an update method to stations classes, to do a complete update of the stations database data (update_raw + quality_check + fillup + richter_correct)
+- only set start_tstp_last_imp values in db if update_raw is done for all the stations
   
 ## Version 0.0.11
 - add fallback on thread if multiprocessing is not working
