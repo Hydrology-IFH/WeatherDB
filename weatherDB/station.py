@@ -898,7 +898,7 @@ class StationBase:
             con.execute(sql_update_meta)
 
     @check_superuser
-    def update_raw(self, only_new=True, ftp_file_list=None):
+    def update_raw(self, only_new=True, ftp_file_list=None, remove_nas=True):
         """Download data from CDC and upload to database.
 
         Parameters
@@ -911,6 +911,10 @@ class StationBase:
             A list of files on the FTP server together with their modification time.
             If None, then the list is fetched from the server.
             The default is None
+        remove_nas : bool, optional
+            Remove the NAs from the downloaded data before updating it to the database. 
+            This has computational advantages.
+            The default is True.
 
         Returns
         -------
@@ -953,8 +957,11 @@ class StationBase:
             .round(0).astype("Int64")
 
         # remove NAs in raw column
-        raw_col = self._cdc_col_names_imp[self._db_col_names_imp.index("raw")]
-        selection = selection[~selection[raw_col].isna()]
+        raw_col = self._cdc_col_names_imp[
+                self._db_col_names_imp.index("raw")]
+        selection_without_na = selection[~selection[raw_col].isna()]
+        if remove_nas:
+            selection = selection_without_na
 
         # upload to DB
         self._update_db_timeserie(
@@ -975,7 +982,7 @@ class StationBase:
                 '''.format(values=update_values))
 
         # if empty skip updating meta filepath
-        if len(selection) == 0:
+        if len(selection_without_na) == 0:
             log_msg = ("raw_update of {para_long} Station {stid}: " +
                     "The downloaded new dataframe was empty and therefor no new data was imported.")\
                 .format(para_long=self._para_long, stid=self.id)
@@ -1082,6 +1089,7 @@ class StationBase:
             df_new = get_dwd_file(zf)
             df_new.set_index(self._date_col, inplace=True)
             df_new = self._check_df_raw(df_new)
+
             # check if hist in query and get max tstp of it ##########
             if "historical" in zf:
                 max_hist_tstp_new = df_new.index.max()
@@ -1122,7 +1130,8 @@ class StationBase:
         pandas.DataFrame
             The Timeseries as a DataFrame with a Timestamp Index.
         """
-        return self._download_raw(zipfiles=self.get_zipfiles(only_new=only_new).index)[0]
+        return self._download_raw(
+            zipfiles=self.get_zipfiles(only_new=only_new).index)[0]
 
     @check_superuser
     def _get_sql_new_qc(self, period=(None, None)):
