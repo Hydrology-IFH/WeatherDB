@@ -2565,6 +2565,10 @@ class StationN(StationNBase):
         # delete measurements outside of the 10 minutes frequency
         df = df[df.index.minute%10==0].copy()
 
+        # delete measurements below 0
+        n_col = self._cdc_col_names_imp[self._db_col_names_imp.index("raw")]
+        df.loc[df[n_col]<0, n_col] = np.nan
+
         return df
 
     @check_superuser
