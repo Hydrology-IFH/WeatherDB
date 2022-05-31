@@ -323,7 +323,8 @@ class StationsBase:
                                   ["4326",     "25832"]):
             if geom_col in infos:
                 meta[geom_col] = meta[geom_col].apply(wkt.loads)
-                meta = gpd.GeoDataFrame(meta, crs="EPSG:" + srid)
+                meta = gpd.GeoDataFrame(
+                    meta, crs="EPSG:" + srid, geometry=geom_col)
 
         return meta
 
@@ -514,7 +515,7 @@ class StationsBase:
 
     @check_superuser
     def update_raw(self, only_new=True, only_real=True, stids="all", 
-            do_mp=True, **kwargs):
+            remove_nas=True, do_mp=True, **kwargs):
         """Download all stations data from CDC and upload to database.
 
         Parameters
@@ -537,7 +538,11 @@ class StationsBase:
             If False the methods will be called in threading mode.
             Multiprocessing needs more memory and a bit more initiating time. Therefor it is only usefull for methods with a lot of computation effort in the python code.
             If the most computation of a methode is done in the postgresql database, then threading is enough to speed the process up.
-            The default is True.      
+            The default is True.  
+        remove_nas : bool, optional
+            Remove the NAs from the downloaded data before updating it to the database. 
+            This has computational advantages.
+            The default is True.    
         kwargs : dict, optional
             The additional keyword arguments for the _run_methode methode
 
@@ -562,7 +567,8 @@ class StationsBase:
             name="download raw {para} data".format(para=self._para.upper()),
             kwds=dict(
                 only_new=only_new,
-                ftp_file_list=ftp_file_list),
+                ftp_file_list=ftp_file_list,
+                remove_nas=remove_nas),
             do_mp=do_mp, **kwargs)
 
         # save start time as variable to db
