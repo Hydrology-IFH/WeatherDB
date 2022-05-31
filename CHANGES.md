@@ -1,6 +1,6 @@
 # Change-log
 
-## Version 0.0.13 (upcoming)
+## Version 0.0.13
 - change the timezone allocation method of the precipitation download df
 - set freq to 10 minutes of precipitation download, to be able to overwrite Values with NAs
 - add remove_nas parameter to overwrite new NAs in the database. (mainly for programming changes)
