@@ -3,6 +3,10 @@
 ## Version 0.0.13 (upcoming)
 - change the timezone allocation method of the precipitation download df
 - set freq to 10 minutes of precipitation download, to be able to overwrite Values with NAs
+- add remove_nas parameter to overwrite new NAs in the database. (mainly for programming changes)
+- define the name of the geometry column in get_meta.
+
+
 ## Version 0.0.12
 - add quality check for precipitation stations: delete values were the aggregated daily sum is more than double of the daily measurement
 - when filling up also replace the filled_by column if it got changed

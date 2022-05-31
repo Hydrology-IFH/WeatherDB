@@ -323,7 +323,8 @@ class StationsBase:
                                   ["4326",     "25832"]):
             if geom_col in infos:
                 meta[geom_col] = meta[geom_col].apply(wkt.loads)
-                meta = gpd.GeoDataFrame(meta, crs="EPSG:" + srid)
+                meta = gpd.GeoDataFrame(
+                    meta, crs="EPSG:" + srid, geometry=geom_col)
 
         return meta
 
