@@ -1,5 +1,8 @@
 # Change-log
 
+## Version 0.0.14 (upcoming)
+- added type test, if parameter gets checked for "all"
+- specify that secrets_weatherDB file should be on PYTHONPATH environment variable
 ## Version 0.0.13
 - change the timezone allocation method of the precipitation download df
 - set freq to 10 minutes of precipitation download, to be able to overwrite Values with NAs
