@@ -29,7 +29,7 @@ else:
         try:
             import secretSettings_weatherDB as secrets
         except ImportError:
-            raise ImportError("The secretSettings_weatherDB.py file was not found on your system.\n Please put the file somewhere on your PATH directories. For more information see the docs.")
+            raise ImportError("The secretSettings_weatherDB.py file was not found on your system.\n Please put the file somewhere on your sys.path directories or add the directory of the file to your sys.path/PYTHONPATH environment variable. For more information see the docs.")
     
     # create the engine
     DB_ENG = sqlalchemy.create_engine(
