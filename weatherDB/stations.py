@@ -356,7 +356,7 @@ class StationsBase:
         meta = self.get_meta(
             infos=["station_id"], only_real=only_real, stids=stids)
 
-        if stids == "all":
+        if (type(stids) == str) and (stids == "all"):
             stations = [
                 self._StationClass(stid, _skip_meta_check=True) 
                 for stid in meta.index]
@@ -572,7 +572,7 @@ class StationsBase:
             do_mp=do_mp, **kwargs)
 
         # save start time as variable to db
-        if stids == "all":
+        if (type(stids == str) and (stids == "all"):
             with DB_ENG.connect() as con:
                 con.execute("""
                     UPDATE para_variables
@@ -980,7 +980,7 @@ class GroupStations(object):
             paras = [paras,]
         
         valid_paras=["n", "t", "et"]
-        if paras == "all":
+        if (type(paras) == str) and (paras == "all"):
             return valid_paras
         else:
             paras_new = []
@@ -1021,7 +1021,7 @@ class GroupStations(object):
 
         It checks against the Precipitation stations.
         """
-        if type(stids) == str and stids == "all":
+        if (type(stids) == str) and (stids == "all"):
             return self.get_valid_stids()
         else:
             valid_stids = self.get_valid_stids()
@@ -1205,7 +1205,7 @@ class GroupStations(object):
         kwargs.update({"_skip_meta_check":True})
         valid_stids = self.get_valid_stids()
 
-        if stids == "all":
+        if (type(stids) == str) and (stids == "all"):
             stations = [
                 self._GroupStation(stid, **kwargs) 
                 for stid in valid_stids]

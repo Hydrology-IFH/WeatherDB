@@ -1437,7 +1437,7 @@ class StationBase:
             a pandas Series with the information names as index and the explanation as values.
         """
         # check which information to get
-        if infos == "all":
+        if (type(infos) == str) and (infos == "all"):
             col_clause = ""
         else:
             if type(infos) == str:
@@ -1485,7 +1485,7 @@ class StationBase:
             If only one information is asked for, then it is returned as single value and not as subdict.
         """
         # check which information to get
-        if infos == "all":
+        if (type(infos) == str) and (infos == "all":
             cols = "*"
         else:
             if type(infos) == str:
@@ -3279,7 +3279,7 @@ class GroupStation(object):
         if type(paras)==str and paras != "all":
             paras = [paras,]
 
-        if paras == "all":
+        if (type(paras) == str) and (paras == "all"):
             return self.paras_available
         else:
             paras_new = []
