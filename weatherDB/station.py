@@ -1485,7 +1485,7 @@ class StationBase:
             If only one information is asked for, then it is returned as single value and not as subdict.
         """
         # check which information to get
-        if (type(infos) == str) and (infos == "all":
+        if (type(infos) == str) and (infos == "all"):
             cols = "*"
         else:
             if type(infos) == str:
