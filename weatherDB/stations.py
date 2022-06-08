@@ -572,7 +572,7 @@ class StationsBase:
             do_mp=do_mp, **kwargs)
 
         # save start time as variable to db
-        if (type(stids == str) and (stids == "all"):
+        if (type(stids) == str) and (stids == "all"):
             with DB_ENG.connect() as con:
                 con.execute("""
                     UPDATE para_variables
