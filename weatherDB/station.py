@@ -22,6 +22,8 @@ import rasterio as rio
 import rasterio.mask
 from shapely.geometry import Point, MultiLineString
 import shapely.wkt
+import pyproj
+import geopandas as gpd
 
 from .lib.connections import DB_ENG, check_superuser
 from .lib.max_fun.import_DWD import dwd_id_to_str, get_dwd_file
@@ -58,8 +60,12 @@ RASTERS = {
         "dtype": int
     },
     "local":{
-        "dgm25": DATA_DIR.joinpath("dgms/DGM25.tif"),
-        "dgm80": DATA_DIR.joinpath("dgms/dgm80.tif")
+        "dgm25": {
+            "fp": DATA_DIR.joinpath("dgms/DGM25.tif"), 
+            "crs":pyproj.CRS.from_epsg(3035)},
+        "dgm80": {
+            "fp": DATA_DIR.joinpath("dgms/dgm80.tif"),
+            "crs":pyproj.CRS.from_epsg(25832)}
     }
 }
 RICHTER_CLASSES = {
@@ -2633,18 +2639,20 @@ class StationN(StationNBase):
 
         # check if files are available
         for dgm_name in ["dgm25", "dgm80"]:
-            if not RASTERS["local"][dgm_name].is_file():
+            if not RASTERS["local"][dgm_name]["fp"].is_file():
                 raise ValueError(
                     "The {dgm_name} was not found in the data directory under: \n{fp}".format(
                         dgm_name=dgm_name,
-                        fp=str(RASTERS["local"][dgm_name])
+                        fp=str(RASTERS["local"][dgm_name]["fp"])
                     )
                 )
 
         # get the horizon value
         radius = 75000 # this value got defined because the maximum height is around 4000m for germany
-        with rio.open(RASTERS["local"]["dgm25"]) as dgm25,\
-             rio.open(RASTERS["local"]["dgm80"]) as dgm80:
+        dgm25_crs = RASTERS["local"]["dgm25"]["crs"]
+        dgm80_crs = RASTERS["local"]["dgm80"]["crs"]
+        with rio.open(RASTERS["local"]["dgm25"]["fp"]) as dgm25,\
+             rio.open(RASTERS["local"]["dgm80"]["fp"]) as dgm80:
                 geom = self.get_geom_shp(crs="utm")
                 xy = [geom.x, geom.y]
                 # sample station heght
@@ -2668,7 +2676,7 @@ class StationN(StationNBase):
                     dgm25_np, dgm25_tr = rasterio.mask.mask(
                         dgm25, [dgm25_mask], crop=True)
                     dgm25_np[dgm25_np==dgm25.profile["nodata"]] = np.nan
-                    dgm_gpd = raster2points(dgm25_np, dgm25_tr, crs=dgm25.crs)
+                    dgm_gpd = raster2points(dgm25_np, dgm25_tr, crs=dgm25_crs)
                     dgm_gpd["dist"] = dgm_gpd.distance(Point(xy))
 
                     # check if parts are missing and fill
@@ -2700,14 +2708,17 @@ class StationN(StationNBase):
                                     row["radius"],
                                     angle
                                 )
+                            line_parts = gpd.GeoDataFrame(
+                                line_parts, geometry="line", crs=dgm25_crs
+                                ).to_crs(dgm80_crs)
                             dgm80_mask = MultiLineString(
                                 line_parts["line"].tolist())
                             dgm80_np, dgm80_tr = rasterio.mask.mask(
                                 dgm80, [dgm80_mask], crop=True)
                             dgm80_np[dgm80_np==dgm80.profile["nodata"]] = np.nan
                             dgm80_gpd = raster2points(
-                                dgm80_np, dgm80_tr, crs=dgm80.crs
-                                ).to_crs(dgm25.crs)
+                                dgm80_np, dgm80_tr, crs=dgm80_crs
+                                ).to_crs(dgm25_crs)
                             dgm80_gpd["dist"] = dgm80_gpd.distance(Point(xy))
                             dgm_gpd = dgm_gpd.append(
                                 dgm80_gpd, ignore_index=True)

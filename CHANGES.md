@@ -4,6 +4,7 @@
 - added type test, if parameter gets checked for "all"
 - specify that secrets_weatherDB file should be on PYTHONPATH environment variable
 - Changed DGM5 to Copernicus DGM25, because of license advantages
+- adjusted update_horizon methode to be able to work with different CRS
 - add kwargs to update_richter_class of StationsN
 
 ## Version 0.0.13
