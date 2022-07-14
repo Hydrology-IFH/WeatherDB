@@ -3,12 +3,13 @@
 ## Version 0.0.14 (upcoming)
 - added type test, if parameter gets checked for "all"
 - specify that secrets_weatherDB file should be on PYTHONPATH environment variable
+- Changed DGM5 to Copernicus DGM25, because of license advantages
+- 
 ## Version 0.0.13
 - change the timezone allocation method of the precipitation download df
 - set freq to 10 minutes of precipitation download, to be able to overwrite Values with NAs
 - add remove_nas parameter to overwrite new NAs in the database. (mainly for programming changes)
 - define the name of the geometry column in get_meta.
-
 
 ## Version 0.0.12
 - add quality check for precipitation stations: delete values were the aggregated daily sum is more than double of the daily measurement
