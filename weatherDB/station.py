@@ -58,7 +58,7 @@ RASTERS = {
         "dtype": int
     },
     "local":{
-        "dgm5": DATA_DIR.joinpath("dgms/dgm5.tif"),
+        "dgm25": DATA_DIR.joinpath("dgms/DGM25.tif"),
         "dgm80": DATA_DIR.joinpath("dgms/dgm80.tif")
     }
 }
@@ -2632,7 +2632,7 @@ class StationN(StationNBase):
                 return horizon
 
         # check if files are available
-        for dgm_name in ["dgm5", "dgm80"]:
+        for dgm_name in ["dgm25", "dgm80"]:
             if not RASTERS["local"][dgm_name].is_file():
                 raise ValueError(
                     "The {dgm_name} was not found in the data directory under: \n{fp}".format(
@@ -2643,12 +2643,12 @@ class StationN(StationNBase):
 
         # get the horizon value
         radius = 75000 # this value got defined because the maximum height is around 4000m for germany
-        with rio.open(RASTERS["local"]["dgm5"]) as dgm5,\
+        with rio.open(RASTERS["local"]["dgm25"]) as dgm25,\
              rio.open(RASTERS["local"]["dgm80"]) as dgm80:
                 geom = self.get_geom_shp(crs="utm")
                 xy = [geom.x, geom.y]
                 # sample station heght
-                stat_h = list(dgm5.sample(
+                stat_h = list(dgm25.sample(
                     xy=[xy],
                     indexes=1,
                     masked=True))[0]
@@ -2664,11 +2664,11 @@ class StationN(StationNBase):
                     index=pd.Index([], name="angle", dtype=int),
                     name="horizon")
                 for angle in range(90, 271, 3):
-                    dgm5_mask = polar_line(xy, radius, angle)
-                    dgm5_np, dgm5_tr = rasterio.mask.mask(
-                        dgm5, [dgm5_mask], crop=True)
-                    dgm5_np[dgm5_np==dgm5.profile["nodata"]] = np.nan
-                    dgm_gpd = raster2points(dgm5_np, dgm5_tr, crs=dgm5.crs)
+                    dgm25_mask = polar_line(xy, radius, angle)
+                    dgm25_np, dgm25_tr = rasterio.mask.mask(
+                        dgm25, [dgm25_mask], crop=True)
+                    dgm25_np[dgm25_np==dgm25.profile["nodata"]] = np.nan
+                    dgm_gpd = raster2points(dgm25_np, dgm25_tr, crs=dgm25.crs)
                     dgm_gpd["dist"] = dgm_gpd.distance(Point(xy))
 
                     # check if parts are missing and fill
@@ -2684,11 +2684,11 @@ class StationN(StationNBase):
                             ignore_index=True)
 
                     # look for missing values at the end
-                    dgm5_max_dist = dgm_gpd.iloc[-1]["dist"]
-                    if dgm5_max_dist < (radius - 5):
+                    dgm25_max_dist = dgm_gpd.iloc[-1]["dist"]
+                    if dgm25_max_dist < (radius - 5):
                             line_parts = line_parts.append(
                                 {"Start_point": dgm_gpd.iloc[-1]["geometry"],
-                                 "radius": radius - dgm5_max_dist},
+                                 "radius": radius - dgm25_max_dist},
                                 ignore_index=True)
 
                     # check if parts are missing and fill
@@ -2707,7 +2707,7 @@ class StationN(StationNBase):
                             dgm80_np[dgm80_np==dgm80.profile["nodata"]] = np.nan
                             dgm80_gpd = raster2points(
                                 dgm80_np, dgm80_tr, crs=dgm80.crs
-                                ).to_crs(dgm5.crs)
+                                ).to_crs(dgm25.crs)
                             dgm80_gpd["dist"] = dgm80_gpd.distance(Point(xy))
                             dgm_gpd = dgm_gpd.append(
                                 dgm80_gpd, ignore_index=True)
