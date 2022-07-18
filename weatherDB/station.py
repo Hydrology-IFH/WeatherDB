@@ -2653,7 +2653,7 @@ class StationN(StationNBase):
         dgm80_crs = RASTERS["local"]["dgm80"]["crs"]
         with rio.open(RASTERS["local"]["dgm25"]["fp"]) as dgm25,\
              rio.open(RASTERS["local"]["dgm80"]["fp"]) as dgm80:
-                geom = self.get_geom_shp(crs="utm")
+                geom = self.get_geom_shp(crs=dgm25_crs.to_epsg())
                 xy = [geom.x, geom.y]
                 # sample station heght
                 stat_h = list(dgm25.sample(
