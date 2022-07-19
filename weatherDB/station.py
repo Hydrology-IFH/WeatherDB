@@ -2685,19 +2685,23 @@ class StationN(StationNBase):
                     line_parts = pd.DataFrame(
                         columns=["Start_point", "radius", "line"])
                     # look for holes inside the line
-                    for j in dgm_gpd[dgm_gpd["dist"].diff() > 10].index:
-                        line_parts = line_parts.append(
-                            {"Start_point": dgm_gpd.loc[j-1, "geometry"],
-                             "radius": dgm_gpd.loc[j, "dist"] - dgm_gpd.loc[j-1, "dist"]},
-                            ignore_index=True)
+                    for i, j in enumerate(dgm_gpd[dgm_gpd["dist"].diff() > 10].index):
+                        line_parts = pd.concat(
+                            [line_parts, 
+                             pd.DataFrame(
+                                {"Start_point": dgm_gpd.loc[j-1, "geometry"], 
+                                 "radius": dgm_gpd.loc[j, "dist"] - dgm_gpd.loc[j-1, "dist"]}, 
+                                index=[i])])
 
                     # look for missing values at the end
                     dgm25_max_dist = dgm_gpd.iloc[-1]["dist"]
                     if dgm25_max_dist < (radius - 5):
-                            line_parts = line_parts.append(
-                                {"Start_point": dgm_gpd.iloc[-1]["geometry"],
-                                 "radius": radius - dgm25_max_dist},
-                                ignore_index=True)
+                            line_parts = pd.concat(
+                                [line_parts,
+                                 pd.DataFrame(
+                                    {"Start_point":  dgm_gpd.iloc[-1]["geometry"], 
+                                     "radius": radius - dgm25_max_dist}, 
+                                    index=[line_parts.index.max()+1])])
 
                     # check if parts are missing and fill
                     if len(line_parts) > 0:
@@ -2720,8 +2724,8 @@ class StationN(StationNBase):
                                 dgm80_np, dgm80_tr, crs=dgm80_crs
                                 ).to_crs(dgm25_crs)
                             dgm80_gpd["dist"] = dgm80_gpd.distance(Point(xy))
-                            dgm_gpd = dgm_gpd.append(
-                                dgm80_gpd, ignore_index=True)
+                            dgm_gpd = pd.concat(
+                                [dgm_gpd, dgm80_gpd], ignore_index=True)
 
                     hab[angle] = np.max(np.degrees(np.arctan(
                             (dgm_gpd["data"]-stat_h) / dgm_gpd["dist"])))
