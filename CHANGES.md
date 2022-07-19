@@ -1,5 +1,7 @@
 # Change-log
 
+## Version 0.0.15 (upcoming)
+- change append with pandas concat function. -> faster
 ## Version 0.0.14
 - added type test, if parameter gets checked for "all"
 - specify that secrets_weatherDB file should be on PYTHONPATH environment variable
