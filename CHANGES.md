@@ -6,6 +6,7 @@
 - Changed DGM5 to Copernicus DGM25, because of license advantages
 - adjusted update_horizon methode to be able to work with different CRS
 - add kwargs to update_richter_class of StationsN
+- fix get_geom with crs transforamation
 
 ## Version 0.0.13
 - change the timezone allocation method of the precipitation download df

@@ -1553,7 +1553,7 @@ class StationBase:
         # get the geom
         return self.get_meta(
             infos=[
-                "{trans_fun}{st_fun}(geometry{utm}){epsg}".format(
+                "{st_fun}({trans_fun}geometry{utm}{epsg})".format(
                     st_fun="ST_As" + format if format else "",
                     utm=utm,
                     trans_fun=trans_fun,
