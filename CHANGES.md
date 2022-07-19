@@ -1,6 +1,6 @@
 # Change-log
 
-## Version 0.0.14 (upcoming)
+## Version 0.0.14
 - added type test, if parameter gets checked for "all"
 - specify that secrets_weatherDB file should be on PYTHONPATH environment variable
 - Changed DGM5 to Copernicus DGM25, because of license advantages
