@@ -356,7 +356,7 @@ class StationsBase:
         meta = self.get_meta(
             infos=["station_id"], only_real=only_real, stids=stids)
 
-        if stids == "all":
+        if (type(stids) == str) and (stids == "all"):
             stations = [
                 self._StationClass(stid, _skip_meta_check=True) 
                 for stid in meta.index]
@@ -572,7 +572,7 @@ class StationsBase:
             do_mp=do_mp, **kwargs)
 
         # save start time as variable to db
-        if stids == "all":
+        if (type(stids) == str) and (stids == "all"):
             with DB_ENG.connect() as con:
                 con.execute("""
                     UPDATE para_variables
@@ -826,7 +826,7 @@ class StationsN(StationsBase):
     _timeout_raw_imp = 360
 
     @check_superuser
-    def update_richter_class(self, stids="all"):
+    def update_richter_class(self, stids="all", **kwargs):
         """Update the Richter exposition class.
 
         Get the value from the raster, compare with the richter categories and save to the database.
@@ -838,6 +838,8 @@ class StationsN(StationsBase):
             Can either be "all", for all possible stations
             or a list with the Station IDs.
             The default is "all".
+        kwargs : dict, optional
+            The keyword arguments to be handed to the station.StationN.update_richter_class method.
 
         Raises
         ------
@@ -848,6 +850,7 @@ class StationsN(StationsBase):
             stations=self.get_stations(only_real=True, stids=stids),
             methode="update_richter_class",
             name="update richter class for {para}".format(para=self._para.upper()),
+            kwds=kwargs,
             do_mp=False)
 
     @check_superuser
@@ -980,7 +983,7 @@ class GroupStations(object):
             paras = [paras,]
         
         valid_paras=["n", "t", "et"]
-        if paras == "all":
+        if (type(paras) == str) and (paras == "all"):
             return valid_paras
         else:
             paras_new = []
@@ -1021,7 +1024,7 @@ class GroupStations(object):
 
         It checks against the Precipitation stations.
         """
-        if type(stids) == str and stids == "all":
+        if (type(stids) == str) and (stids == "all"):
             return self.get_valid_stids()
         else:
             valid_stids = self.get_valid_stids()
@@ -1205,7 +1208,7 @@ class GroupStations(object):
         kwargs.update({"_skip_meta_check":True})
         valid_stids = self.get_valid_stids()
 
-        if stids == "all":
+        if (type(stids) == str) and (stids == "all"):
             stations = [
                 self._GroupStation(stid, **kwargs) 
                 for stid in valid_stids]

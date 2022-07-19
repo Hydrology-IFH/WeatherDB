@@ -38,7 +38,7 @@ If you use the database at the hydrology department of Freiburg, please go to th
 
 The secretSettings_weatherDB.py file needs to be placed either:
 - in a parent folder of the package (e.g. in the main folder of your virtual environment folder)
-- some other directory that is in the PATH environment variable. (You can also create a new directory and add it to the PATH environment)
+- some other directory that is in the PYTHONPATH environment variable. (You can also create a new directory and add it to the PATH environment)
 - in the package source folder (e.g. ../path_to_venv/Lib/site-packages/weatherDB) !This might not be the best method, because an upgrade of the package could delete the file again!
 
 How-to install python
