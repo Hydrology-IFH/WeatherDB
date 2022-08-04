@@ -26,7 +26,7 @@ Install
 To install the package use PIP to install the Github repository:
 
 ```
-pip install git+https://github.com/maxschmi/WeatherDB_module
+pip install git+https://github.com/maxschmi/WeatherDB
 ```
 
 Get started
