@@ -12,7 +12,7 @@ __copyright__ = "Copyright 2022, Max Schmit"
 __version__ = "0.0.15"
 
 if not ("WEATHERDB_MODULE_INSTALLING" in os.environ \
-        and os.environ["WEATHER_MODULE_INSTALLING"]=="True"):
+        and os.environ["WEATHERDB_MODULE_INSTALLING"]=="True"):
     # set the log
     #############
     log = logging.getLogger(__name__)
