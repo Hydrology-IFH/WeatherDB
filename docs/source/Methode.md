@@ -86,7 +86,7 @@ For the precipitation values the 10 minutes values are furthermore adjusted to t
 ## Richter correction
 This step is only done for the 10 minutes precipitation values. Here the filled precipitation values, get corrected like defined in Richter (1995).  
 
-First of all, the horizon angle ("Horizontabschirmung") is calculated from a DGM20 (aggregated from DGM5) and if the DGM20 was out of bound also from a DGM8. The DGM80 is bigger than the german border and therefor for stations around the border this is gives better results than the DGM20 which is only for the german territory. Therefore the rasters are sampled for their values on one single line of 75km, starting from the station. Then the angle to every point from the station is calculated. The Point with the biggest angle is taken as horizon angle for this line. This step is repeated for several lines ranging from north to south in 3° steps. Afterwards the Richter horizon angle is computed as:
+First of all, the horizon angle ("Horizontabschirmung") is calculated from a DGM25 and if the DGM25 was out of bound also from a DGM80. The DGM80 is bigger than the german border and therefor for stations around the border this is gives better results than the DGM20 which is only for the german territory. Therefore the rasters are sampled for their values on one single line of 75km, starting from the station. Then the angle to every point from the station is calculated. The Point with the biggest angle is taken as horizon angle for this line. This step is repeated for several lines ranging from north to south in 3° steps. Afterwards the Richter horizon angle is computed as:
 
 $H’=0,15*H_{S-SW} + 0,35*H_{SW-W} +0,35*H_{W-NW} +0, 15*H_{NW-N}$
 
@@ -112,4 +112,4 @@ The daily correction ($\Delta N$) is then distributed to every 10 minute measure
 
 ## sources
 - Richter, D. 1995. Ergebnisse methodischer Untersuchungen zur Korrektur des systematischen Meßfehlers des Hellmann-Niederschlagsmessers. Offenbach am Main: Selbstverl. des Dt. Wetterdienstes.
-- GeoBasis-DE: Bundesamt für Kartographie und Geodäsie. 2016. Digitales Geländemodell Gitterweite 5 m. DGM5. Produktstand: 2016.
+- Coperniicus. 2016. European Digital Elevation Model (EU-DEM), version 1.1. [online available](https://land.copernicus.eu/imagery-in-situ/eu-dem/eu-dem-v1.1)
