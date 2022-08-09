@@ -61,14 +61,16 @@ It is assumed, that filling the measurements up with values from the neighbor st
 ## gap filling
 To have complete timeseries, the gaps in the quality checked timeseries are filled with data from the neighbor stations. This is done by regionalising the neighbors measurements value to the station that is gap filled. Starting with the nearest neighbor station all available stations are taken until the timeserie is completely filled.
 
-For the reginalisation, the multi-annual values for every station for the climate period of 1991-2020 are computed from the corresponding DWD grid.
+For the reginalisation, the multi-annual values for every station for the climate period of 1991-2020 are computed from the corresponding DWD grid. 
 
 **Table 3: The raster grids that are the basis for the regionalisation**
 | parameter |  <div style="text-align: center">source</div> |
 |:---:|---|
-| Precipitation | DWD Climate Data Center (CDC): <br>REGNIE grids of multi-annual precipitation, period 1991-2020, <br>[online available](https://opendata.dwd.de/climate_environment/CDC/grids_germany/multi_annual/regnie)|
+| Precipitation | DWD Climate Data Center (CDC): <br>HYRAS grids of multi-annual precipitation, period 1991-2020, <br>[online available](https://opendata.dwd.de/climate_environment/CDC/grids_germany/multi_annual/hyras_de/precipitation/)|
 | Temperature | DWD Climate Data Center (CDC): <br>Multi-annual means of grids of air temperature (2m) over Germany, period 1991-2020, version v1.0. <br>[online available](https://opendata.dwd.de/climate_environment/CDC/grids_germany/multi_annual/air_temperature_mean)|
 | potential Evapotranspiration | DWD Climate Data Center (CDC): <br>Multi-annual grids of potential evapotranspiration over grass, 0.x, period 1991-2020, <br>[online available](https://opendata.dwd.de/climate_environment/CDC/grids_germany/multi_annual/evapo_p)|
+
+As those grids have a coarse resolution with 1 km<sup>2</sup>, they got refined to a resolution of 25 meters, on the basis of a DEM25 (Copernicus). To refine the rasters the 1 km<sup>2</sup> DEM that was used by the DWD, was used. Together with the multi-annual raster value of the neighbor cells a linear regression is defined for every cell. The size of the window to produce the linear regression depends on the topology. Starting with a 5 x 5 km window, the standard deviation of the topology is computed. If this is smaller than 4 meters, than the window is increased by 1 km to each side. This step is repeated until the standard deviation is greater than 4 meters or the size of the window is greater than 13 x 13 km. This regression is then used on the DEM25 cells inside the 1 km<sup>2</sup> cell, to calculate the new multi-annual values.
 
 Then to get a regionalisation factor the multi-annual values of both stations are compared. For T and ET only the yearly mean is taken into account. For the precipitation one winter(October-March) and one summer (April-September) factor is computed. The following equation explain the calculation of the filling values for the different parameters, based on their multi-annual mean(ma).
 

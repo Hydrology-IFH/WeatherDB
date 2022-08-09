@@ -1,5 +1,8 @@
 # Change-log
 
+## Version 0.0.16 (upcoming)
+- repaire the update_raw function of StationND
+- change data source from regnie to hyras for precipitation regionalisation
 ## Version 0.0.15
 - change append with pandas concat function. -> faster
 - don't import complete module on installation
