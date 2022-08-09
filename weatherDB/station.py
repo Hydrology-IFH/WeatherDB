@@ -37,25 +37,34 @@ THIS_DIR = Path(__file__).parent.resolve()
 DATA_DIR = THIS_DIR.parents[2].joinpath("data")
 RASTERS = {
     "dwd_grid": {
-        "srid": 31467,
-        "proj4":"+proj=tmerc +lat_0=0 +lon_0=9 +k=1 +x_0=3500000 +y_0=0 +ellps=bessel +towgs84=598.1,73.7,418.2,0.202,0.045,-2.455,6.7 +units=m +no_defs",
+        "srid": 3035,
         "db_table": "dwd_grid_1991_2020",
         "bands": {
-            1: "n_wihj",
-            2: "n_sohj",
-            3: "n_year",
-            4: "t_year",  # is in 0.1°C
-            5: "et_year"
+            1: "n_dwd_wihj",
+            2: "n_dwd_sohj",
+            3: "n_dwd_year",
+            4: "t_dwd_year",  # is in 0.1°C
+            5: "et_dwd_year"
         },
         "dtype": int
     },
-    "regnie_grid": {
-        "srid": 4326,
+    "regnie_grid": { # kept for now
+        "srid": 3035,
         "db_table": "regnie_grid_1991_2020",
         "bands": {
             1: "n_regnie_wihj",
             2: "n_regnie_sohj",
             3: "n_regnie_year"
+        },
+        "dtype": int
+    },
+    "hyras_grid": {
+        "srid": 3035,
+        "db_table": "hyras_grid_1991_2020",
+        "bands": {
+            1: "n_hyras_wihj",
+            2: "n_hyras_sohj",
+            3: "n_hyras_year"
         },
         "dtype": int
     },
@@ -789,23 +798,19 @@ class StationBase:
 
         # create sql statement
         sql_new_mas = """
-            WITH stat_geom AS (
-                SELECT {sql_geom} AS geom
-                FROM meta_{para}
-                WHERE station_id={stid}
-            )
             SELECT {calc_line}
-            FROM rasters.{raster_name};
+            FROM   rasters.{raster_name} AS r
+            JOIN  (SELECT {sql_geom} AS geom
+                   FROM meta_{para}
+                   WHERE station_id={stid}) AS stat
+            ON   ST_Intersects(r.rast, stat.geom);
         """.format(
             stid=self.id, para=self._para,
             raster_name=self._ma_raster["db_table"],
             sql_geom=sql_geom,
             calc_line=", ".join(
-                ["ST_VALUE(rast, {i}, (SELECT geom FROM stat_geom)) as {name}"
-                    .format(
-                        i=i, name=self._ma_raster["bands"][i]
-                    )
-
+                ["ST_VALUE(rast, {i}, stat.geom) as {name}"
+                        .format(i=i, name=self._ma_raster["bands"][i])
                     for i in range(1, len(self._ma_raster["bands"])+1)])
         )
 
@@ -1846,7 +1851,7 @@ class StationBase:
     def get_coef(self, other_stid):
         """Get the regionalisation coefficients due to the height.
 
-        Those are the values from the dwd grid or regnie grids.
+        Those are the values from the dwd grid, HYRAS or REGNIE grids.
 
         Parameters
         ----------
@@ -2392,8 +2397,8 @@ class StationTETBase(StationCanVirtualBase):
 class StationNBase(StationBase):
     _date_col = "MESS_DATUM"
     _decimals = 100
-    _ma_cols = ["n_regnie_wihj", "n_regnie_sohj"]
-    _ma_raster = RASTERS["regnie_grid"]
+    _ma_cols = ["n_hyras_wihj", "n_hyras_sohj"]
+    _ma_raster = RASTERS["hyras_grid"]
 
     def get_adj(self, **kwargs):
         """Get the adjusted timeserie.
@@ -3019,15 +3024,17 @@ class StationN(StationNBase):
         if type(period) != TimestampPeriod:
             period= TimestampPeriod(*period)
 
-        # update difference to regnie
+        # update difference to regnie and hyras
         if period.is_empty() or period[0].year < pd.Timestamp.now().year:
             sql_diff_ma = """
                 UPDATE meta_n
                 SET quot_filled_regnie = quots.quot_regnie*100,
-                    quot_filled_dwd_grid = quots.quot_dwd*100
+                    quot_filled_dwd_grid = quots.quot_dwd*100,
+                    quot_filled_hyras = quots.quot_hyras*100
                 FROM (
                     SELECT df_ma.ys / (srv.n_regnie_year*{decimals}) AS quot_regnie,
-                        df_ma.ys / (srv.n_year*{decimals}) AS quot_dwd
+                        df_ma.ys / (srv.n_dwd_year*{decimals}) AS quot_dwd,
+                        df_ma.ys / (srv.n_hyras_year*{decimals}) AS quot_hyras
                     FROM (
                         SELECT avg(df_a.yearly_sum) as ys
                         FROM (
@@ -3145,7 +3152,7 @@ class StationND(StationNBase, StationCanVirtualBase):
         self.id_str = dwd_id_to_str(id)
 
     def _download_raw(self, zipfiles):
-        df_all = super()._download_raw(zipfiles)
+        df_all, max_hist_tstp = super()._download_raw(zipfiles)
 
         # fill RSK with values from RS if not given
         if "RS" in df_all.columns and "RSK" in df_all.columns:
@@ -3154,7 +3161,7 @@ class StationND(StationNBase, StationCanVirtualBase):
         elif "RS" in df_all.columns:
             df_all["RSK"] = df_all["RS"]
 
-        return df_all
+        return df_all, max_hist_tstp
 
     @check_superuser
     def _create_timeseries_table(self):
@@ -3181,7 +3188,7 @@ class StationT(StationTETBase):
     _cdc_col_names_imp = ["TMK"]
     _unit = "°C"
     _decimals = 10
-    _ma_cols = ["t_year"]
+    _ma_cols = ["t_dwd_year"]
     _coef_sign = ["-", "+"]
     _agg_fun = "avg"
 
@@ -3232,7 +3239,7 @@ class StationET(StationTETBase):
     _cdc_col_names_imp = ["VPGB"]
     _unit = "mm/Tag"
     _decimals = 10
-    _ma_cols = ["et_year"]
+    _ma_cols = ["et_dwd_year"]
     _sql_add_coef_calc = "* ma.exp_fact::float/ma_stat.exp_fact::float"
 
     def __init__(self, id, **kwargs):
