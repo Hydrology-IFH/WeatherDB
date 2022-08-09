@@ -344,7 +344,7 @@ def get_dwd_meta(ftp_folder, min_years=0, max_hole_d=9999):
         return None
     elif len(meta_file) > 1:
         log.info("There are more than one files matching the pattern: " +
-                  pattern + "in the folder:\nftp://opendata.dwd.de/" +
+                  pattern + " in the folder:\nftp://opendata.dwd.de/" +
                   str(ftp_folder) + "\nonly the first file is returned: " +
                   meta_file[0])
 

@@ -46,7 +46,8 @@ RASTERS = {
             4: "t_dwd_year",  # is in 0.1°C
             5: "et_dwd_year"
         },
-        "dtype": int
+        "dtype": int, 
+        "abbreviation": "dwd"
     },
     "regnie_grid": { # kept for now
         "srid": 3035,
@@ -56,7 +57,8 @@ RASTERS = {
             2: "n_regnie_sohj",
             3: "n_regnie_year"
         },
-        "dtype": int
+        "dtype": int, 
+        "abbreviation": "regnie"
     },
     "hyras_grid": {
         "srid": 3035,
@@ -66,7 +68,8 @@ RASTERS = {
             2: "n_hyras_sohj",
             3: "n_hyras_year"
         },
-        "dtype": int
+        "dtype": int, 
+        "abbreviation": "hyras"
     },
     "local":{
         "dgm25": {
@@ -782,7 +785,7 @@ class StationBase:
             con.execute(sql)
 
     @check_superuser
-    def update_ma(self, skip_if_exist=True):
+    def update_ma(self, skip_if_exist=True, drop_when_error=True):
         """Update the multi annual values in the stations_raster_values table.
 
         Get new values from the raster and put in the table.
@@ -809,7 +812,7 @@ class StationBase:
             raster_name=self._ma_raster["db_table"],
             sql_geom=sql_geom,
             calc_line=", ".join(
-                ["ST_VALUE(rast, {i}, stat.geom) as {name}"
+                ["ST_VALUE(r.rast, {i}, stat.geom) as {name}"
                         .format(i=i, name=self._ma_raster["bands"][i])
                     for i in range(1, len(self._ma_raster["bands"])+1)])
         )
@@ -817,7 +820,35 @@ class StationBase:
         with DB_ENG.connect() as con:
             new_mas = con.execute(sql_new_mas).first()
 
-        if any(new_mas):
+        # check for nearby cells if no cell was found:
+        dist = 0
+        if not any(new_mas):
+            for dist in range(0, 1000, 50):
+                sql_nearby = """
+                    SELECT {calc_line}
+                    FROM rasters.{raster_name} r
+                    JOIN (SELECT {sql_geom} AS geom
+                        FROM meta_{para}
+                        WHERE station_id={stid}) AS stat
+                        ON ST_Intersects(r.rast, stat.geom)    
+                    WHERE ST_Intersects(r.rast, 1, ST_Buffer(stat.geom, {dist}));
+                    """.format(
+                        stid=self.id, 
+                        para=self._para, 
+                        sql_geom=sql_geom,
+                        raster_name=self._ma_raster["db_table"],
+                        dist=dist,
+                        calc_line=", ".join(
+                            ["(ST_SummaryStats(r.rast, {i})).mean as {name}"
+                                    .format(i=i, name=self._ma_raster["bands"][i])
+                                for i in range(1, len(self._ma_raster["bands"])+1)]))
+                with DB_ENG.connect() as con:
+                    new_mas = con.execute(sql_nearby).first()
+                if new_mas is not None and any(new_mas): 
+                    break
+
+        # write to stations_raster_values table
+        if new_mas is not None and any(new_mas):
             # multi annual values were found
             sql_update = """
                 INSERT INTO stations_raster_values(station_id, geometry, {ma_cols})
@@ -826,19 +857,22 @@ class StationBase:
                     {update};
             """.format(
                 stid=self.id,
-                ma_cols=', '.join(
-                    [str(key) for key in self._ma_raster["bands"].values()]),
                 geom=self.get_geom(format=None),
-                values=str(new_mas).replace("None", "NULL")[1:-1],
+                ma_cols=', '.join(
+                    [str(key) for key in self._ma_raster["bands"].values()] + 
+                    ["dist_" + self._ma_raster["abbreviation"]]),
+                values=str(new_mas).replace("None", "NULL")[1:-1] + f", {dist}",
                 update=", ".join(
                     ["{key} = EXCLUDED.{key}".format(key=key)
-                        for key in self._ma_raster["bands"].values()]
+                        for key in self._ma_raster["bands"].values()] +
+                    ["{key} = EXCLUDED.{key}".format(
+                        key="dist_" + self._ma_raster["abbreviation"])]
                 ))
             with DB_ENG.connect()\
                     .execution_options(isolation_level="AUTOCOMMIT")\
                     as con:
                 con.execute(sql_update)
-        else:
+        elif drop_when_error:
             # there was no multi annual data found from the raster
             self._drop(
                 why="no multi-annual data was found from 'rasters.{raster_name}'"
