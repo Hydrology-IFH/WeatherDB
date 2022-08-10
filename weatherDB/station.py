@@ -1502,14 +1502,6 @@ class StationBase:
 
         # get the result
         return pd.read_sql(sql,con=DB_ENG, index_col="info")["explanation"]
-        with DB_ENG.connect() as con:
-            res = con.execute(sql)
-        keys = res.keys()
-        values = res.all()
-        if len(values)==1:
-            return values[0]
-        else:
-            return dict(zip(keys, values))
 
     def get_meta(self, infos="all"):
         """Get Information from the meta table.
