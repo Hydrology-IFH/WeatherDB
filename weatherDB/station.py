@@ -641,9 +641,9 @@ class StationBase:
                 where table_schema='timeseries');
             """.format(para=self._para, stid=self.id)
         with DB_ENG.connect() as con:
-            respond = con.execute(sql)
+            result = con.execute(sql).first()[0]
 
-        return respond.first()[0]
+        return result
 
     def isin_meta(self):
         """Check if Station is already in the meta table.
