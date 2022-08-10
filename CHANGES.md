@@ -1,6 +1,6 @@
 # Change-log
 
-## Version 0.0.16 (upcoming)
+## Version 0.0.16
 - repaire the update_raw function of StationND
 - change data source from regnie to hyras for precipitation regionalisation
 - add ability to get nearby ma value from rasters, up to 1km from the station
