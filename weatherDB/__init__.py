@@ -9,7 +9,7 @@ import os
 __author__ = "Max Schmit"
 __email__ = "max.schmit@hydrology.uni-freiburg.de"
 __copyright__ = "Copyright 2022, Max Schmit"
-__version__ = "0.0.15"
+__version__ = "0.0.16"
 
 if not ("WEATHERDB_MODULE_INSTALLING" in os.environ \
         and os.environ["WEATHERDB_MODULE_INSTALLING"]=="True"):

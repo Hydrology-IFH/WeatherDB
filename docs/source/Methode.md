@@ -61,14 +61,16 @@ It is assumed, that filling the measurements up with values from the neighbor st
 ## gap filling
 To have complete timeseries, the gaps in the quality checked timeseries are filled with data from the neighbor stations. This is done by regionalising the neighbors measurements value to the station that is gap filled. Starting with the nearest neighbor station all available stations are taken until the timeserie is completely filled.
 
-For the reginalisation, the multi-annual values for every station for the climate period of 1991-2020 are computed from the corresponding DWD grid.
+For the reginalisation, the multi-annual values for every station for the climate period of 1991-2020 are computed from the corresponding DWD grid. 
 
 **Table 3: The raster grids that are the basis for the regionalisation**
 | parameter |  <div style="text-align: center">source</div> |
 |:---:|---|
-| Precipitation | DWD Climate Data Center (CDC): <br>REGNIE grids of multi-annual precipitation, period 1991-2020, <br>[online available](https://opendata.dwd.de/climate_environment/CDC/grids_germany/multi_annual/regnie)|
+| Precipitation | DWD Climate Data Center (CDC): <br>HYRAS grids of multi-annual precipitation, period 1991-2020, <br>[online available](https://opendata.dwd.de/climate_environment/CDC/grids_germany/multi_annual/hyras_de/precipitation/)|
 | Temperature | DWD Climate Data Center (CDC): <br>Multi-annual means of grids of air temperature (2m) over Germany, period 1991-2020, version v1.0. <br>[online available](https://opendata.dwd.de/climate_environment/CDC/grids_germany/multi_annual/air_temperature_mean)|
 | potential Evapotranspiration | DWD Climate Data Center (CDC): <br>Multi-annual grids of potential evapotranspiration over grass, 0.x, period 1991-2020, <br>[online available](https://opendata.dwd.de/climate_environment/CDC/grids_germany/multi_annual/evapo_p)|
+
+As those grids have a coarse resolution with 1 km<sup>2</sup>, they got refined to a resolution of 25 meters, on the basis of a DEM25 (Copernicus). To refine the rasters the 1 km<sup>2</sup> DEM that was used by the DWD, was used. Together with the multi-annual raster value of the neighbor cells a linear regression is defined for every cell. The size of the window to produce the linear regression depends on the topology. Starting with a 5 x 5 km window, the standard deviation of the topology is computed. If this is smaller than 4 meters, than the window is increased by 1 km to each side. This step is repeated until the standard deviation is greater than 4 meters or the size of the window is greater than 13 x 13 km. This regression is then used on the DEM25 cells inside the 1 km<sup>2</sup> cell, to calculate the new multi-annual values.
 
 Then to get a regionalisation factor the multi-annual values of both stations are compared. For T and ET only the yearly mean is taken into account. For the precipitation one winter(October-March) and one summer (April-September) factor is computed. The following equation explain the calculation of the filling values for the different parameters, based on their multi-annual mean(ma).
 
@@ -86,7 +88,7 @@ For the precipitation values the 10 minutes values are furthermore adjusted to t
 ## Richter correction
 This step is only done for the 10 minutes precipitation values. Here the filled precipitation values, get corrected like defined in Richter (1995).  
 
-First of all, the horizon angle ("Horizontabschirmung") is calculated from a DGM20 (aggregated from DGM5) and if the DGM20 was out of bound also from a DGM8. The DGM80 is bigger than the german border and therefor for stations around the border this is gives better results than the DGM20 which is only for the german territory. Therefore the rasters are sampled for their values on one single line of 75km, starting from the station. Then the angle to every point from the station is calculated. The Point with the biggest angle is taken as horizon angle for this line. This step is repeated for several lines ranging from north to south in 3° steps. Afterwards the Richter horizon angle is computed as:
+First of all, the horizon angle ("Horizontabschirmung") is calculated from a DGM25 and if the DGM25 was out of bound also from a DGM80. The DGM80 is bigger than the german border and therefor for stations around the border this is gives better results than the DGM20 which is only for the german territory. Therefore the rasters are sampled for their values on one single line of 75km, starting from the station. Then the angle to every point from the station is calculated. The Point with the biggest angle is taken as horizon angle for this line. This step is repeated for several lines ranging from north to south in 3° steps. Afterwards the Richter horizon angle is computed as:
 
 $H’=0,15*H_{S-SW} + 0,35*H_{SW-W} +0,35*H_{W-NW} +0, 15*H_{NW-N}$
 
@@ -112,4 +114,4 @@ The daily correction ($\Delta N$) is then distributed to every 10 minute measure
 
 ## sources
 - Richter, D. 1995. Ergebnisse methodischer Untersuchungen zur Korrektur des systematischen Meßfehlers des Hellmann-Niederschlagsmessers. Offenbach am Main: Selbstverl. des Dt. Wetterdienstes.
-- GeoBasis-DE: Bundesamt für Kartographie und Geodäsie. 2016. Digitales Geländemodell Gitterweite 5 m. DGM5. Produktstand: 2016.
+- Coperniicus. 2016. European Digital Elevation Model (EU-DEM), version 1.1. [online available](https://land.copernicus.eu/imagery-in-situ/eu-dem/eu-dem-v1.1)

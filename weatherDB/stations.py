@@ -259,8 +259,9 @@ class StationsBase:
 
         Parameters
         ----------
-        infos : list, optional
+        infos : list or str, optional
             A list of information from the meta file to return
+            If "all" than all possible columns are returned, but only one geometry column.
             The default is: ["Station_id", "filled_from", "filled_until", "geometry"]
         only_real: bool, optional
             Whether only real stations are returned or also virtual ones.
@@ -274,7 +275,12 @@ class StationsBase:
         """
         # make sure columns is of type list
         if type(infos) == str:
-            infos = [infos]
+            if infos=="all":
+                infos = self.get_meta_explanation(infos="all").index.to_list()
+                if "geometry_utm" in infos:
+                    infos.remove("geometry_utm")
+            else:
+                infos = [infos]
 
         # check infos
         infos = [col.lower() for col in infos]
@@ -1388,8 +1394,8 @@ class GroupStations(object):
             Should the ET timeserie contain a column with R_R0.
             If None, then no column is added.
             If int, then a R/R0 column is appended with this number as standard value.
-            If list of int or floats, then the list should have the same length as the ET-timeserie and is appanded to the Timeserie.
-            If pd.Series, then the index should be a timestamp index. The serie is then joined to the ET timeserie.
+            If list of int or floats, then the list should have the same length as the ET-timeserie and is appended to the Timeserie.
+            If pd.Series, then the index should be a timestamp index. The series is then joined to the ET timeserie.
             The default is 1.
 
         Raises
