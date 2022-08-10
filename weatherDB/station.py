@@ -1047,7 +1047,7 @@ class StationBase:
 
         # update meta file
         imp_period = TimestampPeriod(
-            selection.index.min(), selection.index.max())
+            selection_without_na.index.min(), selection_without_na.index.max())
         self._update_last_imp_period_meta(period=imp_period)
 
         log.info(("The raw data for {para_long} station with ID {stid} got "+ 
