@@ -2532,10 +2532,10 @@ class StationN(StationNBase):
         if daily_exists:
             sql_dates_failed = """
                 WITH ts_10min_d AS (
-                    SELECT (ts.timestamp - INTERVAL '5h 50 min')::date as date, sum("raw") as raw
+                    SELECT (ts.timestamp - INTERVAL '6h')::date as date, sum("raw") as raw
                     FROM timeseries."{stid}_{para}" ts
                     WHERE ts.timestamp BETWEEN {min_tstp} AND {max_tstp}
-                    GROUP BY (ts.timestamp - INTERVAL '5h 50 min')::date)
+                    GROUP BY (ts.timestamp - INTERVAL '6h')::date)
                 SELECT date
                 FROM timeseries."{stid}_{para}_d" ts_d
                 LEFT JOIN ts_10min_d ON ts_d.timestamp::date=ts_10min_d.date
@@ -2582,7 +2582,7 @@ class StationN(StationNBase):
                     dates_failed AS ({sql_dates_failed})
             SELECT ts.timestamp,
                 (CASE WHEN ((ts.timestamp IN (SELECT timestamp FROM tstps_failed))
-                        OR ((ts.timestamp - INTERVAL '5h 50 min')::date IN (
+                        OR ((ts.timestamp - INTERVAL '6h')::date IN (
                             SELECT date FROM dates_failed))
                         OR ts."raw" < 0)
                     THEN NULL
