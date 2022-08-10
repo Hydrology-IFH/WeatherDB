@@ -1394,8 +1394,8 @@ class GroupStations(object):
             Should the ET timeserie contain a column with R_R0.
             If None, then no column is added.
             If int, then a R/R0 column is appended with this number as standard value.
-            If list of int or floats, then the list should have the same length as the ET-timeserie and is appanded to the Timeserie.
-            If pd.Series, then the index should be a timestamp index. The serie is then joined to the ET timeserie.
+            If list of int or floats, then the list should have the same length as the ET-timeserie and is appended to the Timeserie.
+            If pd.Series, then the index should be a timestamp index. The series is then joined to the ET timeserie.
             The default is 1.
 
         Raises
