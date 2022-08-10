@@ -259,8 +259,9 @@ class StationsBase:
 
         Parameters
         ----------
-        infos : list, optional
+        infos : list or str, optional
             A list of information from the meta file to return
+            If "all" than all possible columns are returned, but only one geometry column.
             The default is: ["Station_id", "filled_from", "filled_until", "geometry"]
         only_real: bool, optional
             Whether only real stations are returned or also virtual ones.
@@ -274,7 +275,12 @@ class StationsBase:
         """
         # make sure columns is of type list
         if type(infos) == str:
-            infos = [infos]
+            if infos=="all":
+                infos = self.get_meta_explanation(infos="all").index.to_list()
+                if "geometry_utm" in infos:
+                    infos.remove("geometry_utm")
+            else:
+                infos = [infos]
 
         # check infos
         infos = [col.lower() for col in infos]
