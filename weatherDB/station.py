@@ -822,7 +822,7 @@ class StationBase:
 
         # check for nearby cells if no cell was found:
         dist = 0
-        if not any(new_mas):
+        if new_mas is None or (new_mas is not None and not any(new_mas)):
             for dist in range(0, 1000, 50):
                 sql_nearby = """
                     SELECT {calc_line}
