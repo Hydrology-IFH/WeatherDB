@@ -1887,7 +1887,10 @@ class StationBase:
         Returns
         -------
         list of floats or None
-            A list of
+            A list of coefficients. 
+            For T, ET and N-daily only the the yearly coefficient is returned. 
+            For N the winter and summer half yearly coefficient is returned in tuple.
+            None is returned if either the own or other stations multi-annual value is not available.
         """
         ma_values = self.get_multi_annual()
         other_stat = self.__class__(other_stid)
