@@ -1,11 +1,11 @@
 # Change-log
 
 ## Version 0.0.17 (upcoming)
-- 
+- get_df now also accepts filled_share as kind
 
 ## Version 0.0.16
-- repaire the update_raw function of StationND
-- change data source from regnie to hyras for precipitation regionalisation
+- repaired the update_raw function of StationND
+- change data source from REGNIE to HYRAS for precipitation regionalisation
 - add ability to get nearby ma value from rasters, up to 1km from the station
 - change day definition for precipitation to run from 5:50 to 5:50 as written in dwd cdc description. (previously it was 5:40 - 5:40, as 5:40 was the last value of the previous day)
 - add ability to get all the meta information with get_meta
