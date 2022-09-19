@@ -19,7 +19,7 @@
 - added type test, if parameter gets checked for "all"
 - specify that secrets_weatherDB file should be on PYTHONPATH environment variable
 - Changed DGM5 to Copernicus DGM25, because of license advantages
-- adjusted update_horizon methode to be able to work with different CRS
+- adjusted update_horizon method to be able to work with different CRS
 - add kwargs to update_richter_class of StationsN
 - fix get_geom with crs transforamation
 
@@ -43,7 +43,7 @@
   
 ## Version 0.0.11
 - add fallback on thread if multiprocessing is not working
-- cleaning up ftplib use. allways recreate a new instance and don't try to reuse the instance.
+- cleaning up ftplib use. Always recreate a new instance and don't try to reuse the instance.
   This resolves some problems with the threading of the instances.
 - clean raw updates of only recent files by the maximum timestamp of the historical data.
 
