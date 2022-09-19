@@ -822,7 +822,7 @@ class StationBase:
 
         # check for nearby cells if no cell was found:
         dist = 0
-        if not any(new_mas):
+        if new_mas is None or (new_mas is not None and not any(new_mas)):
             for dist in range(0, 1000, 50):
                 sql_nearby = """
                     SELECT {calc_line}
@@ -1912,7 +1912,7 @@ class StationBase:
         kinds : str or list of str
             The data kinds to update.
             Must be a column in the timeseries DB.
-            Must be one of "raw", "qc", "filled", "adj", "filled_by".
+            Must be one of "raw", "qc", "filled", "adj", "filled_by", "filled_share".
             For the precipitation also "qn" and "corr" are valid.
             If "filled_by" is given together with an aggregation step, the "filled_by" is replaced by the "filled_share".
             The "filled_share" gives the share of filled values in the aggregation group in percent.
@@ -1965,6 +1965,11 @@ class StationBase:
                 kinds.remove("adj")
 
         # check kinds and period
+        if "filled_share" in kinds:
+            add_filled_share = True
+            kinds.remove("filled_share")
+        else:
+            add_filled_share = False
         kinds = self._check_kinds(kinds=kinds)
         period = self._check_period(
             period=period, kinds=kinds, nas_allowed=nas_allowed)
@@ -1985,8 +1990,6 @@ class StationBase:
                     This column gives the percentage of the filled fields in the aggregation group.""")
                 kinds.remove("filled_by")
                 add_filled_share = True
-            else:
-                add_filled_share = False
 
             # create sql parts
             kinds_before = kinds.copy()
@@ -3640,7 +3643,7 @@ class GroupStation(object):
         kinds :  str or list of str
             The data kinds to look for filled period.
             Must be a column in the timeseries DB.
-            Must be one of "raw", "qc", "filled", "adj", "filled_by", "best".
+            Must be one of "raw", "qc", "filled", "adj", "filled_by", "filled_share", "best".
             If "best" is given, then depending on the parameter of the station the best kind is selected.
             For precipitation this is "corr" and for the other this is "filled".
             For the precipitation also "qn" and "corr" are valid.
