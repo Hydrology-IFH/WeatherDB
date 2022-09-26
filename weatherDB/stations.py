@@ -382,6 +382,68 @@ class StationsBase:
 
         return stations
 
+    def count_holes(self, stids="all", **kwargs):
+        """Count holes in timeseries depending on there length.
+
+        Parameters
+        ----------
+        stids: string or list of int, optional
+            The Stations to return.
+            Can either be "all", for all possible stations
+            or a list with the Station IDs.
+            The default is "all".
+        kwargs : dict, optional
+            This is a list of parameters, that is supported by the StationBase.count_holes method.
+            E.G.:
+            weeks : list, optional
+                A list of hole length to count. 
+                Every hole longer than the duration of weeks specified is counted.
+                The default is [2, 4, 8, 12, 16, 20, 24]
+            kind : str
+                The kind of the timeserie to analyze.
+                Should be one of ['raw', 'qc', 'filled']. 
+                For N also "corr" is possible.
+                Normally only "raw" and "qc" make sense, because the other timeseries should not have holes.
+            period : TimestampPeriod or (tuple or list of datetime.datetime or None), optional
+                The minimum and maximum Timestamp for which to analyze the timeseries.
+                If None is given, the maximum and minimal possible Timestamp is taken.
+                The default is (None, None).
+            between_meta_period : bool, optional
+                Only check between the respective period that is defined in the meta table.
+                If "qc" is chosen as kind, then the "raw" meta period is taken.
+                The default is True.
+            crop_period : bool, optional
+                should the period get cropped to the maximum filled period.
+                This will result in holes being ignored when they are at the end or at the beginning of the timeserie.
+                If period = (None, None) is given, then this parameter is set to True.
+                The default is False.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A Pandas Dataframe, with station_id as index and one column per week.
+            The numbers in the table are the amount of NA-periods longer than the respective amount of weeks.
+
+        Raises
+        ------
+        ValueError
+            If the input parameters were not correct.
+        """   
+        # check input parameters
+        stations = self.get_stations(stids=stids, only_real=True)
+            
+        # iter stations
+        first = True
+        for station in stations:
+            new_count = station.count_holes(**kwargs)
+            if first:
+                meta = new_count
+                first = False
+            else:
+                meta = pd.concat([meta, new_count], axis=0)
+        
+        return meta       
+
     @staticmethod
     def _get_progressbar(max_value, name):
         pbar = pb.ProgressBar(
