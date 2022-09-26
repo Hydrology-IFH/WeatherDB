@@ -1610,6 +1610,111 @@ class StationBase:
     def get_name(self):
         return self.get_meta(infos="stationsname")
 
+    def count_holes(self, 
+            weeks=[2, 4, 8, 12, 16, 20, 24], kind="qc", period=(None, None),
+            between_meta_period=True, crop_period=False, **kwargs):
+        """Count holes in timeseries depending on there length.
+
+        Parameters
+        ----------
+        weeks : list, optional
+            A list of hole length to count. 
+            Every hole longer than the duration of weeks specified is counted.
+            The default is [2, 4, 8, 12, 16, 20, 24]
+        kind : str
+            The kind of the timeserie to analyze.
+            Should be one of ['raw', 'qc', 'filled']. 
+            For N also "corr" is possible.
+            Normally only "raw" and "qc" make sense, because the other timeseries should not have holes.
+        period : TimestampPeriod or (tuple or list of datetime.datetime or None), optional
+            The minimum and maximum Timestamp for which to analyze the timeseries.
+            If None is given, the maximum and minimal possible Timestamp is taken.
+            The default is (None, None).
+        between_meta_period : bool, optional
+            Only check between the respective period that is defined in the meta table.
+            If "qc" is chosen as kind, then the "raw" meta period is taken.
+            The default is True.
+        crop_period : bool, optional
+            should the period get cropped to the maximum filled period.
+            This will result in holes being ignored when they are at the end or at the beginning of the timeserie.
+            If period = (None, None) is given, then this parameter is set to True.
+            The default is False.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A Pandas Dataframe, with station_id as index and one column per week.
+            The numbers in the table are the amount of NA-periods longer than the respective amount of weeks.
+
+        Raises
+        ------
+        ValueError
+            If the input parameters were not correct.
+        """        
+        # check input parameters
+        kind = self._check_kind(kind)
+        kind_meta_period = "raw" if kind == "qc" else kind
+
+        if period == (None,None):
+            crop_period = True
+        period = self._check_period(
+            period, nas_allowed=not crop_period, kinds=[kind])
+
+        if not type(weeks) == list:
+            weeks = [weeks]
+        if not all([type(el)==int for el in weeks]):
+            raise ValueError(
+                "Not all the elements of the weeks input parameters where integers.")
+
+        # create SQL statement
+        sql_format_dict = dict(
+            stid=self.id, para=self._para,
+            kind=kind, kind_meta_period=kind_meta_period,
+            count_weeks=",".join(
+                [f"COUNT(*) FILTER (WHERE td.diff >= '{w} weeks'::INTERVAL) as \"holes>={w} weeks\"" 
+                    for w in weeks]),
+            where_between_raw_period="",
+            union_from="",
+            **period.get_sql_format_dict()
+        )
+        if between_meta_period: 
+            sql_format_dict.update(dict(
+                where_between_raw_period=\
+                f"AND ts.timestamp>=(SELECT {kind_meta_period}_from FROM meta) \
+                 AND ts.timestamp<=(SELECT {kind_meta_period}_until FROM meta)",
+                union_from=f"UNION (SELECT {kind_meta_period}_from FROM meta)",
+                union_until=f"UNION (SELECT {kind_meta_period}_until FROM meta)"
+            ))
+
+        sql = """
+        WITH meta AS (
+            SELECT {kind_meta_period}_from, {kind_meta_period}_until FROM meta_n WHERE station_id={stid})
+        SELECT {count_weeks} 
+        FROM (
+            SELECT tst.timestamp-LAG(tst.timestamp) OVER (ORDER BY tst.timestamp) as diff 
+            FROM (
+                SELECT timestamp 
+                FROM timeseries."{stid}_{para}" ts 
+                WHERE (ts.timestamp BETWEEN {min_tstp} AND {max_tstp})
+                    AND ts.{kind} IS NOT NULL
+                    {where_between_raw_period}
+                UNION (SELECT {min_tstp} as timestamp {union_from})
+                UNION (SELECT {max_tstp} as timestamp {union_until})
+                ) tst
+            ) td;
+        """.format(**sql_format_dict)
+
+        # get response from server
+        if "return_sql" in kwargs:
+            return sql.replace("%%", "%")
+        res = pd.read_sql(sql, DB_ENG)
+
+        # set index
+        res["station_id"] = self.id
+        res.set_index("station_id", inplace=True)
+
+        return res
+        
     def get_period_meta(self, kind, all=False):
         """Get a specific period from the meta information table.
 
