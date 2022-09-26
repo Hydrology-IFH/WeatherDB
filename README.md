@@ -1,6 +1,6 @@
 WeatherDB - module
 ==================
-author: Max Schmit
+author: ![Max Schmit](https://github.com/maxschmi)
 
 [![Documentation Status](https://readthedocs.org/projects/weatherdb/badge/?version=latest)](https://weatherdb.readthedocs.io/en/latest/?badge=latest)
 
