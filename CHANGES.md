@@ -1,5 +1,9 @@
 # Change-log
 
+## Version 0.0.18 (upcoming)
+- correct spelling error "methode" to "method"
+- add progressbar to count_holes method
+
 ## Version 0.0.17
 - get_df now also accepts filled_share as kind
 - added function to count the holes in the timeseries depending on there length

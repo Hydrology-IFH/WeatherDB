@@ -228,7 +228,7 @@ class StationsBase:
         """
         self._run_simple_loop(
             stations=self.get_stations(only_real=True, stids=stids),
-            methode="update_period_meta",
+            method="update_period_meta",
             name="update period in meta",
             kwargs={}
         )
@@ -470,7 +470,7 @@ class StationsBase:
 
         return pbar
 
-    def _run_methode(self, stations, methode, name, kwds=dict(), 
+    def _run_method(self, stations, method, name, kwds=dict(), 
             do_mp=True, processes=mp.cpu_count()-1):
         """Run methods of the given stations objects in multiprocessing/threading mode.
 
@@ -478,17 +478,17 @@ class StationsBase:
         ----------
         stations : list of station objects
             A list of station objects. Those must be children of the StationBase class.
-        methode : str
-            The name of the methode to call.
+        method : str
+            The name of the method to call.
         name : str
             A descriptive name of the method to show in the progressbar.
         kwds : dict
-            The keyword arguments to give to the methodes
+            The keyword arguments to give to the methods
         do_mp : bool, optional
-            Should the methode be done in multiprocessing mode?
+            Should the method be done in multiprocessing mode?
             If False the methods will be called in threading mode.
             Multiprocessing needs more memory and a bit more initiating time. Therefor it is only usefull for methods with a lot of computation effort in the python code.
-            If the most computation of a methode is done in the postgresql database, then threading is enough to speed the process up.
+            If the most computation of a method is done in the postgresql database, then threading is enough to speed the process up.
             The default is True.
         processes : int, optional
             The number of processes that should get started simultaneously.
@@ -496,13 +496,13 @@ class StationsBase:
             The default is the cpu count -1.
         """
         log.info("-"*79 +
-            f"\n{self._para_long} Stations async loop over methode '{methode}' started."
+            f"\n{self._para_long} Stations async loop over method '{method}' started."
             )
 
         if processes<=1:
-            log.info(f"Ass the number of processes is 1 or lower, the methode '{methode}' is started as a simple loop.")
+            log.info(f"Ass the number of processes is 1 or lower, the method '{method}' is started as a simple loop.")
             self._run_simple_loop(
-                stations=stations, methode=methode, name=name, kwds=kwds)
+                stations=stations, method=method, name=name, kwds=kwds)
         else:
             # progressbar
             num_stations = len(stations)
@@ -525,7 +525,7 @@ class StationsBase:
             for stat in stations:
                 results.append(
                     pool.apply_async(
-                        getattr(stat, methode),
+                        getattr(stat, method),
                         kwds=kwds))
             pool.close()
 
@@ -563,11 +563,11 @@ class StationsBase:
             pool.join()
             pool.terminate()
 
-    def _run_simple_loop(self, stations, methode, name, kwds=dict()):
+    def _run_simple_loop(self, stations, method, name, kwds=dict()):
         log.info("-"*79 +
-        "\n{para_long} Stations simple loop over methode '{methode}' started.".format(
+        "\n{para_long} Stations simple loop over method '{method}' started.".format(
             para_long=self._para_long,
-            methode=methode
+            method=method
         ))
 
         # progressbar
@@ -577,7 +577,7 @@ class StationsBase:
         # start processes
         results = []
         for stat in stations:
-            getattr(stat, methode)(**kwds)
+            getattr(stat, method)(**kwds)
             pbar.variables["last_station"] = stat.id
             pbar.update(pbar.value + 1)
 
@@ -602,17 +602,17 @@ class StationsBase:
             or a list with the Station IDs.
             The default is "all".  
         do_mp : bool, optional
-            Should the methode be done in multiprocessing mode?
+            Should the method be done in multiprocessing mode?
             If False the methods will be called in threading mode.
             Multiprocessing needs more memory and a bit more initiating time. Therefor it is only usefull for methods with a lot of computation effort in the python code.
-            If the most computation of a methode is done in the postgresql database, then threading is enough to speed the process up.
+            If the most computation of a method is done in the postgresql database, then threading is enough to speed the process up.
             The default is True.  
         remove_nas : bool, optional
             Remove the NAs from the downloaded data before updating it to the database. 
             This has computational advantages.
             The default is True.    
         kwargs : dict, optional
-            The additional keyword arguments for the _run_methode methode
+            The additional keyword arguments for the _run_method method
 
         Raises
         ------
@@ -629,9 +629,9 @@ class StationsBase:
             ftp_folders=self._ftp_folders)
 
         # run the tasks in multiprocessing mode
-        self._run_methode(
+        self._run_method(
             stations=self.get_stations(only_real=only_real, stids=stids),
-            methode="update_raw",
+            method="update_raw",
             name="download raw {para} data".format(para=self._para.upper()),
             kwds=dict(
                 only_new=only_new,
@@ -658,10 +658,10 @@ class StationsBase:
         Parameters
         ----------
         do_mp : bool, optional
-            Should the methode be done in multiprocessing mode?
+            Should the method be done in multiprocessing mode?
             If False the methods will be called in threading mode.
             Multiprocessing needs more memory and a bit more initiating time. Therefor it is only usefull for methods with a lot of computation effort in the python code.
-            If the most computation of a methode is done in the postgresql database, then threading is enough to speed the process up.
+            If the most computation of a method is done in the postgresql database, then threading is enough to speed the process up.
             The default is False.
         stids: string or list of int, optional
             The Stations for which to compute.
@@ -669,11 +669,11 @@ class StationsBase:
             or a list with the Station IDs.
             The default is "all".
         kwargs : dict, optional
-            The additional keyword arguments for the _run_methode methode
+            The additional keyword arguments for the _run_method method
         """
-        self._run_methode(
+        self._run_method(
             stations=self.get_stations(only_real=True, stids=stids),
-            methode="last_imp_quality_check",
+            method="last_imp_quality_check",
             name="quality check {para} data".format(para=self._para.upper()),
             do_mp=do_mp, **kwargs)
 
@@ -684,10 +684,10 @@ class StationsBase:
         Parameters
         ----------
         do_mp : bool, optional
-            Should the methode be done in multiprocessing mode?
+            Should the method be done in multiprocessing mode?
             If False the methods will be called in threading mode.
             Multiprocessing needs more memory and a bit more initiating time. Therefor it is only usefull for methods with a lot of computation effort in the python code.
-            If the most computation of a methode is done in the postgresql database, then threading is enough to speed the process up.
+            If the most computation of a method is done in the postgresql database, then threading is enough to speed the process up.
             The default is False.
         stids: string or list of int, optional
             The Stations for which to compute.
@@ -695,7 +695,7 @@ class StationsBase:
             or a list with the Station IDs.
             The default is "all".
         kwargs : dict, optional
-            The additional keyword arguments for the _run_methode methode
+            The additional keyword arguments for the _run_method method
         """
         stations = self.get_stations(only_real=False, stids=stids)
         period = stations[0].get_last_imp_period(all=True)
@@ -704,9 +704,9 @@ class StationsBase:
             para_long=self._para_long,
             min_tstp=period_log[0],
             max_tstp=period_log[1]))
-        self._run_methode(
+        self._run_method(
             stations=stations,
-            methode="last_imp_fillup",
+            method="last_imp_fillup",
             name="fillup {para} data".format(para=self._para.upper()),
             kwds=dict(_last_imp_period=period),
             do_mp=do_mp, **kwargs)
@@ -728,17 +728,17 @@ class StationsBase:
             or a list with the Station IDs.
             The default is "all".
         do_mp : bool, optional
-            Should the methode be done in multiprocessing mode?
+            Should the method be done in multiprocessing mode?
             If False the methods will be called in threading mode.
             Multiprocessing needs more memory and a bit more initiating time. Therefor it is only usefull for methods with a lot of computation effort in the python code.
-            If the most computation of a methode is done in the postgresql database, then threading is enough to speed the process up.
+            If the most computation of a method is done in the postgresql database, then threading is enough to speed the process up.
             The default is False.
         kwargs : dict, optional
-            The additional keyword arguments for the _run_methode methode
+            The additional keyword arguments for the _run_method method
         """
-        self._run_methode(
+        self._run_method(
             stations=self.get_stations(only_real=only_real, stids=stids),
-            methode="quality_check",
+            method="quality_check",
             name="quality check {para} data".format(para=self._para.upper()),
             kwds=dict(period=period),
             do_mp=do_mp, **kwargs)
@@ -757,22 +757,22 @@ class StationsBase:
             or a list with the Station IDs.
             The default is "all".
         do_mp : bool, optional
-            Should the methode be done in multiprocessing mode?
+            Should the method be done in multiprocessing mode?
             If False the methods will be called in threading mode.
             Multiprocessing needs more memory and a bit more initiating time. Therefor it is only usefull for methods with a lot of computation effort in the python code.
-            If the most computation of a methode is done in the postgresql database, then threading is enough to speed the process up.
+            If the most computation of a method is done in the postgresql database, then threading is enough to speed the process up.
             The default is False.
         kwargs : dict, optional
-            The additional keyword arguments for the _run_methode methode
+            The additional keyword arguments for the _run_method method
 
         Raises
         ------
         ValueError
             If the given stids (Station_IDs) are not all valid.
         """
-        self._run_methode(
+        self._run_method(
             stations=self.get_stations(only_real=False, stids=stids),
-            methode="update_ma",
+            method="update_ma",
             name="update ma-values for {para}".format(para=self._para.upper()),
             do_mp=do_mp, **kwargs)
 
@@ -792,22 +792,22 @@ class StationsBase:
             or a list with the Station IDs.
             The default is "all".
         do_mp : bool, optional
-            Should the methode be done in multiprocessing mode?
+            Should the method be done in multiprocessing mode?
             If False the methods will be called in threading mode.
             Multiprocessing needs more memory and a bit more initiating time. Therefor it is only usefull for methods with a lot of computation effort in the python code.
-            If the most computation of a methode is done in the postgresql database, then threading is enough to speed the process up.
+            If the most computation of a method is done in the postgresql database, then threading is enough to speed the process up.
             The default is False.
         kwargs : dict, optional
-            The additional keyword arguments for the _run_methode methode
+            The additional keyword arguments for the _run_method method
 
         Raises
         ------
         ValueError
             If the given stids (Station_IDs) are not all valid.
         """
-        self._run_methode(
+        self._run_method(
             stations=self.get_stations(only_real=only_real, stids=stids),
-            methode="fillup",
+            method="fillup",
             name="fillup {para} data".format(para=self._para.upper()),
             do_mp=do_mp, **kwargs)
     
@@ -914,9 +914,9 @@ class StationsN(StationsBase):
         ValueError
             If the given stids (Station_IDs) are not all valid.
         """
-        self._run_methode(
+        self._run_method(
             stations=self.get_stations(only_real=True, stids=stids),
-            methode="update_richter_class",
+            method="update_richter_class",
             name="update richter class for {para}".format(para=self._para.upper()),
             kwds=kwargs,
             do_mp=False)
@@ -933,16 +933,16 @@ class StationsN(StationsBase):
             or a list with the Station IDs.
             The default is "all".
         kwargs : dict, optional
-            The additional keyword arguments for the _run_methode methode
+            The additional keyword arguments for the _run_method method
 
         Raises
         ------
         ValueError
             If the given stids (Station_IDs) are not all valid.
         """
-        self._run_methode(
+        self._run_method(
             stations=self.get_stations(only_real=False, stids=stids),
-            methode="richter_correct",
+            method="richter_correct",
             name="richter correction on {para}".format(para=self._para.upper()),
             do_mp=False, **kwargs)
 
@@ -958,13 +958,13 @@ class StationsN(StationsBase):
             or a list with the Station IDs.
             The default is "all".
         do_mp : bool, optional
-            Should the methode be done in multiprocessing mode?
+            Should the method be done in multiprocessing mode?
             If False the methods will be called in threading mode.
             Multiprocessing needs more memory and a bit more initiating time. Therefor it is only usefull for methods with a lot of computation effort in the python code.
-            If the most computation of a methode is done in the postgresql database, then threading is enough to speed the process up.
+            If the most computation of a method is done in the postgresql database, then threading is enough to speed the process up.
             The default is False.
         kwargs : dict, optional
-            The additional keyword arguments for the _run_methode methode
+            The additional keyword arguments for the _run_method method
 
         Raises
         ------
@@ -976,9 +976,9 @@ class StationsN(StationsBase):
         log.info("The {para_long} Stations fillup of the last import is started for the period {min_tstp} - {max_tstp}".format(
             para_long=self._para_long,
             **period.get_sql_format_dict(format="%Y%m%d %H:%M")))
-        self._run_methode(
+        self._run_method(
             stations=stations,
-            methode="last_imp_corr",
+            method="last_imp_corr",
             kwds={"_last_imp_period": period},
             name="richter correction on {para}".format(para=self._para.upper()),
             do_mp=do_mp, **kwargs)
@@ -1188,8 +1188,8 @@ class GroupStations(object):
             or a list with the Station IDs.
             The default is "all".
         **kwargs: dict, optional
-            The keyword arguments are passed to the station.GroupStation().get_meta methode.
-            From there it is passed to the single station get_meta methode.
+            The keyword arguments are passed to the station.GroupStation().get_meta method.
+            From there it is passed to the single station get_meta method.
             Can be e.g. "infos"
 
         Returns

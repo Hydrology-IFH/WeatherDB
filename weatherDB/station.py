@@ -2744,7 +2744,7 @@ class StationN(StationNBase):
 
     @staticmethod
     def _check_period_extra(period): 
-        """Additional checks on period used in StationBase class _check_period methode."""   
+        """Additional checks on period used in StationBase class _check_period method."""   
         # add time to period if given as date
         return period.expand_to_timestamp()
 
