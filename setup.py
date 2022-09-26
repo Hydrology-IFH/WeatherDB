@@ -29,7 +29,7 @@ setup(
       ],
    author='Max Schmit',
    author_email='max.schmit@hydrology.uni-freiburg.de',
-   url='https://github.com/maxschmi/WeatherDB_module',
+   url='https://github.com/Hydrology-IFH/WeatherDB',
    license='GNU GPT3',
    packages=find_packages(include=['weatherDB', 'weatherDB.*']), 
    install_requires=requirements(),

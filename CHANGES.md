@@ -1,12 +1,17 @@
 # Change-log
 
+## Version 0.0.17
+- get_df now also accepts filled_share as kind
+- added function to count the holes in the timeseries depending on there length
+
 ## Version 0.0.16
-- repaire the update_raw function of StationND
-- change data source from regnie to hyras for precipitation regionalisation
+- repaired the update_raw function of StationND
+- change data source from REGNIE to HYRAS for precipitation regionalisation
 - add ability to get nearby ma value from rasters, up to 1km from the station
 - change day definition for precipitation to run from 5:50 to 5:50 as written in dwd cdc description. (previously it was 5:40 - 5:40, as 5:40 was the last value of the previous day)
 - add ability to get all the meta information with get_meta
 - save last_imp period but only for df without NAs -> else the marking of last_imp_qc... will not work, as the period will always be smaller than the last_imp period
+
 ## Version 0.0.15
 - change append with pandas concat function. -> faster
 - don't import complete module on installation
@@ -15,7 +20,7 @@
 - added type test, if parameter gets checked for "all"
 - specify that secrets_weatherDB file should be on PYTHONPATH environment variable
 - Changed DGM5 to Copernicus DGM25, because of license advantages
-- adjusted update_horizon methode to be able to work with different CRS
+- adjusted update_horizon method to be able to work with different CRS
 - add kwargs to update_richter_class of StationsN
 - fix get_geom with crs transforamation
 
@@ -39,7 +44,7 @@
   
 ## Version 0.0.11
 - add fallback on thread if multiprocessing is not working
-- cleaning up ftplib use. allways recreate a new instance and don't try to reuse the instance.
+- cleaning up ftplib use. Always recreate a new instance and don't try to reuse the instance.
   This resolves some problems with the threading of the instances.
 - clean raw updates of only recent files by the maximum timestamp of the historical data.
 
