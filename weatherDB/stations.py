@@ -434,7 +434,7 @@ class StationsBase:
             
         # iter stations
         first = True
-        for station in stations:
+        for station in pb.progressbar(stations, line_breaks=False):
             new_count = station.count_holes(**kwargs)
             if first:
                 meta = new_count
