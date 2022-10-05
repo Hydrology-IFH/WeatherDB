@@ -1487,8 +1487,8 @@ class StationBase:
         else:
             if type(infos) == str:
                 infos = [infos]
-            col_clause =" AND column_name IN ({cols})".format(
-                cols=", ".join(list(infos)))
+            col_clause =" AND column_name IN ('{cols}')".format(
+                cols="', '".join(list(infos)))
         sql = """
         SELECT cols.column_name AS info,
             (SELECT pg_catalog.col_description(c.oid, cols.ordinal_position::int)
