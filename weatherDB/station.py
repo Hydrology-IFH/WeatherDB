@@ -46,7 +46,7 @@ RASTERS = {
             4: "t_dwd_year",  # is in 0.1°C
             5: "et_dwd_year"
         },
-        "dtype": int, 
+        "dtype": int,
         "abbreviation": "dwd"
     },
     "regnie_grid": { # kept for now
@@ -57,7 +57,7 @@ RASTERS = {
             2: "n_regnie_sohj",
             3: "n_regnie_year"
         },
-        "dtype": int, 
+        "dtype": int,
         "abbreviation": "regnie"
     },
     "hyras_grid": {
@@ -68,12 +68,12 @@ RASTERS = {
             2: "n_hyras_sohj",
             3: "n_hyras_year"
         },
-        "dtype": int, 
+        "dtype": int,
         "abbreviation": "hyras"
     },
     "local":{
         "dgm25": {
-            "fp": DATA_DIR.joinpath("dgms/DGM25.tif"), 
+            "fp": DATA_DIR.joinpath("dgms/DGM25.tif"),
             "crs":pyproj.CRS.from_epsg(3035)},
         "dgm80": {
             "fp": DATA_DIR.joinpath("dgms/dgm80.tif"),
@@ -368,9 +368,9 @@ class StationBase:
         return period
 
     @staticmethod
-    def _check_period_extra(period): 
+    def _check_period_extra(period):
         """Additional checks on period to define in subclasses"""
-        return period  
+        return period
 
     def _check_agg_to(self, agg_to):
         agg_to_valid = list(AGG_TO.keys())
@@ -432,8 +432,8 @@ class StationBase:
                                 'day',
                                 min(start_tstp_last_imp) - '9h 30min'::INTERVAL
                             ) - '10 min'::INTERVAL,
-                            min(CASE WHEN para='n' THEN max_tstp_last_imp 
-                                     ELSE max_tstp_last_imp + '23h 50min'::INTERVAL 
+                            min(CASE WHEN para='n' THEN max_tstp_last_imp
+                                     ELSE max_tstp_last_imp + '23h 50min'::INTERVAL
                                 END))
                     FROM para_variables)::{tstp_dtype},
                     '{interval}'::INTERVAL)::{tstp_dtype} AS timestamp)
@@ -830,11 +830,11 @@ class StationBase:
                     JOIN (SELECT {sql_geom} AS geom
                         FROM meta_{para}
                         WHERE station_id={stid}) AS stat
-                        ON ST_Intersects(r.rast, stat.geom)    
+                        ON ST_Intersects(r.rast, stat.geom)
                     WHERE ST_Intersects(r.rast, 1, ST_Buffer(stat.geom, {dist}));
                     """.format(
-                        stid=self.id, 
-                        para=self._para, 
+                        stid=self.id,
+                        para=self._para,
                         sql_geom=sql_geom,
                         raster_name=self._ma_raster["db_table"],
                         dist=dist,
@@ -844,7 +844,7 @@ class StationBase:
                                 for i in range(1, len(self._ma_raster["bands"])+1)]))
                 with DB_ENG.connect() as con:
                     new_mas = con.execute(sql_nearby).first()
-                if new_mas is not None and any(new_mas): 
+                if new_mas is not None and any(new_mas):
                     break
 
         # write to stations_raster_values table
@@ -859,7 +859,7 @@ class StationBase:
                 stid=self.id,
                 geom=self.get_geom(format=None),
                 ma_cols=', '.join(
-                    [str(key) for key in self._ma_raster["bands"].values()] + 
+                    [str(key) for key in self._ma_raster["bands"].values()] +
                     ["dist_" + self._ma_raster["abbreviation"]]),
                 values=str(new_mas).replace("None", "NULL")[1:-1] + f", {dist}",
                 update=", ".join(
@@ -957,7 +957,7 @@ class StationBase:
             If None, then the list is fetched from the server.
             The default is None
         remove_nas : bool, optional
-            Remove the NAs from the downloaded data before updating it to the database. 
+            Remove the NAs from the downloaded data before updating it to the database.
             This has computational advantages.
             The default is True.
 
@@ -1015,16 +1015,16 @@ class StationBase:
 
         # update raw_files db table
         update_values = \
-            ", ".join([str(pair) for pair in zip(
-                zipfiles.index,
-                zipfiles["modtime"].dt.strftime("%Y%m%d %H:%M").values)]
+            ", ".join(
+                [f"('{self._para}', '{fp}', '{mod}')" for fp, mod in zip(
+                    zipfiles.index,
+                    zipfiles["modtime"].dt.strftime("%Y%m%d %H:%M").values)]
             )
         with DB_ENG.connect() as con:
-            con.execute('''
-                INSERT INTO raw_files(filepath, modtime)
-                VALUES {values}
-                ON CONFLICT (filepath) DO UPDATE SET modtime = EXCLUDED.modtime
-                '''.format(values=update_values))
+            con.execute(f'''
+                INSERT INTO raw_files(para, filepath, modtime)
+                VALUES {update_values}
+                ON CONFLICT (filepath) DO UPDATE SET modtime = EXCLUDED.modtime;''')
 
         # if empty skip updating meta filepath
         if len(selection_without_na) == 0:
@@ -1050,7 +1050,7 @@ class StationBase:
             selection_without_na.index.min(), selection_without_na.index.max())
         self._update_last_imp_period_meta(period=imp_period)
 
-        log.info(("The raw data for {para_long} station with ID {stid} got "+ 
+        log.info(("The raw data for {para_long} station with ID {stid} got "+
              "updated for the period {min_tstp} to {max_tstp}.").format(
                 para_long=self._para_long,
                 stid=self.id,
@@ -1075,14 +1075,9 @@ class StationBase:
         pandas.DataFrame or None
             A DataFrame of zipfiles and the corresponding modification time on the CDC server to import.
         """
-        # login to CDC FTP server
-        # CDC.login()
-        # CDC = get_cdc_con()
-
         # check if file list providen
         if ftp_file_list is None:
             ftp_file_list = get_cdc_file_list(
-                # CDC,
                 self._ftp_folders
             )
 
@@ -1102,10 +1097,11 @@ class StationBase:
             sql_db_modtimes = \
                 """SELECT filepath, modtime
                  FROM raw_files
-                 WHERE filepath in ({filepaths})""".format(
+                 WHERE filepath in ({filepaths}) AND para='{para}';""".format(
                     filepaths="'" +
-                    "', '".join(zipfiles_CDC.index.to_list())
-                    + "'")
+                        "', '".join(zipfiles_CDC.index.to_list())
+                        + "'",
+                    para=self._para)
             zipfiles_DB = pd.read_sql(
                 sql_db_modtimes, con=DB_ENG
             ).set_index("filepath")
@@ -1380,7 +1376,7 @@ class StationBase:
                         filled_by = new.filled_by
                     FROM new_filled_{stid}_{para} new
                     WHERE ts.timestamp = new.timestamp
-                        AND (ts."filled" IS DISTINCT FROM new."filled" 
+                        AND (ts."filled" IS DISTINCT FROM new."filled"
                              OR ts."filled_by" IS DISTINCT FROM new."filled_by") ;
                 END
             $do$;
@@ -1610,7 +1606,7 @@ class StationBase:
     def get_name(self):
         return self.get_meta(infos="stationsname")
 
-    def count_holes(self, 
+    def count_holes(self,
             weeks=[2, 4, 8, 12, 16, 20, 24], kind="qc", period=(None, None),
             between_meta_period=True, crop_period=False, **kwargs):
         """Count holes in timeseries depending on there length.
@@ -1618,12 +1614,12 @@ class StationBase:
         Parameters
         ----------
         weeks : list, optional
-            A list of hole length to count. 
+            A list of hole length to count.
             Every hole longer than the duration of weeks specified is counted.
             The default is [2, 4, 8, 12, 16, 20, 24]
         kind : str
             The kind of the timeserie to analyze.
-            Should be one of ['raw', 'qc', 'filled']. 
+            Should be one of ['raw', 'qc', 'filled'].
             For N also "corr" is possible.
             Normally only "raw" and "qc" make sense, because the other timeseries should not have holes.
         period : TimestampPeriod or (tuple or list of datetime.datetime or None), optional
@@ -1650,7 +1646,7 @@ class StationBase:
         ------
         ValueError
             If the input parameters were not correct.
-        """        
+        """
         # check input parameters
         kind = self._check_kind(kind)
         kind_meta_period = "raw" if kind == "qc" else kind
@@ -1671,13 +1667,13 @@ class StationBase:
             stid=self.id, para=self._para,
             kind=kind, kind_meta_period=kind_meta_period,
             count_weeks=",".join(
-                [f"COUNT(*) FILTER (WHERE td.diff >= '{w} weeks'::INTERVAL) as \"holes>={w} weeks\"" 
+                [f"COUNT(*) FILTER (WHERE td.diff >= '{w} weeks'::INTERVAL) as \"holes>={w} weeks\""
                     for w in weeks]),
             where_between_raw_period="",
             union_from="",
             **period.get_sql_format_dict()
         )
-        if between_meta_period: 
+        if between_meta_period:
             sql_format_dict.update(dict(
                 where_between_raw_period=\
                 f"AND ts.timestamp>=(SELECT {kind_meta_period}_from FROM meta) \
@@ -1689,12 +1685,12 @@ class StationBase:
         sql = """
         WITH meta AS (
             SELECT {kind_meta_period}_from, {kind_meta_period}_until FROM meta_n WHERE station_id={stid})
-        SELECT {count_weeks} 
+        SELECT {count_weeks}
         FROM (
-            SELECT tst.timestamp-LAG(tst.timestamp) OVER (ORDER BY tst.timestamp) as diff 
+            SELECT tst.timestamp-LAG(tst.timestamp) OVER (ORDER BY tst.timestamp) as diff
             FROM (
-                SELECT timestamp 
-                FROM timeseries."{stid}_{para}" ts 
+                SELECT timestamp
+                FROM timeseries."{stid}_{para}" ts
                 WHERE (ts.timestamp BETWEEN {min_tstp} AND {max_tstp})
                     AND ts.{kind} IS NOT NULL
                     {where_between_raw_period}
@@ -1714,7 +1710,7 @@ class StationBase:
         res.set_index("station_id", inplace=True)
 
         return res
-        
+
     def get_period_meta(self, kind, all=False):
         """Get a specific period from the meta information table.
 
@@ -1992,8 +1988,8 @@ class StationBase:
         Returns
         -------
         list of floats or None
-            A list of coefficients. 
-            For T, ET and N-daily only the the yearly coefficient is returned. 
+            A list of coefficients.
+            For T, ET and N-daily only the the yearly coefficient is returned.
             For N the winter and summer half yearly coefficient is returned in tuple.
             None is returned if either the own or other stations multi-annual value is not available.
         """
@@ -2065,7 +2061,7 @@ class StationBase:
         # check if adj
         if "adj" in kinds:
             adj_df = self.get_adj(
-                period=period, agg_to=agg_to, 
+                period=period, agg_to=agg_to,
                 nas_allowed=nas_allowed, add_na_share=add_na_share)
             if len(kinds) == 1:
                 return adj_df
@@ -2510,7 +2506,7 @@ class StationTETBase(StationCanVirtualBase):
         -------
         pd.DataFrame
             The adjusted timeserie with the timestamp as index.
-        """        
+        """
         # this is only the second part of the method
         main_df, adj_df, ma = super().get_adj(**kwargs)
 
@@ -2550,7 +2546,7 @@ class StationNBase(StationBase):
         -------
         pd.DataFrame
             The adjusted timeserie with the timestamp as index.
-        """  
+        """
         main_df, adj_df, ma = super().get_adj(**kwargs)
 
         # calculate the half yearly mean
@@ -2643,7 +2639,7 @@ class StationN(StationNBase):
                 FROM timeseries."{stid}_{para}_d" ts_d
                 LEFT JOIN ts_10min_d ON ts_d.timestamp::date=ts_10min_d.date
                 WHERE ts_d.timestamp BETWEEN {min_tstp}::date AND {max_tstp}::date
-                    AND ((ts_10min_d.raw = 0 AND ts_d.raw <> 0) OR 
+                    AND ((ts_10min_d.raw = 0 AND ts_d.raw <> 0) OR
                          (ts_10min_d.raw >= 10*{decim} AND ts_10min_d.raw >= (ts_d.raw*2)))
             """.format(**sql_format_dict)
         else:
@@ -2704,7 +2700,7 @@ class StationN(StationNBase):
 
         Here the function adapts the timezone relative to the date.
         As the data on the CDC server is in MEZ before 200 and in UTC after 2000
-        
+
         Some precipitation stations on the DWD CDC server have also rows outside of the normal 10 Minute frequency, e.g. 2008-09-16 01:47 for Station 662.
         Because those rows only have NAs for the measurement they are deleted."""
         # correct Timezone before 2000 -> MEZ after 2000 -> UTC
@@ -2743,8 +2739,8 @@ class StationN(StationNBase):
             con.execute(sql_add_table)
 
     @staticmethod
-    def _check_period_extra(period): 
-        """Additional checks on period used in StationBase class _check_period method."""   
+    def _check_period_extra(period):
+        """Additional checks on period used in StationBase class _check_period method."""
         # add time to period if given as date
         return period.expand_to_timestamp()
 
@@ -2829,10 +2825,10 @@ class StationN(StationNBase):
                     # look for holes inside the line
                     for i, j in enumerate(dgm_gpd[dgm_gpd["dist"].diff() > 10].index):
                         line_parts = pd.concat(
-                            [line_parts, 
+                            [line_parts,
                              pd.DataFrame(
-                                {"Start_point": dgm_gpd.loc[j-1, "geometry"], 
-                                 "radius": dgm_gpd.loc[j, "dist"] - dgm_gpd.loc[j-1, "dist"]}, 
+                                {"Start_point": dgm_gpd.loc[j-1, "geometry"],
+                                 "radius": dgm_gpd.loc[j, "dist"] - dgm_gpd.loc[j-1, "dist"]},
                                 index=[i])])
 
                     # look for missing values at the end
@@ -2841,8 +2837,8 @@ class StationN(StationNBase):
                             line_parts = pd.concat(
                                 [line_parts,
                                  pd.DataFrame(
-                                    {"Start_point":  dgm_gpd.iloc[-1]["geometry"], 
-                                     "radius": radius - dgm25_max_dist}, 
+                                    {"Start_point":  dgm_gpd.iloc[-1]["geometry"],
+                                     "radius": radius - dgm25_max_dist},
                                     index=[line_parts.index.max()+1])])
 
                     # check if parts are missing and fill
