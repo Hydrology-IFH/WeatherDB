@@ -1,6 +1,6 @@
 # Change-log
 
-## Version 0.0.18 (upcoming)
+## Version 0.0.18
 - correct spelling error "methode" to "method"
 - add progressbar to count_holes method
 - add para to raw_files, because some files get used for several parameters (T and N_D)
