@@ -176,7 +176,7 @@ class StationsBase:
 
         # change date columns
         for colname, col in \
-                meta.select_dtypes(include="datetime64").iteritems():
+                meta.select_dtypes(include="datetime64").items():
             meta.loc[:,colname] = col.dt.strftime("%Y%m%d %H:%M")
 
         # change geometry
