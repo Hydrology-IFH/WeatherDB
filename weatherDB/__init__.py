@@ -23,7 +23,7 @@ if not ("WEATHERDB_MODULE_INSTALLING" in os.environ \
     # remove old logs
     log_date_min = datetime.datetime.now() - datetime.timedelta(days=14)
     for log_file in [
-            file for file in log_dir.glob("*.log.*") 
+            file for file in log_dir.glob("*.log.*")
                 if re.match(".*\.log\.\d{4}-\d{2}-\d{2}$", file.name)]:
         try:
             file_date = datetime.datetime.strptime(log_file.stem.split(".")[2], "%Y-%m-%d")
@@ -37,9 +37,10 @@ if not ("WEATHERDB_MODULE_INSTALLING" in os.environ \
         log.setLevel(logging.DEBUG)
         fh = TimedRotatingFileHandler(
             log_dir.joinpath(
-                "classes_" + 
-                socket.gethostname().replace(".","_") + 
-                ".log"), 
+                "weatherDB_" +
+                socket.gethostname().replace(".","_") + "_" +
+                os.getlogin().replace(".","_") +
+                ".log"),
             when="midnight", encoding="utf-8")
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(
