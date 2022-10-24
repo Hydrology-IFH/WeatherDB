@@ -78,7 +78,10 @@ class StationsBase:
             meta_new = get_dwd_meta(ftp_folder=ftp_folder)
 
             # add new stations
-            meta = meta.append(meta_new[~meta_new.index.isin(meta.index)])
+            meta = pd.concat(
+                [meta, meta_new[~meta_new.index.isin(meta.index)]])
+            if type(meta_new)==gpd.GeoDataFrame:
+                meta = gpd.GeoDataFrame(meta, crs=meta_new.crs)
 
             # check for wider timespan
             if "bis_datum" in meta.columns:
@@ -1215,7 +1218,9 @@ class GroupStations(object):
             if "meta_all" not in locals():
                 meta_all = meta_para
             else:
-                meta_all = meta_all.append(meta_para)
+                meta_all = pd.concat([meta_all, meta_para], axis=0)
+                if type(meta_para)==gpd.GeoDataFrame:
+                    meta_all = gpd.GeoDataFrame(meta_all, crs=meta_para.crs)
         
         if len(paras)==1:
             return meta_all.drop("para", axis=1)
