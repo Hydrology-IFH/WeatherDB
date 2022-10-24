@@ -1,12 +1,10 @@
 # Change-log
 
-## Version 0.0.20 (upcoming)
-- changed pandas method iteritems to itmes, due to deprecation warning
-
 ## Version 0.0.19
 - fix error of updating raw_files table after new import.
 - change log file name to weatherDB_%host%_%user%.log
 - change the use of append method to pandas concat method
+- changed pandas method iteritems to items, due to deprecation warning
 
 ## Version 0.0.18
 - correct spelling error "methode" to "method"
