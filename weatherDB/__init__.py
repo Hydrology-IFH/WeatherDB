@@ -35,12 +35,16 @@ if not ("WEATHERDB_MODULE_INSTALLING" in os.environ \
     # add filehandler if necessary
     if not log.hasHandlers():
         log.setLevel(logging.DEBUG)
+        try:
+            user = os.getlogin()
+        except:
+            user = "anonym"
+        #print(os.getlogin())
         fh = TimedRotatingFileHandler(
             log_dir.joinpath(
                 "weatherDB_" +
-                socket.gethostname().replace(".","_") + "_" +
-                os.getlogin().replace(".","_") +
-                ".log"),
+                socket.gethostname().replace(".","_") + 
+                f"_{user}.log"),
             when="midnight", encoding="utf-8")
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(
