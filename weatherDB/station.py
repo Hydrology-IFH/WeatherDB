@@ -1024,7 +1024,7 @@ class StationBase:
             con.execute(f'''
                 INSERT INTO raw_files(para, filepath, modtime)
                 VALUES {update_values}
-                ON CONFLICT (filepath) DO UPDATE SET modtime = EXCLUDED.modtime;''')
+                ON CONFLICT (para, filepath) DO UPDATE SET modtime = EXCLUDED.modtime;''')
 
         # if empty skip updating meta filepath
         if len(selection_without_na) == 0:
