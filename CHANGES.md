@@ -3,6 +3,7 @@
 ## Version 0.0.19
 - fix error of updating raw_files table after new import.
 - change log file name to weatherDB_%host%_%user%.log
+- change the use of append method to pandas concat method
 
 ## Version 0.0.18
 - correct spelling error "methode" to "method"
