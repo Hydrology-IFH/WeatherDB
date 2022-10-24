@@ -1,9 +1,13 @@
 # Change-log
 
+## Version 0.0.19
+- fix error of updating raw_files table after new import.
+- change log file name to weatherDB_%host%_%user%.log
+
 ## Version 0.0.18
 - correct spelling error "methode" to "method"
 - add progressbar to count_holes method
-- add para to raw_files, because some files get used for several parameters (T and N_D)
+- add para to raw_files db-table, because some files get used for several parameters (T and N_D)
 
 ## Version 0.0.17
 - get_df now also accepts filled_share as kind
