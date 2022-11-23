@@ -31,13 +31,21 @@ else:
         except ImportError:
             raise ImportError("The secretSettings_weatherDB.py file was not found on your system.\n Please put the file somewhere on your sys.path directories or add the directory of the file to your sys.path/PYTHONPATH environment variable. For more information see the docs.")
     
+    # backwards compatibility of renaming secret values
+    if hasattr(secrets, "DB_WEA_USER"):
+        secrets.DB_USER = secrets.DB_WEA_USER
+    if hasattr(secrets, "DB_WEA_NAME"):
+        secrets.DB_NAME = secrets.DB_WEA_NAME
+    if hasattr(secrets, "DB_WEA_PWD"):
+        secrets.DB_PWD = secrets.DB_WEA_PWD
+
     # create the engine
     DB_ENG = sqlalchemy.create_engine(
         "postgresql://{user}:{pwd}@{host}:{port}/{name}".format(
-            user=secrets.DB_WEA_USER,
-            pwd=secrets.DB_WEA_PWD,
+            user=secrets.DB_USER,
+            pwd=secrets.DB_PWD,
             host=secrets.DB_HOST,
-            name=secrets.DB_WEA_NAME,
+            name=secrets.DB_NAME,
             port=secrets.DB_PORT
             )
         )
