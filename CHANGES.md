@@ -1,5 +1,8 @@
 # Change-log
 
+## Version 0.0.20 (upcoming)
+- change secretSettings_weatherDB names to DB_PWD, DB_NAME and DB_USER
+
 ## Version 0.0.19
 - fix error of updating raw_files table after new import.
 - change log file name to weatherDB_%host%_%user%.log
