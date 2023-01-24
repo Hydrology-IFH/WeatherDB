@@ -1254,7 +1254,7 @@ class StationBase:
             base_col="qc" if "qc" in self._valid_kinds else "raw",
             cond_mas_not_null=" OR ".join([
                 "ma_other.{ma_col} IS NOT NULL".format(ma_col=ma_col)
-                    for ma_col in self._ma_cols])
+                    for ma_col in self._ma_cols]),
             **self._sql_fillup_extra()
         )
 
@@ -1311,7 +1311,7 @@ class StationBase:
         sql = """
             CREATE TEMP TABLE new_filled_{stid}_{para}
                 ON COMMIT DROP
-                AS (SELECT timestamp, {base_col} AS filled,
+                AS (SELECT timestamp, {base_col} AS filled, {extra_new_temp_cols}
                         NULL::int AS filled_by {is_winter_col}
                     FROM timeseries."{stid}_{para}" ts {cond_period});
             ALTER TABLE new_filled_{stid}_{para} ADD PRIMARY KEY (timestamp);
@@ -1377,7 +1377,7 @@ class StationBase:
                         filled_by = new.filled_by
                     FROM new_filled_{stid}_{para} new
                     WHERE ts.timestamp = new.timestamp
-                        AND (ts."filled" IS DISTINCT FROM new."filled"
+                        AND (ts."filled" IS DISTINCT FROM new."filled" {extra_fillup_where}
                              OR ts."filled_by" IS DISTINCT FROM new."filled_by") ;
                 END
             $do$;
@@ -1417,8 +1417,10 @@ class StationBase:
             A dictionary with the different additional sql_format_dict entries.
         """
         return {"sql_extra_after_loop": "",
-                "extra_cols_fillup":"",
-                "extra_cols_fillup_calc": ""}
+                "extra_new_temp_cols": "",
+                "extra_cols_fillup": "",
+                "extra_cols_fillup_calc": "",
+                "extra_fillup_where": ""}
 
     @check_superuser
     def _mark_last_imp_done(self, kind):
@@ -3364,10 +3366,13 @@ class StationT(StationTETBase):
         # additional parts to calculate the filling of min and max
         fillup_extra_dict = super()._sql_fillup_extra()
         fillup_extra_dict.update({
-            "extra_cols_fillup_calc": "filled_min=round(nb.min + %%3$s, 0)::int, " +
-                                      "filled_max=round(nb.max + %%3$s, 0)::int, ",
+            "extra_new_temp_cols": "raw_min AS filled_min, raw_max AS filled_max,",
+            "extra_cols_fillup_calc": "filled_min=round(nb.raw_min + %%3$s, 0)::int, " +
+                                      "filled_max=round(nb.raw_max + %%3$s, 0)::int, ",
             "extra_cols_fillup": "filled_min = new.filled_min, " +
-                                 "filled_max = new.filled_max, "})
+                                 "filled_max = new.filled_max, ",
+            "extra_fillup_where": ' OR ts."filled_min" IS DISTINCT FROM new."filled_min"' +
+                                  ' OR ts."filled_max" IS DISTINCT FROM new."filled_max"'})
         return fillup_extra_dict
     
     def get_multi_annual(self):
