@@ -3609,6 +3609,12 @@ class GroupStation(object):
             If True, one column per asked kind is added with the respective share of NAs, if the aggregation step is not the smallest.
             The "kind"_na_share column is in percentage.
             The default is False.
+        add_t_min=False : bool, optional
+            Schould the minimal temperature value get added?
+            The default is False.
+        add_t_max=False : bool, optional
+            Schould the maximal temperature value get added?
+            The default is False.
 
         Returns
         -------
@@ -3781,6 +3787,12 @@ class GroupStation(object):
             If list of int or floats, then the list should have the same length as the ET-timeserie and is appanded to the Timeserie.
             If pd.Series, then the index should be a timestamp index. The serie is then joined to the ET timeserie.
             The default is 1.
+        add_t_min=False : bool, optional
+            Schould the minimal temperature value get added?
+            The default is False.
+        add_t_max=False : bool, optional
+            Schould the maximal temperature value get added?
+            The default is False.
 
         Raises
         ------
@@ -3790,7 +3802,7 @@ class GroupStation(object):
         return self.create_ts(dir=dir, period=period, kinds=kind,
                               agg_to="10 min", r_r0=r_r0, split_date=True,
                               nas_allowed=False, 
-                              add_t_min=False, add_t_max=False)
+                              add_t_min=add_t_min, add_t_max=add_t_max)
 
     def create_ts(self, dir, period=(None, None), kinds="best", paras="all",
                   agg_to="10 min", r_r0=None, split_date=False,
