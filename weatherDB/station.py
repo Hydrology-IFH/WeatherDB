@@ -3630,16 +3630,44 @@ class GroupStation(object):
                 # check if min and max for temperature should get added
                 use_kinds = kinds.copy()
                 if stat._para == "t":
-                    if add_t_max:
-                        if "raw" in kinds:
-                            use_kinds.append("raw_max")
-                        elif "filled" in kinds or "best" in kinds:
-                            use_kinds.append("filled_max")
-                    if add_t_min:
-                        if "raw" in kinds:
-                            use_kinds.append("raw_min")
-                        elif "filled" in kinds or "best" in kinds:
-                            use_kinds.append("filled_min")
+                    if type(use_kinds)== str:
+                        use_kinds=[use_kinds]
+                    if "best" in use_kinds:
+                        use_kinds.insert(use_kinds.index("best"), "filled")
+                        use_kinds.pop("best")
+                    # if add_t_max:
+                    #     if "raw" in kinds:
+                    #         use_kinds.insert(
+                    #             use_kinds.index("raw")+1,
+                    #             "raw_max")
+                    #     elif "filled" in kinds or "best" in kinds:
+                    #         use_kinds.insert(
+                    #             use_kinds.index("filled")+1,
+                    #             "filled_max")
+                    # if add_t_min:
+                    for k in ["raw", "filled"]:
+                        if k in kinds:
+                            if add_t_max:
+                                use_kinds.insert(
+                                    use_kinds.index(k)+1,
+                                    f"{k}_max")
+                            if add_t_min:
+                                use_kinds.insert(
+                                    use_kinds.index(k)+1,
+                                    f"{k}_min")
+                        # if "raw" in kinds:
+                        #     use_kinds.insert(
+                        #         use_kinds.index("raw")+1,
+                        #         "raw_min")
+                        # elif "filled" in kinds:
+                        #     use_kinds.insert(
+                        #         use_kinds.index("filled")+1,
+                        #         "filled_min")
+                        # elif "best" in kinds:
+                        #     use_kinds.insert(
+                        #         use_kinds.index("best")+1,
+                        #         "filled_min")
+
 
                 # get the data from station object
                 df = stat.get_df(
@@ -3917,17 +3945,15 @@ class GroupStation(object):
                 add_t_min=add_t_min, add_t_max=add_t_max)
 
             # rename columns
-            if len(kinds)==1:
-                colname_base = [col for col in df.columns if len(col.split("_"))==2][0]
+            if len(kinds)==1 or ("filled_by" in kinds and len(kinds)==2):
+                if len(kinds)==1:
+                    colname_base = [col for col in df.columns if len(col.split("_"))==2][0]
+                else:
+                    colname_base = f"{para.upper()}_" + kinds[1-(kinds.index("filled_by"))]
                 df.rename(
                     {colname_base: para.upper(),
                      f"{colname_base}_min": f"{para.upper()}_min", 
                      f"{colname_base}_max": f"{para.upper()}_max",},
-                    axis=1, inplace=True)
-                
-            elif "filled_by" in kinds and len(kinds)==2:
-                df.rename(
-                    {f"{para.upper()}_" + kinds[1-(kinds.index("filled_by"))]: para.upper()},
                     axis=1, inplace=True)
             else:
                 df.rename(
