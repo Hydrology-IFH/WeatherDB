@@ -1,5 +1,6 @@
 # Change-log
 
+## Version 0.0.21 (upcoming)
 ## Version 0.0.20
 - change secretSettings_weatherDB names to DB_PWD, DB_NAME and DB_USER
 - add min and max to the temperature timeseries
