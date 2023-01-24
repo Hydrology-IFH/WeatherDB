@@ -2419,20 +2419,6 @@ class StationTETBase(StationCanVirtualBase):
     _tstp_format_db = "%Y%m%d"
     _tstp_format_human = "%Y-%m-%d"
 
-    def _create_timeseries_table(self):
-        """Create the timeseries table in the DB if it is not yet existing."""
-        sql_add_table = '''
-            CREATE TABLE IF NOT EXISTS timeseries."{stid}_{para}"  (
-                timestamp date PRIMARY KEY,
-                raw int4,
-                qc int4,
-                filled int4,
-                filled_by int2
-                );
-        '''.format(stid=self.id, para=self._para)
-        with DB_ENG.connect() as con:
-            con.execute(sql_add_table)
-
     def _get_sql_near_mean(self, period, only_real=True):
         """Get the SQL statement for the mean of the 5 nearest stations.
 
@@ -3318,7 +3304,8 @@ class StationT(StationTETBase):
     _date_col = "MESS_DATUM"
     _para = "t"
     _para_long = "Temperature"
-    _cdc_col_names_imp = ["TMK"]
+    _cdc_col_names_imp = ["TMK", "TNK", "TXK"]
+    _db_col_names_imp = ["raw", "raw_min", "raw_max"]
     _unit = "°C"
     _decimals = 10
     _ma_cols = ["t_dwd_year"]
@@ -3328,6 +3315,24 @@ class StationT(StationTETBase):
     def __init__(self, id, **kwargs):
         super().__init__(id, **kwargs)
         self.id_str = dwd_id_to_str(id)
+
+    def _create_timeseries_table(self):
+        """Create the timeseries table in the DB if it is not yet existing."""
+        sql_add_table = '''
+            CREATE TABLE IF NOT EXISTS timeseries."{stid}_{para}"  (
+                timestamp date PRIMARY KEY,
+                raw integer NULL DEFAULT NULL,
+                raw_min integer NULL DEFAULT NULL,
+                raw_max integer NULL DEFAULT NULL,
+                qc integer NULL DEFAULT NULL,
+                filled integer NULL DEFAULT NULL,
+                filled_min integer NULL DEFAULT NULL,
+                filled_max integer NULL DEFAULT NULL,
+                filled_by smallint NULL DEFAULT NULL
+                );
+        '''.format(stid=self.id, para=self._para)
+        with DB_ENG.connect() as con:
+            con.execute(sql_add_table)
 
     def _get_sql_new_qc(self, period):
         # create sql for new qc
@@ -3378,6 +3383,20 @@ class StationET(StationTETBase):
     def __init__(self, id, **kwargs):
         super().__init__(id, **kwargs)
         self.id_str = str(id)
+    
+    def _create_timeseries_table(self):
+        """Create the timeseries table in the DB if it is not yet existing."""
+        sql_add_table = '''
+            CREATE TABLE IF NOT EXISTS timeseries."{stid}_{para}"  (
+                timestamp date PRIMARY KEY,
+                raw integer NULL DEFAULT NULL,
+                qc integer NULL DEFAULT NULL,
+                filled integer NULL DEFAULT NULL,
+                filled_by smallint NULL DEFAULT NULL
+                );
+        '''.format(stid=self.id, para=self._para)
+        with DB_ENG.connect() as con:
+            con.execute(sql_add_table)
 
     def _get_sql_new_qc(self, period):
         # create sql for new qc
