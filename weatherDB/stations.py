@@ -1301,7 +1301,8 @@ class GroupStations(object):
 
     def create_ts(self, dir, period=(None, None), kinds="best",
                   stids="all", agg_to="10 min", r_r0=None, split_date=False, 
-                  nas_allowed=True, add_na_share=False):
+                  nas_allowed=True, add_na_share=False, 
+                  add_t_min=False, add_t_max=False):
         """Download and create the weather tables as csv files.
 
         Parameters
@@ -1351,6 +1352,12 @@ class GroupStations(object):
             This is especially important, when the stations data get aggregated, because the aggregation doesn't make sense if there are a lot of NAs in the original data.
             If True, one column per asked kind is added with the respective share of NAs, if the aggregation step is not the smallest.
             The "kind"_na_share column is in percentage.
+            The default is False.
+        add_t_min : bool, optional
+            Should the minimal temperature value get added?
+            The default is False.
+        add_t_max : bool, optional
+            Should the maximal temperature value get added?
             The default is False.
         """
         start_time = datetime.datetime.now()
@@ -1431,7 +1438,8 @@ class GroupStations(object):
                 quantity=len(stids), dir=dir))
 
     def create_roger_ts(self, dir, period=(None, None), stids="all",
-                        kind="best", r_r0=1):
+                        kind="best", r_r0=1, 
+                        add_t_min=False, add_t_max=False):
         """Create the timeserie files for roger as csv.
 
         This is only a wrapper function for create_ts with some standard settings.
@@ -1464,6 +1472,12 @@ class GroupStations(object):
             If list of int or floats, then the list should have the same length as the ET-timeserie and is appended to the Timeserie.
             If pd.Series, then the index should be a timestamp index. The series is then joined to the ET timeserie.
             The default is 1.
+        add_t_min : bool, optional
+            Should the minimal temperature value get added?
+            The default is False.
+        add_t_max : bool, optional
+            Should the maximal temperature value get added?
+            The default is False.
 
         Raises
         ------
