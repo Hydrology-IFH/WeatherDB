@@ -889,7 +889,8 @@ class StationBase:
         # get last_imp valid kinds that are in the meta file
         last_imp_valid_kinds = self._valid_kinds.copy()
         last_imp_valid_kinds.remove("raw")
-        for name in ["qn", "filled_by"]:
+        for name in ["qn", "filled_by", 
+                     "raw_min", "raw_max", "filled_min", "filled_max"]:
             if name in last_imp_valid_kinds:
                 last_imp_valid_kinds.remove(name)
 
@@ -1254,7 +1255,7 @@ class StationBase:
             cond_mas_not_null=" OR ".join([
                 "ma_other.{ma_col} IS NOT NULL".format(ma_col=ma_col)
                     for ma_col in self._ma_cols]),
-            sql_extra_fillup=self._sql_extra_fillup()
+            **self._sql_fillup_extra()
         )
 
         # make condition for period
@@ -1310,7 +1311,7 @@ class StationBase:
         sql = """
             CREATE TEMP TABLE new_filled_{stid}_{para}
                 ON COMMIT DROP
-                AS (SELECT timestamp, {base_col} AS filled,
+                AS (SELECT timestamp, {base_col} AS filled, {extra_new_temp_cols}
                         NULL::int AS filled_by {is_winter_col}
                     FROM timeseries."{stid}_{para}" ts {cond_period});
             ALTER TABLE new_filled_{stid}_{para} ADD PRIMARY KEY (timestamp);
@@ -1353,7 +1354,7 @@ class StationBase:
                         EXECUTE FORMAT(
                         $$
                         UPDATE new_filled_{stid}_{para} nf
-                        SET filled={filled_calc},
+                        SET filled={filled_calc}, {extra_cols_fillup_calc}
                             filled_by=%%1$s
                         FROM timeseries.%%2$I nb
                         WHERE nf.filled IS NULL AND nb.{base_col} IS NOT NULL
@@ -1370,13 +1371,13 @@ class StationBase:
                         FROM new_filled_{stid}_{para}
                         WHERE "filled" IS NULL;
                     END LOOP;
-                    {sql_extra_fillup}
+                    {sql_extra_after_loop}
                     UPDATE timeseries."{stid}_{para}" ts
-                    SET filled = new.filled,
+                    SET filled = new.filled, {extra_cols_fillup}
                         filled_by = new.filled_by
                     FROM new_filled_{stid}_{para} new
                     WHERE ts.timestamp = new.timestamp
-                        AND (ts."filled" IS DISTINCT FROM new."filled"
+                        AND (ts."filled" IS DISTINCT FROM new."filled" {extra_fillup_where}
                              OR ts."filled_by" IS DISTINCT FROM new."filled_by") ;
                 END
             $do$;
@@ -1402,17 +1403,24 @@ class StationBase:
                 self._mark_last_imp_done(kind="filled")
 
     @check_superuser
-    def _sql_extra_fillup(self):
-        """Get the additional sql statement to treat the newly filled temporary table before updating the real timeserie.
+    def _sql_fillup_extra(self):
+        """Get the sql statement for the fill to calculate the filling of additional columns.
 
-        This is mainly for the precipitation Station and returns an empty string for the other stations.
+        This is mainly for the temperature Station to fillup max and min 
+        and returns an empty string for the other stations.
+        
+        And for the precipitation Station and returns an empty string for the other stations.
 
         Returns
         -------
-        str
-            The SQL statement.
+        dict
+            A dictionary with the different additional sql_format_dict entries.
         """
-        return ""
+        return {"sql_extra_after_loop": "",
+                "extra_new_temp_cols": "",
+                "extra_cols_fillup": "",
+                "extra_cols_fillup_calc": "",
+                "extra_fillup_where": ""}
 
     @check_superuser
     def _mark_last_imp_done(self, kind):
@@ -2419,20 +2427,6 @@ class StationTETBase(StationCanVirtualBase):
     _tstp_format_db = "%Y%m%d"
     _tstp_format_human = "%Y-%m-%d"
 
-    def _create_timeseries_table(self):
-        """Create the timeseries table in the DB if it is not yet existing."""
-        sql_add_table = '''
-            CREATE TABLE IF NOT EXISTS timeseries."{stid}_{para}"  (
-                timestamp date PRIMARY KEY,
-                raw int4,
-                qc int4,
-                filled int4,
-                filled_by int2
-                );
-        '''.format(stid=self.id, para=self._para)
-        with DB_ENG.connect() as con:
-            con.execute(sql_add_table)
-
     def _get_sql_near_mean(self, period, only_real=True):
         """Get the SQL statement for the mean of the 5 nearest stations.
 
@@ -3123,7 +3117,8 @@ class StationN(StationNBase):
         return self.last_imp_richter_correct(_last_imp_period=_last_imp_period)
 
     @check_superuser
-    def _sql_extra_fillup(self):
+    def _sql_fillup_extra(self):
+        # adjust 10 minutes sum to match measured daily value
         sql_extra = """
             UPDATE new_filled_{stid}_{para} ts
             SET filled = filled * coef
@@ -3146,8 +3141,9 @@ class StationN(StationNBase):
             WHERE (ts.timestamp - '5h 50min'::INTERVAL)::date = df_coef.date
                 AND coef != 1;
         """.format(stid=self.id, para=self._para)
-
-        return sql_extra
+        fillup_extra_dict = super()._sql_fillup_extra()
+        fillup_extra_dict.update(dict(sql_extra_after_loop=sql_extra))
+        return fillup_extra_dict
 
     @check_superuser
     def fillup(self, period=(None, None), **kwargs):
@@ -3318,16 +3314,37 @@ class StationT(StationTETBase):
     _date_col = "MESS_DATUM"
     _para = "t"
     _para_long = "Temperature"
-    _cdc_col_names_imp = ["TMK"]
+    _cdc_col_names_imp = ["TMK", "TNK", "TXK"]
+    _db_col_names_imp = ["raw", "raw_min", "raw_max"]
     _unit = "°C"
     _decimals = 10
     _ma_cols = ["t_dwd_year"]
     _coef_sign = ["-", "+"]
     _agg_fun = "avg"
+    _valid_kinds = ["raw", "raw_min", "raw_max", "qc", 
+                    "filled", "filled_min", "filled_max", "filled_by"]
 
     def __init__(self, id, **kwargs):
         super().__init__(id, **kwargs)
         self.id_str = dwd_id_to_str(id)
+
+    def _create_timeseries_table(self):
+        """Create the timeseries table in the DB if it is not yet existing."""
+        sql_add_table = '''
+            CREATE TABLE IF NOT EXISTS timeseries."{stid}_{para}"  (
+                timestamp date PRIMARY KEY,
+                raw integer NULL DEFAULT NULL,
+                raw_min integer NULL DEFAULT NULL,
+                raw_max integer NULL DEFAULT NULL,
+                qc integer NULL DEFAULT NULL,
+                filled integer NULL DEFAULT NULL,
+                filled_min integer NULL DEFAULT NULL,
+                filled_max integer NULL DEFAULT NULL,
+                filled_by smallint NULL DEFAULT NULL
+                );
+        '''.format(stid=self.id, para=self._para)
+        with DB_ENG.connect() as con:
+            con.execute(sql_add_table)
 
     def _get_sql_new_qc(self, period):
         # create sql for new qc
@@ -3344,6 +3361,20 @@ class StationT(StationTETBase):
 
         return sql_new_qc
 
+    @check_superuser
+    def _sql_fillup_extra(self):
+        # additional parts to calculate the filling of min and max
+        fillup_extra_dict = super()._sql_fillup_extra()
+        fillup_extra_dict.update({
+            "extra_new_temp_cols": "raw_min AS filled_min, raw_max AS filled_max,",
+            "extra_cols_fillup_calc": "filled_min=round(nb.raw_min + %%3$s, 0)::int, " +
+                                      "filled_max=round(nb.raw_max + %%3$s, 0)::int, ",
+            "extra_cols_fillup": "filled_min = new.filled_min, " +
+                                 "filled_max = new.filled_max, ",
+            "extra_fillup_where": ' OR ts."filled_min" IS DISTINCT FROM new."filled_min"' +
+                                  ' OR ts."filled_max" IS DISTINCT FROM new."filled_max"'})
+        return fillup_extra_dict
+    
     def get_multi_annual(self):
         mas = super().get_multi_annual()
         if mas is not None:
@@ -3378,6 +3409,20 @@ class StationET(StationTETBase):
     def __init__(self, id, **kwargs):
         super().__init__(id, **kwargs)
         self.id_str = str(id)
+    
+    def _create_timeseries_table(self):
+        """Create the timeseries table in the DB if it is not yet existing."""
+        sql_add_table = '''
+            CREATE TABLE IF NOT EXISTS timeseries."{stid}_{para}"  (
+                timestamp date PRIMARY KEY,
+                raw integer NULL DEFAULT NULL,
+                qc integer NULL DEFAULT NULL,
+                filled integer NULL DEFAULT NULL,
+                filled_by smallint NULL DEFAULT NULL
+                );
+        '''.format(stid=self.id, para=self._para)
+        with DB_ENG.connect() as con:
+            con.execute(sql_add_table)
 
     def _get_sql_new_qc(self, period):
         # create sql for new qc
@@ -3525,7 +3570,8 @@ class GroupStation(object):
         return filled_period
 
     def get_df(self, period=(None, None), kinds="best", paras="all",
-               agg_to="day", nas_allowed=True, add_na_share=False):
+               agg_to="day", nas_allowed=True, add_na_share=False, 
+               add_t_min=False, add_t_max=False):
         """Get a DataFrame with the corresponding data.
 
         Parameters
@@ -3563,6 +3609,12 @@ class GroupStation(object):
             If True, one column per asked kind is added with the respective share of NAs, if the aggregation step is not the smallest.
             The "kind"_na_share column is in percentage.
             The default is False.
+        add_t_min : bool, optional
+            Should the minimal temperature value get added?
+            The default is False.
+        add_t_max : bool, optional
+            Should the maximal temperature value get added?
+            The default is False.
 
         Returns
         -------
@@ -3575,9 +3627,52 @@ class GroupStation(object):
         dfs = []
         for stat in self.station_parts:
             if stat._para in paras:
+                # check if min and max for temperature should get added
+                use_kinds = kinds.copy()
+                if stat._para == "t":
+                    if type(use_kinds)== str:
+                        use_kinds=[use_kinds]
+                    if "best" in use_kinds:
+                        use_kinds.insert(use_kinds.index("best"), "filled")
+                        use_kinds.pop("best")
+                    # if add_t_max:
+                    #     if "raw" in kinds:
+                    #         use_kinds.insert(
+                    #             use_kinds.index("raw")+1,
+                    #             "raw_max")
+                    #     elif "filled" in kinds or "best" in kinds:
+                    #         use_kinds.insert(
+                    #             use_kinds.index("filled")+1,
+                    #             "filled_max")
+                    # if add_t_min:
+                    for k in ["raw", "filled"]:
+                        if k in kinds:
+                            if add_t_max:
+                                use_kinds.insert(
+                                    use_kinds.index(k)+1,
+                                    f"{k}_max")
+                            if add_t_min:
+                                use_kinds.insert(
+                                    use_kinds.index(k)+1,
+                                    f"{k}_min")
+                        # if "raw" in kinds:
+                        #     use_kinds.insert(
+                        #         use_kinds.index("raw")+1,
+                        #         "raw_min")
+                        # elif "filled" in kinds:
+                        #     use_kinds.insert(
+                        #         use_kinds.index("filled")+1,
+                        #         "filled_min")
+                        # elif "best" in kinds:
+                        #     use_kinds.insert(
+                        #         use_kinds.index("best")+1,
+                        #         "filled_min")
+
+
+                # get the data from station object
                 df = stat.get_df(
                     period=period,
-                    kinds=kinds,
+                    kinds=use_kinds,
                     agg_to=agg_to,
                     nas_allowed=nas_allowed,
                     add_na_share=add_na_share)
@@ -3692,7 +3787,7 @@ class GroupStation(object):
         return self.station_parts[0].get_name()
 
     def create_roger_ts(self, dir, period=(None, None),
-                        kind="best", r_r0=1):
+                        kind="best", r_r0=1, add_t_min=False, add_t_max=False):
         """Create the timeserie files for roger as csv.
 
         This is only a wrapper function for create_ts with some standard settings.
@@ -3720,6 +3815,12 @@ class GroupStation(object):
             If list of int or floats, then the list should have the same length as the ET-timeserie and is appanded to the Timeserie.
             If pd.Series, then the index should be a timestamp index. The serie is then joined to the ET timeserie.
             The default is 1.
+        add_t_min=False : bool, optional
+            Schould the minimal temperature value get added?
+            The default is False.
+        add_t_max=False : bool, optional
+            Schould the maximal temperature value get added?
+            The default is False.
 
         Raises
         ------
@@ -3728,11 +3829,13 @@ class GroupStation(object):
         """
         return self.create_ts(dir=dir, period=period, kinds=kind,
                               agg_to="10 min", r_r0=r_r0, split_date=True,
-                              nas_allowed=False)
+                              nas_allowed=False, 
+                              add_t_min=add_t_min, add_t_max=add_t_max)
 
     def create_ts(self, dir, period=(None, None), kinds="best", paras="all",
                   agg_to="10 min", r_r0=None, split_date=False,
-                  nas_allowed=True, add_na_share=False):
+                  nas_allowed=True, add_na_share=False, 
+                  add_t_min=False, add_t_max=False):
         """Create the timeserie files as csv.
 
         Parameters
@@ -3784,6 +3887,12 @@ class GroupStation(object):
             If True, one column per asked kind is added with the respective share of NAs, if the aggregation step is not the smallest.
             The "kind"_na_share column is in percentage.
             The default is False.
+        add_t_min=False : bool, optional
+            Schould the minimal temperature value get added?
+            The default is False.
+        add_t_max=False : bool, optional
+            Schould the maximal temperature value get added?
+            The default is False.
 
         Raises
         ------
@@ -3819,7 +3928,7 @@ class GroupStation(object):
                 period = period_new
 
         # prepare loop
-        name_suffix = "_{stid:0>4}.txt".format(stid=self.id)
+        name_suffix = "_{stid:0>5}.txt".format(stid=self.id)
         x, y = self.get_geom().split(";")[1]\
                 .replace("POINT(", "").replace(")", "")\
                 .split(" ")
@@ -3832,16 +3941,19 @@ class GroupStation(object):
                 period=period, kinds=kinds,
                 paras=[para], agg_to=agg_to,
                 nas_allowed=nas_allowed,
-                add_na_share=add_na_share)
+                add_na_share=add_na_share, 
+                add_t_min=add_t_min, add_t_max=add_t_max)
 
             # rename columns
-            if len(kinds)==1:
+            if len(kinds)==1 or ("filled_by" in kinds and len(kinds)==2):
+                if len(kinds)==1:
+                    colname_base = [col for col in df.columns if len(col.split("_"))==2][0]
+                else:
+                    colname_base = f"{para.upper()}_" + kinds[1-(kinds.index("filled_by"))]
                 df.rename(
-                    {df.columns[0]: para.upper()},
-                    axis=1, inplace=True)
-            elif "filled_by" in kinds and len(kinds)==2:
-                df.rename(
-                    {f"{para.upper()}_" + kinds[1-(kinds.index("filled_by"))]: para.upper()},
+                    {colname_base: para.upper(),
+                     f"{colname_base}_min": f"{para.upper()}_min", 
+                     f"{colname_base}_max": f"{para.upper()}_max",},
                     axis=1, inplace=True)
             else:
                 df.rename(
