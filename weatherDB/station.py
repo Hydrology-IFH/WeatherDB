@@ -3910,17 +3910,21 @@ class GroupStation(object):
         for para in paras:
             # get the timeserie
             df = self.get_df(
-                period=period, kinds=use_kinds,
+                period=period, kinds=kinds,
                 paras=[para], agg_to=agg_to,
                 nas_allowed=nas_allowed,
                 add_na_share=add_na_share, 
                 add_t_min=add_t_min, add_t_max=add_t_max)
 
             # rename columns
-            if len(use_kinds)==1:
+            if len(kinds)==1:
+                colname_base = [col for col in df.columns if len(col.split("_"))==2][0]
                 df.rename(
-                    {df.columns[0]: para.upper()},
+                    {colname_base: para.upper(),
+                     f"{colname_base}_min": f"{para.upper()}_min", 
+                     f"{colname_base}_max": f"{para.upper()}_max",},
                     axis=1, inplace=True)
+                
             elif "filled_by" in kinds and len(kinds)==2:
                 df.rename(
                     {f"{para.upper()}_" + kinds[1-(kinds.index("filled_by"))]: para.upper()},
