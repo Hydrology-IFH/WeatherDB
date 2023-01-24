@@ -889,7 +889,8 @@ class StationBase:
         # get last_imp valid kinds that are in the meta file
         last_imp_valid_kinds = self._valid_kinds.copy()
         last_imp_valid_kinds.remove("raw")
-        for name in ["qn", "filled_by"]:
+        for name in ["qn", "filled_by", 
+                     "raw_min", "raw_max", "filled_min", "filled_max"]:
             if name in last_imp_valid_kinds:
                 last_imp_valid_kinds.remove(name)
 
