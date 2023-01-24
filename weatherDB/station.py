@@ -3864,7 +3864,7 @@ class GroupStation(object):
                 period = period_new
 
         # prepare loop
-        name_suffix = "_{stid:0>4}.txt".format(stid=self.id)
+        name_suffix = "_{stid:0>5}.txt".format(stid=self.id)
         x, y = self.get_geom().split(";")[1]\
                 .replace("POINT(", "").replace(")", "")\
                 .split(" ")
