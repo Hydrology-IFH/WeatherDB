@@ -3570,7 +3570,8 @@ class GroupStation(object):
         return filled_period
 
     def get_df(self, period=(None, None), kinds="best", paras="all",
-               agg_to="day", nas_allowed=True, add_na_share=False):
+               agg_to="day", nas_allowed=True, add_na_share=False, 
+               add_t_min=False, add_t_max=False):
         """Get a DataFrame with the corresponding data.
 
         Parameters
@@ -3620,9 +3621,24 @@ class GroupStation(object):
         dfs = []
         for stat in self.station_parts:
             if stat._para in paras:
+                # check if min and max for temperature should get added
+                use_kinds = kinds.copy()
+                if stat._para == "t":
+                    if add_t_max:
+                        if "raw" in kinds:
+                            use_kinds.append("raw_max")
+                        elif "filled" in kinds or "best" in kinds:
+                            use_kinds.append("filled_max")
+                    if add_t_min:
+                        if "raw" in kinds:
+                            use_kinds.append("raw_min")
+                        elif "filled" in kinds or "best" in kinds:
+                            use_kinds.append("filled_min")
+
+                # get the data from station object
                 df = stat.get_df(
                     period=period,
-                    kinds=kinds,
+                    kinds=use_kinds,
                     agg_to=agg_to,
                     nas_allowed=nas_allowed,
                     add_na_share=add_na_share)
@@ -3737,7 +3753,7 @@ class GroupStation(object):
         return self.station_parts[0].get_name()
 
     def create_roger_ts(self, dir, period=(None, None),
-                        kind="best", r_r0=1):
+                        kind="best", r_r0=1, add_t_min=False, add_t_max=False):
         """Create the timeserie files for roger as csv.
 
         This is only a wrapper function for create_ts with some standard settings.
@@ -3773,11 +3789,13 @@ class GroupStation(object):
         """
         return self.create_ts(dir=dir, period=period, kinds=kind,
                               agg_to="10 min", r_r0=r_r0, split_date=True,
-                              nas_allowed=False)
+                              nas_allowed=False, 
+                              add_t_min=False, add_t_max=False)
 
     def create_ts(self, dir, period=(None, None), kinds="best", paras="all",
                   agg_to="10 min", r_r0=None, split_date=False,
-                  nas_allowed=True, add_na_share=False):
+                  nas_allowed=True, add_na_share=False, 
+                  add_t_min=False, add_t_max=False):
         """Create the timeserie files as csv.
 
         Parameters
@@ -3829,6 +3847,12 @@ class GroupStation(object):
             If True, one column per asked kind is added with the respective share of NAs, if the aggregation step is not the smallest.
             The "kind"_na_share column is in percentage.
             The default is False.
+        add_t_min=False : bool, optional
+            Schould the minimal temperature value get added?
+            The default is False.
+        add_t_max=False : bool, optional
+            Schould the maximal temperature value get added?
+            The default is False.
 
         Raises
         ------
@@ -3874,13 +3898,14 @@ class GroupStation(object):
         for para in paras:
             # get the timeserie
             df = self.get_df(
-                period=period, kinds=kinds,
+                period=period, kinds=use_kinds,
                 paras=[para], agg_to=agg_to,
                 nas_allowed=nas_allowed,
-                add_na_share=add_na_share)
+                add_na_share=add_na_share, 
+                add_t_min=add_t_min, add_t_max=add_t_max)
 
             # rename columns
-            if len(kinds)==1:
+            if len(use_kinds)==1:
                 df.rename(
                     {df.columns[0]: para.upper()},
                     axis=1, inplace=True)
