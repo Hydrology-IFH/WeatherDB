@@ -1253,8 +1253,8 @@ class StationBase:
             base_col="qc" if "qc" in self._valid_kinds else "raw",
             cond_mas_not_null=" OR ".join([
                 "ma_other.{ma_col} IS NOT NULL".format(ma_col=ma_col)
-                    for ma_col in self._ma_cols]),
-            sql_extra_fillup=self._sql_extra_fillup()
+                    for ma_col in self._ma_cols])
+            **self._sql_fillup_extra()
         )
 
         # make condition for period
@@ -1353,7 +1353,7 @@ class StationBase:
                         EXECUTE FORMAT(
                         $$
                         UPDATE new_filled_{stid}_{para} nf
-                        SET filled={filled_calc},
+                        SET filled={filled_calc}, {extra_cols_fillup_calc}
                             filled_by=%%1$s
                         FROM timeseries.%%2$I nb
                         WHERE nf.filled IS NULL AND nb.{base_col} IS NOT NULL
@@ -1370,9 +1370,9 @@ class StationBase:
                         FROM new_filled_{stid}_{para}
                         WHERE "filled" IS NULL;
                     END LOOP;
-                    {sql_extra_fillup}
+                    {sql_extra_after_loop}
                     UPDATE timeseries."{stid}_{para}" ts
-                    SET filled = new.filled,
+                    SET filled = new.filled, {extra_cols_fillup}
                         filled_by = new.filled_by
                     FROM new_filled_{stid}_{para} new
                     WHERE ts.timestamp = new.timestamp
@@ -1402,17 +1402,22 @@ class StationBase:
                 self._mark_last_imp_done(kind="filled")
 
     @check_superuser
-    def _sql_extra_fillup(self):
-        """Get the additional sql statement to treat the newly filled temporary table before updating the real timeserie.
+    def _sql_fillup_extra(self):
+        """Get the sql statement for the fill to calculate the filling of additional columns.
 
-        This is mainly for the precipitation Station and returns an empty string for the other stations.
+        This is mainly for the temperature Station to fillup max and min 
+        and returns an empty string for the other stations.
+        
+        And for the precipitation Station and returns an empty string for the other stations.
 
         Returns
         -------
-        str
-            The SQL statement.
+        dict
+            A dictionary with the different additional sql_format_dict entries.
         """
-        return ""
+        return {"sql_extra_after_loop": "",
+                "extra_cols_fillup":"",
+                "extra_cols_fillup_calc": ""}
 
     @check_superuser
     def _mark_last_imp_done(self, kind):
@@ -3109,7 +3114,8 @@ class StationN(StationNBase):
         return self.last_imp_richter_correct(_last_imp_period=_last_imp_period)
 
     @check_superuser
-    def _sql_extra_fillup(self):
+    def _sql_fillup_extra(self):
+        # adjust 10 minutes sum to match measured daily value
         sql_extra = """
             UPDATE new_filled_{stid}_{para} ts
             SET filled = filled * coef
@@ -3132,8 +3138,9 @@ class StationN(StationNBase):
             WHERE (ts.timestamp - '5h 50min'::INTERVAL)::date = df_coef.date
                 AND coef != 1;
         """.format(stid=self.id, para=self._para)
-
-        return sql_extra
+        fillup_extra_dict = super()._sql_fillup_extra()
+        fillup_extra_dict.update(dict(sql_extra_after_loop=sql_extra))
+        return fillup_extra_dict
 
     @check_superuser
     def fillup(self, period=(None, None), **kwargs):
@@ -3311,6 +3318,8 @@ class StationT(StationTETBase):
     _ma_cols = ["t_dwd_year"]
     _coef_sign = ["-", "+"]
     _agg_fun = "avg"
+    _valid_kinds = ["raw", "raw_min", "raw_max", "qc", 
+                    "filled", "filled_min", "filled_max", "filled_by"]
 
     def __init__(self, id, **kwargs):
         super().__init__(id, **kwargs)
@@ -3349,6 +3358,17 @@ class StationT(StationTETBase):
 
         return sql_new_qc
 
+    @check_superuser
+    def _sql_fillup_extra(self):
+        # additional parts to calculate the filling of min and max
+        fillup_extra_dict = super()._sql_fillup_extra()
+        fillup_extra_dict.update({
+            "extra_cols_fillup_calc": "filled_min=round(nb.min + %%3$s, 0)::int, " +
+                                      "filled_max=round(nb.max + %%3$s, 0)::int, ",
+            "extra_cols_fillup": "filled_min = new.filled_min, " +
+                                 "filled_max = new.filled_max, "})
+        return fillup_extra_dict
+    
     def get_multi_annual(self):
         mas = super().get_multi_annual()
         if mas is not None:
