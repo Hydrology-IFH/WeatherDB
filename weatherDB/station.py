@@ -3609,11 +3609,11 @@ class GroupStation(object):
             If True, one column per asked kind is added with the respective share of NAs, if the aggregation step is not the smallest.
             The "kind"_na_share column is in percentage.
             The default is False.
-        add_t_min=False : bool, optional
-            Schould the minimal temperature value get added?
+        add_t_min : bool, optional
+            Should the minimal temperature value get added?
             The default is False.
-        add_t_max=False : bool, optional
-            Schould the maximal temperature value get added?
+        add_t_max : bool, optional
+            Should the maximal temperature value get added?
             The default is False.
 
         Returns
