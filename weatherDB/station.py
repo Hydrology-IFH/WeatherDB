@@ -2110,8 +2110,8 @@ class StationBase:
                 if re.search(r".*(_min)|(_max)", kind):
                     agg_fun = self._agg_fun
                 else:
-                    agg_fun = "min" if re.search(r".*_min", kind) else "max"
-                kinds.append(f"{agg_fun}({kind}) AS {kind}")
+                    agg_fun = "MIN" if re.search(r".*_min", kind) else "MAX"
+                kinds.append(f"ROUND({agg_fun}({kind}), 0) AS {kind}")
 
             timestamp_col = "date_trunc('{agg_to}', timestamp)".format(
                 agg_to=agg_to)
