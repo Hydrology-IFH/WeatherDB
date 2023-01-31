@@ -2105,9 +2105,14 @@ class StationBase:
 
             # create sql parts
             kinds_before = kinds.copy()
-            kinds = [
-                "{agg_fun}({kind}) AS {kind}".format(
-                    agg_fun=self._agg_fun, kind=kind) for kind in kinds]
+            kinds = []
+            for kind in kinds_before:
+                if re.search(r".*(_min)|(_max)", kind):
+                    agg_fun = self._agg_fun
+                else:
+                    agg_fun = "min" if re.search(r".*_min", kind) else "max"
+                kinds.append(f"{agg_fun}({kind}) AS {kind}")
+
             timestamp_col = "date_trunc('{agg_to}', timestamp)".format(
                 agg_to=agg_to)
             group_by = "GROUP BY " + timestamp_col
@@ -3630,7 +3635,7 @@ class GroupStation(object):
                 # check if min and max for temperature should get added
                 use_kinds = kinds.copy()
                 if stat._para == "t":
-                    if type(use_kinds)== str:
+                    if type(use_kinds)==str:
                         use_kinds=[use_kinds]
                     if "best" in use_kinds:
                         use_kinds.insert(use_kinds.index("best"), "filled")
