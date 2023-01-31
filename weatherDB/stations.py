@@ -1373,9 +1373,9 @@ class GroupStations(object):
             raise ValueError("For the given settings, no timeseries could get extracted from the database.\nMaybe try to change the nas_allowed parameter to True, to see, where the problem comes from.")
 
         # create GroupStation instances
-        stats = self.get_group_stations(stids=stids)
+        gstats = self.get_group_stations(stids=stids)
         pbar = StationsBase._get_progressbar(
-            max_value=len(stats),
+            max_value=len(gstats),
             name="create RoGeR-TS")
         pbar.update(0)
 
@@ -1384,7 +1384,7 @@ class GroupStations(object):
                     dir, "w",
                     compression=zipfile.ZIP_DEFLATED,
                     compresslevel=5) as zf:
-                for stat in stats:
+                for stat in gstats:
                     stat.create_ts(
                         dir=zf,
                         period=period,
@@ -1393,11 +1393,13 @@ class GroupStations(object):
                         r_r0=r_r0,
                         split_date=split_date,
                         nas_allowed=nas_allowed,
-                        add_na_share=add_na_share)
+                        add_na_share=add_na_share,
+                        add_t_min=add_t_min,
+                        add_t_max=add_t_max)
                     pbar.variables["last_station"] = stat.id
                     pbar.update(pbar.value + 1)
         else:
-            for stat in stats:
+            for stat in gstats:
                 stat.create_ts(
                     dir=dir.joinpath(str(stat.id)),
                     period=period,
@@ -1406,7 +1408,9 @@ class GroupStations(object):
                     r_r0=r_r0,
                     split_date=split_date,
                     nas_allowed=nas_allowed,
-                    add_na_share=add_na_share)
+                    add_na_share=add_na_share,
+                    add_t_min=add_t_min,
+                    add_t_max=add_t_max)
                 pbar.variables["last_station"] = stat.id
                 pbar.update(pbar.value + 1)
 
