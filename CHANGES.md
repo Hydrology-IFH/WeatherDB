@@ -1,6 +1,7 @@
 # Change-log
 
 ## Version 0.0.21 (upcoming)
+- add additional parameter sql_add_where to define a sql where statement to filter the created results in the database
 ## Version 0.0.20
 - change secretSettings_weatherDB names to DB_PWD, DB_NAME and DB_USER
 - add min and max to the temperature timeseries
