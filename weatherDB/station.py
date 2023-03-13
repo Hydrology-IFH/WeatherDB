@@ -2016,7 +2016,8 @@ class StationBase:
                 return None
 
     def get_df(self, kinds, period=(None, None), agg_to=None,
-               nas_allowed=True, add_na_share=False, db_unit=False):
+               nas_allowed=True, add_na_share=False, db_unit=False, 
+               sql_add_where=None):
         """Get a timeseries DataFrame from the database.
 
         Parameters
@@ -2056,6 +2057,10 @@ class StationBase:
             If False the unit is getting converted to normal unit, like mm or °C.
             The numbers are saved as integer in the database and got therefor multiplied by 10 or 100 to get to an integer.
             The default is False.
+        sql_add_where : str or None, optional
+            additional sql where statement to filter the output.
+            E.g. "EXTRACT(MONTH FROM timestamp) == 2"
+            The default is None
 
         Returns
         -------
@@ -2136,11 +2141,18 @@ class StationBase:
                 for kind in kinds_before:
                     kinds.append(f"(COUNT(*)-COUNT(\"{kind}\"))/COUNT(*)::float * 100 AS {kind}_na_share")
 
+        # sql_add_where
+        if sql_add_where:
+            if "and" not in sql_add_where.lower():
+                sql_add_where = " AND " + sql_add_where
+        else:
+            sql_add_where = ""
+
         # create base sql
         sql = """
             SELECT {timestamp_col} as timestamp, {kinds}
             FROM timeseries."{stid}_{para}"
-            WHERE timestamp BETWEEN {min_tstp} AND {max_tstp}
+            WHERE timestamp BETWEEN {min_tstp} AND {max_tstp}{sql_add_where}
             {group_by}
             ORDER BY timestamp ASC;
             """.format(
@@ -2149,6 +2161,7 @@ class StationBase:
                 kinds=', '.join(kinds),
                 group_by=group_by,
                 timestamp_col=timestamp_col,
+                sql_add_where=sql_add_where,
                 **period.get_sql_format_dict(
                     format="'{}'".format(self._tstp_format_db))
             )
@@ -3576,7 +3589,7 @@ class GroupStation(object):
 
     def get_df(self, period=(None, None), kinds="best", paras="all",
                agg_to="day", nas_allowed=True, add_na_share=False, 
-               add_t_min=False, add_t_max=False):
+               add_t_min=False, add_t_max=False, **kwargs):
         """Get a DataFrame with the corresponding data.
 
         Parameters
@@ -3657,7 +3670,8 @@ class GroupStation(object):
                     kinds=use_kinds,
                     agg_to=agg_to,
                     nas_allowed=nas_allowed,
-                    add_na_share=add_na_share)
+                    add_na_share=add_na_share, 
+                    **kwargs)
                 df = df.rename(dict(zip(
                     df.columns,
                     [stat._para.upper() + "_" + col for col in df.columns])),
@@ -3769,7 +3783,8 @@ class GroupStation(object):
         return self.station_parts[0].get_name()
 
     def create_roger_ts(self, dir, period=(None, None),
-                        kind="best", r_r0=1, add_t_min=False, add_t_max=False):
+                        kind="best", r_r0=1, add_t_min=False, add_t_max=False,
+                        **kwargs):
         """Create the timeserie files for roger as csv.
 
         This is only a wrapper function for create_ts with some standard settings.
@@ -3803,6 +3818,8 @@ class GroupStation(object):
         add_t_max=False : bool, optional
             Schould the maximal temperature value get added?
             The default is False.
+        **kwargs: 
+            additional parameters for Station.get_df
 
         Raises
         ------
@@ -3817,7 +3834,8 @@ class GroupStation(object):
     def create_ts(self, dir, period=(None, None), kinds="best", paras="all",
                   agg_to="10 min", r_r0=None, split_date=False,
                   nas_allowed=True, add_na_share=False, 
-                  add_t_min=False, add_t_max=False):
+                  add_t_min=False, add_t_max=False, 
+                  **kwargs):
         """Create the timeserie files as csv.
 
         Parameters
@@ -3875,6 +3893,8 @@ class GroupStation(object):
         add_t_max=False : bool, optional
             Schould the maximal temperature value get added?
             The default is False.
+        **kwargs: 
+            additional parameters for Station.get_df
 
         Raises
         ------
@@ -3924,7 +3944,8 @@ class GroupStation(object):
                 paras=[para], agg_to=agg_to,
                 nas_allowed=nas_allowed,
                 add_na_share=add_na_share, 
-                add_t_min=add_t_min, add_t_max=add_t_max)
+                add_t_min=add_t_min, add_t_max=add_t_max, 
+                **kwargs)
 
             # rename columns
             if len(kinds)==1 or ("filled_by" in kinds and len(kinds)==2):
