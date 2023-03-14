@@ -1172,8 +1172,11 @@ class StationBase:
         pandas.DataFrame
             The Timeseries as a DataFrame with a Timestamp Index.
         """
-        return self._download_raw(
-            zipfiles=self.get_zipfiles(only_new=only_new).index)[0]
+        zipfiles = self.get_zipfiles(only_new=only_new)
+        if len(zipfiles)>0:
+            return self._download_raw(zipfiles=zipfiles.index)[0]
+        else:
+            return None
 
     @check_superuser
     def _get_sql_new_qc(self, period=(None, None)):
