@@ -1378,7 +1378,7 @@ class GroupStations(object):
         gstats = self.get_group_stations(stids=stids)
         pbar = StationsBase._get_progressbar(
             max_value=len(gstats),
-            name="create RoGeR-TS")
+            name="create TS")
         pbar.update(0)
 
         if dir.suffix == ".zip":
