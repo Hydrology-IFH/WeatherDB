@@ -570,6 +570,10 @@ class StationBase:
     def _execute_long_sql(self, sql, description="treated"):
         done = False
         attempts = 0
+        re_comp = re.compile("(the database system is in recovery mode)" +
+                             "|(SSL SYSCALL error: EOF detected)" + # login problem due to recovery mode
+                             "|(SSL connection has been closed unexpectedly)" + # sudden logoff
+                             "|(the database system is shutting down)") # to test the procedure by stoping postgresql
         # execute until done
         while not done:
             attempts += 1
@@ -582,12 +586,7 @@ class StationBase:
                 log_msg = ("There was an operational error for the {para_long} Station (ID:{stid})" +
                         "\nHere is the complete error:\n" + str(err)).format(
                     stid=self.id, para_long=self._para_long)
-                if any([
-                        True if re.search(
-                            "the database system is in recovery mode",
-                            arg)
-                        else False
-                        for arg in err.args]):
+                if any(filter(re_comp.search, err.args)):
                     if attempts > 10:
                         log.error(
                             log_msg +
