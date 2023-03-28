@@ -54,6 +54,8 @@ if not ("WEATHERDB_MODULE_INSTALLING" in os.environ \
 
     # import classes
     from . import station, stations
+    from .station import StationN, StationND, StationT, StationET, GroupStation
+    from .stations import StationsN, StationsND, StationsT, StationsET, GroupStations
     try:
         from . import broker
     except PermissionError:
