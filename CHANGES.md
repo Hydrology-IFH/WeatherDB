@@ -1,5 +1,13 @@
 # Change-log
 
+## Version 0.0.21 (upcoming)
+- add additional parameter sql_add_where to define a sql where statement to filter the created results in the database
+- add postgresql error messages that will cause the execution to wait and restart
+- import Station(s)-classes imediatly when module is imported, so now this works 
+  ```
+  import weatherDB as wdb
+  wdb.StationsN()
+  ```
 ## Version 0.0.20
 - change secretSettings_weatherDB names to DB_PWD, DB_NAME and DB_USER
 - add min and max to the temperature timeseries

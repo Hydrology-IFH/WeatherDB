@@ -570,6 +570,10 @@ class StationBase:
     def _execute_long_sql(self, sql, description="treated"):
         done = False
         attempts = 0
+        re_comp = re.compile("(the database system is in recovery mode)" +
+                             "|(SSL SYSCALL error: EOF detected)" + # login problem due to recovery mode
+                             "|(SSL connection has been closed unexpectedly)" + # sudden logoff
+                             "|(the database system is shutting down)") # to test the procedure by stoping postgresql
         # execute until done
         while not done:
             attempts += 1
@@ -582,12 +586,7 @@ class StationBase:
                 log_msg = ("There was an operational error for the {para_long} Station (ID:{stid})" +
                         "\nHere is the complete error:\n" + str(err)).format(
                     stid=self.id, para_long=self._para_long)
-                if any([
-                        True if re.search(
-                            "the database system is in recovery mode",
-                            arg)
-                        else False
-                        for arg in err.args]):
+                if any(filter(re_comp.search, err.args)):
                     if attempts > 10:
                         log.error(
                             log_msg +
@@ -1172,8 +1171,11 @@ class StationBase:
         pandas.DataFrame
             The Timeseries as a DataFrame with a Timestamp Index.
         """
-        return self._download_raw(
-            zipfiles=self.get_zipfiles(only_new=only_new).index)[0]
+        zipfiles = self.get_zipfiles(only_new=only_new)
+        if len(zipfiles)>0:
+            return self._download_raw(zipfiles=zipfiles.index)[0]
+        else:
+            return None
 
     @check_superuser
     def _get_sql_new_qc(self, period=(None, None)):
@@ -2016,7 +2018,8 @@ class StationBase:
                 return None
 
     def get_df(self, kinds, period=(None, None), agg_to=None,
-               nas_allowed=True, add_na_share=False, db_unit=False):
+               nas_allowed=True, add_na_share=False, db_unit=False, 
+               sql_add_where=None):
         """Get a timeseries DataFrame from the database.
 
         Parameters
@@ -2056,6 +2059,10 @@ class StationBase:
             If False the unit is getting converted to normal unit, like mm or °C.
             The numbers are saved as integer in the database and got therefor multiplied by 10 or 100 to get to an integer.
             The default is False.
+        sql_add_where : str or None, optional
+            additional sql where statement to filter the output.
+            E.g. "EXTRACT(MONTH FROM timestamp) == 2"
+            The default is None
 
         Returns
         -------
@@ -2105,9 +2112,14 @@ class StationBase:
 
             # create sql parts
             kinds_before = kinds.copy()
-            kinds = [
-                "{agg_fun}({kind}) AS {kind}".format(
-                    agg_fun=self._agg_fun, kind=kind) for kind in kinds]
+            kinds = []
+            for kind in kinds_before:
+                if re.search(r".*(_min)|(_max)", kind):
+                    agg_fun = "MIN" if re.search(r".*_min", kind) else "MAX"
+                else:
+                    agg_fun = self._agg_fun
+                kinds.append(f"ROUND({agg_fun}({kind}), 0) AS {kind}")
+
             timestamp_col = "date_trunc('{agg_to}', timestamp)".format(
                 agg_to=agg_to)
             group_by = "GROUP BY " + timestamp_col
@@ -2131,11 +2143,18 @@ class StationBase:
                 for kind in kinds_before:
                     kinds.append(f"(COUNT(*)-COUNT(\"{kind}\"))/COUNT(*)::float * 100 AS {kind}_na_share")
 
+        # sql_add_where
+        if sql_add_where:
+            if "and" not in sql_add_where.lower():
+                sql_add_where = " AND " + sql_add_where
+        else:
+            sql_add_where = ""
+
         # create base sql
         sql = """
             SELECT {timestamp_col} as timestamp, {kinds}
             FROM timeseries."{stid}_{para}"
-            WHERE timestamp BETWEEN {min_tstp} AND {max_tstp}
+            WHERE timestamp BETWEEN {min_tstp} AND {max_tstp}{sql_add_where}
             {group_by}
             ORDER BY timestamp ASC;
             """.format(
@@ -2144,6 +2163,7 @@ class StationBase:
                 kinds=', '.join(kinds),
                 group_by=group_by,
                 timestamp_col=timestamp_col,
+                sql_add_where=sql_add_where,
                 **period.get_sql_format_dict(
                     format="'{}'".format(self._tstp_format_db))
             )
@@ -3571,7 +3591,7 @@ class GroupStation(object):
 
     def get_df(self, period=(None, None), kinds="best", paras="all",
                agg_to="day", nas_allowed=True, add_na_share=False, 
-               add_t_min=False, add_t_max=False):
+               add_t_min=False, add_t_max=False, **kwargs):
         """Get a DataFrame with the corresponding data.
 
         Parameters
@@ -3630,23 +3650,13 @@ class GroupStation(object):
                 # check if min and max for temperature should get added
                 use_kinds = kinds.copy()
                 if stat._para == "t":
-                    if type(use_kinds)== str:
+                    if type(use_kinds)==str:
                         use_kinds=[use_kinds]
                     if "best" in use_kinds:
                         use_kinds.insert(use_kinds.index("best"), "filled")
-                        use_kinds.pop("best")
-                    # if add_t_max:
-                    #     if "raw" in kinds:
-                    #         use_kinds.insert(
-                    #             use_kinds.index("raw")+1,
-                    #             "raw_max")
-                    #     elif "filled" in kinds or "best" in kinds:
-                    #         use_kinds.insert(
-                    #             use_kinds.index("filled")+1,
-                    #             "filled_max")
-                    # if add_t_min:
+                        use_kinds.remove("best")
                     for k in ["raw", "filled"]:
-                        if k in kinds:
+                        if k in use_kinds:
                             if add_t_max:
                                 use_kinds.insert(
                                     use_kinds.index(k)+1,
@@ -3655,19 +3665,6 @@ class GroupStation(object):
                                 use_kinds.insert(
                                     use_kinds.index(k)+1,
                                     f"{k}_min")
-                        # if "raw" in kinds:
-                        #     use_kinds.insert(
-                        #         use_kinds.index("raw")+1,
-                        #         "raw_min")
-                        # elif "filled" in kinds:
-                        #     use_kinds.insert(
-                        #         use_kinds.index("filled")+1,
-                        #         "filled_min")
-                        # elif "best" in kinds:
-                        #     use_kinds.insert(
-                        #         use_kinds.index("best")+1,
-                        #         "filled_min")
-
 
                 # get the data from station object
                 df = stat.get_df(
@@ -3675,7 +3672,8 @@ class GroupStation(object):
                     kinds=use_kinds,
                     agg_to=agg_to,
                     nas_allowed=nas_allowed,
-                    add_na_share=add_na_share)
+                    add_na_share=add_na_share, 
+                    **kwargs)
                 df = df.rename(dict(zip(
                     df.columns,
                     [stat._para.upper() + "_" + col for col in df.columns])),
@@ -3787,7 +3785,8 @@ class GroupStation(object):
         return self.station_parts[0].get_name()
 
     def create_roger_ts(self, dir, period=(None, None),
-                        kind="best", r_r0=1, add_t_min=False, add_t_max=False):
+                        kind="best", r_r0=1, add_t_min=False, add_t_max=False,
+                        **kwargs):
         """Create the timeserie files for roger as csv.
 
         This is only a wrapper function for create_ts with some standard settings.
@@ -3821,6 +3820,8 @@ class GroupStation(object):
         add_t_max=False : bool, optional
             Schould the maximal temperature value get added?
             The default is False.
+        **kwargs: 
+            additional parameters for Station.get_df
 
         Raises
         ------
@@ -3835,7 +3836,8 @@ class GroupStation(object):
     def create_ts(self, dir, period=(None, None), kinds="best", paras="all",
                   agg_to="10 min", r_r0=None, split_date=False,
                   nas_allowed=True, add_na_share=False, 
-                  add_t_min=False, add_t_max=False):
+                  add_t_min=False, add_t_max=False, 
+                  **kwargs):
         """Create the timeserie files as csv.
 
         Parameters
@@ -3893,6 +3895,8 @@ class GroupStation(object):
         add_t_max=False : bool, optional
             Schould the maximal temperature value get added?
             The default is False.
+        **kwargs: 
+            additional parameters for Station.get_df
 
         Raises
         ------
@@ -3942,7 +3946,8 @@ class GroupStation(object):
                 paras=[para], agg_to=agg_to,
                 nas_allowed=nas_allowed,
                 add_na_share=add_na_share, 
-                add_t_min=add_t_min, add_t_max=add_t_max)
+                add_t_min=add_t_min, add_t_max=add_t_max, 
+                **kwargs)
 
             # rename columns
             if len(kinds)==1 or ("filled_by" in kinds and len(kinds)==2):

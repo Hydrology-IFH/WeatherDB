@@ -178,7 +178,7 @@ class TimestampPeriod(object):
             period = (None, None)
 
         # return the period
-        if self.is_date and other.is_date:
+        if self.is_date and other.is_date and all(period):
             # if both were data periods, then the result should also be a date period
             return TimestampPeriod(
                 *[val.date() for val in period

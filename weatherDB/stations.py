@@ -1302,7 +1302,7 @@ class GroupStations(object):
     def create_ts(self, dir, period=(None, None), kinds="best",
                   stids="all", agg_to="10 min", r_r0=None, split_date=False, 
                   nas_allowed=True, add_na_share=False, 
-                  add_t_min=False, add_t_max=False):
+                  add_t_min=False, add_t_max=False, **kwargs):
         """Download and create the weather tables as csv files.
 
         Parameters
@@ -1359,6 +1359,8 @@ class GroupStations(object):
         add_t_max : bool, optional
             Should the maximal temperature value get added?
             The default is False.
+        **kwargs: 
+            additional parameters for GroupStation.create_ts
         """
         start_time = datetime.datetime.now()
         # check directory and stids
@@ -1373,10 +1375,10 @@ class GroupStations(object):
             raise ValueError("For the given settings, no timeseries could get extracted from the database.\nMaybe try to change the nas_allowed parameter to True, to see, where the problem comes from.")
 
         # create GroupStation instances
-        stats = self.get_group_stations(stids=stids)
+        gstats = self.get_group_stations(stids=stids)
         pbar = StationsBase._get_progressbar(
-            max_value=len(stats),
-            name="create RoGeR-TS")
+            max_value=len(gstats),
+            name="create TS")
         pbar.update(0)
 
         if dir.suffix == ".zip":
@@ -1384,7 +1386,7 @@ class GroupStations(object):
                     dir, "w",
                     compression=zipfile.ZIP_DEFLATED,
                     compresslevel=5) as zf:
-                for stat in stats:
+                for stat in gstats:
                     stat.create_ts(
                         dir=zf,
                         period=period,
@@ -1393,11 +1395,14 @@ class GroupStations(object):
                         r_r0=r_r0,
                         split_date=split_date,
                         nas_allowed=nas_allowed,
-                        add_na_share=add_na_share)
+                        add_na_share=add_na_share,
+                        add_t_min=add_t_min,
+                        add_t_max=add_t_max, 
+                        **kwargs)
                     pbar.variables["last_station"] = stat.id
                     pbar.update(pbar.value + 1)
         else:
-            for stat in stats:
+            for stat in gstats:
                 stat.create_ts(
                     dir=dir.joinpath(str(stat.id)),
                     period=period,
@@ -1406,7 +1411,10 @@ class GroupStations(object):
                     r_r0=r_r0,
                     split_date=split_date,
                     nas_allowed=nas_allowed,
-                    add_na_share=add_na_share)
+                    add_na_share=add_na_share,
+                    add_t_min=add_t_min,
+                    add_t_max=add_t_max,
+                    **kwargs)
                 pbar.variables["last_station"] = stat.id
                 pbar.update(pbar.value + 1)
 
@@ -1439,7 +1447,7 @@ class GroupStations(object):
 
     def create_roger_ts(self, dir, period=(None, None), stids="all",
                         kind="best", r_r0=1, 
-                        add_t_min=False, add_t_max=False):
+                        add_t_min=False, add_t_max=False, **kwargs):
         """Create the timeserie files for roger as csv.
 
         This is only a wrapper function for create_ts with some standard settings.
@@ -1478,6 +1486,8 @@ class GroupStations(object):
         add_t_max : bool, optional
             Should the maximal temperature value get added?
             The default is False.
+        **kwargs: 
+            additional parameters for GroupStation.create_ts
 
         Raises
         ------
@@ -1486,7 +1496,9 @@ class GroupStations(object):
         """
         return self.create_ts(dir=dir, period=period, kinds=kind,
                               agg_to="10 min", r_r0=r_r0, stids=stids,
-                              split_date=True, nas_allowed=False)
+                              split_date=True, nas_allowed=False,
+                              add_t_min=add_t_min, add_t_max=add_t_max,
+                              **kwargs)
 
 # clean station
 del StationN, StationND, StationT, StationET, GroupStation, StationBase
