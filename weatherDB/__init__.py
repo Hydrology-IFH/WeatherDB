@@ -26,7 +26,7 @@ if not ("WEATHERDB_MODULE_INSTALLING" in os.environ \
             file for file in log_dir.glob("*.log.*")
                 if re.match(".*\.log\.\d{4}-\d{2}-\d{2}$", file.name)]:
         try:
-            file_date = datetime.datetime.strptime(log_file.stem.split(".")[2], "%Y-%m-%d")
+            file_date = datetime.datetime.strptime(log_file.name.split(".")[-1], "%Y-%m-%d")
             if file_date < log_date_min:
                 log_file.unlink()
         except:
