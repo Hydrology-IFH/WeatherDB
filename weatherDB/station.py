@@ -253,7 +253,7 @@ class StationBase:
         if not hasattr(self, "_valid_kinds_tstp_meta"):
             self._valid_kinds_tstp_meta = ["last_imp"]
             for vk in self._valid_kinds:
-                if vk in ["raw", "filled", "corr"]:
+                if vk in ["raw", "qc", "filled", "corr"]:
                     self._valid_kinds_tstp_meta.append(vk)
 
         if kind not in self._valid_kinds_tstp_meta:
@@ -1229,6 +1229,9 @@ class StationBase:
                 **period.get_sql_format_dict(
                     format=self._tstp_format_human)
                 ))
+        
+        # update timespan in meta table
+        self.update_period_meta(kind="qc")
 
         # mark last import as done if in period
         last_imp_period = self.get_last_imp_period()
