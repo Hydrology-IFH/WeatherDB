@@ -1,6 +1,9 @@
 # Change-log
 
-## Version 0.0.21 (upcoming)
+## Version 0.0.22
+- add qc_from and qc_until to the meta informations
+- fix removal of old log files
+## Version 0.0.21
 - add additional parameter sql_add_where to define a sql where statement to filter the created results in the database
 - add postgresql error messages that will cause the execution to wait and restart
 - import Station(s)-classes imediatly when module is imported, so now this works 
