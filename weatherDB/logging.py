@@ -10,14 +10,14 @@ import os
 #############
 log = logging.getLogger(__name__)
 
-log_dir = Path(__file__).resolve().parent.joinpath("logs")
+LOGDIR = Path(__file__).resolve().parent.joinpath("logs")
 
 def remove_old_logs(max_days=14):
     # remove old logs
     log_tstp = datetime.datetime.now().strftime("%Y%m%d")
     log_date_min = datetime.datetime.now() - datetime.timedelta(days=max_days)
     for log_file in [
-            file for file in log_dir.glob("*.log.*")
+            file for file in LOGDIR.glob("*.log.*")
                 if re.match(".*\.log\.\d{4}-\d{2}-\d{2}$", file.name)]:
         try:
             file_date = datetime.datetime.strptime(log_file.name.split(".")[-1], "%Y-%m-%d")
@@ -27,7 +27,7 @@ def remove_old_logs(max_days=14):
             pass
 
 def setup_file_logging():
-    if not log_dir.is_dir(): log_dir.mkdir()
+    if not LOGDIR.is_dir(): LOGDIR.mkdir()
     # add filehandler if necessary
     if not log.hasHandlers():
         log.setLevel(logging.DEBUG)
@@ -37,7 +37,7 @@ def setup_file_logging():
             user = "anonym"
         #print(os.getlogin())
         fh = TimedRotatingFileHandler(
-            log_dir.joinpath(
+            LOGDIR.joinpath(
                 "weatherDB_" +
                 socket.gethostname().replace(".","_") + 
                 f"_{user}.log"),
