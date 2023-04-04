@@ -24,6 +24,7 @@ from shapely.geometry import Point, MultiLineString
 import shapely.wkt
 import pyproj
 import geopandas as gpd
+from packaging import version
 
 from .lib.connections import DB_ENG, check_superuser
 from .lib.max_fun.import_DWD import dwd_id_to_str, get_dwd_file
@@ -4008,8 +4009,12 @@ class GroupStation(object):
                 df.reset_index(inplace=True)
 
             # write table out
+            if version.parse(pd.__version__) > version.parse("1.5.0"):
+                to_csv_kwargs = dict(lineterminator="\n")
+            else:
+                to_csv_kwargs = dict(line_terminator="\n")
             str_df = header + df.to_csv(
-                sep="\t", decimal=".", index=False, line_terminator="\n")
+                sep="\t", decimal=".", index=False, **to_csv_kwargs)
             file_name = para.upper() + name_suffix
             if do_zip:
                 dir.writestr(
