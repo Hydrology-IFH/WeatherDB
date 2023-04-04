@@ -7,6 +7,7 @@ import weatherDB
 
 @click.command()
 def update_db():
+    weatherDB.setup_file_logging()
     broker = weatherDB.broker.Broker()
     broker.update_db()
 
