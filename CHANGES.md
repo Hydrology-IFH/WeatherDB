@@ -1,5 +1,7 @@
 # Change-log
 
+## Version 0.0.23 (upcoming)
+- change pandas to_csv parameter line_terminator to lineterminator, for newer versions
 ## Version 0.0.22
 - add qc_from and qc_until to the meta informations
 - fix removal of old log files
