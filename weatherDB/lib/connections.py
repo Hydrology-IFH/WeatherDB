@@ -1,5 +1,6 @@
 # libraries
 import sqlalchemy
+from sqlalchemy import text as sqltxt
 import sys, os
 from pathlib import Path
 
@@ -53,12 +54,12 @@ else:
 
     # check if user has super user privileges
     with DB_ENG.connect() as con:
-        DB_ENG.is_superuser = con.execute("""
+        DB_ENG.is_superuser = con.execute(sqltxt("""
             SELECT 'weather_owner' in (
                 SELECT rolname FROM pg_auth_members
                 LEFT JOIN pg_roles ON oid=roleid
                 WHERE member = (SELECT oid FROM pg_roles WHERE rolname='{user}'));
-            """.format(user=DB_ENG.url.username)).first()[0]
+            """.format(user=DB_ENG.url.username))).first()[0]
 
 # decorator function to overwrite methods
 def check_superuser(methode):

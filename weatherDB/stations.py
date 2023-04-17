@@ -19,6 +19,7 @@ import datetime
 import socket
 import zipfile
 from pathlib import Path
+from sqlalchemy import text as sqltxt
 
 from .lib.connections import DB_ENG, check_superuser
 from .lib.utils import TimestampPeriod, get_cdc_file_list
@@ -118,7 +119,7 @@ class StationsBase:
             WHERE para ='{para}';
         """.format(para=self._para)
         with DB_ENG.connect() as con:
-            droped_stids = con.execute(sql_get_droped).all()
+            droped_stids = con.execute(sqltxt(sql_get_droped)).all()
         droped_stids = [row[0] for row in droped_stids
                         if row[0] in meta.index]
         meta.drop(droped_stids, inplace=True)
@@ -151,13 +152,13 @@ class StationsBase:
 
         # check if columns are initiated in DB
         with DB_ENG.connect() as con:
-            columns_db = con.execute(
+            columns_db = con.execute(sqltxt(
                 """
                 SELECT column_name
                 FROM information_schema.columns
                 WHERE table_name='meta_{para}';
                 """.format(para=self._para)
-                ).all()
+                )).all()
             columns_db = [col[0] for col in columns_db]
 
         col_mask = [col in columns_db for col in columns]
@@ -210,7 +211,7 @@ class StationsBase:
 
         # run sql command
         with DB_ENG.connect() as con:
-            con.execute(sql)
+            con.execute(sqltxt(sql))
 
     @check_superuser
     def update_period_meta(self, stids="all"):
@@ -645,14 +646,14 @@ class StationsBase:
         # save start time as variable to db
         if (type(stids) == str) and (stids == "all"):
             with DB_ENG.connect() as con:
-                con.execute("""
+                con.execute(sqltxt("""
                     UPDATE para_variables
                     SET start_tstp_last_imp='{start_tstp}'::timestamp,
                     max_tstp_last_imp=(SELECT max(raw_until) FROM meta_{para})
                     WHERE para='{para}';
                 """.format(
                     para=self._para,
-                    start_tstp=start_tstp.strftime("%Y%m%d %H:%M")))
+                    start_tstp=start_tstp.strftime("%Y%m%d %H:%M"))))
 
     @check_superuser
     def last_imp_quality_check(self, stids="all", do_mp=False, **kwargs):
@@ -1045,7 +1046,7 @@ class GroupStations(object):
             sql ="""
             SELECT station_id FROM meta_n"""
             with DB_ENG.connect() as con:
-                res = con.execute(sql)
+                res = con.execute(sqltxt(sql))
             self._valid_stids = [el[0] for el in res.all()]
         return self._valid_stids
 
@@ -1438,7 +1439,7 @@ class GroupStations(object):
             pc=socket.gethostname(),
             out_size=out_size)
         with DB_ENG.connect() as con:
-            con.execute(sql_save_time)
+            con.execute(sqltxt(sql_save_time))
 
         # create log message
         log.debug(
