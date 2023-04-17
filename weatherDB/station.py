@@ -17,6 +17,7 @@ import zipfile
 import numpy as np
 import pandas as pd
 from sqlalchemy.exc import OperationalError
+from sqlalchemy import text as sqltxt
 
 import rasterio as rio
 import rasterio.mask
@@ -453,7 +454,7 @@ class StationBase:
         with DB_ENG.connect()\
                 .execution_options(isolation_level="AUTOCOMMIT")\
                 as con:
-            con.execute(sql)
+            con.execute(sqltxt(sql))
 
     @check_superuser
     def _update_db_timeserie(self, df, kinds):
@@ -519,7 +520,7 @@ class StationBase:
                 sql_insert = sql_insert[:-1] + ";"
 
                 # run sql command
-                con.execute(sql_insert)
+                con.execute(sqltxt(sql_insert))
 
     @check_superuser
     def _drop(self, why="No reason given"):
@@ -539,7 +540,7 @@ class StationBase:
             why=why.replace("'", "''"))
 
         with DB_ENG.connect() as con:
-            con.execute(sql)
+            con.execute(sqltxt(sql))
         log.debug(
             "The {para_long} Station with ID {stid} got droped from the database."
             .format(stid=self.id, para_long=self._para_long))
@@ -565,7 +566,7 @@ class StationBase:
         with DB_ENG.connect()\
                 .execution_options(isolation_level="AUTOCOMMIT")\
                 as con:
-            con.execute(sql_update)
+            con.execute(sqltxt(sql_update))
 
     @check_superuser
     def _execute_long_sql(self, sql, description="treated"):
@@ -581,7 +582,7 @@ class StationBase:
             try:
                 with DB_ENG.connect() as con:
                     con.execution_options(isolation_level="AUTOCOMMIT"
-                                        ).execute(sql)
+                                        ).execute(sqltxt(sql))
                 done = True
             except OperationalError as err:
                 log_msg = ("There was an operational error for the {para_long} Station (ID:{stid})" +
@@ -623,7 +624,7 @@ class StationBase:
         """.format(stid=self.id, para=self._para, state=state)
 
         with DB_ENG.connect() as con:
-            con.execute(sql)
+            con.execute(sqltxt(sql))
 
     def isin_db(self):
         """Check if Station is already in a timeseries table.
@@ -641,7 +642,7 @@ class StationBase:
                 where table_schema='timeseries');
             """.format(para=self._para, stid=self.id)
         with DB_ENG.connect() as con:
-            result = con.execute(sql).first()[0]
+            result = con.execute(sqltxt(sql)).first()[0]
 
         return result
 
@@ -654,9 +655,9 @@ class StationBase:
             True if Station is in meta table.
         """
         with DB_ENG.connect() as con:
-            result = con.execute("""
+            result = con.execute(sqltxt("""
             SELECT EXISTS(SELECT station_id FROM meta_{para} WHERE station_id={stid});
-            """.format(stid=self.id, para=self._para))
+            """.format(stid=self.id, para=self._para)))
         return result.first()[0]
 
     def isin_ma(self):
@@ -682,7 +683,7 @@ class StationBase:
                 [col + " IS NOT NULL" for col in self._ma_cols]))
 
         with DB_ENG.connect() as con:
-            result = con.execute(sql)
+            result = con.execute(sqltxt(sql))
         return result.first()[0]
 
     def is_virtual(self):
@@ -715,7 +716,7 @@ class StationBase:
             WHERE station_id= {stid}
         """.format(stid=self.id, para=self._para)
         with DB_ENG.connect() as con:
-            res = con.execute(sql)
+            res = con.execute(sqltxt(sql))
         return res.first()[0]
 
     def is_last_imp_done(self, kind):
@@ -746,7 +747,7 @@ class StationBase:
         """.format(stid=self.id, para=self._para, kind=kind)
 
         with DB_ENG.connect() as con:
-            res = con.execute(sql)
+            res = con.execute(sqltxt(sql))
 
         return res.first()[0]
 
@@ -782,7 +783,7 @@ class StationBase:
         )
 
         with DB_ENG.connect() as con:
-            con.execute(sql)
+            con.execute(sqltxt(sql))
 
     @check_superuser
     def update_ma(self, skip_if_exist=True, drop_when_error=True):
@@ -818,7 +819,7 @@ class StationBase:
         )
 
         with DB_ENG.connect() as con:
-            new_mas = con.execute(sql_new_mas).first()
+            new_mas = con.execute(sqltxt(sql_new_mas)).first()
 
         # check for nearby cells if no cell was found:
         dist = 0
@@ -843,7 +844,7 @@ class StationBase:
                                     .format(i=i, name=self._ma_raster["bands"][i])
                                 for i in range(1, len(self._ma_raster["bands"])+1)]))
                 with DB_ENG.connect() as con:
-                    new_mas = con.execute(sql_nearby).first()
+                    new_mas = con.execute(sqltxt(sql_nearby)).first()
                 if new_mas is not None and any(new_mas):
                     break
 
@@ -871,7 +872,7 @@ class StationBase:
             with DB_ENG.connect()\
                     .execution_options(isolation_level="AUTOCOMMIT")\
                     as con:
-                con.execute(sql_update)
+                con.execute(sqltxt(sql_update))
         elif drop_when_error:
             # there was no multi annual data found from the raster
             self._drop(
@@ -941,7 +942,7 @@ class StationBase:
         # execute meta update
         with DB_ENG.connect()\
                 .execution_options(isolation_level="AUTOCOMMIT") as con:
-            con.execute(sql_update_meta)
+            con.execute(sqltxt(sql_update_meta))
 
     @check_superuser
     def update_raw(self, only_new=True, ftp_file_list=None, remove_nas=True):
@@ -1022,10 +1023,10 @@ class StationBase:
                     zipfiles["modtime"].dt.strftime("%Y%m%d %H:%M").values)]
             )
         with DB_ENG.connect() as con:
-            con.execute(f'''
+            con.execute(sqltxt(f'''
                 INSERT INTO raw_files(para, filepath, modtime)
                 VALUES {update_values}
-                ON CONFLICT (para, filepath) DO UPDATE SET modtime = EXCLUDED.modtime;''')
+                ON CONFLICT (para, filepath) DO UPDATE SET modtime = EXCLUDED.modtime;'''))
 
         # if empty skip updating meta filepath
         if len(selection_without_na) == 0:
@@ -1450,7 +1451,7 @@ class StationBase:
         """.format(stid=self.id, para=self._para, kind=kind)
 
         with DB_ENG.connect() as con:
-            con.execute(sql)
+            con.execute(sqltxt(sql))
 
     @check_superuser
     def last_imp_quality_check(self):
@@ -1547,7 +1548,7 @@ class StationBase:
             cols=cols)
 
         with DB_ENG.connect() as con:
-            res = con.execute(sql)
+            res = con.execute(sqltxt(sql))
         keys = res.keys()
         values = [val.replace(tzinfo=timezone.utc) if type(val) == datetime else val for val in res.first()]
         if len(keys)==1:
@@ -1821,7 +1822,7 @@ class StationBase:
                 WHERE "{kind}" is not NULL
             """.format(stid=self.id, kind=kind, para=self._para)
             with DB_ENG.connect() as con:
-                respond = con.execute(sql)
+                respond = con.execute(sqltxt(sql))
 
             return TimestampPeriod(*respond.first())
         else:
@@ -1858,7 +1859,7 @@ class StationBase:
                 """.format(
                     stid=self.id, para=self._para)
             with DB_ENG.connect() as con:
-                res = con.execute(sql_max_tstp)
+                res = con.execute(sqltxt(sql_max_tstp))
             max_period = TimestampPeriod(*res.first())
         else:
             kinds = self._check_kinds(kinds)
@@ -1925,7 +1926,7 @@ class StationBase:
             cond_only_real="AND is_real" if only_real else "",
             stid=self.id, para=self._para, n=n)
         with DB_ENG.connect() as con:
-            result = con.execute(sql_nearest_stids)
+            result = con.execute(sqltxt(sql_nearest_stids))
             nearest_stids = [res[0] for res in result.all()]
         return nearest_stids
 
@@ -1949,13 +1950,13 @@ class StationBase:
         )
 
         with DB_ENG.connect() as con:
-            res = con.execute(sql).first()
+            res = con.execute(sqltxt(sql)).first()
 
         # Update ma values if no result returned
         if res is None:
             self.update_ma()
             with DB_ENG.connect() as con:
-                res = con.execute(sql).first()
+                res = con.execute(sqltxt(sql)).first()
 
         if res is None:
             return None
@@ -1985,7 +1986,7 @@ class StationBase:
         )
         # return sql
         with DB_ENG.connect() as con:
-            value = con.execute(sql).first()[0]
+            value = con.execute(sqltxt(sql)).first()[0]
 
         return raster["dtype"](value)
 
@@ -2419,7 +2420,7 @@ and not in the precipitation meta table in the DB""")
         """.format(stid=self.id, para=self._para)
 
         with DB_ENG.connect().execution_options(isolation_level="AUTOCOMMIT") as con:
-            con.execute(sql)
+            con.execute(sqltxt(sql))
 
     def isin_meta_n(self):
         """Check if Station is in the precipitation meta table.
@@ -2430,9 +2431,9 @@ and not in the precipitation meta table in the DB""")
             True if Station is in the precipitation meta table.
         """
         with DB_ENG.connect() as con:
-            result = con.execute("""
+            result = con.execute(sqltxt("""
             SELECT {stid} in (SELECT station_id FROM meta_n);
-            """.format(stid=self.id))
+            """.format(stid=self.id)))
         return result.first()[0]
 
     def quality_check(self, period=(None, None)):
@@ -2641,7 +2642,7 @@ class StationN(StationNBase):
                     AND table_name = '{stid}_{para}_d'
             );""".format(**sql_format_dict)
         with DB_ENG.connect() as con:
-            daily_exists = con.execute(sql_check_d).first()[0]
+            daily_exists = con.execute(sqltxt(sql_check_d)).first()[0]
 
         # create sql for dates where the aggregated 10 minutes measurements are 0
         # althought the daily measurements are not 0
@@ -2754,7 +2755,7 @@ class StationN(StationNBase):
             );
         '''.format(stid=self.id, para=self._para)
         with DB_ENG.connect() as con:
-            con.execute(sql_add_table)
+            con.execute(sqltxt(sql_add_table))
 
     @staticmethod
     def _check_period_extra(period):
@@ -3101,7 +3102,7 @@ class StationN(StationNBase):
                 WHERE station_id={stid};""".format(**sql_format_dict)
 
             with DB_ENG.connect() as con:
-                con.execute(sql_diff_filled)
+                con.execute(sqltxt(sql_diff_filled))
 
         # update filled time in meta table
         self.update_period_meta(kind="corr")
@@ -3208,7 +3209,7 @@ class StationN(StationNBase):
             if "return_sql" in kwargs and kwargs["return_sql"]:
                 return (str(super_ret) + "\n" + sql_diff_ma).replace("%%", "%")
             with DB_ENG.connect() as con:
-                con.execute(sql_diff_ma)
+                con.execute(sqltxt(sql_diff_ma))
 
     def get_corr(self, **kwargs):
         return self.get_df(kinds=["corr"], **kwargs)
@@ -3240,7 +3241,7 @@ class StationN(StationNBase):
         """.format(stid=self.id, para=self._para)
 
         with DB_ENG.connect() as con:
-            res = con.execute(sql).first()
+            res = con.execute(sqltxt(sql)).first()
 
         # check result
         if res is None:
@@ -3328,7 +3329,7 @@ class StationND(StationNBase, StationCanVirtualBase):
             );
         '''.format(stid=self.id, para=self._para)
         with DB_ENG.connect() as con:
-            con.execute(sql_add_table)
+            con.execute(sqltxt(sql_add_table))
 
 
 class StationT(StationTETBase):
@@ -3368,7 +3369,7 @@ class StationT(StationTETBase):
                 );
         '''.format(stid=self.id, para=self._para)
         with DB_ENG.connect() as con:
-            con.execute(sql_add_table)
+            con.execute(sqltxt(sql_add_table))
 
     def _get_sql_new_qc(self, period):
         # create sql for new qc
@@ -3446,7 +3447,7 @@ class StationET(StationTETBase):
                 );
         '''.format(stid=self.id, para=self._para)
         with DB_ENG.connect() as con:
-            con.execute(sql_add_table)
+            con.execute(sqltxt(sql_add_table))
 
     def _get_sql_new_qc(self, period):
         # create sql for new qc
