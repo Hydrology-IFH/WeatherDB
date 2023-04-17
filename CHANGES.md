@@ -2,6 +2,7 @@
 
 ## Version 0.0.24
 - add text wrapper from sqlalchemy to work with sqlalchemy version >2.0
+- add compatibility for shapely >2.0
 ## Version 0.0.23
 - change pandas to_csv parameter line_terminator to lineterminator, for newer versions
 - change logging procedure, to not log to file as a standard way, but only after calling setup_file_logging from logging.py
