@@ -1,5 +1,7 @@
 # Change-log
 
+## Version 0.0.25
+- change logging.py submodule name, because of import conflicts with python logging package
 ## Version 0.0.24
 - add text wrapper from sqlalchemy to work with sqlalchemy version >2.0
 - add compatibility for shapely >2.0
