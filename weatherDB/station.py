@@ -2666,7 +2666,7 @@ class StationN(StationNBase):
                 "For the {para_long} station with ID {stid} there is no timeserie with daily values. " +
                 "Therefor the quality check for daily values equal to 0 is not done.\n" +
                 "Please consider updating the daily stations with:\n" +
-                "stats = stations.StationNDs()\n" +
+                "stats = stations.StationsND()\n" +
                 "stats.update_meta()\nstats.update_raw()"
             ).format(**sql_format_dict))
             sql_dates_failed = """
