@@ -8,7 +8,7 @@ import os
 
 # set the log
 #############
-log = logging.getLogger(__name__)
+log = logging.getLogger(__name__.split(".")[0])
 
 LOGDIR = Path(__file__).resolve().parent.joinpath("logs")
 
