@@ -1,6 +1,10 @@
 # Change-log
 
+## Version 0.0.26
+- fix error with sql statements
+- fix logging
 ## Version 0.0.25
+**version has major problems, use version 0.0.26**
 - change logging.py submodule name, because of import conflicts with python logging package
 ## Version 0.0.24
 - add text wrapper from sqlalchemy to work with sqlalchemy version >2.0

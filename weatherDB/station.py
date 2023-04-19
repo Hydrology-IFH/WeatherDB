@@ -1224,7 +1224,7 @@ class StationBase:
 
         # run commands
         if "return_sql" in kwargs and kwargs["return_sql"]:
-            return sql_qc.replace("%%", "%")
+            return sql_qc
         self._execute_long_sql(
             sql=sql_qc,
             description="quality checked for the period {min_tstp} to {max_tstp}.".format(
@@ -1287,7 +1287,7 @@ class StationBase:
                     ma_col=self._ma_cols[0],
                     coef_sign=self._coef_sign),
                 coef_format="i.coef",
-                filled_calc="round(nb.{base_col} {coef_sign[1]} %%3$s, 0)::int"
+                filled_calc="round(nb.{base_col} {coef_sign[1]} %3$s, 0)::int"
                 .format(**sql_format_dict)
             ))
         elif len(self._ma_cols) == 2:
@@ -1306,8 +1306,8 @@ class StationBase:
                 coef_format="i.coef_wi, \n" + " " * 24 + "i.coef_so",
                 filled_calc="""
                     CASE WHEN nf.is_winter
-                        THEN round(nb.{base_col} {coef_sign[1]} %%3$s, 0)::int
-                        ELSE round(nb.{base_col} {coef_sign[1]} %%4$s, 0)::int
+                        THEN round(nb.{base_col} {coef_sign[1]} %3$s, 0)::int
+                        ELSE round(nb.{base_col} {coef_sign[1]} %4$s, 0)::int
                     END""".format(**sql_format_dict)
             ))
         else:
@@ -1348,7 +1348,7 @@ class StationBase:
                                 SELECT tablename
                                 FROM pg_catalog.pg_tables
                                 WHERE schemaname ='timeseries'
-                                    AND tablename LIKE '%%_{para}')
+                                    AND tablename LIKE '%_{para}')
                                 AND ({cond_mas_not_null})
                         ORDER BY ST_DISTANCE(
                             geometry_utm,
@@ -1362,8 +1362,8 @@ class StationBase:
                         $$
                         UPDATE new_filled_{stid}_{para} nf
                         SET filled={filled_calc}, {extra_cols_fillup_calc}
-                            filled_by=%%1$s
-                        FROM timeseries.%%2$I nb
+                            filled_by=%1$s
+                        FROM timeseries.%2$I nb
                         WHERE nf.filled IS NULL AND nb.{base_col} IS NOT NULL
                             AND nf.timestamp = nb.timestamp;
                         $$,
@@ -1392,7 +1392,7 @@ class StationBase:
 
         # execute
         if "return_sql" in kwargs and kwargs["return_sql"]:
-            return sql.replace("%%", "%")
+            return sql
         self._execute_long_sql(
             sql=sql,
             description="filled for the period {min_tstp} - {max_tstp}".format(
@@ -1717,7 +1717,7 @@ class StationBase:
 
         # get response from server
         if "return_sql" in kwargs:
-            return sql.replace("%%", "%")
+            return sql
         res = pd.read_sql(sql, DB_ENG)
 
         # set index
@@ -2666,7 +2666,7 @@ class StationN(StationNBase):
                 "For the {para_long} station with ID {stid} there is no timeserie with daily values. " +
                 "Therefor the quality check for daily values equal to 0 is not done.\n" +
                 "Please consider updating the daily stations with:\n" +
-                "stats = stations.StationNDs()\n" +
+                "stats = stations.StationsND()\n" +
                 "stats.update_meta()\nstats.update_raw()"
             ).format(**sql_format_dict))
             sql_dates_failed = """
@@ -3073,7 +3073,7 @@ class StationN(StationNBase):
 
         # run commands
         if "return_sql" in kwargs and kwargs["return_sql"]:
-            return sql_update.replace("%%", "%")
+            return sql_update
 
         self._execute_long_sql(
             sql_update,
@@ -3207,7 +3207,7 @@ class StationN(StationNBase):
 
             #execute sql or return
             if "return_sql" in kwargs and kwargs["return_sql"]:
-                return (str(super_ret) + "\n" + sql_diff_ma).replace("%%", "%")
+                return (str(super_ret) + "\n" + sql_diff_ma)
             with DB_ENG.connect() as con:
                 con.execute(sqltxt(sql_diff_ma))
 
@@ -3392,8 +3392,8 @@ class StationT(StationTETBase):
         fillup_extra_dict = super()._sql_fillup_extra()
         fillup_extra_dict.update({
             "extra_new_temp_cols": "raw_min AS filled_min, raw_max AS filled_max,",
-            "extra_cols_fillup_calc": "filled_min=round(nb.raw_min + %%3$s, 0)::int, " +
-                                      "filled_max=round(nb.raw_max + %%3$s, 0)::int, ",
+            "extra_cols_fillup_calc": "filled_min=round(nb.raw_min + %3$s, 0)::int, " +
+                                      "filled_max=round(nb.raw_max + %3$s, 0)::int, ",
             "extra_cols_fillup": "filled_min = new.filled_min, " +
                                  "filled_max = new.filled_max, ",
             "extra_fillup_where": ' OR ts."filled_min" IS DISTINCT FROM new."filled_min"' +
