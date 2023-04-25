@@ -160,10 +160,10 @@ class RichterValues(Base):
     precipitation_typ = sa.Column(sa.Text(), primary_key=True)
     temperaturbereich = sa.Column(sa.Text())
     e = sa.Column(sa.float8())
-    b_no-protection = sa.Column(sa.float8())
-    b_little-protection = sa.Column(sa.float8())
+    b_no_protection = sa.Column(sa.float8(), name="b_no-protection")
+    b_little_protection = sa.Column(sa.float8(), name="b_little-protection")
     b_protected = sa.Column(sa.float8())
-    b_heavy-protection = sa.Column(sa.float8())
+    b_heavy_protection = sa.Column(sa.float8(), name="b_heavy-protection")
 
 
 class StationsRasterValues(Base):
