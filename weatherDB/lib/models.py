@@ -1,6 +1,7 @@
 import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
+from geoalchemy2 import Geometry
 
 
 Base = declarative_base()
@@ -16,7 +17,7 @@ class DropedStations(Base):
     timestamp = sa.Column(sa.TIMESTAMP())
 
 
-class MetaEt(Base):
+class MetaET(Base):
 
     __tablename__ = 'meta_et'
 
@@ -36,6 +37,8 @@ class MetaEt(Base):
     hist_until = sa.Column(sa.TIMESTAMP())
     qc_from = sa.Column(sa.TIMESTAMP())
     qc_until = sa.Column(sa.TIMESTAMP())
+    geometry = sa.Column(Geometry('POINT', 4326))
+    geometry_utm = sa.Column(Geometry('POINT', 25832))
 
 
 class MetaN(Base):
@@ -67,6 +70,8 @@ class MetaN(Base):
     quot_filled_hyras = sa.Column(sa.float8())
     qc_from = sa.Column(sa.TIMESTAMP())
     qc_until = sa.Column(sa.TIMESTAMP())
+    geometry = sa.Column(Geometry('POINT', 4326))
+    geometry_utm = sa.Column(Geometry('POINT', 25832))
 
 
 class MetaND(Base):
@@ -88,6 +93,8 @@ class MetaND(Base):
     hist_until = sa.Column(sa.TIMESTAMP())
     qc_from = sa.Column(sa.TIMESTAMP())
     qc_until = sa.Column(sa.TIMESTAMP())
+    geometry = sa.Column(Geometry('POINT', 4326))
+    geometry_utm = sa.Column(Geometry('POINT', 25832))
 
 
 class MetaT(Base):
@@ -110,6 +117,8 @@ class MetaT(Base):
     hist_until = sa.Column(sa.TIMESTAMP())
     qc_from = sa.Column(sa.TIMESTAMP())
     qc_until = sa.Column(sa.TIMESTAMP())
+    geometry = sa.Column(Geometry('POINT', 4326))
+    geometry_utm = sa.Column(Geometry('POINT', 25832))
 
 
 class NeededDownloadTime(Base):
@@ -179,3 +188,4 @@ class StationsRasterValues(Base):
     s_r_f = sa.Column(sa.float8())
     r__s = sa.Column(sa.float8())
     dist_sol = sa.Column(sa.int2())
+    geometry = sa.Column(Geometry('POINT', 25832))
