@@ -14,7 +14,7 @@ class DropedStations(Base):
     station_id = sa.Column(sa.int4(), primary_key=True)
     para = sa.Column(sa.bpchar(3), primary_key=True)
     why = sa.Column(sa.Text())
-    timestamp = sa.Column(sa.TIMESTAMP())
+    timestamp = sa.Column(sa.TIMESTAMP(), server_default=func.now())
 
 
 class MetaET(Base):
@@ -25,6 +25,9 @@ class MetaET(Base):
     is_real = sa.Column(sa.Boolean(), nullable=False, server_default='true')
     raw_from = sa.Column(sa.TIMESTAMP())
     raw_until = sa.Column(sa.TIMESTAMP())
+    hist_until = sa.Column(sa.TIMESTAMP())
+    qc_until = sa.Column(sa.TIMESTAMP())
+    qc_from = sa.Column(sa.TIMESTAMP())
     filled_from = sa.Column(sa.TIMESTAMP())
     filled_until = sa.Column(sa.TIMESTAMP())
     last_imp_from = sa.Column(sa.TIMESTAMP())
@@ -34,9 +37,6 @@ class MetaET(Base):
     stationshoehe = sa.Column(sa.int4())
     stationsname = sa.Column(sa.String())
     bundesland = sa.Column(sa.String())
-    hist_until = sa.Column(sa.TIMESTAMP())
-    qc_from = sa.Column(sa.TIMESTAMP())
-    qc_until = sa.Column(sa.TIMESTAMP())
     geometry = sa.Column(Geometry('POINT', 4326))
     geometry_utm = sa.Column(Geometry('POINT', 25832))
 
@@ -49,8 +49,13 @@ class MetaN(Base):
     is_real = sa.Column(sa.Boolean(), nullable=False, server_default='true')
     raw_from = sa.Column(sa.TIMESTAMP())
     raw_until = sa.Column(sa.TIMESTAMP())
+    hist_until = sa.Column(sa.TIMESTAMP())
+    qc_from = sa.Column(sa.TIMESTAMP())
+    qc_until = sa.Column(sa.TIMESTAMP())
     filled_from = sa.Column(sa.TIMESTAMP())
     filled_until = sa.Column(sa.TIMESTAMP())
+    corr_from = sa.Column(sa.TIMESTAMP())
+    corr_until = sa.Column(sa.TIMESTAMP())
     last_imp_from = sa.Column(sa.TIMESTAMP())
     last_imp_until = sa.Column(sa.TIMESTAMP())
     last_imp_qc = sa.Column(sa.Boolean(), nullable=False, server_default='false')
@@ -59,17 +64,12 @@ class MetaN(Base):
     stationshoehe = sa.Column(sa.int4())
     stationsname = sa.Column(sa.String())
     bundesland = sa.Column(sa.String())
-    richter_class = sa.Column(sa.String())
     horizon = sa.Column(sa.float4())
+    richter_class = sa.Column(sa.String())
+    quot_filled_hyras = sa.Column(sa.float4())
     quot_filled_regnie = sa.Column(sa.float4())
     quot_filled_dwd_grid = sa.Column(sa.float4())
     quot_corr_filled = sa.Column(sa.float4())
-    corr_from = sa.Column(sa.TIMESTAMP())
-    corr_until = sa.Column(sa.TIMESTAMP())
-    hist_until = sa.Column(sa.TIMESTAMP())
-    quot_filled_hyras = sa.Column(sa.float8())
-    qc_from = sa.Column(sa.TIMESTAMP())
-    qc_until = sa.Column(sa.TIMESTAMP())
     geometry = sa.Column(Geometry('POINT', 4326))
     geometry_utm = sa.Column(Geometry('POINT', 25832))
 
@@ -82,6 +82,9 @@ class MetaND(Base):
     is_real = sa.Column(sa.Boolean(), nullable=False, server_default='true')
     raw_from = sa.Column(sa.TIMESTAMP())
     raw_until = sa.Column(sa.TIMESTAMP())
+    hist_until = sa.Column(sa.TIMESTAMP())
+    qc_from = sa.Column(sa.TIMESTAMP())
+    qc_until = sa.Column(sa.TIMESTAMP())
     filled_from = sa.Column(sa.TIMESTAMP())
     filled_until = sa.Column(sa.TIMESTAMP())
     last_imp_from = sa.Column(sa.TIMESTAMP())
@@ -90,9 +93,6 @@ class MetaND(Base):
     stationshoehe = sa.Column(sa.int4())
     stationsname = sa.Column(sa.String())
     bundesland = sa.Column(sa.String())
-    hist_until = sa.Column(sa.TIMESTAMP())
-    qc_from = sa.Column(sa.TIMESTAMP())
-    qc_until = sa.Column(sa.TIMESTAMP())
     geometry = sa.Column(Geometry('POINT', 4326))
     geometry_utm = sa.Column(Geometry('POINT', 25832))
 
@@ -105,6 +105,9 @@ class MetaT(Base):
     is_real = sa.Column(sa.Boolean(), nullable=False, server_default='true')
     raw_from = sa.Column(sa.TIMESTAMP())
     raw_until = sa.Column(sa.TIMESTAMP())
+    hist_until = sa.Column(sa.TIMESTAMP())
+    qc_until = sa.Column(sa.TIMESTAMP())
+    qc_from = sa.Column(sa.TIMESTAMP())
     filled_from = sa.Column(sa.TIMESTAMP())
     filled_until = sa.Column(sa.TIMESTAMP())
     last_imp_from = sa.Column(sa.TIMESTAMP())
@@ -114,15 +117,12 @@ class MetaT(Base):
     stationshoehe = sa.Column(sa.int4())
     stationsname = sa.Column(sa.String())
     bundesland = sa.Column(sa.String())
-    hist_until = sa.Column(sa.TIMESTAMP())
-    qc_from = sa.Column(sa.TIMESTAMP())
-    qc_until = sa.Column(sa.TIMESTAMP())
     geometry = sa.Column(Geometry('POINT', 4326))
     geometry_utm = sa.Column(Geometry('POINT', 25832))
 
 
 class NeededDownloadTime(Base):
-
+    
     __tablename__ = 'needed_download_time'
 
     timestamp = sa.Column(sa.TIMESTAMP(), server_default=func.now(), primary_key=True)
@@ -135,15 +135,6 @@ class NeededDownloadTime(Base):
     output_size = sa.Column(sa.int4(), nullable=False)
 
 
-class ParaVariables(Base):
-
-    __tablename__ = 'para_variables'
-
-    para = sa.Column(sa.bpchar(3), primary_key=True)
-    start_tstp_last_imp = sa.Column(sa.TIMESTAMP())
-    max_tstp_last_imp = sa.Column(sa.TIMESTAMP())
-
-
 class RawFiles(Base):
 
     __tablename__ = 'raw_files'
@@ -153,8 +144,17 @@ class RawFiles(Base):
     modtime = sa.Column(sa.TIMESTAMP(), nullable=False)
 
 
-class RichterValues(Base):
+class ParaVariables(Base):
 
+    __tablename__ = 'para_variables'
+
+    para = sa.Column(sa.String(3), primary_key=True)
+    start_tstp_last_imp = sa.Column(sa.TIMESTAMP())
+    max_tstp_last_imp = sa.Column(sa.TIMESTAMP())
+
+
+class RichterValues(Base):
+    
     __tablename__ = 'richter_values'
 
     precipitation_typ = sa.Column(sa.Text(), primary_key=True)
@@ -167,7 +167,7 @@ class RichterValues(Base):
 
 
 class StationsRasterValues(Base):
-
+    
     __tablename__ = 'stations_raster_values'
 
     station_id = sa.Column(sa.int4(), primary_key=True)
