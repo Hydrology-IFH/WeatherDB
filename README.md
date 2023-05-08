@@ -29,6 +29,12 @@ To install the package use PIP to install the Github repository:
 pip install git+https://github.com/Hydrology-IFH/WeatherDB
 ```
 
+Or to upgrade use:
+
+```
+pip install git+https://github.com/Hydrology-IFH/WeatherDB --upgrade
+```
+
 Get started
 -----------
 To get started you need to enter the credentials to access the Database. If this is an account with read only access, than only those method's, that read data from the Database are available.
