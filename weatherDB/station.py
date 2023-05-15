@@ -2827,7 +2827,8 @@ class StationN(StationNBase):
             # sample dgm for horizon angle
             hab = pd.Series(
                 index=pd.Index([], name="angle", dtype=int),
-                name="horizon")
+                name="horizon",
+                dtype=float)
             for angle in range(90, 271, 3):
                 dgm25_mask = polar_line(xy, radius, angle)
                 dgm25_np, dgm25_tr = rasterio.mask.mask(
