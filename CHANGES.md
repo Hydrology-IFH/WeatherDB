@@ -2,6 +2,7 @@
 
 ## Version 0.0.27
 - fixed major error with update_horizon method. Therefor the Richter Exposition classe changes for many stations. This error existed since Version 0.0.15
+- add multiprocess ability to update_richter_class 
 
 ## Version 0.0.26
 - fix error with sql statements

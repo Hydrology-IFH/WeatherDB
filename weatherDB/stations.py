@@ -898,7 +898,7 @@ class StationsN(StationsBase):
     _timeout_raw_imp = 360
 
     @check_superuser
-    def update_richter_class(self, stids="all", **kwargs):
+    def update_richter_class(self, stids="all", do_mp=True, **kwargs):
         """Update the Richter exposition class.
 
         Get the value from the raster, compare with the richter categories and save to the database.
@@ -923,7 +923,7 @@ class StationsN(StationsBase):
             method="update_richter_class",
             name="update richter class for {para}".format(para=self._para.upper()),
             kwds=kwargs,
-            do_mp=False)
+            do_mp=do_mp)
 
     @check_superuser
     def richter_correct(self, stids="all", **kwargs):
