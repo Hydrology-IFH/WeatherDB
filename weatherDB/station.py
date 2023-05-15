@@ -2436,9 +2436,9 @@ and not in the precipitation meta table in the DB""")
             """.format(stid=self.id)))
         return result.first()[0]
 
-    def quality_check(self, period=(None, None)):
+    def quality_check(self, period=(None, None), **kwargs):
         if not self.is_virtual():
-            super().quality_check(period=period)
+            super().quality_check(period=period, **kwargs)
 
 
 class StationTETBase(StationCanVirtualBase):
