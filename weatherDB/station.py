@@ -2810,97 +2810,97 @@ class StationN(StationNBase):
         dgm80_crs = RASTERS["local"]["dgm80"]["crs"]
         with rio.open(RASTERS["local"]["dgm25"]["fp"]) as dgm25,\
              rio.open(RASTERS["local"]["dgm80"]["fp"]) as dgm80:
-                geom = self.get_geom_shp(crs=dgm25_crs.to_epsg())
-                xy = [geom.x, geom.y]
-                # sample station heght
-                stat_h = list(dgm25.sample(
-                    xy=[xy],
-                    indexes=1,
-                    masked=True))[0]
-                if stat_h.mask[0]:
-                    log.error("update_horizon(): No height was found for {para_long} Station {stid}. Therefor the horizon angle could not get updated.".format(
-                        stid=self.id, para_long=self._para_long))
-                    return None
-                else:
-                    stat_h = stat_h[0]
+            geom = self.get_geom_shp(crs=dgm25_crs.to_epsg())
+            xy = [geom.x, geom.y]
+            # sample station heght
+            stat_h = list(dgm25.sample(
+                xy=[xy],
+                indexes=1,
+                masked=True))[0]
+            if stat_h.mask[0]:
+                log.error("update_horizon(): No height was found for {para_long} Station {stid}. Therefor the horizon angle could not get updated.".format(
+                    stid=self.id, para_long=self._para_long))
+                return None
+            else:
+                stat_h = stat_h[0]
 
-                # sample dgm for horizon angle
-                hab = pd.Series(
-                    index=pd.Index([], name="angle", dtype=int),
-                    name="horizon")
-                for angle in range(90, 271, 3):
-                    dgm25_mask = polar_line(xy, radius, angle)
-                    dgm25_np, dgm25_tr = rasterio.mask.mask(
-                        dgm25, [dgm25_mask], crop=True)
-                    dgm25_np[dgm25_np==dgm25.profile["nodata"]] = np.nan
-                    dgm_gpd = raster2points(dgm25_np, dgm25_tr, crs=dgm25_crs)
-                    dgm_gpd["dist"] = dgm_gpd.distance(Point(xy))
+            # sample dgm for horizon angle
+            hab = pd.Series(
+                index=pd.Index([], name="angle", dtype=int),
+                name="horizon")
+            for angle in range(90, 271, 3):
+                dgm25_mask = polar_line(xy, radius, angle)
+                dgm25_np, dgm25_tr = rasterio.mask.mask(
+                    dgm25, [dgm25_mask], crop=True)
+                dgm25_np[dgm25_np==dgm25.profile["nodata"]] = np.nan
+                dgm_gpd = raster2points(dgm25_np, dgm25_tr, crs=dgm25_crs)
+                dgm_gpd["dist"] = dgm_gpd.distance(Point(xy))
 
-                    # check if parts are missing and fill
-                    #####################################
-                    dgm_gpd = dgm_gpd.sort_values("dist").reset_index(drop=True)
-                    line_parts = pd.DataFrame(
-                        columns=["Start_point", "radius", "line"])
-                    # look for holes inside the line
-                    for i, j in enumerate(dgm_gpd[dgm_gpd["dist"].diff() > 10].index):
+                # check if parts are missing and fill
+                #####################################
+                dgm_gpd = dgm_gpd.sort_values("dist").reset_index(drop=True)
+                line_parts = pd.DataFrame(
+                    columns=["Start_point", "radius", "line"])
+                # look for holes inside the line
+                for i, j in enumerate(dgm_gpd[dgm_gpd["dist"].diff() > 10].index):
+                    line_parts = pd.concat(
+                        [line_parts,
+                            pd.DataFrame(
+                            {"Start_point": dgm_gpd.loc[j-1, "geometry"],
+                                "radius": dgm_gpd.loc[j, "dist"] - dgm_gpd.loc[j-1, "dist"]},
+                            index=[i])])
+
+                # look for missing values at the end
+                dgm25_max_dist = dgm_gpd.iloc[-1]["dist"]
+                if dgm25_max_dist < (radius - 5):
                         line_parts = pd.concat(
                             [line_parts,
-                             pd.DataFrame(
-                                {"Start_point": dgm_gpd.loc[j-1, "geometry"],
-                                 "radius": dgm_gpd.loc[j, "dist"] - dgm_gpd.loc[j-1, "dist"]},
-                                index=[i])])
+                                pd.DataFrame(
+                                {"Start_point":  dgm_gpd.iloc[-1]["geometry"],
+                                    "radius": radius - dgm25_max_dist},
+                                index=[line_parts.index.max()+1])])
 
-                    # look for missing values at the end
-                    dgm25_max_dist = dgm_gpd.iloc[-1]["dist"]
-                    if dgm25_max_dist < (radius - 5):
-                            line_parts = pd.concat(
-                                [line_parts,
-                                 pd.DataFrame(
-                                    {"Start_point":  dgm_gpd.iloc[-1]["geometry"],
-                                     "radius": radius - dgm25_max_dist},
-                                    index=[line_parts.index.max()+1])])
+                # check if parts are missing and fill
+                if len(line_parts) > 0:
+                        # create the lines
+                        for i, row in line_parts.iterrows():
+                            line_parts.loc[i, "line"] = polar_line(
+                                [el[0] for el in row["Start_point"].xy],
+                                row["radius"],
+                                angle
+                            )
+                        line_parts = gpd.GeoDataFrame(
+                            line_parts, geometry="line", crs=dgm25_crs
+                            ).to_crs(dgm80_crs)
+                        dgm80_mask = MultiLineString(
+                            line_parts["line"].tolist())
+                        dgm80_np, dgm80_tr = rasterio.mask.mask(
+                            dgm80, [dgm80_mask], crop=True)
+                        dgm80_np[dgm80_np==dgm80.profile["nodata"]] = np.nan
+                        dgm80_gpd = raster2points(
+                            dgm80_np, dgm80_tr, crs=dgm80_crs
+                            ).to_crs(dgm25_crs)
+                        dgm80_gpd["dist"] = dgm80_gpd.distance(Point(xy))
+                        dgm_gpd = pd.concat(
+                            [dgm_gpd, dgm80_gpd], ignore_index=True)
 
-                    # check if parts are missing and fill
-                    if len(line_parts) > 0:
-                            # create the lines
-                            for i, row in line_parts.iterrows():
-                                line_parts.loc[i, "line"] = polar_line(
-                                    [el[0] for el in row["Start_point"].xy],
-                                    row["radius"],
-                                    angle
-                                )
-                            line_parts = gpd.GeoDataFrame(
-                                line_parts, geometry="line", crs=dgm25_crs
-                                ).to_crs(dgm80_crs)
-                            dgm80_mask = MultiLineString(
-                                line_parts["line"].tolist())
-                            dgm80_np, dgm80_tr = rasterio.mask.mask(
-                                dgm80, [dgm80_mask], crop=True)
-                            dgm80_np[dgm80_np==dgm80.profile["nodata"]] = np.nan
-                            dgm80_gpd = raster2points(
-                                dgm80_np, dgm80_tr, crs=dgm80_crs
-                                ).to_crs(dgm25_crs)
-                            dgm80_gpd["dist"] = dgm80_gpd.distance(Point(xy))
-                            dgm_gpd = pd.concat(
-                                [dgm_gpd, dgm80_gpd], ignore_index=True)
+                hab[angle] = np.max(np.degrees(np.arctan(
+                        (dgm_gpd["data"]-stat_h) / dgm_gpd["dist"])))
 
-                    hab[angle] = np.max(np.degrees(np.arctan(
-                            (dgm_gpd["data"]-stat_h) / dgm_gpd["dist"])))
+        # calculate the mean "horizontabschimung"
+        # Richter: H’=0,15H(S-SW) +0,35H(SW-W) +0,35H(W-NW) +0, 15H(NW-N)
+        horizon = max(0,
+            0.15*hab[(hab.index>225) & (hab.index<=270)].mean()
+            + 0.35*hab[(hab.index>=180) & (hab.index<=225)].mean()
+            + 0.35*hab[(hab.index>=135) & (hab.index<180)].mean()
+            + 0.15*hab[(hab.index>=90) & (hab.index<135)].mean())
 
-                # calculate the mean "horizontabschimung"
-                # Richter: H’=0,15H(S-SW) +0,35H(SW-W) +0,35H(W-NW) +0, 15H(NW-N)
-                horizon = max(0,
-                    0.15*hab[(hab.index>225) & (hab.index<=270)].mean()
-                    + 0.35*hab[(hab.index>=180) & (hab.index<=225)].mean()
-                    + 0.35*hab[(hab.index>=135) & (hab.index<180)].mean()
-                    + 0.15*hab[(hab.index>=90) & (hab.index<135)].mean())
+        # insert to meta table in db
+        self._update_meta(
+            cols=["horizon"],
+            values=[horizon])
 
-                # insert to meta table in db
-                self._update_meta(
-                    cols=["horizon"],
-                    values=[horizon])
-
-                return horizon
+        return horizon
 
     @check_superuser
     def update_richter_class(self, skip_if_exist=True):
