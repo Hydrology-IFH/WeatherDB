@@ -8,14 +8,14 @@
 
 | parameter | compare equation | lower limit | upper limit|
 |:---:|:---:|:---:|:---:|
-| Temperature |  $\Delta T = T_{Stat} - \overline{T}_{neighbors}$ | $\Delta T < -\bold{0.5}°C$ | $\Delta T > \bold{0.5}°C$ |
-| pot. Evapotranspiration |  $\delta ET = \dfrac{ET_{Stat}}{\overline{ET}_{neighbors}}$ | $\begin{cases}\delta ET< \bold{20}\% \\ ET_{Stat}> \bold{0.2} \frac{mm}{d}\end{cases}$|$\begin{cases}\delta ET> 200\% \\ ET_{Stat}> \bold{0.3} \frac{mm}{d}\end{cases}$|
+| Temperature |  $$\Delta T = T_{Stat} - \overline{T}_{neighbors}$ | $\Delta T < -\mathbf{0.5}°C$ | $\Delta T > \mathbf{0.5}°C$$ |
+| pot. Evapotranspiration |  $\delta ET = \dfrac{ET_{Stat}}{\overline{ET}_{neighbors}}$ | $\begin{cases}\delta ET< \mathbf{20}\% \\ ET_{Stat}> \mathbf{0.2} \frac{mm}{d}\end{cases}$|$\begin{cases}\delta ET> 200\% \\ ET_{Stat}> \mathbf{0.3} \frac{mm}{d}\end{cases}$|
 
 Those limits got corrected to correspond now to:
 | parameter | compare equation | lower limit | upper limit|
 |:---:|:---:|:---:|:---:|
-| Temperature |  $\Delta T = T_{Stat} - \overline{T}_{neighbors}$ | $\Delta T < -\bold{5}°C$ | $\Delta T > \bold{5}°C$ |
-| pot. Evapotranspiration |  $\delta ET = \dfrac{ET_{Stat}}{\overline{ET}_{neighbors}}$ | $\begin{cases}\delta ET< \bold{25}\% \\ ET_{Stat}> \bold{2} \frac{mm}{d}\end{cases}$|$\begin{cases}\delta ET> 200\% \\ ET_{Stat}> \bold{3} \frac{mm}{d}\end{cases}$|
+| Temperature |  $\Delta T = T_{Stat} - \overline{T}_{neighbors}$ | $\Delta T < -\mathbf{5}°C$ | $\Delta T > \mathbf{5}°C$ |
+| pot. Evapotranspiration |  $\delta ET = \dfrac{ET_{Stat}}{\overline{ET}_{neighbors}}$ | $\begin{cases}\delta ET< \mathbf{25}\% \\ ET_{Stat}> \mathbf{2} \frac{mm}{d}\end{cases}$|$\begin{cases}\delta ET> 200\% \\ ET_{Stat}> \mathbf{3} \frac{mm}{d}\end{cases}$|
 - fixed error that came up in version 0.0.27 for richter correction. The horizon was only calculated from west to south not from north to south.
 - correct update_horizon to also consider that the distance between grid cells can be diagonal to the grid, so miultiply with $\sqrt{2}$
 
