@@ -14,6 +14,7 @@ Those limits got corrected to correspond now to:
 | Temperature |  $\Delta T = T_{Stat} - \overline{T}_{neighbors}$ | $\Delta T < -\bm{5}°C$ | $\Delta T > \bm{5}°C$ |
 | pot. Evapotranspiration |  $\delta ET = \dfrac{ET_{Stat}}{\overline{ET}_{neighbors}}$ | $\begin{cases}\delta ET< \bm{25}\% \\ ET_{Stat}> \bm{2} \frac{mm}{d}\end{cases}$|$\begin{cases}\delta ET> 200\% \\ ET_{Stat}> \bm{3} \frac{mm}{d}\end{cases}$|
 - fixed error that came up in version 0.0.27 for richter correction. The horizon was only calculated from west to south not from north to south.
+- correct update_horizon to also consider that the distance between grid cells can be diagonal to the grid, so miultiply with $\sqrt{2}$
 
 ## Version 0.0.27
 - fixed major error with update_horizon method. Therefor the Richter Exposition classe changes for many stations. This error existed since Version 0.0.15
