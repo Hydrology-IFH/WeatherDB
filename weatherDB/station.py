@@ -3400,16 +3400,15 @@ class StationT(StationTETBase):
 
     def _get_sql_new_qc(self, period):
         # create sql for new qc
-        sql_new_qc = """
-            WITH nears AS ({sql_near_mean})
+        sql_new_qc = f"""
+            WITH nears AS ({self._get_sql_near_mean(period=period, only_real=True)})
             SELECT
                 timestamp,
-                (CASE WHEN (ABS(nears.raw - nears.mean) > 5)
+                (CASE WHEN (ABS(nears.raw - nears.mean) > 5 * {self._decimals})
                     THEN NULL
                     ELSE nears."raw" END) as qc
             FROM nears
-        """ .format(
-            sql_near_mean=self._get_sql_near_mean(period=period, only_real=True))
+        """
 
         return sql_new_qc
 
@@ -3478,19 +3477,16 @@ class StationET(StationTETBase):
 
     def _get_sql_new_qc(self, period):
         # create sql for new qc
-        sql_new_qc = """
-            WITH nears AS ({sql_near_mean})
+        sql_new_qc = f"""
+            WITH nears AS ({self._get_sql_near_mean(period=period, only_real=True)})
             SELECT
                 timestamp,
-                (CASE WHEN ((nears.raw > (nears.mean * 2) AND nears.raw > 3)
-                            OR (nears.raw < (nears.mean * 0.5) AND nears.raw > 2))
+                (CASE WHEN ((nears.raw > (nears.mean * 2) AND nears.raw > {3*self._decimals})
+                            OR ((nears.raw * 4) < nears.mean AND nears.raw > {2*self._decimals}))
                     THEN NULL
                     ELSE nears."raw" END) as qc
             FROM nears
-        """ .format(
-            sql_near_mean=self._get_sql_near_mean(
-                period=period, only_real=True)
-        )
+        """
 
         return sql_new_qc
 

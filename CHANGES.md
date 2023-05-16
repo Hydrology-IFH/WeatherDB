@@ -1,5 +1,19 @@
 # Change-log
 
+## Version 0.0.28
+- MAJOR Error fix: The quality check for T and ET did not consider the decimal multiplier for the limits. So the table 2 from the Method documentation should have looked like this until now, in bold are the numbers that were wrong in the code:
+
+| parameter | compare equation | lower limit | upper limit|
+|:---:|:---:|:---:|:---:|
+| Temperature |  $\Delta T = T_{Stat} - \overline{T}_{neighbors}$ | $\Delta T < -\bm{0.5}°C$ | $\Delta T > \bm{0.5}°C$ |
+| pot. Evapotranspiration |  $\delta ET = \dfrac{ET_{Stat}}{\overline{ET}_{neighbors}}$ | $\begin{cases}\delta ET< \bm{20}\% \\ ET_{Stat}> \bm{0.2} \frac{mm}{d}\end{cases}$|$\begin{cases}\delta ET> 200\% \\ ET_{Stat}> \bm{0.3} \frac{mm}{d}\end{cases}$|
+
+Those limits got corrected to correspond now to:
+| parameter | compare equation | lower limit | upper limit|
+|:---:|:---:|:---:|:---:|
+| Temperature |  $\Delta T = T_{Stat} - \overline{T}_{neighbors}$ | $\Delta T < -\bm{5}°C$ | $\Delta T > \bm{5}°C$ |
+| pot. Evapotranspiration |  $\delta ET = \dfrac{ET_{Stat}}{\overline{ET}_{neighbors}}$ | $\begin{cases}\delta ET< \bm{25}\% \\ ET_{Stat}> \bm{2} \frac{mm}{d}\end{cases}$|$\begin{cases}\delta ET> 200\% \\ ET_{Stat}> \bm{3} \frac{mm}{d}\end{cases}$|
+
 ## Version 0.0.27
 - fixed major error with update_horizon method. Therefor the Richter Exposition classe changes for many stations. This error existed since Version 0.0.15
 - add multiprocess ability to update_richter_class 

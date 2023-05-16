@@ -38,7 +38,7 @@ For T and ET quality check the data is compared to the 5 nearest neighbors data.
 | parameter | compare equation | lower limit | upper limit|
 |:---:|:---:|:---:|:---:|
 | Temperature |  $\Delta T = T_{Stat} - \overline{T}_{neighbors}$ | $\Delta T < -5°C$ | $\Delta T > 5°C$ |
-| pot. Evapotranspiration |  $\delta ET = \dfrac{ET_{Stat}}{\overline{ET}_{neighbors}}$ | $\begin{cases}\delta ET< 25\% \\ ET_{Stat}< 2 \frac{mm}{d}\end{cases}$|$\begin{cases}\delta ET> 200\% \\ ET_{Stat}> 3 \frac{mm}{d}\end{cases}$|
+| pot. Evapotranspiration |  $\delta ET = \dfrac{ET_{Stat}}{\overline{ET}_{neighbors}}$ | $\begin{cases}\delta ET< 25\% \\ ET_{Stat}> 2 \frac{mm}{d}\end{cases}$|$\begin{cases}\delta ET> 200\% \\ ET_{Stat}> 3 \frac{mm}{d}\end{cases}$|
 
 For the evapotranspiration there are two rules that need to be fulfilled to be unplausible. One relative and one nominal. This is because, low measurement values tend to have high relative differences and would then get deleted too often.
 
@@ -49,7 +49,7 @@ The precipitation measurements must pass through multiple quality checks.
 As some precipitation station (e.g. Feldberg station) have measurements of 0mm in the 10 minutes dataset even though the daily dataset has measurements. This is especially true for the measurement points in 20th and early 21th century. This is probably the result of new measurement equipment to measure the 10 minutes values, but without a good quality control. back then the daily values are often measured with other equipments and have a better quality check they are going through, so that the values are more reliable.
 
 To filter those wrongly measurements of 0 mm out of the data, the data is compared to the daily values from the DWD at the same location. For this reason the daily measurements are first filled up (see next chapter). <br>
-The 10 minutes measurements get aggregated to daily values. If this daily sum is 0 mm, even though the daily data from the DWD is not 0, all the 10 minutes measurements of that day are deleted.
+The 10 minutes measurements get aggregated to daily values. If this daily sum is 0 mm, even though the daily data from the DWD is not 0, all the 10 minutes measurements of that day are deleted. Furthermore if the daily measurement is more than twice the aggregated 10 minutes values, all the 10 minutes data of that day are removed.
 
 This check is the only reason why the daily precipitation values were downloaded in the first place. 
 
