@@ -2850,7 +2850,7 @@ class StationN(StationNBase):
                     columns=["Start_point", "radius", "line"])
                 
                 # look for holes inside the line
-                for i, j in enumerate(dgm_gpd[dgm_gpd["dist"].diff() > dgm1_tr[0]].index):
+                for i, j in enumerate(dgm_gpd[dgm_gpd["dist"].diff() > dgm1_tr[0]*np.sqrt(2)].index):
                     line_parts = pd.concat(
                         [line_parts,
                         pd.DataFrame(
@@ -2860,7 +2860,7 @@ class StationN(StationNBase):
                 
                 # look for missing values at the end
                 dgm1_max_dist = dgm_gpd.iloc[-1]["dist"]
-                if dgm1_max_dist < (radius - dgm1_tr[0]/2):
+                if dgm1_max_dist < (radius - dgm1_tr[0]/2*np.sqrt(2)):
                     line_parts = pd.concat(
                         [line_parts,
                         pd.DataFrame(
