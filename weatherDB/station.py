@@ -1221,6 +1221,16 @@ class StationBase:
         """.format(
             sql_new_qc=self._get_sql_new_qc(period=period),
             stid=self.id, para=self._para)
+        
+        # calculate the percentage of droped values
+        sql_qc += f"""
+            UPDATE meta_{self._para}
+            SET "qc_droped" = ts."qc_droped"
+            FROM (
+                SELECT ROUND(((count("raw")-count("qc"))::numeric/count("raw")), 4)*100 as qc_droped
+                FROM timeseries."{self.id}_{self._para}"
+            ) ts
+            WHERE station_id = {self.id};"""
 
         # run commands
         if "return_sql" in kwargs and kwargs["return_sql"]:

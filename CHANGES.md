@@ -1,5 +1,8 @@
 # Change-log
 
+## Version 0.0.29
+-add calculation of droped values in quality check
+
 ## Version 0.0.28
 - MAJOR Error fix: The quality check for T and ET did not consider the decimal multiplier for the limits. So the table 2 from the Method documentation should have looked like this until now, in bold are the numbers that were wrong in the code:
 
