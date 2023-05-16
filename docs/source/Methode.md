@@ -38,7 +38,7 @@ For T and ET quality check the data is compared to the 5 nearest neighbors data.
 | parameter | compare equation | lower limit | upper limit|
 |:---:|:---:|:---:|:---:|
 | Temperature |  $\Delta T = T_{Stat} - \overline{T}_{neighbors}$ | $\Delta T < -5°C$ | $\Delta T > 5°C$ |
-| pot. Evapotranspiration |  $\delta ET = \dfrac{ET_{Stat}}{\overline{ET}_{neighbors}}$ | $\begin{cases}\delta ET< 25\% \\ ET_{Stat}< 2 \frac{mm}{d}\end{cases}$|$\begin{cases}\delta ET> 200\% \\ ET_{Stat}> 3 \frac{mm}{d}\end{cases}$|
+| pot. Evapotranspiration |  $\delta ET = \dfrac{ET_{Stat}}{\overline{ET}_{neighbors}}$ | $\begin{cases}\delta ET< 25\% \\ ET_{Stat}> 2 \frac{mm}{d}\end{cases}$|$\begin{cases}\delta ET> 200\% \\ ET_{Stat}> 3 \frac{mm}{d}\end{cases}$|
 
 For the evapotranspiration there are two rules that need to be fulfilled to be unplausible. One relative and one nominal. This is because, low measurement values tend to have high relative differences and would then get deleted too often.
 
