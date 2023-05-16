@@ -103,6 +103,13 @@ shutil.copyfile(
     base_path.joinpath("README.md"),
     readme_src
 )
+# copy the CHANGES file to _static
+changes_src = src_path.joinpath("CHANGES.md")
+if changes_src.is_file(): changes_src.unlink()
+shutil.copyfile(
+    base_path.joinpath("CHANGES.md"),
+    changes_src
+)
 
 # Autodoc options
 autodoc_default_options = {
