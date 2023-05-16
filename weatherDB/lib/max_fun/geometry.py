@@ -144,10 +144,7 @@ def raster2points(raster_np, transform, crs=None):
     cols, rows =  mask.nonzero()
     coords = rio.transform.xy(transform, cols, rows)
 
-    if len(cols) == 1:
-        geoms = [Point(coords)]
-    else:
-        geoms = [Point(xy) for xy in list(zip(*coords))]
+    geoms = [Point(xy) for xy in list(zip(*coords))]
 
     return gpd.GeoDataFrame(
         {"data": raster_np[0][mask]}, 
