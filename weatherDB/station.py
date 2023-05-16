@@ -2830,7 +2830,7 @@ class StationN(StationNBase):
                 name="horizon", 
                 dtype=float)
             
-            for angle in range(180, 271, 3):
+            for angle in range(90, 271, 3):
                 dgm1_mask = polar_line(xy, radius, angle)
                 dgm1_np, dgm1_tr = rasterio.mask.mask(
                     dgm1, [dgm1_mask], crop=True)
