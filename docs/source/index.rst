@@ -14,6 +14,7 @@ Welcome to WeatherDB's documentation!
    Quickstart <Quickstart.md>
    Method <Methode.md>
 	API reference <modules>
+   Changelog <CHANGES.md>
 
 
 Indices and tables
