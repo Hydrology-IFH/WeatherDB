@@ -1360,6 +1360,7 @@ class StationBase:
                                 WHERE schemaname ='timeseries'
                                     AND tablename LIKE '%_{para}')
                                 AND ({cond_mas_not_null})
+                                AND (meta.raw_from IS NOT NULL AND meta.raw_until IS NOT NULL)
                         ORDER BY ST_DISTANCE(
                             geometry_utm,
                             (SELECT geometry_utm
@@ -1367,7 +1368,8 @@ class StationBase:
                             WHERE station_id={stid})) ASC)
                     LOOP
                         CONTINUE WHEN i.raw_from > unfilled_period.max
-                                      OR i.raw_until < unfilled_period.min;
+                                      OR i.raw_until < unfilled_period.min
+                                      OR (i.raw_from IS NULL AND i.raw_until IS NULL);
                         EXECUTE FORMAT(
                         $$
                         UPDATE new_filled_{stid}_{para} nf
@@ -2503,12 +2505,14 @@ class StationTETBase(StationCanVirtualBase):
                  COALESCE(ts3.qc {coef_sign[1]} {coefs[2]}, 0) +
                  COALESCE(ts4.qc {coef_sign[1]} {coefs[3]}, 0) +
                  COALESCE(ts5.qc {coef_sign[1]} {coefs[4]}, 0) )
-                 / (NULLIF(5 - (
+                 / (NULLIF(NULLIF(
+                        5 - (
                         (ts1.qc IS NULL OR {coefs[0]} is NULL)::int +
                         (ts2.qc IS NULL OR {coefs[1]} is NULL)::int +
                         (ts3.qc IS NULL OR {coefs[2]} is NULL)::int +
                         (ts4.qc IS NULL OR {coefs[3]} is NULL)::int +
-                        (ts5.qc IS NULL OR {coefs[4]} is NULL)::int ) , 0)
+                        (ts5.qc IS NULL OR {coefs[4]} is NULL)::int ),
+                    0), 1)
                  ) AS mean,
                 ts."raw" as raw
             FROM timeseries."{stid}_{para}" AS ts
