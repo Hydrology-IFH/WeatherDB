@@ -2000,7 +2000,7 @@ class StationBase:
 
         return raster["dtype"](value)
 
-    def get_coef(self, other_stid):
+    def get_coef(self, other_stid, in_db_unit=False):
         """Get the regionalisation coefficients due to the height.
 
         Those are the values from the dwd grid, HYRAS or REGNIE grids.
@@ -2009,6 +2009,10 @@ class StationBase:
         ----------
         other_stid : int
             The Station Id of the other station from wich to regionalise for own station.
+        in_db_unit : bool, optional
+            Should the coefficients be returned in the unit as stored in the database?
+            This is only relevant for the temperature.
+            The default is False.
 
         Returns
         -------
@@ -2028,7 +2032,8 @@ class StationBase:
             if self._coef_sign[0] == "/":
                 return [own/other for own, other in zip(ma_values, other_ma_values)]
             elif self._coef_sign[0] == "-":
-                return [own-other for own, other in zip(ma_values, other_ma_values)]
+                fact = self._decimals if in_db_unit else 1
+                return [(own-other)*fact for own, other in zip(ma_values, other_ma_values)]
             else:
                 return None
 
