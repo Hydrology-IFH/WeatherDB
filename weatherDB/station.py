@@ -1949,6 +1949,7 @@ class StationBase:
             The corresponding multi annual value.
             For T en ET the yearly value is returned.
             For N the winter and summer half yearly sum is returned in tuple.
+            The returned unit is mm or °C.
         """
         sql = """
             SELECT {ma_cols}
@@ -2000,7 +2001,7 @@ class StationBase:
 
         return raster["dtype"](value)
 
-    def get_coef(self, other_stid):
+    def get_coef(self, other_stid, in_db_unit=False):
         """Get the regionalisation coefficients due to the height.
 
         Those are the values from the dwd grid, HYRAS or REGNIE grids.
@@ -2009,6 +2010,10 @@ class StationBase:
         ----------
         other_stid : int
             The Station Id of the other station from wich to regionalise for own station.
+        in_db_unit : bool, optional
+            Should the coefficients be returned in the unit as stored in the database?
+            This is only relevant for the temperature.
+            The default is False.
 
         Returns
         -------
@@ -2028,7 +2033,11 @@ class StationBase:
             if self._coef_sign[0] == "/":
                 return [own/other for own, other in zip(ma_values, other_ma_values)]
             elif self._coef_sign[0] == "-":
-                return [own-other for own, other in zip(ma_values, other_ma_values)]
+                if in_db_unit:
+                    return [int(np.round((own-other)*self._decimals)) 
+                            for own, other in zip(ma_values, other_ma_values)]
+                else: 
+                    return [own-other for own, other in zip(ma_values, other_ma_values)]
             else:
                 return None
 
@@ -2482,7 +2491,7 @@ class StationTETBase(StationCanVirtualBase):
             SQL statement for the regionalised mean of the 5 nearest stations.
         """
         near_stids = self.get_neighboor_stids(n=5, only_real=only_real)
-        coefs = [self.get_coef(other_stid=near_stid)[0]
+        coefs = [self.get_coef(other_stid=near_stid, in_db_unit=True)[0]
                  for near_stid in near_stids]
         coefs = ["NULL" if coef is None else coef for coef in coefs]
 
