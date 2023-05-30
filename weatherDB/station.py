@@ -1367,7 +1367,8 @@ class StationBase:
                             WHERE station_id={stid})) ASC)
                     LOOP
                         CONTINUE WHEN i.raw_from > unfilled_period.max
-                                      OR i.raw_until < unfilled_period.min;
+                                      OR i.raw_until < unfilled_period.min
+                                      OR (i.raw_from IS NULL AND i.raw_until IS NULL);
                         EXECUTE FORMAT(
                         $$
                         UPDATE new_filled_{stid}_{para} nf
