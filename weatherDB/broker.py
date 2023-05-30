@@ -6,6 +6,8 @@ import logging
 from sqlalchemy import text as sqltxt
 from .lib.connections import DB_ENG
 from .stations import StationsN, StationsND, StationsT, StationsET
+from packaging import version as pv
+from . import __version__ as __version__
 
 log = logging.getLogger(__name__)
 
@@ -219,14 +221,17 @@ class Broker(object):
         log.info("="*79 + "\nBroker update_db starts")
         self._check_paras(paras)
 
-        self.update_meta(paras=paras)
-        self.update_raw(paras=paras)
-        if "n_d" in paras:
-            paras.remove("n_d")
-        self.last_imp_quality_check(paras=paras)
-        self.last_imp_fillup(paras=paras)
-        self.last_imp_corr()
-        # self.vacuum()
+        if pv.parse(__version__) > self.get_db_version():
+            log.info("--> There is a new version of the python script. Therefor the database is recalculated completly")
+            self.initiate_db()
+        else:
+            self.update_meta(paras=paras)
+            self.update_raw(paras=paras)
+            if "n_d" in paras:
+                paras.remove("n_d")
+            self.last_imp_quality_check(paras=paras)
+            self.last_imp_fillup(paras=paras)
+            self.last_imp_corr()
 
     def initiate_db(self):
         """Initiate the Database.
@@ -247,10 +252,95 @@ class Broker(object):
         self.quality_check(paras=["n", "t", "et"])
         self.fillup(paras=["n", "t", "et"])
         self.richter_correct()
-        # self.vacuum()
+        self.set_db_version()
 
     def vacuum(self, do_analyze=True):
         sql = "VACUUM {anlyze};".format(
             analyze="ANALYZE" if do_analyze else "")
         with DB_ENG.connect() as con:
             con.execute(sqltxt(sql))
+
+    def get_setting(self, key):
+        """Get a specific settings value. 
+
+        Parameters
+        ----------
+        key : str
+            The key of the setting.
+
+        Returns
+        -------
+        value: str
+            The version of the database.
+        """
+        with DB_ENG.connect() as con:
+            res = con.execute(
+                sqltxt(f"SELECT value FROM settings WHERE key='{key}';")
+                ).fetchone()
+        if res is None:
+            return None
+        else:
+            return res[0]
+        
+    def set_setting(self, key:str, value:str):
+        """Set a specific setting.
+
+        Parameters
+        ----------
+        key : str
+            The key of the setting.
+        value : str
+            The value of the setting.
+        """
+        with DB_ENG.connect() as con:
+            con.execute(sqltxt(
+                f"""INSERT INTO settings 
+                VALUES ('{key}', '{value}')
+                ON CONFLICT (key) 
+                    DO UPDATE SET value=EXCLUDED.value;"""))
+    
+    def get_db_version(self):
+        """Get the package version that the databases state is at. 
+
+        Returns
+        -------
+        version
+            The version of the database.
+        """
+        res = self.get_setting("version")
+        if res is not None:
+            res = pv.parse(res)
+        return res
+  
+    def set_db_version(self, version=pv.parse(__version__)):
+        """Set the package version that the databases state is at.
+
+        Parameters
+        ----------
+        version: pv.Version, optional
+            The Version of the python package
+            The default is the version of this package.
+        """
+        if not isinstance(version, pv.Version):
+            raise TypeError("version must be of type pv.Version")
+        self.set_setting("version", str(version))
+
+    def set_is_broker_active(self, is_active:bool):
+        """Set the state of the broker.
+
+        Parameters
+        ----------
+        is_active : bool
+            Whether the broker is active.
+        """
+        self.set_setting("is_broker_active", str(is_active))
+            
+    def get_is_broker_active(self):
+        """Get the state of the broker.
+
+        Returns
+        -------
+        bool
+            Whether the broker is active.
+        """
+        return self.get_setting("is_broker_active") == "True"
