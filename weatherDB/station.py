@@ -2505,12 +2505,14 @@ class StationTETBase(StationCanVirtualBase):
                  COALESCE(ts3.qc {coef_sign[1]} {coefs[2]}, 0) +
                  COALESCE(ts4.qc {coef_sign[1]} {coefs[3]}, 0) +
                  COALESCE(ts5.qc {coef_sign[1]} {coefs[4]}, 0) )
-                 / (NULLIF(5 - (
+                 / (NULLIF(NULLIF(
+                        5 - (
                         (ts1.qc IS NULL OR {coefs[0]} is NULL)::int +
                         (ts2.qc IS NULL OR {coefs[1]} is NULL)::int +
                         (ts3.qc IS NULL OR {coefs[2]} is NULL)::int +
                         (ts4.qc IS NULL OR {coefs[3]} is NULL)::int +
-                        (ts5.qc IS NULL OR {coefs[4]} is NULL)::int ) , 0)
+                        (ts5.qc IS NULL OR {coefs[4]} is NULL)::int ),
+                    0), 1)
                  ) AS mean,
                 ts."raw" as raw
             FROM timeseries."{stid}_{para}" AS ts
