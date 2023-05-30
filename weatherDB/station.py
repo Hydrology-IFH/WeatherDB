@@ -2033,9 +2033,9 @@ class StationBase:
             if self._coef_sign[0] == "/":
                 return [own/other for own, other in zip(ma_values, other_ma_values)]
             elif self._coef_sign[0] == "-":
-                fact = self._decimals 
                 if in_db_unit:
-                    return [int(np.round((own-other)*self._decimals )) for own, other in zip(ma_values, other_ma_values)]
+                    return [int(np.round((own-other)*self._decimals)) 
+                            for own, other in zip(ma_values, other_ma_values)]
                 else: 
                     return [own-other for own, other in zip(ma_values, other_ma_values)]
             else:
