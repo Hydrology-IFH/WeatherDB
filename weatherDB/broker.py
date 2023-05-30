@@ -220,6 +220,7 @@ class Broker(object):
         """
         log.info("="*79 + "\nBroker update_db starts")
         self._check_paras(paras)
+        self.check_is_broker_active()
 
         if pv.parse(__version__) > self.get_db_version():
             log.info("--> There is a new version of the python script. Therefor the database is recalculated completly")
@@ -232,6 +233,7 @@ class Broker(object):
             self.last_imp_quality_check(paras=paras)
             self.last_imp_fillup(paras=paras)
             self.last_imp_corr()
+            self.set_is_broker_active(False)
 
     def initiate_db(self):
         """Initiate the Database.
@@ -241,6 +243,7 @@ class Broker(object):
         Quality checks and fills up the timeseries.
         """
         log.info("="*79 + "\nBroker initiate_db starts")
+        self.check_is_broker_active()
         self.update_meta(
             paras=["n_d", "n", "t", "et"])
         self.update_raw(
@@ -253,6 +256,7 @@ class Broker(object):
         self.fillup(paras=["n", "t", "et"])
         self.richter_correct()
         self.set_db_version()
+        self.set_is_broker_active(False)
 
     def vacuum(self, do_analyze=True):
         sql = "VACUUM {anlyze};".format(
@@ -344,3 +348,16 @@ class Broker(object):
             Whether the broker is active.
         """
         return self.get_setting("is_broker_active") == "True"
+
+    def check_is_broker_active(self):
+        """Check if another broker instance is active and if so raise an error.
+
+        Raises
+        ------
+        RuntimeError
+            If the broker is not active.
+        """
+        if self.get_is_broker_active():
+            raise RuntimeError("Another Broker is active and therefor this broker is not allowed to run.")
+        else:
+            self.set_is_broker_active(True)
