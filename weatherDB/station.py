@@ -1360,6 +1360,7 @@ class StationBase:
                                 WHERE schemaname ='timeseries'
                                     AND tablename LIKE '%_{para}')
                                 AND ({cond_mas_not_null})
+                                AND (meta.raw_from IS NOT NULL AND meta.raw_until IS NOT NULL)
                         ORDER BY ST_DISTANCE(
                             geometry_utm,
                             (SELECT geometry_utm
