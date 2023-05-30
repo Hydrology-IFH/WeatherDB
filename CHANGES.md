@@ -1,5 +1,7 @@
 # Change-log
 
+## Version 0.0.31
+- only compare to neighbooring stations if at least 2 stations have data in the quality check of T and ET
 ## Version 0.0.30
 - fix MAJOR error in Temperature quality check: The coefficient did not get converted to the database unit. 
   This had as a consequence, that the neighboring values did not get regionalised correctly to the checked station. So if the neighboring station has big difference in the multi annual temperature value, too many values got kicked out. 
