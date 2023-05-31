@@ -861,6 +861,10 @@ class StationsBase:
         stats = self.get_stations(only_real=False, stids=stids)
         for stat in pb.progressbar(stats, line_breaks=False):
             df = stat.get_df(kinds=[kind], **kwargs)
+            if df is None:
+                warnings.warn(
+                    f"There was no data for {stat._para_long} station {stat.id}!")
+                continue
             df.rename(
                 dict(zip(
                     df.columns, 
@@ -870,8 +874,10 @@ class StationsBase:
                 df_all = df_all.join(df)
             else:
                 df_all = df
-        
-        return df_all
+        if "df_all" in locals():
+            return df_all
+        else:
+            None
 
 
 class StationsTETBase(StationsBase):
