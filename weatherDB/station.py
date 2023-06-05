@@ -1903,7 +1903,7 @@ class StationBase:
         """
         return self.get_period_meta(kind="last_imp", all=all)
 
-    def get_neighboor_stids(self, n=5, only_real=True):
+    def get_neighboor_stids(self, n=5, only_real=True, p_elev=None):
         """Get a list with Station Ids of the nearest neighboor stations.
 
         Parameters
@@ -1916,6 +1916,12 @@ class StationBase:
             Should only real station get considered?
             If false also virtual stations are part of the result.
             The default is True.
+        p_elev : tuple of float or None, optional
+            The parameters (P_1, P_2) to weight the height differences between stations.
+            The elevation difference is considered with the formula from LARSIM (equation 3-18 & 3-19 from the LARSIM manual):
+            $L_{gewichtet} = L_{horizontal} * (1 + (\frac{|\delta H|}{P_1})^{P_2})$
+            If None, then the height difference is not considered and only the nearest stations are returned.
+            The default is None.
 
         Returns
         -------
@@ -1925,18 +1931,36 @@ class StationBase:
         """
         self._check_isin_meta()
 
-        sql_nearest_stids = """
-                SELECT station_id
-                FROM meta_{para}
-                WHERE station_id != {stid} {cond_only_real}
-                ORDER BY ST_DISTANCE(
-                    geometry_utm,
-                    (SELECT geometry_utm FROM meta_{para}
-                     WHERE station_id={stid}))
-                LIMIT {n}
-            """.format(
+        sql_dict = dict(
             cond_only_real="AND is_real" if only_real else "",
-            stid=self.id, para=self._para, n=n)
+            stid=self.id, para=self._para, n=n,
+            add_meta_rows="", cond_period="", add_elev_order="")
+        
+        if p_elev is not None:
+            if len(p_elev) != 2:
+                raise ValueError("p_elev must be a tuple of length 2 or None")
+            sql_dict.update(dict(
+                add_meta_rows=", stationshoehe",
+                add_elev_order = \
+                    f"""*(1+power(
+                        abs(stationshoehe - (SELECT stationshoehe FROM stat_row))
+                        /{p_elev[0]}::float, 
+                        {p_elev[1]}::float))"""
+                ))
+
+        sql_nearest_stids = """
+            WITH stat_row AS (
+                SELECT geometry_utm {add_meta_rows}
+                FROM meta_{para} WHERE station_id={stid}	
+            )
+            SELECT station_id
+            FROM meta_{para}
+            WHERE station_id != {stid} {cond_only_real} {cond_period}
+            ORDER BY ST_DISTANCE(geometry_utm,(SELECT geometry_utm FROM stat_row))
+                {add_elev_order}
+            LIMIT {n};
+            """.format(**sql_dict)
+        
         with DB_ENG.connect() as con:
             result = con.execute(sqltxt(sql_nearest_stids))
             nearest_stids = [res[0] for res in result.all()]
@@ -2472,6 +2496,10 @@ class StationTETBase(StationCanVirtualBase):
     _min_agg_to = "day"
     _tstp_format_db = "%Y%m%d"
     _tstp_format_human = "%Y-%m-%d"
+
+    def get_neighboor_stids(self, n=5, only_real=True, p_elev=(250, 1.5)):
+        # define the P1 and P2 default values for T and ET
+        return super().get_neighboor_stids(n=n, only_real=only_real, p_elev=p_elev)
 
     def _get_sql_near_mean(self, period, only_real=True):
         """Get the SQL statement for the mean of the 5 nearest stations.
