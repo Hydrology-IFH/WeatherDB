@@ -2569,13 +2569,17 @@ class StationTETBase(StationCanVirtualBase):
             index=pd.Index(range(start_year, end_year+1), name="years"),
             columns=["near_stids"], dtype=object)
         nbs_stids_all = set()
+        now = pd.Timestamp.now()
         for year in nbs.index:
-            y_period = TimestampPeriod(f"{year}-01-01", f"{year}-12-31")
-            nbs_i = self.get_neighboor_stids(period=y_period)
+            if year == now.year:
+                y_period = TimestampPeriod(f"{year}-01-01", now.date())
+            else:
+                y_period = TimestampPeriod(f"{year}-01-01", f"{year}-12-31")
+            nbs_i = self.get_neighboor_stids(period=y_period, only_real=only_real)
             nbs_stids_all = nbs_stids_all.union(nbs_i)
             nbs.loc[year, "near_stids"] = nbs_i
 
-        # add a grouping column if stids before the same
+        # add a grouping column if stids of year before is the same
         before = None
         group_i = 1
         for year, row in nbs.iterrows():
@@ -2585,6 +2589,7 @@ class StationTETBase(StationCanVirtualBase):
                 group_i += 1
                 before = row["near_stids"]
             nbs.loc[year, "group"] = group_i
+
 
         # aggregate if neighboors are the same
         nbs["start"] = nbs.index
@@ -2636,7 +2641,7 @@ class StationTETBase(StationCanVirtualBase):
                     coefs=coefs[row["near_stids"]].to_list(),
                     coef_sign=self._coef_sign,
                     tstp_dtype=self._tstp_dtype,
-                    **period_part.get_sql_format_dict() ))
+                    **period_part.get_sql_format_dict()))
 
         # create sql for mean of the near stations and the raw value itself for total period
         sql_near_mean = """SELECT ts.timestamp, nbs_mean, ts.raw as raw 
