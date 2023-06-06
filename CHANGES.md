@@ -1,16 +1,22 @@
 # Change-log
 
+## Version 0.0.32
+- add elevation consideration for the selection of neighboring stations, based on LARSIMformula for the quality_check and fillup procedure of T and ET. So not only the closest stations are selected but sometimes also a station that is further away, but has les difference in height.
+- get neighboring stations for T and ET quality check for full years, to always have around 5 neighboring stations
+- fix problem in get_multi_annual for T Station if no ma found
+- fix error because timeseries did only get created when, station T or ET is in meta_n table, even if they exist in meta_t or meta_et. So e.g a T Station exists in meta table because of own data, but is not added because no P station is there.
+
 ## Version 0.0.31
 - only compare to neighbooring stations if at least 2 stations have data in the quality check of T and ET
 - add settings to the database and broker now updates the whole database if a new version is loaded
 - stop broker execution if another broker instance is activly updating the database
 ## Version 0.0.30
-- fix MAJOR error in Temperature quality check: The coefficient did not get converted to the database unit. 
-  This had as a consequence, that the neighboring values did not get regionalised correctly to the checked station. So if the neighboring station has big difference in the multi annual temperature value, too many values got kicked out. 
+- fix MAJOR error in Temperature quality check: The coefficient did not get converted to the database unit.
+  This had as a consequence, that the neighboring values did not get regionalised correctly to the checked station. So if the neighboring station has big difference in the multi annual temperature value, too many values got kicked out.
   This error existed probably since version 0.0.15
 
 ## Version 0.0.29
--add calculation of droped values in quality check
+-add calculation of dropped values in quality check
 
 ## Version 0.0.28
 - MAJOR Error fix: The quality check for T and ET did not consider the decimal multiplier for the limits. So the table 2 from the Method documentation should have looked like this until now, in bold are the numbers that were wrong in the code:

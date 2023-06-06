@@ -107,6 +107,7 @@ class TimestampPeriod(object):
                 period[i] = Timestamp(tstp)
 
             # check timezone
+            self.tzinfo=tzinfo
             if tzinfo is not None:
                 if period[i].tzinfo is None:
                     period[i] = period[i].tz_localize(tzinfo)
@@ -358,6 +359,22 @@ class TimestampPeriod(object):
         """        
         return self.end - self.start
 
+    def get_middle(self):
+        """Get the middle Timestamp of the TimestampPeriod.
+
+        Returns
+        -------
+        Timestamp
+            The middle Timestamp of this TimestampPeriod.
+        """
+        middle = self.start + self.get_interval() / 2
+        if self.is_date:
+            middle = Timestamp(middle.date())
+        if self.tzinfo is not None:
+            if middle.tzinfo is None:
+                middle = middle.tz_localize(self.tzinfo)
+        return middle
+    
     def copy(self):
         """Copy this TimestampPeriod.
 

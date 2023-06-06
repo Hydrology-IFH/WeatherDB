@@ -32,7 +32,18 @@ Although every quality check can get computed for different periods:
 - the last imported period, with e.g. `station.StationET(3).last_imp_quality_check()`
 
 ### Temperature and Evapotranspiration
-For T and ET quality check the data is compared to the 5 nearest neighbors data. The data of every neighboor station is regionalised, based on the DWD grids (see chapter regionalisation), to the examined station. Then the mean value of those 5 values is taken to compare to the station data. If this mean value is too far away from the own value, then the measurement point is deleted.
+For T and ET quality check the data is compared to the 5 nearest neighbors data. 
+To get the nearest stations, the selection is done on a yearly basis. So neighbor stations having data for more than 6 months in that year are considered.
+
+Furthermore also the difference in elevation between the two stations is considered to select nearest stations. This is done, because the topographie has a big influence on the Temperature and Evapotranspiration. The weighted distance is thereby calculated with the LARSIM formula:
+
+$L_{gewichtet} = L_{horizontal} * (1 + (\frac{|\delta H|}{P_1})^{P_2})$
+
+In Larsim those parameters are defined as $P_1 = 500$ and $P_2 = 1$.
+<br>Stoelzle et al. (2016) found that $P_1 = 100$ and $P_2 = 4$ is better for Baden-Württemberg to consider the quick changes in topagraphie.
+<br>or all of Germany, those parameter values are giving too much weight to the elevation difference, which can result in getting neighbor stations from the border of the Czech Republic for the Feldberg station. Therefor the values $P_1 = 250$ and $P_2 = 1.5$ are used as default values.
+
+The data of every neighbor station is regionalized, based on the DWD grids (see chapter regionalisation), to the examined station. Then the mean value of those 5 values is taken to compare to the station data. If this mean value is too far away from the own value, then the measurement point is deleted.
 
 **Table 2: Limits for the quality check of the T and ET measurements, when compared with neighbor stations**
 | parameter | compare equation | lower limit | upper limit|
@@ -51,7 +62,7 @@ As some precipitation station (e.g. Feldberg station) have measurements of 0mm i
 To filter those wrongly measurements of 0 mm out of the data, the data is compared to the daily values from the DWD at the same location. For this reason the daily measurements are first filled up (see next chapter). <br>
 The 10 minutes measurements get aggregated to daily values. If this daily sum is 0 mm, even though the daily data from the DWD is not 0, all the 10 minutes measurements of that day are deleted. Furthermore if the daily measurement is more than twice the aggregated 10 minutes values, all the 10 minutes data of that day are removed.
 
-This check is the only reason why the daily precipitation values were downloaded in the first place. 
+This check is the only reason why the daily precipitation values were downloaded in the first place.
 
 #### consecutive equal values
 Sometimes there are several consecutive 10 minutes values that are exactly the same. As the accuracy of the measurement is 0.01 mm, this is very improbable to be a real measurement and is more likely the result of splitting e.g. an hourly value into 6 values.
@@ -59,9 +70,9 @@ Sometimes there are several consecutive 10 minutes values that are exactly the s
 It is assumed, that filling the measurements up with values from the neighbor stations is more accurate than this dissemination. Therefor 3 consecutive same measurements are deleted, if their "Qualitätsnorm" from the DWD is not 3 (meaning that the measurements didn't get a good quality control from the DWD).
 
 ## gap filling
-To have complete timeseries, the gaps in the quality checked timeseries are filled with data from the neighbor stations. This is done by regionalising the neighbors measurements value to the station that is gap filled. Starting with the nearest neighbor station all available stations are taken until the timeserie is completely filled.
+To have complete timeseries, the gaps in the quality checked timeseries are filled with data from the neighbor stations. The neighboring stations are selected in the order of horizontal difference for the precipitation stations and in order of the elevation weighted distance (see chapter quality check - Temperature and Evapotranspiration) for T and ET stations. This is done by regionalising the neighbors measurements value to the station that is gap filled. Starting with the nearest neighbor station all available stations are taken until the timeserie is completely filled.
 
-For the reginalisation, the multi-annual values for every station for the climate period of 1991-2020 are computed from the corresponding DWD grid. 
+For the reginalisation, the multi-annual values for every station for the climate period of 1991-2020 are computed from the corresponding DWD grid.
 
 **Table 3: The raster grids that are the basis for the regionalisation**
 | parameter |  <div style="text-align: center">source</div> |
@@ -115,3 +126,5 @@ The daily correction ($\Delta N$) is then distributed to every 10 minute measure
 ## sources
 - Richter, D. 1995. Ergebnisse methodischer Untersuchungen zur Korrektur des systematischen Meßfehlers des Hellmann-Niederschlagsmessers. Offenbach am Main: Selbstverl. des Dt. Wetterdienstes.
 - Coperniicus. 2016. European Digital Elevation Model (EU-DEM), version 1.1. [online available](https://land.copernicus.eu/imagery-in-situ/eu-dem/eu-dem-v1.1)
+- Stoelzle, Michael & Weiler, Markus & Steinbrich, Andreas. (2016) Starkregengefährdung in Baden-Württemberg – von der Methodenentwicklung zur Starkregenkartierung. Tag der Hydrologie.
+- LARSIM Dokumentation, Stand 06.04.2023, online unter https://www.larsim.info/dokumentation/LARSIM-Dokumentation.pdf
