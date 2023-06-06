@@ -2462,7 +2462,7 @@ class StationCanVirtualBase(StationBase):
         if self.isin_meta():
             if self.isin_db():
                 return True
-            elif self.isin_meta_n():
+            else:
                 self._create_timeseries_table()
                 return True
         elif self.isin_meta_n():
