@@ -2562,52 +2562,97 @@ class StationTETBase(StationCanVirtualBase):
         str
             SQL statement for the regionalised mean of the 5 nearest stations.
         """
-        near_stids = self.get_neighboor_stids(n=5, only_real=only_real)
-        coefs = [self.get_coef(other_stid=near_stid, in_db_unit=True)[0]
-                 for near_stid in near_stids]
-        coefs = ["NULL" if coef is None else coef for coef in coefs]
+        # get neighboring station for every year 
+        start_year = period.start.year
+        end_year = period.end.year
+        nbs = pd.DataFrame(
+            index=pd.Index(range(start_year, end_year+1), name="years"),
+            columns=["near_stids"], dtype=object)
+        nbs_stids_all = set()
+        for year in nbs.index:
+            y_period = TimestampPeriod(f"{year}-01-01", f"{year}-12-31")
+            nbs_i = self.get_neighboor_stids(period=y_period)
+            nbs_stids_all = nbs_stids_all.union(nbs_i)
+            nbs.loc[year, "near_stids"] = nbs_i
 
-        # create sql for mean of the near stations and the raw value itself
-        sql_near_mean = """
-            SELECT ts.timestamp,
-                (COALESCE(ts1.qc {coef_sign[1]} {coefs[0]}, 0) +
-                 COALESCE(ts2.qc {coef_sign[1]} {coefs[1]}, 0) +
-                 COALESCE(ts3.qc {coef_sign[1]} {coefs[2]}, 0) +
-                 COALESCE(ts4.qc {coef_sign[1]} {coefs[3]}, 0) +
-                 COALESCE(ts5.qc {coef_sign[1]} {coefs[4]}, 0) )
-                 / (NULLIF(NULLIF(
-                        5 - (
-                        (ts1.qc IS NULL OR {coefs[0]} is NULL)::int +
-                        (ts2.qc IS NULL OR {coefs[1]} is NULL)::int +
-                        (ts3.qc IS NULL OR {coefs[2]} is NULL)::int +
-                        (ts4.qc IS NULL OR {coefs[3]} is NULL)::int +
-                        (ts5.qc IS NULL OR {coefs[4]} is NULL)::int ),
-                    0), 1)
-                 ) AS mean,
-                ts."raw" as raw
+        # add a grouping column if stids before the same
+        before = None
+        group_i = 1
+        for year, row in nbs.iterrows():
+            if before is None:
+                before = row["near_stids"]
+            if before != row["near_stids"]:
+                group_i += 1
+                before = row["near_stids"]
+            nbs.loc[year, "group"] = group_i
+
+        # aggregate if neighboors are the same
+        nbs["start"] = nbs.index
+        nbs["end"] = nbs.index
+        nbs = nbs.groupby(nbs["group"])\
+            .agg({"near_stids":"first", "start": "min", "end": "max"})\
+            .set_index(["start", "end"])
+
+        # get coefs for regionalisation from neighbor stations
+        coefs = pd.Series(
+            index=nbs_stids_all, 
+            data=[self.get_coef(other_stid=near_stid, in_db_unit=True)
+                        for near_stid in nbs_stids_all]
+            ).fillna("NULL")\
+            .apply(lambda x: x[0] if isinstance(x, list) else x)\
+            .astype(str)
+
+        # create year subqueries for near stations mean
+        sql_near_mean_parts = []
+        for (start, end), row in nbs.iterrows():
+            period_part = TimestampPeriod(f"{start}-01-01", f"{end}-12-31")
+
+            # create sql for mean of the near stations and the raw value itself
+            sql_near_mean_parts.append("""
+                SELECT timestamp,
+                    (COALESCE(ts1.qc {coef_sign[1]} {coefs[0]}, 0) +
+                        COALESCE(ts2.qc {coef_sign[1]} {coefs[1]}, 0) +
+                        COALESCE(ts3.qc {coef_sign[1]} {coefs[2]}, 0) +
+                        COALESCE(ts4.qc {coef_sign[1]} {coefs[3]}, 0) +
+                        COALESCE(ts5.qc {coef_sign[1]} {coefs[4]}, 0) )
+                        / (NULLIF(NULLIF(
+                            5 - (
+                            (ts1.qc IS NULL OR {coefs[0]} is NULL)::int +
+                            (ts2.qc IS NULL OR {coefs[1]} is NULL)::int +
+                            (ts3.qc IS NULL OR {coefs[2]} is NULL)::int +
+                            (ts4.qc IS NULL OR {coefs[3]} is NULL)::int +
+                            (ts5.qc IS NULL OR {coefs[4]} is NULL)::int ),
+                        0), 1)
+                        ) AS nbs_mean
+                FROM timeseries."{near_stids[0]}_{para}" ts1
+                FULL OUTER JOIN timeseries."{near_stids[1]}_{para}" ts2 USING (timestamp)
+                FULL OUTER JOIN timeseries."{near_stids[2]}_{para}" ts3 USING (timestamp)
+                FULL OUTER JOIN timeseries."{near_stids[3]}_{para}" ts4 USING (timestamp)
+                FULL OUTER JOIN timeseries."{near_stids[4]}_{para}" ts5 USING (timestamp)
+                WHERE timestamp BETWEEN {min_tstp}::{tstp_dtype} AND {max_tstp}::{tstp_dtype}
+                """.format(
+                    para=self._para,
+                    near_stids=row["near_stids"],
+                    coefs=coefs[row["near_stids"]].to_list(),
+                    coef_sign=self._coef_sign,
+                    tstp_dtype=self._tstp_dtype,
+                    **period_part.get_sql_format_dict() ))
+
+        # create sql for mean of the near stations and the raw value itself for total period
+        sql_near_mean = """SELECT ts.timestamp, nbs_mean, ts.raw as raw 
             FROM timeseries."{stid}_{para}" AS ts
-            LEFT JOIN timeseries."{near_stids[0]}_{para}" ts1
-                ON ts.timestamp=ts1.timestamp
-            LEFT JOIN timeseries."{near_stids[1]}_{para}" ts2
-                ON ts.timestamp=ts2.timestamp
-            LEFT JOIN timeseries."{near_stids[2]}_{para}" ts3
-                ON ts.timestamp=ts3.timestamp
-            LEFT JOIN timeseries."{near_stids[3]}_{para}" ts4
-                ON ts.timestamp=ts4.timestamp
-            LEFT JOIN timeseries."{near_stids[4]}_{para}" ts5
-                ON ts.timestamp=ts5.timestamp
-            WHERE ts.timestamp BETWEEN {min_tstp} AND {max_tstp}
-            """.format(
-            stid=self.id,
-            para=self._para,
-            near_stids=near_stids,
-            coefs=coefs,
-            coef_sign=self._coef_sign,
-            **period.get_sql_format_dict()
-        )
+            LEFT JOIN (SELECT timestamp, nbs_mean FROM ({sql_near_parts}) sq_nbs) nbs
+                ON ts.timestamp=nbs.timestamp
+            WHERE ts.timestamp BETWEEN {min_tstp}::{tstp_dtype} AND {max_tstp}::{tstp_dtype}"""\
+                .format(
+                    stid = self.id,
+                    para = self._para,
+                    sql_near_parts = " UNION ".join(sql_near_mean_parts),
+                    tstp_dtype=self._tstp_dtype,
+                    **period.get_sql_format_dict())
 
         return sql_near_mean
-
+     
     def get_adj(self, **kwargs):
         """Get the adjusted timeserie.
 
