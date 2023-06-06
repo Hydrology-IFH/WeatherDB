@@ -1903,7 +1903,7 @@ class StationBase:
         """
         return self.get_period_meta(kind="last_imp", all=all)
 
-    def get_neighboor_stids(self, n=5, only_real=True, p_elev=None):
+    def get_neighboor_stids(self, n=5, only_real=True, p_elev=None, period=None, **kwargs):
         """Get a list with Station Ids of the nearest neighboor stations.
 
         Parameters
@@ -1922,6 +1922,11 @@ class StationBase:
             $L_{gewichtet} = L_{horizontal} * (1 + (\frac{|\delta H|}{P_1})^{P_2})$
             If None, then the height difference is not considered and only the nearest stations are returned.
             The default is None.
+        period : utils.TimestampPeriod or None, optional
+            The period for which the nearest neighboors are returned.
+            The neighboor station needs to have raw data for at least one half of the period.
+            If None, then the availability of the data is not checked.
+            The default is None.
 
         Returns
         -------
@@ -1936,6 +1941,7 @@ class StationBase:
             stid=self.id, para=self._para, n=n,
             add_meta_rows="", cond_period="", add_elev_order="")
         
+        # Elevation parts
         if p_elev is not None:
             if len(p_elev) != 2:
                 raise ValueError("p_elev must be a tuple of length 2 or None")
@@ -1947,7 +1953,20 @@ class StationBase:
                         /{p_elev[0]}::float, 
                         {p_elev[1]}::float))"""
                 ))
+        
+        # period parts
+        if period is not None:
+            if not isinstance(period, TimestampPeriod):
+                period = TimestampPeriod(*period)
+            days = period.get_interval().days
+            tmstp_mid = period.get_middle()
+            sql_dict.update(dict(
+                cond_period=f""" AND (raw_until - raw_from > '{np.round(days/2)} days'::INTERVAL 
+                    AND (raw_from <= '{tmstp_mid.strftime("%Y%m%d")}'::timestamp 
+                        AND raw_until >= '{tmstp_mid.strftime("%Y%m%d")}'::timestamp)) """
+            ))
 
+        # create sql statement
         sql_nearest_stids = """
             WITH stat_row AS (
                 SELECT geometry_utm {add_meta_rows}
@@ -1960,6 +1979,9 @@ class StationBase:
                 {add_elev_order}
             LIMIT {n};
             """.format(**sql_dict)
+        
+        if "return_sql" in kwargs and kwargs["return_sql"]:
+            return sql_nearest_stids
         
         with DB_ENG.connect() as con:
             result = con.execute(sqltxt(sql_nearest_stids))
