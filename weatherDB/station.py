@@ -1260,6 +1260,9 @@ class StationBase:
             The minimum and maximum Timestamp for which to gap fill the timeseries.
             If None is given, the maximum or minimal possible Timestamp is taken.
             The default is (None, None).
+        kwargs : dict, optional
+            Additional arguments for the fillup function.
+            e.g. p_elev to consider the elevation to select nearest stations. (only for T and ET)
         """
         self._expand_timeserie_to_period()
         self._check_ma()
@@ -1272,7 +1275,7 @@ class StationBase:
             cond_mas_not_null=" OR ".join([
                 "ma_other.{ma_col} IS NOT NULL".format(ma_col=ma_col)
                     for ma_col in self._ma_cols]),
-            **self._sql_fillup_extra()
+            **self._sql_fillup_extra_dict(**kwargs)
         )
 
         # make condition for period
@@ -1342,6 +1345,8 @@ class StationBase:
                     FROM new_filled_{stid}_{para}
                     WHERE "filled" IS NULL;
                     FOR i IN (
+                        WITH stat_row AS (
+                            SELECT * FROM meta_{para} WHERE station_id={stid})
                         SELECT meta.station_id,
                             meta.raw_from, meta.raw_until,
                             meta.station_id || '_{para}' AS tablename,
@@ -1365,7 +1370,7 @@ class StationBase:
                             geometry_utm,
                             (SELECT geometry_utm
                             FROM meta_{para}
-                            WHERE station_id={stid})) ASC)
+                            WHERE station_id={stid})) {mul_elev_order} ASC)
                     LOOP
                         CONTINUE WHEN i.raw_from > unfilled_period.max
                                       OR i.raw_until < unfilled_period.min
@@ -1422,7 +1427,7 @@ class StationBase:
                 self._mark_last_imp_done(kind="filled")
 
     @check_superuser
-    def _sql_fillup_extra(self):
+    def _sql_fillup_extra_dict(self, **kwargs):
         """Get the sql statement for the fill to calculate the filling of additional columns.
 
         This is mainly for the temperature Station to fillup max and min 
@@ -1439,7 +1444,8 @@ class StationBase:
                 "extra_new_temp_cols": "",
                 "extra_cols_fillup": "",
                 "extra_cols_fillup_calc": "",
-                "extra_fillup_where": ""}
+                "extra_fillup_where": "",
+                "mul_elev_order": ""}
 
     @check_superuser
     def _mark_last_imp_done(self, kind):
@@ -1903,6 +1909,21 @@ class StationBase:
         """
         return self.get_period_meta(kind="last_imp", all=all)
 
+    def _get_sql_nbs_elev_order(self, p_elev=None):
+        """Get the sql part for the elevation order.
+        Needs to have stat_row defined. e.g with the following statement:
+        WITH stat_row AS (SELECT * FROM meta_{para} WHERE station_id={stid})
+        """
+        if p_elev is not None:
+            if len(p_elev) != 2:
+                raise ValueError("p_elev must be a tuple of length 2 or None")
+            return f"""*(1+power(
+                        abs(stationshoehe - (SELECT stationshoehe FROM stat_row))
+                        /{p_elev[0]}::float, 
+                        {p_elev[1]}::float))"""
+        else:
+            return ""
+        
     def get_neighboor_stids(self, n=5, only_real=True, p_elev=None, period=None, **kwargs):
         """Get a list with Station Ids of the nearest neighboor stations.
 
@@ -1941,7 +1962,7 @@ class StationBase:
         sql_dict = dict(
             cond_only_real="AND is_real" if only_real else "",
             stid=self.id, para=self._para, n=n,
-            add_meta_rows="", cond_period="", add_elev_order="")
+            add_meta_rows="", cond_period="", mul_elev_order="")
         
         # Elevation parts
         if p_elev is not None:
@@ -1949,11 +1970,7 @@ class StationBase:
                 raise ValueError("p_elev must be a tuple of length 2 or None")
             sql_dict.update(dict(
                 add_meta_rows=", stationshoehe",
-                add_elev_order = \
-                    f"""*(1+power(
-                        abs(stationshoehe - (SELECT stationshoehe FROM stat_row))
-                        /{p_elev[0]}::float, 
-                        {p_elev[1]}::float))"""
+                mul_elev_order = self._get_sql_nbs_elev_order(p_elev=p_elev)
                 ))
         
         # period parts
@@ -1978,7 +1995,7 @@ class StationBase:
             FROM meta_{para}
             WHERE station_id != {stid} {cond_only_real} {cond_period}
             ORDER BY ST_DISTANCE(geometry_utm,(SELECT geometry_utm FROM stat_row))
-                {add_elev_order}
+                {mul_elev_order}
             LIMIT {n};
             """.format(**sql_dict)
         
@@ -2648,7 +2665,8 @@ class StationTETBase(StationCanVirtualBase):
             FROM timeseries."{stid}_{para}" AS ts
             LEFT JOIN (SELECT timestamp, nbs_mean FROM ({sql_near_parts}) sq_nbs) nbs
                 ON ts.timestamp=nbs.timestamp
-            WHERE ts.timestamp BETWEEN {min_tstp}::{tstp_dtype} AND {max_tstp}::{tstp_dtype}"""\
+            WHERE ts.timestamp BETWEEN {min_tstp}::{tstp_dtype} AND {max_tstp}::{tstp_dtype}
+            ORDER BY timestamp ASC"""\
                 .format(
                     stid = self.id,
                     para = self._para,
@@ -2658,6 +2676,24 @@ class StationTETBase(StationCanVirtualBase):
 
         return sql_near_mean
      
+    def _get_sql_nbs_elev_order(self, p_elev=(250, 1.5)):
+        """Set the default P values. See _get_sql_near_mean for more informations."""
+        return super()._get_sql_nbs_elev_order(p_elev=p_elev)
+    
+    def fillup(self, p_elev=(250, 1.5), **kwargs):
+        """Set the default P values. See _get_sql_near_mean for more informations."""
+        return super().fillup(p_elev=p_elev)
+
+    def _sql_fillup_extra_dict(self, **kwargs):
+        sql_extra_dict = super()._sql_fillup_extra_dict(**kwargs)
+        if "p_elev" in kwargs:
+            sql_extra_dict.update(dict(
+                mul_elev_order=self._get_sql_nbs_elev_order(p_elev=kwargs["p_elev"])))
+        else:
+            sql_extra_dict.update(dict(
+                mul_elev_order=self._get_sql_nbs_elev_order()))
+        return sql_extra_dict
+
     def get_adj(self, **kwargs):
         """Get the adjusted timeserie.
 
@@ -3312,7 +3348,7 @@ class StationN(StationNBase):
         return self.last_imp_richter_correct(_last_imp_period=_last_imp_period)
 
     @check_superuser
-    def _sql_fillup_extra(self):
+    def _sql_fillup_extra_dict(self, **kwargs):
         # adjust 10 minutes sum to match measured daily value
         sql_extra = """
             UPDATE new_filled_{stid}_{para} ts
@@ -3336,7 +3372,7 @@ class StationN(StationNBase):
             WHERE (ts.timestamp - '5h 50min'::INTERVAL)::date = df_coef.date
                 AND coef != 1;
         """.format(stid=self.id, para=self._para)
-        fillup_extra_dict = super()._sql_fillup_extra()
+        fillup_extra_dict = super()._sql_fillup_extra_dict(**kwargs)
         fillup_extra_dict.update(dict(sql_extra_after_loop=sql_extra))
         return fillup_extra_dict
 
@@ -3556,9 +3592,9 @@ class StationT(StationTETBase):
         return sql_new_qc
 
     @check_superuser
-    def _sql_fillup_extra(self):
+    def _sql_fillup_extra_dict(self, **kwargs):
         # additional parts to calculate the filling of min and max
-        fillup_extra_dict = super()._sql_fillup_extra()
+        fillup_extra_dict = super()._sql_fillup_extra_dict(**kwargs)
         fillup_extra_dict.update({
             "extra_new_temp_cols": "raw_min AS filled_min, raw_max AS filled_max,",
             "extra_cols_fillup_calc": "filled_min=round(nb.raw_min + %3$s, 0)::int, " +
