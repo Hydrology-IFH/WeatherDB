@@ -1921,6 +1921,8 @@ class StationBase:
             The elevation difference is considered with the formula from LARSIM (equation 3-18 & 3-19 from the LARSIM manual):
             $L_{gewichtet} = L_{horizontal} * (1 + (\frac{|\delta H|}{P_1})^{P_2})$
             If None, then the height difference is not considered and only the nearest stations are returned.
+            literature:
+                - LARSIM Dokumentation, Stand 06.04.2023, online unter https://www.larsim.info/dokumentation/LARSIM-Dokumentation.pdf
             The default is None.
         period : utils.TimestampPeriod or None, optional
             The period for which the nearest neighboors are returned.
@@ -2519,9 +2521,27 @@ class StationTETBase(StationCanVirtualBase):
     _tstp_format_db = "%Y%m%d"
     _tstp_format_human = "%Y-%m-%d"
 
-    def get_neighboor_stids(self, n=5, only_real=True, p_elev=(250, 1.5)):
+    def get_neighboor_stids(self, p_elev=(250, 1.5), **kwargs):
+        """Get the 5 nearest stations to this station.
+
+        Parameters
+        ----------
+        p_elev : tuple, optional
+            In Larsim those parameters are defined as $P_1 = 500$ and $P_2 = 1$.
+            Stoelzle et al. (2016) found that $P_1 = 100$ and $P_2 = 4$ is better for Baden-Würtemberg to consider the quick changes in topographie..
+            For all of germany, those parameter values are giving too much weight to the elevation difference, which can result in getting neighboor stations from the border of the Tschec Republic for the Feldberg station. Therefor the values $P_1 = 250$ and $P_2 = 1.5$ are used as default values.
+            literature:
+                - Stoelzle, Michael & Weiler, Markus & Steinbrich, Andreas. (2016) Starkregengefährdung in Baden-Württemberg – von der Methodenentwicklung zur Starkregenkartierung. Tag der Hydrologie.
+                - LARSIM Dokumentation, Stand 06.04.2023, online unter https://www.larsim.info/dokumentation/LARSIM-Dokumentation.pdf
+            The default is (250, 1.5).
+
+        Returns
+        -------
+        _type_
+            _description_
+        """        
         # define the P1 and P2 default values for T and ET
-        return super().get_neighboor_stids(n=n, only_real=only_real, p_elev=p_elev)
+        return super().get_neighboor_stids(p_elev=p_elev, **kwargs)
 
     def _get_sql_near_mean(self, period, only_real=True):
         """Get the SQL statement for the mean of the 5 nearest stations.
