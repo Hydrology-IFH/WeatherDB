@@ -2615,18 +2615,18 @@ class StationTETBase(StationCanVirtualBase):
             # create sql for mean of the near stations and the raw value itself
             sql_near_mean_parts.append("""
                 SELECT timestamp,
-                    (COALESCE(ts1.qc {coef_sign[1]} {coefs[0]}, 0) +
-                        COALESCE(ts2.qc {coef_sign[1]} {coefs[1]}, 0) +
-                        COALESCE(ts3.qc {coef_sign[1]} {coefs[2]}, 0) +
-                        COALESCE(ts4.qc {coef_sign[1]} {coefs[3]}, 0) +
-                        COALESCE(ts5.qc {coef_sign[1]} {coefs[4]}, 0) )
+                    (COALESCE(ts1.raw {coef_sign[1]} {coefs[0]}, 0) +
+                        COALESCE(ts2.raw {coef_sign[1]} {coefs[1]}, 0) +
+                        COALESCE(ts3.raw {coef_sign[1]} {coefs[2]}, 0) +
+                        COALESCE(ts4.raw {coef_sign[1]} {coefs[3]}, 0) +
+                        COALESCE(ts5.raw {coef_sign[1]} {coefs[4]}, 0) )
                         / (NULLIF(NULLIF(
                             5 - (
-                            (ts1.qc IS NULL OR {coefs[0]} is NULL)::int +
-                            (ts2.qc IS NULL OR {coefs[1]} is NULL)::int +
-                            (ts3.qc IS NULL OR {coefs[2]} is NULL)::int +
-                            (ts4.qc IS NULL OR {coefs[3]} is NULL)::int +
-                            (ts5.qc IS NULL OR {coefs[4]} is NULL)::int ),
+                            (ts1.raw IS NULL OR {coefs[0]} is NULL)::int +
+                            (ts2.raw IS NULL OR {coefs[1]} is NULL)::int +
+                            (ts3.raw IS NULL OR {coefs[2]} is NULL)::int +
+                            (ts4.raw IS NULL OR {coefs[3]} is NULL)::int +
+                            (ts5.raw IS NULL OR {coefs[4]} is NULL)::int ),
                         0), 1)
                         ) AS nbs_mean
                 FROM timeseries."{near_stids[0]}_{para}" ts1
