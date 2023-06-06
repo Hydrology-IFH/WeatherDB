@@ -34,6 +34,8 @@ Although every quality check can get computed for different periods:
 ### Temperature and Evapotranspiration
 For T and ET quality check the data is compared to the 5 nearest neighbors data. The data of every neighboor station is regionalised, based on the DWD grids (see chapter regionalisation), to the examined station. Then the mean value of those 5 values is taken to compare to the station data. If this mean value is too far away from the own value, then the measurement point is deleted.
 
+$L_{gewichtet} = L_{horizontal} * (1 + (\frac{|\delta H|}{P_1})^{P_2})$
+
 **Table 2: Limits for the quality check of the T and ET measurements, when compared with neighbor stations**
 | parameter | compare equation | lower limit | upper limit|
 |:---:|:---:|:---:|:---:|

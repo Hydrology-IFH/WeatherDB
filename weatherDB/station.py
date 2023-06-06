@@ -3542,7 +3542,7 @@ class StationT(StationTETBase):
             WITH nears AS ({self._get_sql_near_mean(period=period, only_real=True)})
             SELECT
                 timestamp,
-                (CASE WHEN (ABS(nears.raw - nears.mean) > 5 * {self._decimals})
+                (CASE WHEN (ABS(nears.raw - nears.nbs_mean) > 5 * {self._decimals})
                     THEN NULL
                     ELSE nears."raw" END) as qc
             FROM nears
@@ -3619,8 +3619,8 @@ class StationET(StationTETBase):
             WITH nears AS ({self._get_sql_near_mean(period=period, only_real=True)})
             SELECT
                 timestamp,
-                (CASE WHEN ((nears.raw > (nears.mean * 2) AND nears.raw > {3*self._decimals})
-                            OR ((nears.raw * 4) < nears.mean AND nears.raw > {2*self._decimals}))
+                (CASE WHEN ((nears.raw > (nears.nbs_mean * 2) AND nears.raw > {3*self._decimals})
+                            OR ((nears.raw * 4) < nears.nbs_mean AND nears.raw > {2*self._decimals}))
                     THEN NULL
                     ELSE nears."raw" END) as qc
             FROM nears
