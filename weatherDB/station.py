@@ -2019,7 +2019,7 @@ class StationBase:
             with DB_ENG.connect() as con:
                 res = con.execute(sqltxt(sql)).first()
 
-        if res is None:
+        if res[0] is None:
             return None
         else:
             return list(res)
