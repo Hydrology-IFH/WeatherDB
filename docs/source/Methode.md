@@ -32,9 +32,18 @@ Although every quality check can get computed for different periods:
 - the last imported period, with e.g. `station.StationET(3).last_imp_quality_check()`
 
 ### Temperature and Evapotranspiration
-For T and ET quality check the data is compared to the 5 nearest neighbors data. The data of every neighboor station is regionalised, based on the DWD grids (see chapter regionalisation), to the examined station. Then the mean value of those 5 values is taken to compare to the station data. If this mean value is too far away from the own value, then the measurement point is deleted.
+For T and ET quality check the data is compared to the 5 nearest neighbors data. 
+To get the nearest stations, the selection is done on a yearly basis. So neighbor stations having data for more than 6 months in that year are considered.
+
+Furthermore also the difference in elevation between the two stations is considered to select nearest stations. This is done, because the topographie has a big influence on the Temperature and Evapotranspiration. The weighted distance is thereby calculated with the LARSIM formula:
 
 $L_{gewichtet} = L_{horizontal} * (1 + (\frac{|\delta H|}{P_1})^{P_2})$
+
+In Larsim those parameters are defined as $P_1 = 500$ and $P_2 = 1$.
+<br>Stoelzle et al. (2016) found that $P_1 = 100$ and $P_2 = 4$ is better for Baden-Würtemberg to consider the quick changes in topographie.
+<br>or all of germany, those parameter values are giving too much weight to the elevation difference, which can result in getting neighboor stations from the border of the Tschec Republic for the Feldberg station. Therefor the values $P_1 = 250$ and $P_2 = 1.5$ are used as default values.
+
+The data of every neighboor station is regionalised, based on the DWD grids (see chapter regionalisation), to the examined station. Then the mean value of those 5 values is taken to compare to the station data. If this mean value is too far away from the own value, then the measurement point is deleted.
 
 **Table 2: Limits for the quality check of the T and ET measurements, when compared with neighbor stations**
 | parameter | compare equation | lower limit | upper limit|
@@ -117,3 +126,5 @@ The daily correction ($\Delta N$) is then distributed to every 10 minute measure
 ## sources
 - Richter, D. 1995. Ergebnisse methodischer Untersuchungen zur Korrektur des systematischen Meßfehlers des Hellmann-Niederschlagsmessers. Offenbach am Main: Selbstverl. des Dt. Wetterdienstes.
 - Coperniicus. 2016. European Digital Elevation Model (EU-DEM), version 1.1. [online available](https://land.copernicus.eu/imagery-in-situ/eu-dem/eu-dem-v1.1)
+- Stoelzle, Michael & Weiler, Markus & Steinbrich, Andreas. (2016) Starkregengefährdung in Baden-Württemberg – von der Methodenentwicklung zur Starkregenkartierung. Tag der Hydrologie.
+- LARSIM Dokumentation, Stand 06.04.2023, online unter https://www.larsim.info/dokumentation/LARSIM-Dokumentation.pdf
