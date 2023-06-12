@@ -2647,12 +2647,12 @@ class StationTETBase(StationCanVirtualBase):
             sql_is_winter_col = ""
 
         # create year subqueries for near stations mean
-        sql_near_mean_parts = []
+        sql_near_median_parts = []
         for (start, end), row in nbs.iterrows():
             period_part = TimestampPeriod(f"{start}-01-01", f"{end}-12-31")
 
             # create sql for mean of the near stations and the raw value itself
-            sql_near_mean_parts.append("""
+            sql_near_median_parts.append("""
                 SELECT timestamp,
                     (SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY T.c)
                      FROM (VALUES (ts1.raw), (ts2.raw), (ts3.raw), (ts4.raw), (ts5.raw)) T (c)
@@ -2672,22 +2672,22 @@ class StationTETBase(StationCanVirtualBase):
                     **period_part.get_sql_format_dict()))
 
         # create sql for mean of the near stations and the raw value itself for total period
-        sql_near_mean = """SELECT ts.timestamp, nbs_median, ts.raw as raw {extra_cols}{is_winter_col}
+        sql_near_median = """SELECT ts.timestamp, nbs_median, ts.raw as raw {extra_cols}{is_winter_col}
             FROM timeseries."{stid}_{para}" AS ts
-            LEFT JOIN (SELECT timestamp, nbs_median FROM ({sql_near_parts}) sq_nbs) nbs
+            LEFT JOIN ({sql_near_parts}) nbs
                 ON ts.timestamp=nbs.timestamp
             WHERE ts.timestamp BETWEEN {min_tstp}::{tstp_dtype} AND {max_tstp}::{tstp_dtype}
             ORDER BY timestamp ASC"""\
                 .format(
                     stid = self.id,
                     para = self._para,
-                    sql_near_parts = " UNION ".join(sql_near_mean_parts),
+                    sql_near_parts = " UNION ".join(sql_near_median_parts),
                     tstp_dtype=self._tstp_dtype,
                     extra_cols=extra_cols,
                     is_winter_col=sql_is_winter_col,
                     **period.get_sql_format_dict())
 
-        return sql_near_mean
+        return sql_near_median
      
     def _get_sql_nbs_elev_order(self, p_elev=(250, 1.5)):
         """Set the default P values. See _get_sql_near_median for more informations."""
