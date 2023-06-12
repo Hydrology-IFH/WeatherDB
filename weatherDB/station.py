@@ -2632,20 +2632,9 @@ class StationTETBase(StationCanVirtualBase):
             # create sql for mean of the near stations and the raw value itself
             sql_near_mean_parts.append("""
                 SELECT timestamp,
-                    (COALESCE(ts1.raw {coef_sign[1]} {coefs[0]}, 0) +
-                        COALESCE(ts2.raw {coef_sign[1]} {coefs[1]}, 0) +
-                        COALESCE(ts3.raw {coef_sign[1]} {coefs[2]}, 0) +
-                        COALESCE(ts4.raw {coef_sign[1]} {coefs[3]}, 0) +
-                        COALESCE(ts5.raw {coef_sign[1]} {coefs[4]}, 0) )
-                        / (NULLIF(NULLIF(
-                            5 - (
-                            (ts1.raw IS NULL OR {coefs[0]} is NULL)::int +
-                            (ts2.raw IS NULL OR {coefs[1]} is NULL)::int +
-                            (ts3.raw IS NULL OR {coefs[2]} is NULL)::int +
-                            (ts4.raw IS NULL OR {coefs[3]} is NULL)::int +
-                            (ts5.raw IS NULL OR {coefs[4]} is NULL)::int ),
-                        0), 1)
-                        ) AS nbs_mean
+                    (SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY T.c)
+                     FROM (VALUES (ts1.raw), (ts2.raw), (ts3.raw), (ts4.raw), (ts5.raw)) T (c)
+                    ) as nbs_median
                 FROM timeseries."{near_stids[0]}_{para}" ts1
                 FULL OUTER JOIN timeseries."{near_stids[1]}_{para}" ts2 USING (timestamp)
                 FULL OUTER JOIN timeseries."{near_stids[2]}_{para}" ts3 USING (timestamp)
@@ -2661,9 +2650,9 @@ class StationTETBase(StationCanVirtualBase):
                     **period_part.get_sql_format_dict()))
 
         # create sql for mean of the near stations and the raw value itself for total period
-        sql_near_mean = """SELECT ts.timestamp, nbs_mean, ts.raw as raw 
+        sql_near_mean = """SELECT ts.timestamp, nbs_median, ts.raw as raw 
             FROM timeseries."{stid}_{para}" AS ts
-            LEFT JOIN (SELECT timestamp, nbs_mean FROM ({sql_near_parts}) sq_nbs) nbs
+            LEFT JOIN (SELECT timestamp, nbs_median FROM ({sql_near_parts}) sq_nbs) nbs
                 ON ts.timestamp=nbs.timestamp
             WHERE ts.timestamp BETWEEN {min_tstp}::{tstp_dtype} AND {max_tstp}::{tstp_dtype}
             ORDER BY timestamp ASC"""\
@@ -3660,8 +3649,8 @@ class StationET(StationTETBase):
             WITH nears AS ({self._get_sql_near_mean(period=period, only_real=True)})
             SELECT
                 timestamp,
-                (CASE WHEN ((nears.raw > (nears.nbs_mean * 2) AND nears.raw > {3*self._decimals})
-                            OR ((nears.raw * 4) < nears.nbs_mean AND nears.raw > {2*self._decimals}))
+                (CASE WHEN ((nears.raw > (nears.nbs_median * 2) AND nears.raw > {3*self._decimals})
+                            OR ((nears.raw * 4) < nears.nbs_median AND nears.raw > {2*self._decimals}))
                     THEN NULL
                     ELSE nears."raw" END) as qc
             FROM nears
