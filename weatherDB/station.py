@@ -3580,14 +3580,30 @@ class StationT(StationTETBase):
             con.execute(sqltxt(sql_add_table))
 
     def _get_sql_new_qc(self, period):
+        # inversion possible?
+        if self.get_meta(infos=["stationshoehe"])>800:
+            # with inversion
+            sql_nears = self._get_sql_near_mean(
+                period=period, only_real=False, 
+                extra_cols="raw-nbs_median AS diff, " +\
+                           "EXTRACT(MONTH FROM ts.timestamp) in (1,2,3,10,11,12) AS winter")
+            sql_null_case = f"ABS(diff) > (5 * {self._decimals})"
+        else:
+            # without inversion
+            sql_nears = self._get_sql_near_mean(period=period, only_real=False)
+            sql_null_case = f"CASE WHEN (winter) THEN "+\
+                f"diff < (-5 * {self._decimals}) ELSE "+\
+                f"ABS(diff) > (5 * {self._decimals}) END"
+
         # create sql for new qc
         sql_new_qc = f"""
-            WITH nears AS ({self._get_sql_near_mean(period=period, only_real=True)})
+            WITH nears AS ({sql_nears})
             SELECT
                 timestamp,
-                (CASE WHEN (ABS(nears.raw - nears.nbs_mean) > 5 * {self._decimals})
+                (CASE WHEN ({sql_null_case})
                     THEN NULL
-                    ELSE nears."raw" END) as qc
+                    ELSE nears."raw" 
+                    END) as qc
             FROM nears
         """
 
