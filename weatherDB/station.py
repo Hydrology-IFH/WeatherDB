@@ -2560,7 +2560,7 @@ class StationTETBase(StationCanVirtualBase):
         # define the P1 and P2 default values for T and ET
         return super().get_neighboor_stids(p_elev=p_elev, **kwargs)
 
-    def _get_sql_near_mean(self, period, only_real=True, extra_cols=None):
+    def _get_sql_near_median(self, period, only_real=True, extra_cols=None):
         """Get the SQL statement for the mean of the 5 nearest stations.
 
         Needs to have one column timestamp, mean and raw(original raw value).
@@ -2679,11 +2679,11 @@ class StationTETBase(StationCanVirtualBase):
         return sql_near_mean
      
     def _get_sql_nbs_elev_order(self, p_elev=(250, 1.5)):
-        """Set the default P values. See _get_sql_near_mean for more informations."""
+        """Set the default P values. See _get_sql_near_median for more informations."""
         return super()._get_sql_nbs_elev_order(p_elev=p_elev)
     
     def fillup(self, p_elev=(250, 1.5), **kwargs):
-        """Set the default P values. See _get_sql_near_mean for more informations."""
+        """Set the default P values. See _get_sql_near_median for more informations."""
         return super().fillup(p_elev=p_elev)
 
     def _sql_fillup_extra_dict(self, **kwargs):
@@ -3583,14 +3583,14 @@ class StationT(StationTETBase):
         # inversion possible?
         if self.get_meta(infos=["stationshoehe"])>800:
             # with inversion
-            sql_nears = self._get_sql_near_mean(
+            sql_nears = self._get_sql_near_median(
                 period=period, only_real=False, 
                 extra_cols="raw-nbs_median AS diff, " +\
                            "EXTRACT(MONTH FROM ts.timestamp) in (1,2,3,10,11,12) AS winter")
             sql_null_case = f"ABS(diff) > (5 * {self._decimals})"
         else:
             # without inversion
-            sql_nears = self._get_sql_near_mean(period=period, only_real=False)
+            sql_nears = self._get_sql_near_median(period=period, only_real=False)
             sql_null_case = f"CASE WHEN (winter) THEN "+\
                 f"diff < (-5 * {self._decimals}) ELSE "+\
                 f"ABS(diff) > (5 * {self._decimals}) END"
@@ -3675,7 +3675,7 @@ class StationET(StationTETBase):
     def _get_sql_new_qc(self, period):
         # create sql for new qc
         sql_new_qc = f"""
-            WITH nears AS ({self._get_sql_near_mean(period=period, only_real=True)})
+            WITH nears AS ({self._get_sql_near_median(period=period, only_real=True)})
             SELECT
                 timestamp,
                 (CASE WHEN ((nears.raw > (nears.nbs_median * 2) AND nears.raw > {3*self._decimals})
