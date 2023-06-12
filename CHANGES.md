@@ -1,7 +1,12 @@
 # Change-log
 
+## Version 0.0.33 (upcoming)
+- change quality control of T-Stations -> add inversion consideration for stations above 800m altitude
+  Those stations values are only sorted out if their difference to the median neighbor station is negative
+- change quality control of T and ET -> the values get now compared to the median of 5 neighbors, not the mean
+- 
 ## Version 0.0.32
-- add elevation consideration for the selection of neighboring stations, based on LARSIMformula for the quality_check and fillup procedure of T and ET. So not only the closest stations are selected but sometimes also a station that is further away, but has les difference in height.
+- add elevation consideration for the selection of neighboring stations, based on LARSIM formula for the quality_check and fillup procedure of T and ET. So not only the closest stations are selected but sometimes also a station that is further away, but has les difference in height.
 - get neighboring stations for T and ET quality check for full years, to always have around 5 neighboring stations
 - fix problem in get_multi_annual for T Station if no ma found
 - fix error because timeseries did only get created when, station T or ET is in meta_n table, even if they exist in meta_t or meta_et. So e.g a T Station exists in meta table because of own data, but is not added because no P station is there.
