@@ -3686,30 +3686,26 @@ class StationET(StationTETBase):
 
     def _get_sql_new_qc(self, period):
         # inversion possible?
-        if self.get_meta(infos=["stationshoehe"])<800:
-            # without inversion
-            sql_nears = self._get_sql_near_median(
-                period=period, only_real=False, 
-                extra_cols="raw-nbs_median AS diff, " +\
-                           "EXTRACT(MONTH FROM ts.timestamp) in (1,2,3,10,11,12) AS winter")
-            sql_null_case = f"(nears.raw > (nears.nbs_median * 2) AND nears.raw > {3*self._decimals})
-                            OR ((nears.raw * 4) < nears.nbs_median AND nears.raw > {2*self._decimals})"
-        else:
-            # with inversion
-            sql_nears = self._get_sql_near_median(period=period, only_real=False)
-            sql_null_case = f"CASE WHEN (winter) THEN "+\
-                f"diff < (-5 * {self._decimals}) ELSE "+\
-                f"ABS(diff) > (5 * {self._decimals}) END"
+        do_invers = self.get_meta(infos=["stationshoehe"])>800
+
         sql_nears = self._get_sql_near_median(
-            period=period, only_real=True, 
-            extra_cols="EXTRACT(MONTH FROM ts.timestamp) in (1,2,3,10,11,12) AS winter")
+            period=period, only_real=False, add_is_winter=do_invers,
+            extra_cols="raw-nbs_median AS diff")
         
+        sql_null_case = f"""(nears.raw > (nears.nbs_median * 2) AND nears.raw > {3*self._decimals})
+                            OR ((nears.raw * 4) < nears.nbs_median AND nears.raw > {2*self._decimals})"""
+        if do_invers:
+            # without inversion
+            sql_null_case = f"CASE WHEN (winter) THEN "+\
+                f"((nears.raw * 4) < nears.nbs_median AND nears.raw > {2*self._decimals}) ELSE "+\
+                f"{sql_null_case} END"
+
         # create sql for new qc
         sql_new_qc = f"""
             WITH nears AS ({sql_nears})
             SELECT
                 timestamp,
-                (CASE WHEN ({null_case})
+                (CASE WHEN ({sql_null_case})
                     THEN NULL
                     ELSE nears."raw" END) as qc
             FROM nears
