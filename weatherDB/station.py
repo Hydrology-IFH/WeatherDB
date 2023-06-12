@@ -3595,13 +3595,13 @@ class StationT(StationTETBase):
         if self.get_meta(infos=["stationshoehe"])>800:
             # with inversion
             sql_nears = self._get_sql_near_median(
-                period=period, only_real=False, 
-                extra_cols="raw-nbs_median AS diff, " +\
-                           "EXTRACT(MONTH FROM ts.timestamp) in (1,2,3,10,11,12) AS winter")
+                period=period, only_real=False, add_is_winter=False)
             sql_null_case = f"ABS(diff) > (5 * {self._decimals})"
         else:
             # without inversion
-            sql_nears = self._get_sql_near_median(period=period, only_real=False)
+            sql_nears = self._get_sql_near_median(
+                eriod=period, only_real=False, add_is_winter=True,
+                extra_cols="raw-nbs_median AS diff")
             sql_null_case = f"CASE WHEN (winter) THEN "+\
                 f"diff < (-5 * {self._decimals}) ELSE "+\
                 f"ABS(diff) > (5 * {self._decimals}) END"
