@@ -1363,7 +1363,7 @@ class StationBase:
                                 SELECT tablename
                                 FROM pg_catalog.pg_tables
                                 WHERE schemaname ='timeseries'
-                                    AND tablename LIKE '%_{para}')
+                                    AND tablename LIKE '%\_{para}')
                                 AND ({cond_mas_not_null})
                                 AND (meta.raw_from IS NOT NULL AND meta.raw_until IS NOT NULL)
                         ORDER BY ST_DISTANCE(
