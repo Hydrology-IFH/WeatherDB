@@ -2560,7 +2560,8 @@ class StationTETBase(StationCanVirtualBase):
         # define the P1 and P2 default values for T and ET
         return super().get_neighboor_stids(p_elev=p_elev, **kwargs)
 
-    def _get_sql_near_median(self, period, only_real=True, extra_cols=None):
+    def _get_sql_near_median(self, period, only_real=True, 
+                             extra_cols=None, add_is_winter=False):
         """Get the SQL statement for the mean of the 5 nearest stations.
 
         Needs to have one column timestamp, mean and raw(original raw value).
@@ -2578,6 +2579,9 @@ class StationTETBase(StationCanVirtualBase):
             Should be a sql-string for the SELECT part.
             If None then there are no additional columns.     
             The default is None.
+        add_is_winter : bool, optional
+            Should there be a column ("winter") that indicates if the value is in winter?
+            The default is False.
 
         Returns
         -------
@@ -2636,6 +2640,12 @@ class StationTETBase(StationCanVirtualBase):
         else:
             extra_cols = ""
 
+        # create sql for winter
+        if add_is_winter:
+            sql_is_winter_col = ", EXTRACT(MONTH FROM ts.timestamp) in (1,2,3,10,11,12) AS winter"
+        else:
+            sql_is_winter_col = ""
+
         # create year subqueries for near stations mean
         sql_near_mean_parts = []
         for (start, end), row in nbs.iterrows():
@@ -2662,7 +2672,7 @@ class StationTETBase(StationCanVirtualBase):
                     **period_part.get_sql_format_dict()))
 
         # create sql for mean of the near stations and the raw value itself for total period
-        sql_near_mean = """SELECT ts.timestamp, nbs_median, ts.raw as raw {extra_cols} 
+        sql_near_mean = """SELECT ts.timestamp, nbs_median, ts.raw as raw {extra_cols}{is_winter_col}
             FROM timeseries."{stid}_{para}" AS ts
             LEFT JOIN (SELECT timestamp, nbs_median FROM ({sql_near_parts}) sq_nbs) nbs
                 ON ts.timestamp=nbs.timestamp
@@ -2674,6 +2684,7 @@ class StationTETBase(StationCanVirtualBase):
                     sql_near_parts = " UNION ".join(sql_near_mean_parts),
                     tstp_dtype=self._tstp_dtype,
                     extra_cols=extra_cols,
+                    is_winter_col=sql_is_winter_col,
                     **period.get_sql_format_dict())
 
         return sql_near_mean
