@@ -2655,7 +2655,11 @@ class StationTETBase(StationCanVirtualBase):
             sql_near_median_parts.append("""
                 SELECT timestamp,
                     (SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY T.c)
-                     FROM (VALUES (ts1.raw), (ts2.raw), (ts3.raw), (ts4.raw), (ts5.raw)) T (c)
+                     FROM (VALUES (ts1.raw{coef_sign[1]}{coefs[0]}), 
+                                  (ts2.raw{coef_sign[1]}{coefs[1]}), 
+                                  (ts3.raw{coef_sign[1]}{coefs[2]}), 
+                                  (ts4.raw{coef_sign[1]}{coefs[3]}), 
+                                  (ts5.raw{coef_sign[1]}{coefs[4]})) T (c)
                     ) as nbs_median
                 FROM timeseries."{near_stids[0]}_{para}" ts1
                 FULL OUTER JOIN timeseries."{near_stids[1]}_{para}" ts2 USING (timestamp)
