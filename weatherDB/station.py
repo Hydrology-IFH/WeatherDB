@@ -3592,19 +3592,20 @@ class StationT(StationTETBase):
 
     def _get_sql_new_qc(self, period):
         # inversion possible?
-        if self.get_meta(infos=["stationshoehe"])>800:
-            # with inversion
-            sql_nears = self._get_sql_near_median(
-                period=period, only_real=False, add_is_winter=False)
-            sql_null_case = f"ABS(diff) > (5 * {self._decimals})"
-        else:
+        do_invers = self.get_meta(infos=["stationshoehe"])>800
+
+        sql_nears = self._get_sql_near_median(
+            period=period, only_real=False, add_is_winter=do_invers,
+            extra_cols="raw-nbs_median AS diff")
+        
+        if do_invers:
             # without inversion
-            sql_nears = self._get_sql_near_median(
-                eriod=period, only_real=False, add_is_winter=True,
-                extra_cols="raw-nbs_median AS diff")
             sql_null_case = f"CASE WHEN (winter) THEN "+\
                 f"diff < (-5 * {self._decimals}) ELSE "+\
                 f"ABS(diff) > (5 * {self._decimals}) END"
+        else:
+            # with inversion
+            sql_null_case = f"ABS(diff) > (5 * {self._decimals})"
 
         # create sql for new qc
         sql_new_qc = f"""
@@ -3684,13 +3685,31 @@ class StationET(StationTETBase):
             con.execute(sqltxt(sql_add_table))
 
     def _get_sql_new_qc(self, period):
+        # inversion possible?
+        if self.get_meta(infos=["stationshoehe"])<800:
+            # without inversion
+            sql_nears = self._get_sql_near_median(
+                period=period, only_real=False, 
+                extra_cols="raw-nbs_median AS diff, " +\
+                           "EXTRACT(MONTH FROM ts.timestamp) in (1,2,3,10,11,12) AS winter")
+            sql_null_case = f"(nears.raw > (nears.nbs_median * 2) AND nears.raw > {3*self._decimals})
+                            OR ((nears.raw * 4) < nears.nbs_median AND nears.raw > {2*self._decimals})"
+        else:
+            # with inversion
+            sql_nears = self._get_sql_near_median(period=period, only_real=False)
+            sql_null_case = f"CASE WHEN (winter) THEN "+\
+                f"diff < (-5 * {self._decimals}) ELSE "+\
+                f"ABS(diff) > (5 * {self._decimals}) END"
+        sql_nears = self._get_sql_near_median(
+            period=period, only_real=True, 
+            extra_cols="EXTRACT(MONTH FROM ts.timestamp) in (1,2,3,10,11,12) AS winter")
+        
         # create sql for new qc
         sql_new_qc = f"""
-            WITH nears AS ({self._get_sql_near_median(period=period, only_real=True)})
+            WITH nears AS ({sql_nears})
             SELECT
                 timestamp,
-                (CASE WHEN ((nears.raw > (nears.nbs_median * 2) AND nears.raw > {3*self._decimals})
-                            OR ((nears.raw * 4) < nears.nbs_median AND nears.raw > {2*self._decimals}))
+                (CASE WHEN ({null_case})
                     THEN NULL
                     ELSE nears."raw" END) as qc
             FROM nears
