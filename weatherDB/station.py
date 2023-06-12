@@ -158,6 +158,8 @@ class StationBase:
     _interval = None  # The interval of the timeseries e.g. "1 day" or "10 min"
     _min_agg_to = None # Similar to the interval, but same format ass in AGG_TO
     _agg_fun = "sum" # the sql aggregating function to use
+    _filled_by_n = 1 # How many neighboring stations are used for the fillup procedure
+    _fillup_max_dist = None # The maximal distance in meters to use to get neighbor stations for the fillup. Only relevant if multiple stations are considered for fillup.
 
     def __init__(self, id, _skip_meta_check=False):
         """Create a Station object.
@@ -1275,6 +1277,10 @@ class StationBase:
             cond_mas_not_null=" OR ".join([
                 "ma_other.{ma_col} IS NOT NULL".format(ma_col=ma_col)
                     for ma_col in self._ma_cols]),
+            filled_by_col="NULL::smallint AS filled_by",
+            exit_cond="SUM((filled IS NULL)::int) = 0",
+            extra_unfilled_period_where="",
+            add_meta_col="",
             **self._sql_fillup_extra_dict(**kwargs)
         )
 
@@ -1327,12 +1333,71 @@ class StationBase:
             raise ValueError(
                 "There were too many multi annual columns selected. The fillup method is only implemented for yearly or half yearly regionalisations")
 
+        # check if filled_by column is ARRAY or smallint
+        if self._filled_by_n>1:
+            sql_array_init = "ARRAY[{0}]".format(
+                ", ".join(["NULL::smallint"] * self._filled_by_n))
+            
+            # create execute sql command
+            sql_exec_fillup=""
+            prev_check = ""
+            for i in range(1, self._filled_by_n+1):
+                sql_exec_fillup += f"""
+                UPDATE new_filled_1346_t nf
+                SET nb_mean[{i}]=round(nb.qc + %3$s, 0)::int,
+                    {sql_format_dict["extra_exec_cols"].format(i=i)}
+                    filled_by[{i}]=%1$s
+                FROM timeseries.%2$I nb
+                WHERE nf.filled IS NULL AND nf.nb_mean[{i}] IS NULL {prev_check}
+                    AND nf.timestamp = nb.timestamp;"""
+                prev_check += f" AND nf.nb_mean[{i}] IS NOT NULL AND nf.filled_by[{i}] != %1$s"
+            
+            sql_format_dict.update(dict(
+                filled_by_col = f"{sql_array_init} AS filled_by",
+                extra_new_temp_cols = sql_format_dict["extra_new_temp_cols"] +
+                    f"{sql_array_init} AS nb_mean,",
+                sql_exec_fillup=sql_exec_fillup,
+                extra_unfilled_period_where="AND nb_mean[3] is NULL",
+                extra_fillup_where=sql_format_dict["extra_fillup_where"] +\
+                    ' OR NOT (ts."filled_by" @> new."filled_by" AND ts."filled_by" <@ new."filled_by")'
+                ))
+            
+            # create exit condition
+            sql_format_dict.update(dict(
+                exit_cond=f"SUM((filled IS NULL AND nb_mean[{self._filled_by_n}] is NULL)::int) = 0 ")) 
+            if self._fillup_max_dist is not None:
+                sql_format_dict.update(dict(
+                    add_meta_col="ST_DISTANCE(geometry_utm,(SELECT geometry_utm FROM stat_row)) as dist, ",
+                    exit_cond=sql_format_dict["exit_cond"]\
+                        +"OR ((i.dist > {self._fillup_max_dist}) AND SUM((filled IS NULL AND nb_mean[1] is NULL)::int) = 0)"
+                    ))
+                
+            # create sql after loop, to calculate the median of the regionalised neighbors
+            sql_format_dict.update(dict(
+                sql_extra_after_loop = """UPDATE new_filled_{stid}_{para} SET
+                        filled=(SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY v)
+                                FROM unnest(nb_mean) as T(v)) {extra_after_loop_extra_col}
+                    WHERE filled is NULL;
+                    {sql_extra_after_loop}""".format(**sql_format_dict)))
+        else:
+            # create execute command if only 1 neighbor is considered
+            sql_format_dict.update(dict(
+                sql_exec_fillup="""
+                    UPDATE new_filled_{stid}_{para} nf
+                    SET filled={filled_calc}, {extra_cols_fillup_calc}
+                        filled_by=%1$s
+                    FROM timeseries.%2$I nb
+                    WHERE nf.filled IS NULL AND nb.{base_col} IS NOT NULL
+                        AND nf.timestamp = nb.timestamp;""".format(**sql_format_dict),
+                extra_fillup_where=sql_format_dict["extra_fillup_where"] +\
+                    ' OR ts."filled_by" IS DISTINCT FROM new."filled_by"'))
+            
         # Make SQL statement to fill the missing values with values from nearby stations
         sql = """
             CREATE TEMP TABLE new_filled_{stid}_{para}
                 ON COMMIT DROP
-                AS (SELECT timestamp, {base_col} AS filled, {extra_new_temp_cols}
-                        NULL::int AS filled_by {is_winter_col}
+                AS (SELECT timestamp, {base_col} AS filled, 
+                        {extra_new_temp_cols}{filled_by_col}{is_winter_col}
                     FROM timeseries."{stid}_{para}" ts {cond_period});
             ALTER TABLE new_filled_{stid}_{para} ADD PRIMARY KEY (timestamp);
             DO
@@ -1350,7 +1415,7 @@ class StationBase:
                         SELECT meta.station_id,
                             meta.raw_from, meta.raw_until,
                             meta.station_id || '_{para}' AS tablename,
-                            {coef_calc}
+                            {coef_calc}{add_meta_col}
                         FROM meta_{para} meta
                         LEFT JOIN stations_raster_values ma_other
                             ON ma_other.station_id=meta.station_id
@@ -1368,32 +1433,25 @@ class StationBase:
                                 AND (meta.raw_from IS NOT NULL AND meta.raw_until IS NOT NULL)
                         ORDER BY ST_DISTANCE(
                             geometry_utm,
-                            (SELECT geometry_utm
-                            FROM meta_{para}
-                            WHERE station_id={stid})) {mul_elev_order} ASC)
+                            (SELECT geometry_utm FROM stat_row)) {mul_elev_order} ASC)
                     LOOP
                         CONTINUE WHEN i.raw_from > unfilled_period.max
                                       OR i.raw_until < unfilled_period.min
                                       OR (i.raw_from IS NULL AND i.raw_until IS NULL);
                         EXECUTE FORMAT(
                         $$
-                        UPDATE new_filled_{stid}_{para} nf
-                        SET filled={filled_calc}, {extra_cols_fillup_calc}
-                            filled_by=%1$s
-                        FROM timeseries.%2$I nb
-                        WHERE nf.filled IS NULL AND nb.{base_col} IS NOT NULL
-                            AND nf.timestamp = nb.timestamp;
+                        {sql_exec_fillup}
                         $$,
                         i.station_id,
                         i.tablename,
                         {coef_format}
                         );
-                        EXIT WHEN (SELECT SUM((filled IS NULL)::int) = 0
+                        EXIT WHEN (SELECT {exit_cond}
                                    FROM new_filled_{stid}_{para});
                         SELECT min(timestamp) AS min, max(timestamp) AS max
                         INTO unfilled_period
                         FROM new_filled_{stid}_{para}
-                        WHERE "filled" IS NULL;
+                        WHERE "filled" IS NULL {extra_unfilled_period_where};
                     END LOOP;
                     {sql_extra_after_loop}
                     UPDATE timeseries."{stid}_{para}" ts
@@ -1401,8 +1459,7 @@ class StationBase:
                         filled_by = new.filled_by
                     FROM new_filled_{stid}_{para} new
                     WHERE ts.timestamp = new.timestamp
-                        AND (ts."filled" IS DISTINCT FROM new."filled" {extra_fillup_where}
-                             OR ts."filled_by" IS DISTINCT FROM new."filled_by") ;
+                        AND (ts."filled" IS DISTINCT FROM new."filled" {extra_fillup_where}) ;
                 END
             $do$;
         """.format(**sql_format_dict)
@@ -1445,7 +1502,9 @@ class StationBase:
                 "extra_cols_fillup": "",
                 "extra_cols_fillup_calc": "",
                 "extra_fillup_where": "",
-                "mul_elev_order": ""}
+                "mul_elev_order": "",
+                "extra_exec_cols": "",
+                "extra_after_loop_extra_col": ""}
 
     @check_superuser
     def _mark_last_imp_done(self, kind):
@@ -2699,7 +2758,7 @@ class StationTETBase(StationCanVirtualBase):
     
     def fillup(self, p_elev=(250, 1.5), **kwargs):
         """Set the default P values. See _get_sql_near_median for more informations."""
-        return super().fillup(p_elev=p_elev)
+        return super().fillup(p_elev=p_elev, **kwargs)
 
     def _sql_fillup_extra_dict(self, **kwargs):
         sql_extra_dict = super()._sql_fillup_extra_dict(**kwargs)
@@ -3571,6 +3630,7 @@ class StationT(StationTETBase):
     _agg_fun = "avg"
     _valid_kinds = ["raw", "raw_min", "raw_max", "qc", 
                     "filled", "filled_min", "filled_max", "filled_by"]
+    _filled_by_n = 5
 
     def __init__(self, id, **kwargs):
         super().__init__(id, **kwargs)
@@ -3578,8 +3638,8 @@ class StationT(StationTETBase):
 
     def _create_timeseries_table(self):
         """Create the timeseries table in the DB if it is not yet existing."""
-        sql_add_table = '''
-            CREATE TABLE IF NOT EXISTS timeseries."{stid}_{para}"  (
+        sql_add_table = f'''
+            CREATE TABLE IF NOT EXISTS timeseries."{self.id}_{self._para}"  (
                 timestamp date PRIMARY KEY,
                 raw integer NULL DEFAULT NULL,
                 raw_min integer NULL DEFAULT NULL,
@@ -3588,9 +3648,9 @@ class StationT(StationTETBase):
                 filled integer NULL DEFAULT NULL,
                 filled_min integer NULL DEFAULT NULL,
                 filled_max integer NULL DEFAULT NULL,
-                filled_by smallint NULL DEFAULT NULL
+                filled_by smallint[{self._filled_by_n}] NULL DEFAULT NULL
                 );
-        '''.format(stid=self.id, para=self._para)
+        '''
         with DB_ENG.connect() as con:
             con.execute(sqltxt(sql_add_table))
 
@@ -3629,14 +3689,24 @@ class StationT(StationTETBase):
     def _sql_fillup_extra_dict(self, **kwargs):
         # additional parts to calculate the filling of min and max
         fillup_extra_dict = super()._sql_fillup_extra_dict(**kwargs)
+        sql_array_init = "ARRAY[{0}]".format(
+            ", ".join(["NULL::smallint"] * self._filled_by_n))
         fillup_extra_dict.update({
-            "extra_new_temp_cols": "raw_min AS filled_min, raw_max AS filled_max,",
+            "extra_new_temp_cols": "raw_min AS filled_min, raw_max AS filled_max," +
+                        f"{sql_array_init} AS nb_min, {sql_array_init} AS nb_max,",
             "extra_cols_fillup_calc": "filled_min=round(nb.raw_min + %3$s, 0)::int, " +
                                       "filled_max=round(nb.raw_max + %3$s, 0)::int, ",
             "extra_cols_fillup": "filled_min = new.filled_min, " +
                                  "filled_max = new.filled_max, ",
             "extra_fillup_where": ' OR ts."filled_min" IS DISTINCT FROM new."filled_min"' +
-                                  ' OR ts."filled_max" IS DISTINCT FROM new."filled_max"'})
+                                  ' OR ts."filled_max" IS DISTINCT FROM new."filled_max"',
+            "extra_exec_cols": "nb_max[{i}]=round(nb.raw_max + %3$s, 0)::int,"+
+                               "nb_min[{i}]=round(nb.raw_min + %3$s, 0)::int,",
+            "extra_after_loop_extra_col": """,
+                filled_min=(SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY v)
+                            FROM unnest(nb_min) as T(v)),
+                filled_max=(SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY v)
+                            FROM unnest(nb_max) as T(v))"""})
         return fillup_extra_dict
     
     def get_multi_annual(self):
@@ -3669,6 +3739,7 @@ class StationET(StationTETBase):
     _decimals = 10
     _ma_cols = ["et_dwd_year"]
     _sql_add_coef_calc = "* ma.exp_fact::float/ma_stat.exp_fact::float"
+    _fillup_max_dist = 100000
 
     def __init__(self, id, **kwargs):
         super().__init__(id, **kwargs)
