@@ -1,9 +1,10 @@
 # Change-log
 
-## Version 0.0.34 (upcoming)
+## Version 0.0.34
 
 - StationsBase.get_meta: strip whitespace in str columns
 - add min/max-tresholds for T and ET
+- add -9999 as possible NA value for DWD data
 
 ## Version 0.0.33
 
