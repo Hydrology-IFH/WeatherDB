@@ -56,13 +56,13 @@ def dwd_id_to_str(id):
     return str(int(id) + 100000)[1:6]
 
 
-def _dwd_date_parser(date_str):
+def _dwd_date_parser(date_ser):
     """
     Parse the dates from a DWD table to datetime.
 
     Parameters
     ----------
-    date_str : list of str or str
+    date_ser : pd.Series of str or str
         the string from the DWD table. e.g. "20200101" or "2020010112"
 
     Returns
@@ -71,22 +71,22 @@ def _dwd_date_parser(date_str):
         The date as datetime.
 
     """
+    if type(date_ser) != pd.Series:
+        raise ValueError("date_str must be a pd.Series of str")
+        
     # test if list or single str
-    if type(date_str) == list:
-        char_num = len(date_str[0])
-    elif type(date_str) == str:
-        char_num = len(date_str)
+    char_num = len(date_ser.iloc[0])
 
     # parse to correct datetime
     if char_num == 8:
-        return datetime.strptime(date_str, '%Y%m%d')
+        return pd.to_datetime(date_ser, format='%Y%m%d')
     elif char_num == 10:
-        return datetime.strptime(date_str, '%Y%m%d%H')
+        return pd.to_datetime(date_ser, format='%Y%m%d%H')
     elif char_num == 12:
-        return datetime.strptime(date_str, '%Y%m%d%H%M')
+        return pd.to_datetime(date_ser, format='%Y%m%d%H%M')
     else:
-        raise ValueError("there was an error while converting " + date_str +
-                         " to a correct datetime")
+        raise ValueError("there was an error while converting the following  to a correct datetime"+ 
+                         date_ser.head())
 
 
 # main functions
@@ -154,14 +154,16 @@ def get_dwd_file(zip_filepath):
         # extract the file from the zip folder and return it as pd.DataFrame
         with compressed_folder.open(files[0]) as f:
             df = pd.read_table(f, sep=";",
-                                 skipinitialspace=True,
-                                 na_values=[-999, -9999, "####", "#####", "######"])
+                             dtype={"Datum":str, "MESS_DATUM":str},
+                               skipinitialspace=True,
+                               na_values=[-999, -9999, "####", "#####", "######"])
 
     elif re.search("derived", zip_filepath):
         df = pd.read_table(f"ftp://{CDC_HOST}/{zip_filepath}",
                              compression="gzip",
                              sep=";",
                              skipinitialspace=True,
+                             dtype={"Datum":str, "MESS_DATUM":str},
                              na_values=[-999, -9999, "####", "#####", "######"])
     else:
         raise ImportError("ERROR: No file could be imported, as there is " +
