@@ -153,23 +153,26 @@ def get_dwd_file(zip_filepath):
 
         # extract the file from the zip folder and return it as pd.DataFrame
         with compressed_folder.open(files[0]) as f:
-            return pd.read_table(f, sep=";",
-                                 parse_dates=["MESS_DATUM"],
-                                 date_parser=_dwd_date_parser,
+            df = pd.read_table(f, sep=";",
                                  skipinitialspace=True,
                                  na_values=[-999, -9999, "####", "#####", "######"])
 
     elif re.search("derived", zip_filepath):
-        return pd.read_table(f"ftp://{CDC_HOST}/{zip_filepath}",
+        df = pd.read_table(f"ftp://{CDC_HOST}/{zip_filepath}",
                              compression="gzip",
                              sep=";",
-                             parse_dates=["Datum"],
-                             date_parser=_dwd_date_parser,
                              skipinitialspace=True,
                              na_values=[-999, -9999, "####", "#####", "######"])
     else:
         raise ImportError("ERROR: No file could be imported, as there is " +
                           "just a setup for observation and derived datas")
+    
+    # convert dates to datetime
+    for col in ["MESS_DATUM", "Datum"]:
+        if col in df.columns:
+            df[col] = _dwd_date_parser(df[col])
+
+    return df
 
 def get_dwd_data(station_id, ftp_folder):
     """
