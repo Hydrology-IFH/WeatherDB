@@ -892,7 +892,7 @@ class StationBase:
         # get last_imp valid kinds that are in the meta file
         last_imp_valid_kinds = self._valid_kinds.copy()
         last_imp_valid_kinds.remove("raw")
-        for name in ["qn", "filled_by", 
+        for name in ["qn", "filled_by",
                      "raw_min", "raw_max", "filled_min", "filled_max"]:
             if name in last_imp_valid_kinds:
                 last_imp_valid_kinds.remove(name)
@@ -1223,7 +1223,7 @@ class StationBase:
         """.format(
             sql_new_qc=self._get_sql_new_qc(period=period),
             stid=self.id, para=self._para)
-        
+
         # calculate the percentage of droped values
         sql_qc += f"""
             UPDATE meta_{self._para}
@@ -1243,7 +1243,7 @@ class StationBase:
                 **period.get_sql_format_dict(
                     format=self._tstp_format_human)
                 ))
-        
+
         # update timespan in meta table
         self.update_period_meta(kind="qc")
 
@@ -1337,7 +1337,7 @@ class StationBase:
         if self._filled_by_n>1:
             sql_array_init = "ARRAY[{0}]".format(
                 ", ".join(["NULL::smallint"] * self._filled_by_n))
-            
+
             # create execute sql command
             sql_exec_fillup=""
             prev_check = ""
@@ -1351,7 +1351,7 @@ class StationBase:
                 WHERE nf.filled IS NULL AND nf.nb_mean[{i}] IS NULL {prev_check}
                     AND nf.timestamp = nb.timestamp;"""
                 prev_check += f" AND nf.nb_mean[{i}] IS NOT NULL AND nf.filled_by[{i}] != %1$s"
-            
+
             sql_format_dict.update(dict(
                 filled_by_col = f"{sql_array_init} AS filled_by",
                 extra_new_temp_cols = sql_format_dict["extra_new_temp_cols"] +
@@ -1361,17 +1361,17 @@ class StationBase:
                 extra_fillup_where=sql_format_dict["extra_fillup_where"] +\
                     ' OR NOT (ts."filled_by" @> new."filled_by" AND ts."filled_by" <@ new."filled_by")'
                 ))
-            
+
             # create exit condition
             sql_format_dict.update(dict(
-                exit_cond=f"SUM((filled IS NULL AND nb_mean[{self._filled_by_n}] is NULL)::int) = 0 ")) 
+                exit_cond=f"SUM((filled IS NULL AND nb_mean[{self._filled_by_n}] is NULL)::int) = 0 "))
             if self._fillup_max_dist is not None:
                 sql_format_dict.update(dict(
                     add_meta_col="ST_DISTANCE(geometry_utm,(SELECT geometry_utm FROM stat_row)) as dist, ",
                     exit_cond=sql_format_dict["exit_cond"]\
                         +"OR ((i.dist > {self._fillup_max_dist}) AND SUM((filled IS NULL AND nb_mean[1] is NULL)::int) = 0)"
                     ))
-                
+
             # create sql after loop, to calculate the median of the regionalised neighbors
             sql_format_dict.update(dict(
                 sql_extra_after_loop = """UPDATE new_filled_{stid}_{para} SET
@@ -1391,12 +1391,12 @@ class StationBase:
                         AND nf.timestamp = nb.timestamp;""".format(**sql_format_dict),
                 extra_fillup_where=sql_format_dict["extra_fillup_where"] +\
                     ' OR ts."filled_by" IS DISTINCT FROM new."filled_by"'))
-            
+
         # Make SQL statement to fill the missing values with values from nearby stations
         sql = """
             CREATE TEMP TABLE new_filled_{stid}_{para}
                 ON COMMIT DROP
-                AS (SELECT timestamp, {base_col} AS filled, 
+                AS (SELECT timestamp, {base_col} AS filled,
                         {extra_new_temp_cols}{filled_by_col}{is_winter_col}
                     FROM timeseries."{stid}_{para}" ts {cond_period});
             ALTER TABLE new_filled_{stid}_{para} ADD PRIMARY KEY (timestamp);
@@ -1487,9 +1487,9 @@ class StationBase:
     def _sql_fillup_extra_dict(self, **kwargs):
         """Get the sql statement for the fill to calculate the filling of additional columns.
 
-        This is mainly for the temperature Station to fillup max and min 
+        This is mainly for the temperature Station to fillup max and min
         and returns an empty string for the other stations.
-        
+
         And for the precipitation Station and returns an empty string for the other stations.
 
         Returns
@@ -1978,11 +1978,11 @@ class StationBase:
                 raise ValueError("p_elev must be a tuple of length 2 or None")
             return f"""*(1+power(
                         abs(stationshoehe - (SELECT stationshoehe FROM stat_row))
-                        /{p_elev[0]}::float, 
+                        /{p_elev[0]}::float,
                         {p_elev[1]}::float))"""
         else:
             return ""
-        
+
     def get_neighboor_stids(self, n=5, only_real=True, p_elev=None, period=None, **kwargs):
         """Get a list with Station Ids of the nearest neighboor stations.
 
@@ -2022,7 +2022,7 @@ class StationBase:
             cond_only_real="AND is_real" if only_real else "",
             stid=self.id, para=self._para, n=n,
             add_meta_rows="", cond_period="", mul_elev_order="")
-        
+
         # Elevation parts
         if p_elev is not None:
             if len(p_elev) != 2:
@@ -2031,7 +2031,7 @@ class StationBase:
                 add_meta_rows=", stationshoehe",
                 mul_elev_order = self._get_sql_nbs_elev_order(p_elev=p_elev)
                 ))
-        
+
         # period parts
         if period is not None:
             if not isinstance(period, TimestampPeriod):
@@ -2039,8 +2039,8 @@ class StationBase:
             days = period.get_interval().days
             tmstp_mid = period.get_middle()
             sql_dict.update(dict(
-                cond_period=f""" AND (raw_until - raw_from > '{np.round(days/2)} days'::INTERVAL 
-                    AND (raw_from <= '{tmstp_mid.strftime("%Y%m%d")}'::timestamp 
+                cond_period=f""" AND (raw_until - raw_from > '{np.round(days/2)} days'::INTERVAL
+                    AND (raw_from <= '{tmstp_mid.strftime("%Y%m%d")}'::timestamp
                         AND raw_until >= '{tmstp_mid.strftime("%Y%m%d")}'::timestamp)) """
             ))
 
@@ -2048,7 +2048,7 @@ class StationBase:
         sql_nearest_stids = """
             WITH stat_row AS (
                 SELECT geometry_utm {add_meta_rows}
-                FROM meta_{para} WHERE station_id={stid}	
+                FROM meta_{para} WHERE station_id={stid}
             )
             SELECT station_id
             FROM meta_{para}
@@ -2057,10 +2057,10 @@ class StationBase:
                 {mul_elev_order}
             LIMIT {n};
             """.format(**sql_dict)
-        
+
         if "return_sql" in kwargs and kwargs["return_sql"]:
             return sql_nearest_stids
-        
+
         with DB_ENG.connect() as con:
             result = con.execute(sqltxt(sql_nearest_stids))
             nearest_stids = [res[0] for res in result.all()]
@@ -2160,15 +2160,15 @@ class StationBase:
                 return [own/other for own, other in zip(ma_values, other_ma_values)]
             elif self._coef_sign[0] == "-":
                 if in_db_unit:
-                    return [int(np.round((own-other)*self._decimals)) 
+                    return [int(np.round((own-other)*self._decimals))
                             for own, other in zip(ma_values, other_ma_values)]
-                else: 
+                else:
                     return [own-other for own, other in zip(ma_values, other_ma_values)]
             else:
                 return None
 
     def get_df(self, kinds, period=(None, None), agg_to=None,
-               nas_allowed=True, add_na_share=False, db_unit=False, 
+               nas_allowed=True, add_na_share=False, db_unit=False,
                sql_add_where=None):
         """Get a timeseries DataFrame from the database.
 
@@ -2615,11 +2615,11 @@ class StationTETBase(StationCanVirtualBase):
         -------
         _type_
             _description_
-        """        
+        """
         # define the P1 and P2 default values for T and ET
         return super().get_neighboor_stids(p_elev=p_elev, **kwargs)
 
-    def _get_sql_near_median(self, period, only_real=True, 
+    def _get_sql_near_median(self, period, only_real=True,
                              extra_cols=None, add_is_winter=False):
         """Get the SQL statement for the mean of the 5 nearest stations.
 
@@ -2636,7 +2636,7 @@ class StationTETBase(StationCanVirtualBase):
         extra_cols : str or None, optional
             Should there bae additional columns in the result?
             Should be a sql-string for the SELECT part.
-            If None then there are no additional columns.     
+            If None then there are no additional columns.
             The default is None.
         add_is_winter : bool, optional
             Should there be a column ("winter") that indicates if the value is in winter?
@@ -2647,7 +2647,7 @@ class StationTETBase(StationCanVirtualBase):
         str
             SQL statement for the regionalised mean of the 5 nearest stations.
         """
-        # get neighboring station for every year 
+        # get neighboring station for every year
         start_year = period.start.year
         end_year = period.end.year
         nbs = pd.DataFrame(
@@ -2685,13 +2685,13 @@ class StationTETBase(StationCanVirtualBase):
 
         # get coefs for regionalisation from neighbor stations
         coefs = pd.Series(
-            index=nbs_stids_all, 
+            index=nbs_stids_all,
             data=[self.get_coef(other_stid=near_stid, in_db_unit=True)
                         for near_stid in nbs_stids_all]
             ).fillna("NULL")\
             .apply(lambda x: x[0] if isinstance(x, list) else x)\
             .astype(str)
-        
+
         # check extra cols to be in the right format
         if extra_cols and len(extra_cols) > 0:
             if extra_cols[0] != ",":
@@ -2714,10 +2714,10 @@ class StationTETBase(StationCanVirtualBase):
             sql_near_median_parts.append("""
                 SELECT timestamp,
                     (SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY T.c)
-                     FROM (VALUES (ts1.raw{coef_sign[1]}{coefs[0]}), 
-                                  (ts2.raw{coef_sign[1]}{coefs[1]}), 
-                                  (ts3.raw{coef_sign[1]}{coefs[2]}), 
-                                  (ts4.raw{coef_sign[1]}{coefs[3]}), 
+                     FROM (VALUES (ts1.raw{coef_sign[1]}{coefs[0]}),
+                                  (ts2.raw{coef_sign[1]}{coefs[1]}),
+                                  (ts3.raw{coef_sign[1]}{coefs[2]}),
+                                  (ts4.raw{coef_sign[1]}{coefs[3]}),
                                   (ts5.raw{coef_sign[1]}{coefs[4]})) T (c)
                     ) as nbs_median
                 FROM timeseries."{near_stids[0]}_{para}" ts1
@@ -2751,11 +2751,11 @@ class StationTETBase(StationCanVirtualBase):
                     **period.get_sql_format_dict())
 
         return sql_near_median
-     
+
     def _get_sql_nbs_elev_order(self, p_elev=(250, 1.5)):
         """Set the default P values. See _get_sql_near_median for more informations."""
         return super()._get_sql_nbs_elev_order(p_elev=p_elev)
-    
+
     def fillup(self, p_elev=(250, 1.5), **kwargs):
         """Set the default P values. See _get_sql_near_median for more informations."""
         return super().fillup(p_elev=p_elev, **kwargs)
@@ -3082,9 +3082,9 @@ class StationN(StationNBase):
             # sample dgm for horizon angle
             hab = pd.Series(
                 index=pd.Index([], name="angle", dtype=int),
-                name="horizon", 
+                name="horizon",
                 dtype=float)
-            
+
             for angle in range(90, 271, 3):
                 dgm1_mask = polar_line(xy, radius, angle)
                 dgm1_np, dgm1_tr = rasterio.mask.mask(
@@ -3103,7 +3103,7 @@ class StationN(StationNBase):
                 #####################################
                 line_parts = pd.DataFrame(
                     columns=["Start_point", "radius", "line"])
-                
+
                 # look for holes inside the line
                 for i, j in enumerate(dgm_gpd[dgm_gpd["dist"].diff() > dgm1_tr[0]*np.sqrt(2)].index):
                     line_parts = pd.concat(
@@ -3112,7 +3112,7 @@ class StationN(StationNBase):
                             {"Start_point": dgm_gpd.loc[j-1, "geometry"],
                             "radius": dgm_gpd.loc[j, "dist"] - dgm_gpd.loc[j-1, "dist"]},
                             index=[i])])
-                
+
                 # look for missing values at the end
                 dgm1_max_dist = dgm_gpd.iloc[-1]["dist"]
                 if dgm1_max_dist < (radius - dgm1_tr[0]/2*np.sqrt(2)):
@@ -3168,7 +3168,7 @@ class StationN(StationNBase):
                         [dgm_gpd[["horizon"]], dgm2_gpd[["horizon"]]], ignore_index=True)
 
                 hab[angle] = dgm_gpd["horizon"].max()
-                
+
         # calculate the mean "horizontabschimung"
         # Richter: H’=0,15H(S-SW) +0,35H(SW-W) +0,35H(W-NW) +0, 15H(NW-N)
         horizon = max(0,
@@ -3628,7 +3628,7 @@ class StationT(StationTETBase):
     _ma_cols = ["t_dwd_year"]
     _coef_sign = ["-", "+"]
     _agg_fun = "avg"
-    _valid_kinds = ["raw", "raw_min", "raw_max", "qc", 
+    _valid_kinds = ["raw", "raw_min", "raw_max", "qc",
                     "filled", "filled_min", "filled_max", "filled_by"]
     _filled_by_n = 5
 
@@ -3661,7 +3661,7 @@ class StationT(StationTETBase):
         sql_nears = self._get_sql_near_median(
             period=period, only_real=False, add_is_winter=do_invers,
             extra_cols="raw-nbs_median AS diff")
-        
+
         if do_invers:
             # without inversion
             sql_null_case = f"CASE WHEN (winter) THEN "+\
@@ -3678,7 +3678,7 @@ class StationT(StationTETBase):
                 timestamp,
                 (CASE WHEN ({sql_null_case})
                     THEN NULL
-                    ELSE nears."raw" 
+                    ELSE nears."raw"
                     END) as qc
             FROM nears
         """
@@ -3708,7 +3708,7 @@ class StationT(StationTETBase):
                 filled_max=(SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY v)
                             FROM unnest(nb_max) as T(v))"""})
         return fillup_extra_dict
-    
+
     def get_multi_annual(self):
         mas = super().get_multi_annual()
         if mas is not None:
@@ -3744,7 +3744,7 @@ class StationET(StationTETBase):
     def __init__(self, id, **kwargs):
         super().__init__(id, **kwargs)
         self.id_str = str(id)
-    
+
     def _create_timeseries_table(self):
         """Create the timeseries table in the DB if it is not yet existing."""
         sql_add_table = '''
@@ -3766,7 +3766,7 @@ class StationET(StationTETBase):
         sql_nears = self._get_sql_near_median(
             period=period, only_real=False, add_is_winter=do_invers,
             extra_cols="raw-nbs_median AS diff")
-        
+
         sql_null_case = f"""(nears.raw > (nears.nbs_median * 2) AND nears.raw > {3*self._decimals})
                             OR ((nears.raw * 4) < nears.nbs_median AND nears.raw > {2*self._decimals})"""
         if do_invers:
@@ -3916,7 +3916,7 @@ class GroupStation(object):
         return filled_period
 
     def get_df(self, period=(None, None), kinds="best", paras="all",
-               agg_to="day", nas_allowed=True, add_na_share=False, 
+               agg_to="day", nas_allowed=True, add_na_share=False,
                add_t_min=False, add_t_max=False, **kwargs):
         """Get a DataFrame with the corresponding data.
 
@@ -3998,7 +3998,7 @@ class GroupStation(object):
                     kinds=use_kinds,
                     agg_to=agg_to,
                     nas_allowed=nas_allowed,
-                    add_na_share=add_na_share, 
+                    add_na_share=add_na_share,
                     **kwargs)
                 df = df.rename(dict(zip(
                     df.columns,
@@ -4146,7 +4146,7 @@ class GroupStation(object):
         add_t_max=False : bool, optional
             Schould the maximal temperature value get added?
             The default is False.
-        **kwargs: 
+        **kwargs:
             additional parameters for Station.get_df
 
         Raises
@@ -4156,13 +4156,13 @@ class GroupStation(object):
         """
         return self.create_ts(dir=dir, period=period, kinds=kind,
                               agg_to="10 min", r_r0=r_r0, split_date=True,
-                              nas_allowed=False, 
+                              nas_allowed=False,
                               add_t_min=add_t_min, add_t_max=add_t_max)
 
     def create_ts(self, dir, period=(None, None), kinds="best", paras="all",
                   agg_to="10 min", r_r0=None, split_date=False,
-                  nas_allowed=True, add_na_share=False, 
-                  add_t_min=False, add_t_max=False, 
+                  nas_allowed=True, add_na_share=False,
+                  add_t_min=False, add_t_max=False,
                   **kwargs):
         """Create the timeserie files as csv.
 
@@ -4221,7 +4221,7 @@ class GroupStation(object):
         add_t_max=False : bool, optional
             Schould the maximal temperature value get added?
             The default is False.
-        **kwargs: 
+        **kwargs:
             additional parameters for Station.get_df
 
         Raises
@@ -4271,8 +4271,8 @@ class GroupStation(object):
                 period=period, kinds=kinds,
                 paras=[para], agg_to=agg_to,
                 nas_allowed=nas_allowed,
-                add_na_share=add_na_share, 
-                add_t_min=add_t_min, add_t_max=add_t_max, 
+                add_na_share=add_na_share,
+                add_t_min=add_t_min, add_t_max=add_t_max,
                 **kwargs)
 
             # rename columns
@@ -4283,7 +4283,7 @@ class GroupStation(object):
                     colname_base = f"{para.upper()}_" + kinds[1-(kinds.index("filled_by"))]
                 df.rename(
                     {colname_base: para.upper(),
-                     f"{colname_base}_min": f"{para.upper()}_min", 
+                     f"{colname_base}_min": f"{para.upper()}_min",
                      f"{colname_base}_max": f"{para.upper()}_max",},
                     axis=1, inplace=True)
             else:
