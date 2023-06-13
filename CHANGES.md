@@ -3,6 +3,7 @@
 ## Version 0.0.34 (upcoming)
 
 - StationsBase.get_meta: strip whitespace in str columns
+- add min/max-tresholds for T and ET
 
 ## Version 0.0.33
 
