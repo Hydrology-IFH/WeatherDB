@@ -265,7 +265,7 @@ class Broker(object):
             con.execute(sqltxt(sql))
 
     def get_setting(self, key):
-        """Get a specific settings value. 
+        """Get a specific settings value.
 
         Parameters
         ----------
@@ -285,7 +285,7 @@ class Broker(object):
             return None
         else:
             return res[0]
-        
+
     def set_setting(self, key:str, value:str):
         """Set a specific setting.
 
@@ -298,13 +298,13 @@ class Broker(object):
         """
         with DB_ENG.connect() as con:
             con.execute(sqltxt(
-                f"""INSERT INTO settings 
+                f"""INSERT INTO settings
                 VALUES ('{key}', '{value}')
-                ON CONFLICT (key) 
+                ON CONFLICT (key)
                     DO UPDATE SET value=EXCLUDED.value;"""))
-    
+
     def get_db_version(self):
-        """Get the package version that the databases state is at. 
+        """Get the package version that the databases state is at.
 
         Returns
         -------
@@ -315,7 +315,7 @@ class Broker(object):
         if res is not None:
             res = pv.parse(res)
         return res
-  
+
     def set_db_version(self, version=pv.parse(__version__)):
         """Set the package version that the databases state is at.
 
@@ -338,7 +338,7 @@ class Broker(object):
             Whether the broker is active.
         """
         self.set_setting("is_broker_active", str(is_active))
-            
+
     def get_is_broker_active(self):
         """Get the state of the broker.
 

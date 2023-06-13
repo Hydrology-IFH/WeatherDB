@@ -1,24 +1,36 @@
 # Change-log
 
+## Version 0.0.33
+
+- change quality control of T- & ET-Stations -> add inversion consideration for stations above 800m altitude
+  Those stations values are only sorted out in winter if their difference to the median neighbor station is negative (lower limit)
+- change quality control of T and ET -> the values are now getting compared to the median of 5 neighbors, not the mean
+- change fillup method: has now the possibility to take the median of multiple neighboring stations to fillup. This possibility is now used for Temperature stations, where 5 neighboring stations are considered.
+
 ## Version 0.0.32
-- add elevation consideration for the selection of neighboring stations, based on LARSIMformula for the quality_check and fillup procedure of T and ET. So not only the closest stations are selected but sometimes also a station that is further away, but has les difference in height.
+
+- add elevation consideration for the selection of neighboring stations, based on LARSIM formula for the quality_check and fillup procedure of T and ET. So not only the closest stations are selected but sometimes also a station that is further away, but has les difference in height.
 - get neighboring stations for T and ET quality check for full years, to always have around 5 neighboring stations
 - fix problem in get_multi_annual for T Station if no ma found
 - fix error because timeseries did only get created when, station T or ET is in meta_n table, even if they exist in meta_t or meta_et. So e.g a T Station exists in meta table because of own data, but is not added because no P station is there.
 
 ## Version 0.0.31
+
 - only compare to neighbooring stations if at least 2 stations have data in the quality check of T and ET
 - add settings to the database and broker now updates the whole database if a new version is loaded
 - stop broker execution if another broker instance is activly updating the database
 ## Version 0.0.30
+
 - fix MAJOR error in Temperature quality check: The coefficient did not get converted to the database unit.
   This had as a consequence, that the neighboring values did not get regionalised correctly to the checked station. So if the neighboring station has big difference in the multi annual temperature value, too many values got kicked out.
   This error existed probably since version 0.0.15
 
 ## Version 0.0.29
+
 -add calculation of dropped values in quality check
 
 ## Version 0.0.28
+
 - MAJOR Error fix: The quality check for T and ET did not consider the decimal multiplier for the limits. So the table 2 from the Method documentation should have looked like this until now, in bold are the numbers that were wrong in the code:
 
 | parameter | compare equation | lower limit | upper limit|
@@ -35,52 +47,64 @@ Those limits got corrected to correspond now to:
 - correct update_horizon to also consider that the distance between grid cells can be diagonal to the grid, so miultiply with $\sqrt{2}$
 
 ## Version 0.0.27
+
 - fixed major error with update_horizon method. Therefor the Richter Exposition classe changes for many stations. This error existed since Version 0.0.15
-- add multiprocess ability to update_richter_class 
+- add multiprocess ability to update_richter_class
 
 ## Version 0.0.26
+
 - fix error with sql statements
 - fix logging
 ## Version 0.0.25
+
 **version has major problems, use version 0.0.26**
 - change logging.py submodule name, because of import conflicts with python logging package
 ## Version 0.0.24
+
 - add text wrapper from sqlalchemy to work with sqlalchemy version >2.0
 - add compatibility for shapely >2.0
 ## Version 0.0.23
+
 - change pandas to_csv parameter line_terminator to lineterminator, for newer versions
 - change logging procedure, to not log to file as a standard way, but only after calling setup_file_logging from logging.py
 ## Version 0.0.22
+
 - add qc_from and qc_until to the meta informations
 - fix removal of old log files
 ## Version 0.0.21
+
 - add additional parameter sql_add_where to define a sql where statement to filter the created results in the database
 - add postgresql error messages that will cause the execution to wait and restart
-- import Station(s)-classes imediatly when module is imported, so now this works 
+- import Station(s)-classes imediatly when module is imported, so now this works
   ```
   import weatherDB as wdb
   wdb.StationsN()
   ```
 ## Version 0.0.20
+
 - change secretSettings_weatherDB names to DB_PWD, DB_NAME and DB_USER
 - add min and max to the temperature timeseries
 
 ## Version 0.0.19
+
 - fix error of updating raw_files table after new import.
 - change log file name to weatherDB_%host%_%user%.log
 - change the use of append method to pandas concat method
 - changed pandas method iteritems to items, due to deprecation warning
 
 ## Version 0.0.18
+
 - correct spelling error "methode" to "method"
 - add progressbar to count_holes method
 - add para to raw_files db-table, because some files get used for several parameters (T and N_D)
 
 ## Version 0.0.17
+
 - get_df now also accepts filled_share as kind
 - added function to count the holes in the timeseries depending on there length
 
 ## Version 0.0.16
+
 - repaired the update_raw function of StationND
 - change data source from REGNIE to HYRAS for precipitation regionalisation
 - add ability to get nearby ma value from rasters, up to 1km from the station
@@ -89,10 +113,12 @@ Those limits got corrected to correspond now to:
 - save last_imp period but only for df without NAs -> else the marking of last_imp_qc... will not work, as the period will always be smaller than the last_imp period
 
 ## Version 0.0.15
+
 - change append with pandas concat function. -> faster
 - don't import complete module on installation
 
 ## Version 0.0.14
+
 - added type test, if parameter gets checked for "all"
 - specify that secrets_weatherDB file should be on PYTHONPATH environment variable
 - Changed DGM5 to Copernicus DGM25, because of license advantages
@@ -101,12 +127,14 @@ Those limits got corrected to correspond now to:
 - fix get_geom with crs transforamation
 
 ## Version 0.0.13
+
 - change the timezone allocation method of the precipitation download df
 - set freq to 10 minutes of precipitation download, to be able to overwrite Values with NAs
 - add remove_nas parameter to overwrite new NAs in the database. (mainly for programming changes)
 - define the name of the geometry column in get_meta.
 
 ## Version 0.0.12
+
 - add quality check for precipitation stations: delete values were the aggregated daily sum is more than double of the daily measurement
 - when filling up also replace the filled_by column if it got changed
 - TimestampPeriod class now also detects string inputs as date
@@ -117,51 +145,58 @@ Those limits got corrected to correspond now to:
 - add stids parameter to last_imp methods of stations classes
 - add an update method to stations classes, to do a complete update of the stations database data (update_raw + quality_check + fillup + richter_correct)
 - only set start_tstp_last_imp values in db if update_raw is done for all the stations
-  
+
 ## Version 0.0.11
+
 - add fallback on thread if multiprocessing is not working
 - cleaning up ftplib use. Always recreate a new instance and don't try to reuse the instance.
   This resolves some problems with the threading of the instances.
 - clean raw updates of only recent files by the maximum timestamp of the historical data.
 
 ## Version 0.0.10
-- fixed get_adj compare Timestamp with timezone 
+
+- fixed get_adj compare Timestamp with timezone
 
 ## Version 0.0.9
+
 - fixed future warning in stations.GroupStations().create_ts
 - stations.GroupStations().create_roger_ts fixed
 - removed join_how from _check_period as it was not used
 - fixed StationND().get_adj, because the StationNBase.get_adj was only for 10 minute resolution
 - get_adj always based on "filled" data
-  
+
 ## Version 0.0.8
+
 - fixed installation (psycopg2 problem and DB_ENG creation)
 - fixed importing module when not super user
 
 ## Version 0.0.7
+
 - convert timezone of downloaded precipitation data, because (before 200 the data is in "MEZ" afterwards in "UTC")
-- update_ma: 
-  - Rasters now also have proj4 code, if necessary. Because the postgis database is not supporting transformation to EPSG:31467 
+- update_ma:
+  - Rasters now also have proj4 code, if necessary. Because the postgis database is not supporting transformation to EPSG:31467
   - small speed improvement
 - StationCanVirtual._check_meta updated to check separately if station is in meta table and if it has a timeseries table
 - Added timezone support. The database timezone is UTC.
 
 ## Version 0.0.6
+
 - error fixed with is_virtual (!important error!)
 - human readable format for the period in log message added
 - some spelling errors fixed in documentation
 - kwargs added to child methods of get_df (like get_raw...)
-- in get_df and consecutive methods: 
+- in get_df and consecutive methods:
   - filled_share column added if aggregating and filled_by selected
   - possibility to download filled_by added
   - nas_allowed option added
-  - add_na_share option added. (give the share of NAs if aggregating) 
+  - add_na_share option added. (give the share of NAs if aggregating)
 - in create_ts option to save several kinds added
 - get_max_period method
 - error in check_stids fixed
 - error in ma_update fixed
 
 ## Version 0.0.5
+
 - The et_et0 parameter gor renamed to r_r0 in the create_ts method
 - The r_r0 is now possible to add as pd.Serie or list, when creating a timeserie file
 - get_meta method of single stations updated
@@ -175,8 +210,10 @@ Those limits got corrected to correspond now to:
 - dropping stations from meta while updating checks now if stid is in downloaded meta file
 
 ## Version 0.0.4
-- The method part was added to the documentation 
+
+- The method part was added to the documentation
 - the connection method got updated
 
 ## Version 0.0.3
+
 This is the first released version

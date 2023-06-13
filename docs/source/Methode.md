@@ -1,4 +1,5 @@
 # Method
+
 Behind this package/website is a PostGreSQL-database. This database is build and updated with the same package, as for downloading the data. The only difference is, that the given connection in the secretSettings file needs to have write permissions for the database.
 Therefor everyone can look into the code to find out exactly how the database creation works. But as an overview this page will give basic explanations of the processes behind it.
 
@@ -11,6 +12,7 @@ The timeseries for Temperature, Evapotranspiration and Precipitation are going t
 In the following chapters the processes will get explained furthermore.
 
 ## downloading the data
+
 The raw data is downloaded from the [DWD-CDC server](https://opendata.dwd.de/climate_environment/CDC/). The timeseries are downloaded and saved from the 1.1.1994 on. If there is historical data available for a measurement, they are preferred over recent values, because they are already quality checked a bit. The Temperature (T) and potential Evapotranspiration (ET) is downloaded on daily resolution. Where as the Precipitation (N) is downloaded as 10 minute and daily values, but only the 10 minute values are the basis for the downloads.
 
 **Table 1: The downloaded raw data, resolution and their source**
@@ -24,6 +26,7 @@ The raw data is downloaded from the [DWD-CDC server](https://opendata.dwd.de/cli
 For computation improvements the downloaded files and their modification time is saved to the database, to be able to only download the updated data.
 
 ## quality check
+
 To quality check the data it is very dependent on which parameter is treated. Therefor this chapter is grouped into subchapters.
 
 Although every quality check can get computed for different periods:
@@ -32,10 +35,11 @@ Although every quality check can get computed for different periods:
 - the last imported period, with e.g. `station.StationET(3).last_imp_quality_check()`
 
 ### Temperature and Evapotranspiration
-For T and ET quality check the data is compared to the 5 nearest neighbors data. 
-To get the nearest stations, the selection is done on a yearly basis. So neighbor stations having data for more than 6 months in that year are considered.
 
-Furthermore also the difference in elevation between the two stations is considered to select nearest stations. This is done, because the topographie has a big influence on the Temperature and Evapotranspiration. The weighted distance is thereby calculated with the LARSIM formula:
+For T and ET quality check the data is compared to the 5 nearest neighbors data.
+To get the nearest stations, the selection is done on a yearly basis. For this neighbor stations having data for more than 6 months in that year are considered.
+
+Furthermore also the difference in elevation between the two stations is considered to select the closest stations. This is done, because the topographie has a big influence on the Temperature and Evapotranspiration. The weighted distance is thereby calculated with the LARSIM formula:
 
 $L_{gewichtet} = L_{horizontal} * (1 + (\frac{|\delta H|}{P_1})^{P_2})$
 
@@ -53,10 +57,14 @@ The data of every neighbor station is regionalized, based on the DWD grids (see 
 
 For the evapotranspiration there are two rules that need to be fulfilled to be unplausible. One relative and one nominal. This is because, low measurement values tend to have high relative differences and would then get deleted too often.
 
+To consider the possible inversion weather phenomena, stations higher than 800 m.a.S. are only tested against the lower limit in winter months (October-March).
+
 ### Precipitation
+
 The precipitation measurements must pass through multiple quality checks.
 
 #### daily sum is zero
+
 As some precipitation station (e.g. Feldberg station) have measurements of 0mm in the 10 minutes dataset even though the daily dataset has measurements. This is especially true for the measurement points in 20th and early 21th century. This is probably the result of new measurement equipment to measure the 10 minutes values, but without a good quality control. back then the daily values are often measured with other equipments and have a better quality check they are going through, so that the values are more reliable.
 
 To filter those wrongly measurements of 0 mm out of the data, the data is compared to the daily values from the DWD at the same location. For this reason the daily measurements are first filled up (see next chapter). <br>
@@ -65,11 +73,13 @@ The 10 minutes measurements get aggregated to daily values. If this daily sum is
 This check is the only reason why the daily precipitation values were downloaded in the first place.
 
 #### consecutive equal values
+
 Sometimes there are several consecutive 10 minutes values that are exactly the same. As the accuracy of the measurement is 0.01 mm, this is very improbable to be a real measurement and is more likely the result of splitting e.g. an hourly value into 6 values.
 
 It is assumed, that filling the measurements up with values from the neighbor stations is more accurate than this dissemination. Therefor 3 consecutive same measurements are deleted, if their "Qualitätsnorm" from the DWD is not 3 (meaning that the measurements didn't get a good quality control from the DWD).
 
 ## gap filling
+
 To have complete timeseries, the gaps in the quality checked timeseries are filled with data from the neighbor stations. The neighboring stations are selected in the order of horizontal difference for the precipitation stations and in order of the elevation weighted distance (see chapter quality check - Temperature and Evapotranspiration) for T and ET stations. This is done by regionalising the neighbors measurements value to the station that is gap filled. Starting with the nearest neighbor station all available stations are taken until the timeserie is completely filled.
 
 For the reginalisation, the multi-annual values for every station for the climate period of 1991-2020 are computed from the corresponding DWD grid.
@@ -94,9 +104,12 @@ N_{neighbor} * \dfrac{N_{station,ma,winter}}{N_{neighbor,ma,winter}} \space if\s
 N_{neighbor} * \dfrac{N_{station,ma,summer}}{N_{neighbor,ma,summer}} \space if\space month\notin[4:9]
 \end{cases}$
 
+For the precipitation and evapotranpiration stations only the closest station with quality checked data is taken to fill missing values. For the temperature stations the median of the regionalised values from the 5 closest stations (but not more than 100 km away)  to fill missing values.
+
 For the precipitation values the 10 minutes values are furthermore adjusted to the daily measurements. Therefor the daily sum is computed. Then the quotient with the daily measurement is calculated and multiplied to every 10 minute measurement. So the difference to the daily measurement is added relatively to the measured value. In the end the gap filled 10 minutes precipitation values sum up to the same daily values as the daily values from the DWD.
 
 ## Richter correction
+
 This step is only done for the 10 minutes precipitation values. Here the filled precipitation values, get corrected like defined in Richter (1995).  
 
 First of all, the horizon angle ("Horizontabschirmung") is calculated from a DGM25 and if the DGM25 was out of bound also from a DGM80. The DGM80 is bigger than the german border and therefor for stations around the border this is gives better results than the DGM20 which is only for the german territory. Therefore the rasters are sampled for their values on one single line of 75km, starting from the station. Then the angle to every point from the station is calculated. The Point with the biggest angle is taken as horizon angle for this line. This step is repeated for several lines ranging from north to south in 3° steps. Afterwards the Richter horizon angle is computed as:
@@ -123,7 +136,8 @@ The daily correction ($\Delta N$) is then distributed to every 10 minute measure
 
 -------------------------
 
-## sources
+## Sources
+
 - Richter, D. 1995. Ergebnisse methodischer Untersuchungen zur Korrektur des systematischen Meßfehlers des Hellmann-Niederschlagsmessers. Offenbach am Main: Selbstverl. des Dt. Wetterdienstes.
 - Coperniicus. 2016. European Digital Elevation Model (EU-DEM), version 1.1. [online available](https://land.copernicus.eu/imagery-in-situ/eu-dem/eu-dem-v1.1)
 - Stoelzle, Michael & Weiler, Markus & Steinbrich, Andreas. (2016) Starkregengefährdung in Baden-Württemberg – von der Methodenentwicklung zur Starkregenkartierung. Tag der Hydrologie.

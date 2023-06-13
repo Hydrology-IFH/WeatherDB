@@ -1,7 +1,7 @@
 import click
 import sys, os
 sys.path.insert(
-    0, 
+    0,
     os.path.split(os.path.abspath(os.path.split(__file__)[0]))[0])
 import weatherDB
 
