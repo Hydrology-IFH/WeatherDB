@@ -1,5 +1,11 @@
 # Change-log
 
+## Version 0.0.34
+
+- StationsBase.get_meta: strip whitespace in str columns
+- add min/max-tresholds for T and ET
+- add -9999 as possible NA value for DWD data
+
 ## Version 0.0.33
 
 - change quality control of T- & ET-Stations -> add inversion consideration for stations above 800m altitude
@@ -16,9 +22,10 @@
 
 ## Version 0.0.31
 
-- only compare to neighbooring stations if at least 2 stations have data in the quality check of T and ET
+- only compare to neighboring stations if at least 2 stations have data in the quality check of T and ET
 - add settings to the database and broker now updates the whole database if a new version is loaded
 - stop broker execution if another broker instance is activly updating the database
+
 ## Version 0.0.30
 
 - fix MAJOR error in Temperature quality check: The coefficient did not get converted to the database unit.

@@ -335,6 +335,13 @@ class StationsBase:
                 meta[geom_col] = meta[geom_col].apply(wkt.loads)
                 meta = gpd.GeoDataFrame(
                     meta, crs="EPSG:" + srid, geometry=geom_col)
+                
+        # strip whitespaces in string columns
+        for col in meta.columns[meta.dtypes == object]:
+            try:
+                meta[col] = meta[col].str.strip()
+            except:
+                pass
 
         return meta
 

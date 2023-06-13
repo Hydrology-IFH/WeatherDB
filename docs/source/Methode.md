@@ -50,14 +50,16 @@ In Larsim those parameters are defined as $P_1 = 500$ and $P_2 = 1$.
 The data of every neighbor station is regionalized, based on the DWD grids (see chapter regionalisation), to the examined station. Then the mean value of those 5 values is taken to compare to the station data. If this mean value is too far away from the own value, then the measurement point is deleted.
 
 **Table 2: Limits for the quality check of the T and ET measurements, when compared with neighbor stations**
-| parameter | compare equation | lower limit | upper limit|
-|:---:|:---:|:---:|:---:|
-| Temperature |  $\Delta T = T_{Stat} - \overline{T}_{neighbors}$ | $\Delta T < -5°C$ | $\Delta T > 5°C$ |
-| pot. Evapotranspiration |  $\delta ET = \dfrac{ET_{Stat}}{\overline{ET}_{neighbors}}$ | $\begin{cases}\delta ET< 25\% \\ ET_{Stat}> 2 \frac{mm}{d}\end{cases}$|$\begin{cases}\delta ET> 200\% \\ ET_{Stat}> 3 \frac{mm}{d}\end{cases}$|
+| parameter | compare equation | lower limit | upper limit| treshold |
+|:---:|:---:|:---:|:---:|:---:|
+| Temperature |  $\Delta T = T_{Stat} - \overline{T}_{neighbors}$ | $\Delta T < -5°C$ | $\Delta T > 5°C$ | $-50°C < T_{Stat} < 50°C$ |
+| pot. Evapotranspiration |  $\delta ET = \dfrac{ET_{Stat}}{\overline{ET}_{neighbors}}$ | $\begin{cases}\delta ET< 25\% \\ ET_{Stat}> 2 \frac{mm}{d}\end{cases}$|$\begin{cases}\delta ET> 200\% \\ ET_{Stat}> 3 \frac{mm}{d}\end{cases}$| $0\frac{mm}{d} =< ET_{Stat} < 200\frac{mm}{d}$ |
 
 For the evapotranspiration there are two rules that need to be fulfilled to be unplausible. One relative and one nominal. This is because, low measurement values tend to have high relative differences and would then get deleted too often.
 
 To consider the possible inversion weather phenomena, stations higher than 800 m.a.S. are only tested against the lower limit in winter months (October-March).
+
+Furthermore there are maximum and minimum treshold values to which the ET and T values are compared to. Those treshold values are set to reasonable values for germany.
 
 ### Precipitation
 

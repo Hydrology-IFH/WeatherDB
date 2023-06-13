@@ -157,7 +157,7 @@ def get_dwd_file(zip_filepath):
                                  parse_dates=["MESS_DATUM"],
                                  date_parser=_dwd_date_parser,
                                  skipinitialspace=True,
-                                 na_values=[-999, "####", "#####", "######"])
+                                 na_values=[-999, -9999, "####", "#####", "######"])
 
     elif re.search("derived", zip_filepath):
         return pd.read_table(f"ftp://{CDC_HOST}/{zip_filepath}",
@@ -166,7 +166,7 @@ def get_dwd_file(zip_filepath):
                              parse_dates=["Datum"],
                              date_parser=_dwd_date_parser,
                              skipinitialspace=True,
-                             na_values=[-999, "####", "#####", "######"])
+                             na_values=[-999, -9999, "####", "#####", "######"])
     else:
         raise ImportError("ERROR: No file could be imported, as there is " +
                           "just a setup for observation and derived datas")
