@@ -1353,7 +1353,7 @@ class StationBase:
                 prev_check += f" AND nf.nb_mean[{i}] IS NOT NULL AND nf.filled_by[{i}] != %1$s"
 
             sql_format_dict.update(dict(
-                filled_by_col = f"{sql_array_init} AS filled_by",
+                filled_by_col = f"NULL::smallint[] AS filled_by",
                 extra_new_temp_cols = sql_format_dict["extra_new_temp_cols"] +
                     f"{sql_array_init} AS nb_mean,",
                 sql_exec_fillup=sql_exec_fillup,
@@ -2324,7 +2324,7 @@ class StationBase:
         df = pd.read_sql(sql, con=DB_ENG, index_col="timestamp")
 
         # convert filled_by to Int16, pandas Integer with NA support
-        if "filled_by" in kinds:
+        if "filled_by" in kinds and df["filled_by"].dtype != object:
             df["filled_by"] = df["filled_by"].astype("Int16")
 
         # change index to pandas DatetimeIndex if necessary

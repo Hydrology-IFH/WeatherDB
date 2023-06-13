@@ -1,5 +1,10 @@
 # Change-log
 
+## Version 0.0.35
+
+- set filled_by for T stations default to NULL not [NULL] -> works better with other methods
+- change date parsing for read dwd function, to work with pandas version >2.0
+
 ## Version 0.0.34
 
 - StationsBase.get_meta: strip whitespace in str columns
