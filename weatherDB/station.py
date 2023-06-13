@@ -3669,8 +3669,9 @@ class StationT(StationTETBase):
         if do_invers:
             # without inversion
             sql_null_case = f"CASE WHEN (winter) THEN "+\
-                f"diff < (-5 * {self._decimals}) ELSE "+\
-                f"ABS(diff) > (5 * {self._decimals}) END"
+                f"diff < {-5 * self._decimals} ELSE "+\
+                f"ABS(diff) > {5 * self._decimals} END "+\
+                f"OR raw < {-50 * self._decimals} OR raw > {50 * self._decimals}"
         else:
             # with inversion
             sql_null_case = f"ABS(diff) > (5 * {self._decimals})"
@@ -3772,7 +3773,8 @@ class StationET(StationTETBase):
             extra_cols="raw-nbs_median AS diff")
 
         sql_null_case = f"""(nears.raw > (nears.nbs_median * 2) AND nears.raw > {3*self._decimals})
-                            OR ((nears.raw * 4) < nears.nbs_median AND nears.raw > {2*self._decimals})"""
+                            OR ((nears.raw * 4) < nears.nbs_median AND nears.raw > {2*self._decimals})
+                            OR (nears.raw < 0) OR (nears.raw > {20*self._decimals})"""
         if do_invers:
             # without inversion
             sql_null_case = f"CASE WHEN (winter) THEN "+\
