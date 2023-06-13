@@ -3631,6 +3631,7 @@ class StationT(StationTETBase):
     _valid_kinds = ["raw", "raw_min", "raw_max", "qc",
                     "filled", "filled_min", "filled_max", "filled_by"]
     _filled_by_n = 5
+    _fillup_max_dist = 100e3
 
     def __init__(self, id, **kwargs):
         super().__init__(id, **kwargs)
