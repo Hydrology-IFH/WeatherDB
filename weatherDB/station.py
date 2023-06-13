@@ -2169,7 +2169,7 @@ class StationBase:
 
     def get_df(self, kinds, period=(None, None), agg_to=None,
                nas_allowed=True, add_na_share=False, db_unit=False,
-               sql_add_where=None):
+               sql_add_where=None, **kwargs):
         """Get a timeseries DataFrame from the database.
 
         Parameters
@@ -2318,6 +2318,9 @@ class StationBase:
                     format="'{}'".format(self._tstp_format_db))
             )
 
+        if "return_sql" in kwargs and kwargs["return_sql"]:
+            return sql
+
         df = pd.read_sql(sql, con=DB_ENG, index_col="timestamp")
 
         # convert filled_by to Int16, pandas Integer with NA support
@@ -2425,7 +2428,7 @@ class StationBase:
 
         return df
 
-    def get_filled(self, period=(None, None), with_dist=False):
+    def get_filled(self, period=(None, None), with_dist=False, **kwargs):
         """Get the filled timeserie.
 
         Either only the timeserie is returned or also the id of the station from which the station data got filled, together with the distance to this station in m.
@@ -2445,7 +2448,7 @@ class StationBase:
         pd.DataFrame
             The filled timeserie for this station and the given period.
         """
-        df = self.get_df(period=period, kinds="filled")
+        df = self.get_df(period=period, kinds="filled", **kwargs)
 
         # should the distance information get added
         if with_dist:
