@@ -3,6 +3,7 @@
 ## Version 0.0.36 (upcoming)
 
 - throw error if Richter correction is done on empty filled timeserie
+- add test for filled daily values before adjusting the 10 minute values in the fillup
 
 ## Version 0.0.35
 

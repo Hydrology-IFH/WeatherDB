@@ -3427,31 +3427,38 @@ class StationN(StationNBase):
 
     @check_superuser
     def _sql_fillup_extra_dict(self, **kwargs):
-        # adjust 10 minutes sum to match measured daily value
-        sql_extra = """
-            UPDATE new_filled_{stid}_{para} ts
-            SET filled = filled * coef
-            FROM (
-                SELECT
-                    date,
-                    ts_d."raw"/ts_10."filled"::float AS coef
+        fillup_extra_dict = super()._sql_fillup_extra_dict(**kwargs)
+
+        stat_nd = StationND(self.id)
+        if stat_nd.isin_db() and \
+                not stat_nd.get_filled_period(kind="filled", from_meta=True).is_empty():
+            # adjust 10 minutes sum to match measured daily value
+            sql_extra = """
+                UPDATE new_filled_{stid}_{para} ts
+                SET filled = filled * coef
                 FROM (
                     SELECT
-                        date(timestamp - '5h 50min'::INTERVAL),
-                        sum(filled) AS filled
-                    FROM new_filled_{stid}_{para}
-                    GROUP BY date(timestamp - '5h 50min'::INTERVAL)
-                    ) ts_10
-                LEFT JOIN timeseries."{stid}_n_d" ts_d
-                    ON ts_10.date=ts_d.timestamp
-                WHERE ts_d."raw" IS NOT NULL
-                      AND ts_10.filled > 0
-                ) df_coef
-            WHERE (ts.timestamp - '5h 50min'::INTERVAL)::date = df_coef.date
-                AND coef != 1;
-        """.format(stid=self.id, para=self._para)
-        fillup_extra_dict = super()._sql_fillup_extra_dict(**kwargs)
-        fillup_extra_dict.update(dict(sql_extra_after_loop=sql_extra))
+                        date,
+                        ts_d."raw"/ts_10."filled"::float AS coef
+                    FROM (
+                        SELECT
+                            date(timestamp - '5h 50min'::INTERVAL),
+                            sum(filled) AS filled
+                        FROM new_filled_{stid}_{para}
+                        GROUP BY date(timestamp - '5h 50min'::INTERVAL)
+                        ) ts_10
+                    LEFT JOIN timeseries."{stid}_n_d" ts_d
+                        ON ts_10.date=ts_d.timestamp
+                    WHERE ts_d."raw" IS NOT NULL
+                        AND ts_10.filled > 0
+                    ) df_coef
+                WHERE (ts.timestamp - '5h 50min'::INTERVAL)::date = df_coef.date
+                    AND coef != 1;
+            """.format(stid=self.id, para=self._para)
+            fillup_extra_dict.update(dict(sql_extra_after_loop=sql_extra))
+        else:
+            log.warn("Station_N({stid}).fillup: There is no daily timeserie in the database, "+
+                     "therefor the 10 minutes values are not getting adjusted to daily values")
         return fillup_extra_dict
 
     @check_superuser
