@@ -3,6 +3,7 @@
 ## Version 0.0.37
 
 - create_ts: skip period check if already done in GroupStation or GroupStations -> previously this got checked 3 times
+- add functionality to StationsBase.get_df to get multiple columns
 
 ## Version 0.0.36
 
