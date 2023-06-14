@@ -133,8 +133,6 @@ class StationBase:
     _date_col = None  # The name of the date column on the CDC server
     _para = None  # The parameter string "n", "t", or "et"
     _para_long = None  # The parameter as a long descriptive string
-    # the name of the CDC column that has the raw data and gets multiplied by the decimals
-    _cdc_col_name_raw = None
     # the names of the CDC columns that get imported
     _cdc_col_names_imp = [None]
     # the corresponding column name in the DB of the raw import
@@ -541,7 +539,7 @@ class StationBase:
             stid=self.id, para=self._para,
             why=why.replace("'", "''"))
 
-        with DB_ENG.connect() as con:
+        with DB_ENG.connect().execution_options(isolation_level="AUTOCOMMIT") as con:
             con.execute(sqltxt(sql))
         log.debug(
             "The {para_long} Station with ID {stid} got droped from the database."
@@ -1024,7 +1022,7 @@ class StationBase:
                     zipfiles.index,
                     zipfiles["modtime"].dt.strftime("%Y%m%d %H:%M").values)]
             )
-        with DB_ENG.connect() as con:
+        with DB_ENG.connect().execution_options(isolation_level="AUTOCOMMIT") as con:
             con.execute(sqltxt(f'''
                 INSERT INTO raw_files(para, filepath, modtime)
                 VALUES {update_values}
@@ -1343,7 +1341,7 @@ class StationBase:
             prev_check = ""
             for i in range(1, self._filled_by_n+1):
                 sql_exec_fillup += f"""
-                UPDATE new_filled_1346_t nf
+                UPDATE new_filled_{self.id}_{self._para} nf
                 SET nb_mean[{i}]=round(nb.qc + %3$s, 0)::int,
                     {sql_format_dict["extra_exec_cols"].format(i=i)}
                     filled_by[{i}]=%1$s
@@ -1367,9 +1365,9 @@ class StationBase:
                 exit_cond=f"SUM((filled IS NULL AND nb_mean[{self._filled_by_n}] is NULL)::int) = 0 "))
             if self._fillup_max_dist is not None:
                 sql_format_dict.update(dict(
-                    add_meta_col="ST_DISTANCE(geometry_utm,(SELECT geometry_utm FROM stat_row)) as dist, ",
+                    add_meta_col=", ST_DISTANCE(geometry_utm,(SELECT geometry_utm FROM stat_row)) as dist",
                     exit_cond=sql_format_dict["exit_cond"]\
-                        +"OR ((i.dist > {self._fillup_max_dist}) AND SUM((filled IS NULL AND nb_mean[1] is NULL)::int) = 0)"
+                        +f"OR ((i.dist > {self._fillup_max_dist}) AND SUM((filled IS NULL AND nb_mean[1] is NULL)::int) = 0)"
                     ))
 
             # create sql after loop, to calculate the median of the regionalised neighbors
@@ -2187,6 +2185,7 @@ class StationBase:
             The default is (None, None).
         agg_to : str or None, optional
             Aggregate to a given timespan.
+            If more than 20% of missing values in the aggregation group, the aggregated value will be None.
             Can be anything smaller than the maximum timespan of the saved data.
             If a Timeperiod smaller than the saved data is given, than the maximum possible timeperiod is returned.
             For T and ET it can be "month", "year".
@@ -2268,7 +2267,9 @@ class StationBase:
                     agg_fun = "MIN" if re.search(r".*_min", kind) else "MAX"
                 else:
                     agg_fun = self._agg_fun
-                kinds.append(f"ROUND({agg_fun}({kind}), 0) AS {kind}")
+                kinds.append(
+                    f"CASE WHEN (COUNT(\"{kind}\")/COUNT(*)::float)>0.8 "+
+                    f"THEN ROUND({agg_fun}({kind}), 0) ELSE NULL END AS {kind}")
 
             timestamp_col = "date_trunc('{agg_to}', timestamp)".format(
                 agg_to=agg_to)
@@ -3241,9 +3242,9 @@ class StationN(StationNBase):
         if type(period) != TimestampPeriod:
             period = TimestampPeriod(*period)
         period_in = period.copy()
-        if not period.is_empty():
-            period = self._check_period(
+        period = self._check_period(
                 period=period, kinds=["filled"])
+        if not period_in.is_empty():
             sql_period_clause = """
                 WHERE timestamp BETWEEN {min_tstp} AND {max_tstp}
             """.format(
@@ -3257,17 +3258,16 @@ class StationN(StationNBase):
         # check if temperature station is filled
         stat_t = StationT(self.id)
         stat_t_period = stat_t.get_filled_period(kind="filled")
-        stat_n_period = self.get_filled_period(kind="filled")
         delta = timedelta(hours=5, minutes=50)
         min_date = pd.Timestamp(MIN_TSTP).date()
         stat_t_min = stat_t_period[0].date()
         stat_t_max = stat_t_period[1].date()
-        stat_n_min = (stat_n_period[0] - delta).date()
-        stat_n_max = (stat_n_period[1] - delta).date()
+        stat_n_min = (period[0] - delta).date()
+        stat_n_max = (period[1] - delta).date()
         if stat_t_period.is_empty()\
                 or (stat_t_min > stat_n_min
                     and not (stat_n_min < min_date)
-                            and (stat_t_min == min_date)) \
+                             and (stat_t_min == min_date)) \
                 or (stat_t_max  < stat_n_max)\
                 and not stat_t.is_last_imp_done(kind="filled"):
             stat_t.fillup(period=period)
@@ -3350,7 +3350,9 @@ class StationN(StationNBase):
                             ELSE ts."filled"
                             END
             FROM ({sql_delta_n}) ts_delta_n
-            WHERE (ts.timestamp)::date = ts_delta_n.date;
+            WHERE (ts.timestamp)::date = ts_delta_n.date 
+                AND ((ts.filled>0 AND ts.corr!=(ts."filled" + ts_delta_n."delta_10min"))
+                     OR (ts.filled IS NULL AND ts.corr IS DISTINCT FROM NULL));
         """.format(
             sql_delta_n=sql_delta_n,
             **sql_format_dict
@@ -3428,31 +3430,38 @@ class StationN(StationNBase):
 
     @check_superuser
     def _sql_fillup_extra_dict(self, **kwargs):
-        # adjust 10 minutes sum to match measured daily value
-        sql_extra = """
-            UPDATE new_filled_{stid}_{para} ts
-            SET filled = filled * coef
-            FROM (
-                SELECT
-                    date,
-                    ts_d."raw"/ts_10."filled"::float AS coef
+        fillup_extra_dict = super()._sql_fillup_extra_dict(**kwargs)
+
+        stat_nd = StationND(self.id)
+        if stat_nd.isin_db() and \
+                not stat_nd.get_filled_period(kind="filled", from_meta=True).is_empty():
+            # adjust 10 minutes sum to match measured daily value
+            sql_extra = """
+                UPDATE new_filled_{stid}_{para} ts
+                SET filled = filled * coef
                 FROM (
                     SELECT
-                        date(timestamp - '5h 50min'::INTERVAL),
-                        sum(filled) AS filled
-                    FROM new_filled_{stid}_{para}
-                    GROUP BY date(timestamp - '5h 50min'::INTERVAL)
-                    ) ts_10
-                LEFT JOIN timeseries."{stid}_n_d" ts_d
-                    ON ts_10.date=ts_d.timestamp
-                WHERE ts_d."raw" IS NOT NULL
-                      AND ts_10.filled > 0
-                ) df_coef
-            WHERE (ts.timestamp - '5h 50min'::INTERVAL)::date = df_coef.date
-                AND coef != 1;
-        """.format(stid=self.id, para=self._para)
-        fillup_extra_dict = super()._sql_fillup_extra_dict(**kwargs)
-        fillup_extra_dict.update(dict(sql_extra_after_loop=sql_extra))
+                        date,
+                        ts_d."raw"/ts_10."filled"::float AS coef
+                    FROM (
+                        SELECT
+                            date(timestamp - '5h 50min'::INTERVAL),
+                            sum(filled) AS filled
+                        FROM new_filled_{stid}_{para}
+                        GROUP BY date(timestamp - '5h 50min'::INTERVAL)
+                        ) ts_10
+                    LEFT JOIN timeseries."{stid}_n_d" ts_d
+                        ON ts_10.date=ts_d.timestamp
+                    WHERE ts_d."raw" IS NOT NULL
+                        AND ts_10.filled > 0
+                    ) df_coef
+                WHERE (ts.timestamp - '5h 50min'::INTERVAL)::date = df_coef.date
+                    AND coef != 1;
+            """.format(stid=self.id, para=self._para)
+            fillup_extra_dict.update(dict(sql_extra_after_loop=sql_extra))
+        else:
+            log.warn("Station_N({stid}).fillup: There is no daily timeserie in the database, "+
+                     "therefor the 10 minutes values are not getting adjusted to daily values")
         return fillup_extra_dict
 
     @check_superuser

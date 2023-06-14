@@ -1,5 +1,14 @@
 # Change-log
 
+## Version 0.0.36 (upcoming)
+
+- throw error if Richter correction is done on empty filled timeserie
+- add test for filled daily values before adjusting the 10 minute values in the fillup
+- fix errors in fillup for Temperature stations
+- set autocommit for _drop method
+- richter_correct: only update corr when new values -> way faster
+- only give aggregated value if at least 80% data is available
+
 ## Version 0.0.35
 
 - set filled_by for T stations default to NULL not [NULL] -> works better with other methods
