@@ -1,5 +1,6 @@
 WeatherDB - module
 ==================
+
 author: ![Max Schmit](https://github.com/maxschmi)
 
 [![Documentation Status](https://readthedocs.org/projects/weatherdb/badge/?version=latest)](https://weatherdb.readthedocs.io/en/latest/?badge=latest)
@@ -23,32 +24,36 @@ This submodule has only one class Broker. This one is used to do actions on all 
 
 Install
 -------
+
 To install the package use PIP to install the Github repository:
 
-```
+```{cmd}
 pip install git+https://github.com/Hydrology-IFH/WeatherDB
 ```
 
 Or to upgrade use:
 
-```
+```{cmd}
 pip install git+https://github.com/Hydrology-IFH/WeatherDB --upgrade
 ```
 
 Get started
 -----------
+
 To get started you need to enter the credentials to access the Database. If this is an account with read only access, than only those method's, that read data from the Database are available.
 Enter those credentials in the secretSettings_weatherDB.py file. An example secretSettings_weatherDB.py file is in the source directory (see secretSettings_weatherDB_example.py)
 
 If you use the database at the hydrology department of Freiburg, please go to the [weather.hydro.intra.uni-freiburg.de](http://weather.hydro.intra.uni-freiburg.de). There you can create yourself an account and then download your login secretSettings file from your profile page, next to the "API Password".
 
 The secretSettings_weatherDB.py file needs to be placed either:
+
 - in a parent folder of the package (e.g. in the main folder of your virtual environment folder)
 - some other directory that is in the PYTHONPATH environment variable. (You can also create a new directory and add it to the PATH environment)
 - in the package source folder (e.g. ../path_to_venv/Lib/site-packages/weatherDB) !This might not be the best method, because an upgrade of the package could delete the file again!
 
 How-to install python
 ---------------------
+
 To use this package you obviously need Python with several packages installed.
 
 The easiest way to install python is by installing [Anaconda](https://www.anaconda.com/products/distribution).
@@ -56,12 +61,13 @@ The easiest way to install python is by installing [Anaconda](https://www.anacon
 After the installation you should create yourself a virtual environment. This is basically a folder with all your packages installed and some definition files to set the appropriate environment variables...
 To do so use (in Anaconda Terminal): 
 
-```
+```{cmd}
 conda create --name your_environment_name python=3.8
 ```
+
 Afterwards you need to activate your environment and then install the requirements:
 
-```
+```{cmd}
 conda activate your_environment_name
 conda install shapely numpy geopandas pandas sqlalchemy
 conda install -c conda-forge rasterio psycopg2 pip
