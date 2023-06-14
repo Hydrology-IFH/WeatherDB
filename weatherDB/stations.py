@@ -844,7 +844,7 @@ class StationsBase:
             self.quality_check(**kwargs)
             self.fillup(**kwargs)
 
-    def get_df(self, stids, kind, **kwargs):
+    def get_df(self, stids, **kwargs):
         """Get a DataFrame with the corresponding data.
 
         Parameters
@@ -861,22 +861,31 @@ class StationsBase:
         Returns
         -------
         pd.Dataframe
-            A DataFrame with the timeseries for this station and the given period.
+            A DataFrame with the timeseries for the selected stations, kind(s) and the given period.
+            If multiple columns are selected, the columns in this DataFrame is a MultiIndex with the station IDs as first level and the kind as second level.
         """
-        if "kinds" in kwargs:
-            raise ValueError("The kinds parameter is not supported for stations objects. Please use kind instead.")
+        if "kinds" in kwargs and "kind" in kwargs:
+            raise ValueError("Either enter kind or kinds, not both.")
+        if "kind" in kwargs:
+            kinds=[kwargs.pop("kind")]
+        else:
+            kinds=kwargs.pop("kinds")
         stats = self.get_stations(only_real=False, stids=stids)
         for stat in pb.progressbar(stats, line_breaks=False):
-            df = stat.get_df(kinds=[kind], **kwargs)
+            df = stat.get_df(kinds=kinds, **kwargs)
             if df is None:
                 warnings.warn(
                     f"There was no data for {stat._para_long} station {stat.id}!")
                 continue
-            df.rename(
-                dict(zip(
-                    df.columns,
-                    [str(stat.id) for col in df.columns])),
-                axis=1, inplace=True)
+            if len(df.columns) == 1:
+                df.rename(
+                    dict(zip(df.columns,
+                             [str(stat.id) for col in df.columns])),
+                    axis=1, inplace=True)
+            else:
+                df.columns = pd.MultiIndex.from_product(
+                    [[stat.id], df.columns], 
+                    names=["Station ID", "kind"])
             if "df_all" in locals():
                 df_all = df_all.join(df)
             else:
