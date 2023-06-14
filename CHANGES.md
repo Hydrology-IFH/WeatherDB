@@ -4,6 +4,7 @@
 
 - create_ts: skip period check if already done in GroupStation or GroupStations -> previously this got checked 3 times
 - add functionality to StationsBase.get_df to get multiple columns
+- fix error in richter_correct from previous version
 
 ## Version 0.0.36
 
