@@ -133,8 +133,6 @@ class StationBase:
     _date_col = None  # The name of the date column on the CDC server
     _para = None  # The parameter string "n", "t", or "et"
     _para_long = None  # The parameter as a long descriptive string
-    # the name of the CDC column that has the raw data and gets multiplied by the decimals
-    _cdc_col_name_raw = None
     # the names of the CDC columns that get imported
     _cdc_col_names_imp = [None]
     # the corresponding column name in the DB of the raw import
