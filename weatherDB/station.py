@@ -1343,7 +1343,7 @@ class StationBase:
             prev_check = ""
             for i in range(1, self._filled_by_n+1):
                 sql_exec_fillup += f"""
-                UPDATE new_filled_1346_t nf
+                UPDATE new_filled_{self.id}_{self._para} nf
                 SET nb_mean[{i}]=round(nb.qc + %3$s, 0)::int,
                     {sql_format_dict["extra_exec_cols"].format(i=i)}
                     filled_by[{i}]=%1$s
@@ -1367,9 +1367,9 @@ class StationBase:
                 exit_cond=f"SUM((filled IS NULL AND nb_mean[{self._filled_by_n}] is NULL)::int) = 0 "))
             if self._fillup_max_dist is not None:
                 sql_format_dict.update(dict(
-                    add_meta_col="ST_DISTANCE(geometry_utm,(SELECT geometry_utm FROM stat_row)) as dist, ",
+                    add_meta_col=", ST_DISTANCE(geometry_utm,(SELECT geometry_utm FROM stat_row)) as dist",
                     exit_cond=sql_format_dict["exit_cond"]\
-                        +"OR ((i.dist > {self._fillup_max_dist}) AND SUM((filled IS NULL AND nb_mean[1] is NULL)::int) = 0)"
+                        +f"OR ((i.dist > {self._fillup_max_dist}) AND SUM((filled IS NULL AND nb_mean[1] is NULL)::int) = 0)"
                     ))
 
             # create sql after loop, to calculate the median of the regionalised neighbors
