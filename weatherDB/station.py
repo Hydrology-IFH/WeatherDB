@@ -2185,6 +2185,7 @@ class StationBase:
             The default is (None, None).
         agg_to : str or None, optional
             Aggregate to a given timespan.
+            If more than 20% of missing values in the aggregation group, the aggregated value will be None.
             Can be anything smaller than the maximum timespan of the saved data.
             If a Timeperiod smaller than the saved data is given, than the maximum possible timeperiod is returned.
             For T and ET it can be "month", "year".
@@ -2266,7 +2267,9 @@ class StationBase:
                     agg_fun = "MIN" if re.search(r".*_min", kind) else "MAX"
                 else:
                     agg_fun = self._agg_fun
-                kinds.append(f"ROUND({agg_fun}({kind}), 0) AS {kind}")
+                kinds.append(
+                    f"CASE WHEN (COUNT(\"{kind}\")/COUNT(*)::float)>0.8 "+
+                    f"THEN ROUND({agg_fun}({kind}), 0) ELSE NULL END AS {kind}")
 
             timestamp_col = "date_trunc('{agg_to}', timestamp)".format(
                 agg_to=agg_to)

@@ -7,6 +7,7 @@
 - fix errors in fillup for Temperature stations
 - set autocommit for _drop method
 - richter_correct: only update corr when new values -> way faster
+- only give aggregated value if at least 80% data is available
 
 ## Version 0.0.35
 
