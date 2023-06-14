@@ -1412,6 +1412,7 @@ class GroupStations(object):
                         add_na_share=add_na_share,
                         add_t_min=add_t_min,
                         add_t_max=add_t_max,
+                        _skip_period_check=True,
                         **kwargs)
                     pbar.variables["last_station"] = stat.id
                     pbar.update(pbar.value + 1)
