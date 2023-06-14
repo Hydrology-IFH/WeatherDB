@@ -541,9 +541,8 @@ class StationBase:
             stid=self.id, para=self._para,
             why=why.replace("'", "''"))
 
-        with DB_ENG.connect() as con:
-            con.execution_options(isolation_level="AUTOCOMMIT")\
-                .execute(sqltxt(sql))
+        with DB_ENG.connect().execution_options(isolation_level="AUTOCOMMIT") as con:
+            con.execute(sqltxt(sql))
         log.debug(
             "The {para_long} Station with ID {stid} got droped from the database."
             .format(stid=self.id, para_long=self._para_long))
@@ -1025,7 +1024,7 @@ class StationBase:
                     zipfiles.index,
                     zipfiles["modtime"].dt.strftime("%Y%m%d %H:%M").values)]
             )
-        with DB_ENG.connect() as con:
+        with DB_ENG.connect().execution_options(isolation_level="AUTOCOMMIT") as con:
             con.execute(sqltxt(f'''
                 INSERT INTO raw_files(para, filepath, modtime)
                 VALUES {update_values}
