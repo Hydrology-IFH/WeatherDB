@@ -3332,7 +3332,7 @@ class StationN(StationNBase):
         sql_delta_n = """
             SELECT date,
                 CASE WHEN "count_n"> 0 THEN
-                        round(("b_{richter_class}" * ("n_d"::float/{n_decim})^"E" * {n_decim})/"count_n")
+                        round(("b_{richter_class}" * ("n_d"::float/{n_decim})^"E" * {n_decim})/"count_n")::int
                     ELSE 0
                 END AS "delta_10min"
             FROM ({sql_n_daily_precip_class}) tsn_d2
