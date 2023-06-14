@@ -3332,7 +3332,7 @@ class StationN(StationNBase):
         sql_delta_n = """
             SELECT date,
                 CASE WHEN "count_n"> 0 THEN
-                        round(("b_{richter_class}" * ("n_d"::float/{n_decim})^"E" * {n_decim})/"count_n")
+                        round(("b_{richter_class}" * ("n_d"::float/{n_decim})^"E" * {n_decim})/"count_n")::int
                     ELSE 0
                 END AS "delta_10min"
             FROM ({sql_n_daily_precip_class}) tsn_d2
@@ -3344,18 +3344,29 @@ class StationN(StationNBase):
         )
 
         # calculate the new corr
-        sql_update = """
-            UPDATE timeseries."{stid}_{para}" ts
-            SET "corr" = CASE WHEN "filled" > 0
-                            THEN ts."filled" + ts_delta_n."delta_10min"
-                            ELSE ts."filled"
-                            END
-            FROM ({sql_delta_n}) ts_delta_n
-            WHERE (ts.timestamp)::date = ts_delta_n.date 
-                AND ((ts.filled>0 AND ts.corr!=(ts."filled" + ts_delta_n."delta_10min"))
-                     OR (ts.filled IS NULL AND ts.corr IS DISTINCT FROM NULL));
+        sql_new_corr = """
+            SELECT timestamp, 
+                CASE WHEN "filled" > 0
+                     THEN ts."filled" + ts_delta_n."delta_10min"
+                     ELSE ts."filled"
+                END as corr
+            FROM timeseries."{stid}_{para}" ts
+            LEFT JOIN ({sql_delta_n}) ts_delta_n
+                ON (ts.timestamp)::date = ts_delta_n.date
         """.format(
             sql_delta_n=sql_delta_n,
+            **sql_format_dict
+        )
+
+        # update the timeseries
+        sql_update = """
+            UPDATE timeseries."{stid}_{para}" ts
+            SET "corr" = new.corr
+            FROM ({sql_new_corr}) new
+            WHERE ts.timestamp = new.timestamp 
+                AND ts.corr is distinct from new.corr;
+        """.format(
+            sql_new_corr=sql_new_corr,
             **sql_format_dict
         )
 
