@@ -210,7 +210,7 @@ class StationsBase:
         sql = sql[:-2] + ";"
 
         # run sql command
-        with DB_ENG.connect() as con:
+        with DB_ENG.connect().execution_options(isolation_level="AUTOCOMMIT") as con:
             con.execute(sqltxt(sql))
 
     @check_superuser
@@ -1451,7 +1451,7 @@ class GroupStations(object):
             zip="true" if dir.suffix ==".zip" else "false",
             pc=socket.gethostname(),
             out_size=out_size)
-        with DB_ENG.connect() as con:
+        with DB_ENG.connect().execution_options(isolation_level="AUTOCOMMIT") as con:
             con.execute(sqltxt(sql_save_time))
 
         # create log message
