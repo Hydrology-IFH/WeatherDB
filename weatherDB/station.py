@@ -4274,6 +4274,8 @@ class GroupStation(object):
                             period=str(period),
                             period_filled=str(period_filled)))
                     period = period_new
+        if "_skip_period_check" in kwargs:
+            del kwargs["_skip_period_check"]
 
         # prepare loop
         name_suffix = "_{stid:0>5}.txt".format(stid=self.id)
