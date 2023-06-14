@@ -3349,7 +3349,9 @@ class StationN(StationNBase):
                             ELSE ts."filled"
                             END
             FROM ({sql_delta_n}) ts_delta_n
-            WHERE (ts.timestamp)::date = ts_delta_n.date;
+            WHERE (ts.timestamp)::date = ts_delta_n.date 
+                AND ((ts.filled>0 AND ts.corr!=(ts."filled" + ts_delta_n."delta_10min"))
+                     OR (ts.filled IS NULL AND ts.CORR IS DISTINCT FROM NULL));
         """.format(
             sql_delta_n=sql_delta_n,
             **sql_format_dict

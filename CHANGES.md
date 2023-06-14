@@ -6,6 +6,7 @@
 - add test for filled daily values before adjusting the 10 minute values in the fillup
 - fix errors in fillup for Temperature stations
 - set autocommit for _drop method
+- richter_correct: only update corr when new values -> way faster
 
 ## Version 0.0.35
 
