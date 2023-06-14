@@ -3241,9 +3241,9 @@ class StationN(StationNBase):
         if type(period) != TimestampPeriod:
             period = TimestampPeriod(*period)
         period_in = period.copy()
-        if not period.is_empty():
-            period = self._check_period(
+        period = self._check_period(
                 period=period, kinds=["filled"])
+        if not period_in.is_empty():
             sql_period_clause = """
                 WHERE timestamp BETWEEN {min_tstp} AND {max_tstp}
             """.format(
@@ -3257,17 +3257,16 @@ class StationN(StationNBase):
         # check if temperature station is filled
         stat_t = StationT(self.id)
         stat_t_period = stat_t.get_filled_period(kind="filled")
-        stat_n_period = self.get_filled_period(kind="filled")
         delta = timedelta(hours=5, minutes=50)
         min_date = pd.Timestamp(MIN_TSTP).date()
         stat_t_min = stat_t_period[0].date()
         stat_t_max = stat_t_period[1].date()
-        stat_n_min = (stat_n_period[0] - delta).date()
-        stat_n_max = (stat_n_period[1] - delta).date()
+        stat_n_min = (period[0] - delta).date()
+        stat_n_max = (period[1] - delta).date()
         if stat_t_period.is_empty()\
                 or (stat_t_min > stat_n_min
                     and not (stat_n_min < min_date)
-                            and (stat_t_min == min_date)) \
+                             and (stat_t_min == min_date)) \
                 or (stat_t_max  < stat_n_max)\
                 and not stat_t.is_last_imp_done(kind="filled"):
             stat_t.fillup(period=period)

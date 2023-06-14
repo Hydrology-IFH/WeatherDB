@@ -1,5 +1,9 @@
 # Change-log
 
+## Version 0.0.36 (upcoming)
+
+- throw error if Richter correction is done on empty filled timeserie
+
 ## Version 0.0.35
 
 - set filled_by for T stations default to NULL not [NULL] -> works better with other methods
