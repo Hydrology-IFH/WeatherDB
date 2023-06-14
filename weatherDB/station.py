@@ -2239,7 +2239,7 @@ class StationBase:
         else:
             add_filled_share = False
         kinds = self._check_kinds(kinds=kinds)
-        if "_skip_period_check" in kwargs and not kwargs["_skip_period_check"]:
+        if not ("_skip_period_check" in kwargs and kwargs["_skip_period_check"]):
             period = self._check_period(
                 period=period, kinds=kinds, nas_allowed=nas_allowed)
 
@@ -4255,7 +4255,7 @@ class GroupStation(object):
         paras = self._check_paras(paras)
 
         # get the period
-        if "_skip_period_check" in kwargs and not kwargs["_skip_period_check"]:
+        if not ("_skip_period_check" in kwargs and kwargs["_skip_period_check"]):
             period = TimestampPeriod._check_period(period).expand_to_timestamp()
             period_filled = self.get_filled_period(
                 kinds=kinds, 
