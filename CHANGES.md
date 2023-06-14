@@ -1,5 +1,9 @@
 # Change-log
 
+## Version 0.0.37
+
+- create_ts: skip period check if already done in GroupStation or GroupStations -> previously this got checked 3 times
+
 ## Version 0.0.36
 
 - throw error if Richter correction is done on empty filled timeserie

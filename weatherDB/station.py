@@ -1903,7 +1903,7 @@ class StationBase:
         else:
             return TimestampPeriod(None, None)
 
-    def get_max_period(self, kinds, nas_allowed=False):
+    def get_max_period(self, kinds, nas_allowed=False, **kwargs):
         """Get the maximum available period for this stations timeseries.
 
         If nas_allowed is True, then the maximum range of the timeserie is returned.
@@ -1939,10 +1939,10 @@ class StationBase:
         else:
             kinds = self._check_kinds(kinds)
             if len(kinds)>0:
-                max_period = self.get_filled_period(kind=kinds[0])
+                max_period = self.get_filled_period(kind=kinds[0], **kwargs)
                 for kind in kinds[1:]:
                     max_period = max_period.union(
-                        self.get_filled_period(kind=kind),
+                        self.get_filled_period(kind=kind, **kwargs),
                         how="outer" if nas_allowed else "inner")
             else:
                 max_period = TimestampPeriod(None, None)
@@ -2239,8 +2239,9 @@ class StationBase:
         else:
             add_filled_share = False
         kinds = self._check_kinds(kinds=kinds)
-        period = self._check_period(
-            period=period, kinds=kinds, nas_allowed=nas_allowed)
+        if "_skip_period_check" in kwargs and not kwargs["_skip_period_check"]:
+            period = self._check_period(
+                period=period, kinds=kinds, nas_allowed=nas_allowed)
 
         if period.is_empty() and not nas_allowed:
             return None
@@ -4254,24 +4255,27 @@ class GroupStation(object):
         paras = self._check_paras(paras)
 
         # get the period
-        join_how = "outer" if nas_allowed else "inner"
+        if "_skip_period_check" in kwargs and not kwargs["_skip_period_check"]:
+            period = TimestampPeriod._check_period(period).expand_to_timestamp()
+            period_filled = self.get_filled_period(
+                kinds=kinds, 
+                join_how="outer" if nas_allowed else "inner")
 
-        period = TimestampPeriod._check_period(period)
-        period_filled = self.get_filled_period(kinds=kinds, join_how=join_how)
-
-        if period.is_empty():
-            period = period_filled
-        else:
-            period_new = period_filled.union(
-                period,
-                how="inner")
-            if period_new != period:
-                warnings.warn(
-                    "The Period for Station {stid} got changed from {period} to {period_filled}.".format(
-                        stid=self.id,
-                        period=str(period),
-                        period_filled=str(period_filled)))
-                period = period_new
+            if period.is_empty():
+                period = period_filled
+            else:
+                period_new = period_filled.union(
+                    period,
+                    how="inner")
+                if period_new != period:
+                    warnings.warn(
+                        "The Period for Station {stid} got changed from {period} to {period_filled}.".format(
+                            stid=self.id,
+                            period=str(period),
+                            period_filled=str(period_filled)))
+                    period = period_new
+        if "_skip_period_check" in kwargs:
+            del kwargs["_skip_period_check"]
 
         # prepare loop
         name_suffix = "_{stid:0>5}.txt".format(stid=self.id)
@@ -4289,6 +4293,7 @@ class GroupStation(object):
                 nas_allowed=nas_allowed,
                 add_na_share=add_na_share,
                 add_t_min=add_t_min, add_t_max=add_t_max,
+                _skip_period_check=True,
                 **kwargs)
 
             # rename columns
