@@ -2514,7 +2514,15 @@ class StationBase:
             If None than the maximum timeperiod is taken.
             The default is None.
         """
-        df = self.get_df(kinds=[kind], period=period, db_unit=False, agg_to=agg_to)
+        kinds = []
+        if "kinds" in kwargs:
+            for kind in kwargs["kinds"]:
+                if kind not in kinds:
+                    kinds.append(kind)
+        else:
+            kinds = [kind]
+
+        df = self.get_df(kinds=kinds, period=period, db_unit=False, agg_to=agg_to)
 
         df.plot(
             xlabel="Datum", ylabel=self._unit,
@@ -3345,7 +3353,7 @@ class StationN(StationNBase):
 
         # calculate the new corr
         sql_new_corr = """
-            SELECT timestamp, 
+            SELECT timestamp,
                 CASE WHEN "filled" > 0
                      THEN ts."filled" + ts_delta_n."delta_10min"
                      ELSE ts."filled"
@@ -3363,7 +3371,7 @@ class StationN(StationNBase):
             UPDATE timeseries."{stid}_{para}" ts
             SET "corr" = new.corr
             FROM ({sql_new_corr}) new
-            WHERE ts.timestamp = new.timestamp 
+            WHERE ts.timestamp = new.timestamp
                 AND ts.corr is distinct from new.corr;
         """.format(
             sql_new_corr=sql_new_corr,
@@ -3806,8 +3814,8 @@ class StationET(StationTETBase):
             WITH nears AS ({sql_nears})
             SELECT
                 timestamp,
-                (CASE WHEN ({sql_null_case} 
-                            OR (nears.raw < 0) 
+                (CASE WHEN ({sql_null_case}
+                            OR (nears.raw < 0)
                             OR (nears.raw > {20*self._decimals}))
                     THEN NULL
                     ELSE nears."raw" END) as qc
@@ -4269,7 +4277,7 @@ class GroupStation(object):
         if not ("_skip_period_check" in kwargs and kwargs["_skip_period_check"]):
             period = TimestampPeriod._check_period(period).expand_to_timestamp()
             period_filled = self.get_filled_period(
-                kinds=kinds, 
+                kinds=kinds,
                 join_how="outer" if nas_allowed else "inner")
 
             if period.is_empty():
