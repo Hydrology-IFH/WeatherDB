@@ -2519,6 +2519,7 @@ class StationBase:
             for kind in kwargs["kinds"]:
                 if kind not in kinds:
                     kinds.append(kind)
+            kwargs.pop("kinds")
         else:
             kinds = [kind]
 
