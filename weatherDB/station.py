@@ -3255,13 +3255,9 @@ class StationN(StationNBase):
         period = self._check_period(
                 period=period, kinds=["filled"])
         if not period_in.is_empty():
-            sql_period_clause = """
-                WHERE timestamp BETWEEN {min_tstp} AND {max_tstp}
-            """.format(
-                **period.get_sql_format_dict(
-                    format="'{}'".format(self._tstp_format_db)
-                )
-            )
+            sql_period_clause = \
+                "WHERE timestamp BETWEEN {min_tstp} AND {max_tstp}".format(
+                    **period.get_sql_format_dict(f"'{self._tstp_format_db}'"))
         else:
             sql_period_clause = ""
 
@@ -3362,6 +3358,7 @@ class StationN(StationNBase):
             FROM timeseries."{stid}_{para}" ts
             LEFT JOIN ({sql_delta_n}) ts_delta_n
                 ON (ts.timestamp)::date = ts_delta_n.date
+            {period_clause}
         """.format(
             sql_delta_n=sql_delta_n,
             **sql_format_dict
