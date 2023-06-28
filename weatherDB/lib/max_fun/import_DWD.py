@@ -323,8 +323,8 @@ def get_dwd_meta(ftp_folder, min_years=0, max_hole_d=9999):
         The default is 0.
     max_hole_d : int
         The maximum amount of days missing in the data allowed.
-        If there are several files for one station and the time hole is biger
-        than this value, the older "von_datum" is overwriten
+        If there are several files for one station and the time hole is bigger
+        than this value, the older "von_datum" is overwritten
         in the meta GeoDataFrame.
         The default is 2.
 
