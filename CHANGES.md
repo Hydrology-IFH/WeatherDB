@@ -6,6 +6,7 @@
   Previously the richter correction did only work, when applied to the whole period (period=(None,None)).
   When a smaller period was selected, everything outside of this period got set to NULL. 
   This problem existed since Version 0.0.36
+- update pattern to find meta file, DWD has a second file in kl daily folder, having "mn4" in name
 
 ## Version 0.0.37
 
