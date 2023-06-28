@@ -1,5 +1,12 @@
 # Change-log
 
+## Version 0.0.38
+
+- fix problem when updating the richter correction to only a period. 
+  Previously the richter correction did only work, when applied to the whole period (period=(None,None)).
+  When a smaller period was selected, everything outside of this period got set to NULL. 
+  This problem existed since Version 0.0.36
+
 ## Version 0.0.37
 
 - create_ts: skip period check if already done in GroupStation or GroupStations -> previously this got checked 3 times
