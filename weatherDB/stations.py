@@ -1450,19 +1450,20 @@ class GroupStations(object):
                 f.stat().st_size for f in dir.glob('**/*') if f.is_file())
 
         # save needed time to db
-        sql_save_time = """
-            INSERT INTO needed_download_time(timestamp, quantity, aggregate, timespan, zip, pc, duration, output_size)
-            VALUES (now(), '{quantity}', '{agg_to}', '{timespan}', '{zip}', '{pc}', '{duration}', '{out_size}');
-        """.format(
-            quantity=len(stids),
-            agg_to=agg_to,
-            timespan=str(period.get_interval()),
-            duration=str(datetime.datetime.now() - start_time),
-            zip="true" if dir.suffix ==".zip" else "false",
-            pc=socket.gethostname(),
-            out_size=out_size)
-        with DB_ENG.connect().execution_options(isolation_level="AUTOCOMMIT") as con:
-            con.execute(sqltxt(sql_save_time))
+        if DB_ENG.is_superuser:
+            sql_save_time = """
+                INSERT INTO needed_download_time(timestamp, quantity, aggregate, timespan, zip, pc, duration, output_size)
+                VALUES (now(), '{quantity}', '{agg_to}', '{timespan}', '{zip}', '{pc}', '{duration}', '{out_size}');
+            """.format(
+                quantity=len(stids),
+                agg_to=agg_to,
+                timespan=str(period.get_interval()),
+                duration=str(datetime.datetime.now() - start_time),
+                zip="true" if dir.suffix ==".zip" else "false",
+                pc=socket.gethostname(),
+                out_size=out_size)
+            with DB_ENG.connect().execution_options(isolation_level="AUTOCOMMIT") as con:
+                con.execute(sqltxt(sql_save_time))
 
         # create log message
         log.debug(
@@ -1471,7 +1472,8 @@ class GroupStations(object):
 
     def create_roger_ts(self, dir, period=(None, None), stids="all",
                         kind="best", r_r0=1,
-                        add_t_min=False, add_t_max=False, **kwargs):
+                        add_t_min=False, add_t_max=False, 
+                        do_toolbox_format=False, **kwargs):
         """Create the timeserie files for roger as csv.
 
         This is only a wrapper function for create_ts with some standard settings.
@@ -1510,6 +1512,9 @@ class GroupStations(object):
         add_t_max : bool, optional
             Should the maximal temperature value get added?
             The default is False.
+        do_toolbox_format : bool, optional
+            Should the timeseries be saved in the RoGeR toolbox format? (have a look at the RoGeR examples in https://github.com/Hydrology-IFH/roger)
+            The default is False.
         **kwargs:
             additional parameters for GroupStation.create_ts
 
@@ -1517,12 +1522,27 @@ class GroupStations(object):
         ------
         Warning
             If there are NAs in the timeseries or the period got changed.
-        """
-        return self.create_ts(dir=dir, period=period, kinds=kind,
-                              agg_to="10 min", r_r0=r_r0, stids=stids,
-                              split_date=True, nas_allowed=False,
-                              add_t_min=add_t_min, add_t_max=add_t_max,
-                              **kwargs)
+        """  
+        if do_toolbox_format:
+            return self.create_ts(
+                dir=dir, period=period, kinds=kind,
+                agg_to="10 min", r_r0=r_r0, stids=stids,
+                split_date=True, nas_allowed=False,
+                add_t_min=add_t_min, add_t_max=add_t_max, 
+                file_names={"N":"PREC.txt", "T":"TEMP.txt", "ET":"PET.txt"},
+                col_names={"N":"PREC", "ET":"PET", 
+                           "T":"TA", "T_min":"TA_min", "T_max":"TA_max", 
+                           "Jahr":"YYYY", "Monat":"MM", "Tag":"DD", 
+                           "Stunde":"hh", "Minute":"mm"},
+                add_meta=False,
+                **kwargs)
+        else:
+            return self.create_ts(
+                dir=dir, period=period, kinds=kind,
+                agg_to="10 min", r_r0=r_r0, stids=stids,
+                split_date=True, nas_allowed=False,
+                add_t_min=add_t_min, add_t_max=add_t_max,
+                **kwargs)
 
 # clean station
 del StationN, StationND, StationT, StationET, GroupStation, StationBase

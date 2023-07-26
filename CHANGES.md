@@ -1,10 +1,16 @@
 # Change-log
 
+## Version 0.0.39
+
+- add the RoGeR Toolbox format as timeseries format. See https://github.com/Hydrology-IFH/roger for more specifications on the format
+- only insert needed download time if DB_ENG is super user
+- add possibility to change the column names and filenames of written out weather timeserires
+
 ## Version 0.0.38
 
-- fix problem when updating the richter correction to only a period. 
-  Previously the richter correction did only work, when applied to the whole period (period=(None,None)).
-  When a smaller period was selected, everything outside of this period got set to NULL. 
+- fix problem when updating the Richter correction to only a period.
+  Previously the Richter correction did only work, when applied to the whole period (period=(None,None)).
+  When a smaller period was selected, everything outside of this period got set to NULL.
   This problem existed since Version 0.0.36
 - update pattern to find meta file, DWD has a second file in kl daily folder, having "mn4" in name
 

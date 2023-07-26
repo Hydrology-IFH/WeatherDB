@@ -4146,6 +4146,7 @@ class GroupStation(object):
 
     def create_roger_ts(self, dir, period=(None, None),
                         kind="best", r_r0=1, add_t_min=False, add_t_max=False,
+                        do_toolbox_format=False,
                         **kwargs):
         """Create the timeserie files for roger as csv.
 
@@ -4180,6 +4181,9 @@ class GroupStation(object):
         add_t_max=False : bool, optional
             Schould the maximal temperature value get added?
             The default is False.
+        do_toolbox_format : bool, optional
+            Should the timeseries be saved in the RoGeR toolbox format? (have a look at the RoGeR examples in https://github.com/Hydrology-IFH/roger)
+            The default is False.
         **kwargs:
             additional parameters for Station.get_df
 
@@ -4188,15 +4192,32 @@ class GroupStation(object):
         Warning
             If there are NAs in the timeseries or the period got changed.
         """
-        return self.create_ts(dir=dir, period=period, kinds=kind,
-                              agg_to="10 min", r_r0=r_r0, split_date=True,
-                              nas_allowed=False,
-                              add_t_min=add_t_min, add_t_max=add_t_max)
+        if do_toolbox_format:
+            return self.create_ts(
+                dir=dir, period=period, kinds=kind,
+                agg_to="10 min", r_r0=r_r0, split_date=True,
+                nas_allowed=False,
+                add_t_min=add_t_min, add_t_max=add_t_max, 
+                file_names={"N":"PREC.txt", "T":"TEMP.txt", "ET":"PET.txt"},
+                col_names={"N":"PREC", "ET":"PET", 
+                           "T":"TA", "T_min":"TA_min", "T_max":"TA_max", 
+                           "Jahr":"YYYY", "Monat":"MM", "Tag":"DD", 
+                           "Stunde":"hh", "Minute":"mm"},
+                add_meta=False,
+                **kwargs)
+        else:
+            return self.create_ts(
+                dir=dir, period=period, kinds=kind,
+                agg_to="10 min", r_r0=r_r0, split_date=True,
+                nas_allowed=False,
+                add_t_min=add_t_min, add_t_max=add_t_max, 
+                **kwargs)
 
     def create_ts(self, dir, period=(None, None), kinds="best", paras="all",
                   agg_to="10 min", r_r0=None, split_date=False,
                   nas_allowed=True, add_na_share=False,
                   add_t_min=False, add_t_max=False,
+                  add_meta=True, file_names={}, col_names={},
                   **kwargs):
         """Create the timeserie files as csv.
 
@@ -4250,11 +4271,24 @@ class GroupStation(object):
             The "kind"_na_share column is in percentage.
             The default is False.
         add_t_min=False : bool, optional
-            Schould the minimal temperature value get added?
+            Should the minimal temperature value get added?
             The default is False.
         add_t_max=False : bool, optional
-            Schould the maximal temperature value get added?
+            Should the maximal temperature value get added?
             The default is False.
+        add_meta : bool, optional
+            Should station Meta information like name and Location (lat, long) be added to the file?
+            The default is True.
+        file_names : dict, optional
+            A dictionary with the file names for the different parameters.
+            e.g.{"N":"PREC.txt", "T":"TEMP.txt", "ET":"ET.txt"}
+            If an empty dictionary is given, then the standard names are used.
+            The default is {}.
+        col_names : dict, optional
+            A dictionary with the column names for the different parameters.
+            e.g.{"N":"PREC", "T":"TEMP", "ET":"ET", "Jahr":"YYYY", "Monat":"MM", "Tag":"DD", "Stunde":"HH", "Minute":"MN"}
+            If an empty dictionary is given, then the standard names are used.
+            The default is {}.
         **kwargs:
             additional parameters for Station.get_df
 
@@ -4357,8 +4391,11 @@ class GroupStation(object):
                         pd.Series(r_r0, name="R/R0", index=df.index))
 
             # create header
-            header = ("Name: " + name + "\t" * (num_col-1) + "\n" +
+            if add_meta:
+                header = ("Name: " + name + "\t" * (num_col-1) + "\n" +
                         "Lat: " + y + "   ,Lon: " + x + "\t" * (num_col-1) + "\n")
+            else:
+                header = ""
 
             # create tables
             if split_date:
@@ -4368,6 +4405,17 @@ class GroupStation(object):
             else:
                 df.reset_index(inplace=True)
 
+            # rename columns if user asked for
+            df.rename(col_names, axis=1, inplace=True)
+
+            # get file name
+            if para.upper() in file_names:
+                file_name = file_names[para.upper()]
+            elif para in file_names:
+                file_name = file_names[para]
+            else:
+                file_name = para.upper() + name_suffix
+
             # write table out
             if version.parse(pd.__version__) > version.parse("1.5.0"):
                 to_csv_kwargs = dict(lineterminator="\n")
@@ -4375,12 +4423,9 @@ class GroupStation(object):
                 to_csv_kwargs = dict(line_terminator="\n")
             str_df = header + df.to_csv(
                 sep="\t", decimal=".", index=False, **to_csv_kwargs)
-            file_name = para.upper() + name_suffix
+            
             if do_zip:
-                dir.writestr(
-                    "{stid}/{file}".format(
-                        stid=self.id, file=file_name),
-                    str_df)
+                dir.writestr(f"{self.id}/{file_name}", str_df)
             else:
                 with open(dir.joinpath(file_name), "w") as f:
                     f.write(str_df)
