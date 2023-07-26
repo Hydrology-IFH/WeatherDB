@@ -1472,7 +1472,8 @@ class GroupStations(object):
 
     def create_roger_ts(self, dir, period=(None, None), stids="all",
                         kind="best", r_r0=1,
-                        add_t_min=False, add_t_max=False, **kwargs):
+                        add_t_min=False, add_t_max=False, 
+                        do_toolbox_format=False, **kwargs):
         """Create the timeserie files for roger as csv.
 
         This is only a wrapper function for create_ts with some standard settings.
@@ -1511,6 +1512,9 @@ class GroupStations(object):
         add_t_max : bool, optional
             Should the maximal temperature value get added?
             The default is False.
+        do_toolbox_format : bool, optional
+            Should the timeseries be saved in the RoGeR toolbox format? (have a look at the RoGeR examples in https://github.com/Hydrology-IFH/roger)
+            The default is False.
         **kwargs:
             additional parameters for GroupStation.create_ts
 
@@ -1518,12 +1522,26 @@ class GroupStations(object):
         ------
         Warning
             If there are NAs in the timeseries or the period got changed.
-        """
-        return self.create_ts(dir=dir, period=period, kinds=kind,
-                              agg_to="10 min", r_r0=r_r0, stids=stids,
-                              split_date=True, nas_allowed=False,
-                              add_t_min=add_t_min, add_t_max=add_t_max,
-                              **kwargs)
+        """  
+        if do_toolbox_format:
+            return self.create_ts(
+                dir=dir, period=period, kinds=kind,
+                agg_to="10 min", r_r0=r_r0, stids=stids,
+                split_date=True, nas_allowed=False,
+                add_t_min=add_t_min, add_t_max=add_t_max, 
+                file_names={"N":"PREC.txt", "T":"TEMP.txt", "ET":"PET.txt"},
+                col_names={"N":"PREC", "T":"TA", "ET":"PET", 
+                           "Jahr":"YYYY", "Monat":"MM", "Tag":"DD", 
+                           "Stunde":"hh", "Minute":"mm"},
+                add_meta=False,
+                **kwargs)
+        else:
+            return self.create_ts(
+                dir=dir, period=period, kinds=kind,
+                agg_to="10 min", r_r0=r_r0, stids=stids,
+                split_date=True, nas_allowed=False,
+                add_t_min=add_t_min, add_t_max=add_t_max,
+                **kwargs)
 
 # clean station
 del StationN, StationND, StationT, StationET, GroupStation, StationBase
