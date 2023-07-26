@@ -4200,7 +4200,7 @@ class GroupStation(object):
                 add_t_min=add_t_min, add_t_max=add_t_max, 
                 file_names={"N":"PREC.txt", "T":"TEMP.txt", "ET":"PET.txt"},
                 col_names={"N":"PREC", "ET":"PET", 
-                           "T":"TA", "T_min": "TA_min", "T_max":"TA_max", 
+                           "T":"TA", "T_min":"TA_min", "T_max":"TA_max", 
                            "Jahr":"YYYY", "Monat":"MM", "Tag":"DD", 
                            "Stunde":"hh", "Minute":"mm"},
                 add_meta=False,

@@ -1,5 +1,11 @@
 # Change-log
 
+## Version 0.0.39
+
+- add the RoGeR Toolbox format as timeseries format. See https://github.com/Hydrology-IFH/roger for more specifications on the format
+- only insert needed download time if DB_ENG is super user
+- add possibility to change the column names and filenames of written out weather timeserires
+
 ## Version 0.0.38
 
 - fix problem when updating the Richter correction to only a period.
