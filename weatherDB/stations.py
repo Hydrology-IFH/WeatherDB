@@ -1450,19 +1450,20 @@ class GroupStations(object):
                 f.stat().st_size for f in dir.glob('**/*') if f.is_file())
 
         # save needed time to db
-        sql_save_time = """
-            INSERT INTO needed_download_time(timestamp, quantity, aggregate, timespan, zip, pc, duration, output_size)
-            VALUES (now(), '{quantity}', '{agg_to}', '{timespan}', '{zip}', '{pc}', '{duration}', '{out_size}');
-        """.format(
-            quantity=len(stids),
-            agg_to=agg_to,
-            timespan=str(period.get_interval()),
-            duration=str(datetime.datetime.now() - start_time),
-            zip="true" if dir.suffix ==".zip" else "false",
-            pc=socket.gethostname(),
-            out_size=out_size)
-        with DB_ENG.connect().execution_options(isolation_level="AUTOCOMMIT") as con:
-            con.execute(sqltxt(sql_save_time))
+        if DB_ENG.is_superuser:
+            sql_save_time = """
+                INSERT INTO needed_download_time(timestamp, quantity, aggregate, timespan, zip, pc, duration, output_size)
+                VALUES (now(), '{quantity}', '{agg_to}', '{timespan}', '{zip}', '{pc}', '{duration}', '{out_size}');
+            """.format(
+                quantity=len(stids),
+                agg_to=agg_to,
+                timespan=str(period.get_interval()),
+                duration=str(datetime.datetime.now() - start_time),
+                zip="true" if dir.suffix ==".zip" else "false",
+                pc=socket.gethostname(),
+                out_size=out_size)
+            with DB_ENG.connect().execution_options(isolation_level="AUTOCOMMIT") as con:
+                con.execute(sqltxt(sql_save_time))
 
         # create log message
         log.debug(
