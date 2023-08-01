@@ -4320,10 +4320,7 @@ class GroupStation(object):
                     how="inner")
                 if period_new != period:
                     warnings.warn(
-                        "The Period for Station {stid} got changed from {period} to {period_filled}.".format(
-                            stid=self.id,
-                            period=str(period),
-                            period_filled=str(period_filled)))
+                        f"The Period for Station {self.id} got changed from {str(period)} to {str(period_new)}.")
                     period = period_new
         if "_skip_period_check" in kwargs:
             del kwargs["_skip_period_check"]
