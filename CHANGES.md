@@ -1,5 +1,9 @@
 # Change-log
 
+## Version 0.0.40
+
+- change roger_toolbox format to keep minute and hour values even if daily aggregation
+
 ## Version 0.0.39
 
 - add the RoGeR Toolbox format as timeseries format. See https://github.com/Hydrology-IFH/roger for more specifications on the format
