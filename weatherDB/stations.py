@@ -335,7 +335,7 @@ class StationsBase:
                 meta[geom_col] = meta[geom_col].apply(wkt.loads)
                 meta = gpd.GeoDataFrame(
                     meta, crs="EPSG:" + srid, geometry=geom_col)
-                
+
         # strip whitespaces in string columns
         for col in meta.columns[meta.dtypes == object]:
             try:
@@ -884,7 +884,7 @@ class StationsBase:
                     axis=1, inplace=True)
             else:
                 df.columns = pd.MultiIndex.from_product(
-                    [[stat.id], df.columns], 
+                    [[stat.id], df.columns],
                     names=["Station ID", "kind"])
             if "df_all" in locals():
                 df_all = df_all.join(df)
@@ -1325,7 +1325,7 @@ class GroupStations(object):
     def create_ts(self, dir, period=(None, None), kinds="best",
                   stids="all", agg_to="10 min", r_r0=None, split_date=False,
                   nas_allowed=True, add_na_share=False,
-                  add_t_min=False, add_t_max=False, 
+                  add_t_min=False, add_t_max=False,
                   **kwargs):
         """Download and create the weather tables as csv files.
 
@@ -1473,7 +1473,7 @@ class GroupStations(object):
 
     def create_roger_ts(self, dir, period=(None, None), stids="all",
                         kind="best", r_r0=1,
-                        add_t_min=False, add_t_max=False, 
+                        add_t_min=False, add_t_max=False,
                         do_toolbox_format=False, **kwargs):
         """Create the timeserie files for roger as csv.
 
@@ -1523,17 +1523,17 @@ class GroupStations(object):
         ------
         Warning
             If there are NAs in the timeseries or the period got changed.
-        """  
+        """
         if do_toolbox_format:
             return self.create_ts(
                 dir=dir, period=period, kinds=kind,
                 agg_to="10 min", r_r0=r_r0, stids=stids,
                 split_date=True, nas_allowed=False,
-                add_t_min=add_t_min, add_t_max=add_t_max, 
-                file_names={"N":"PREC.txt", "T":"TEMP.txt", "ET":"PET.txt"},
-                col_names={"N":"PREC", "ET":"PET", 
-                           "T":"TA", "T_min":"TA_min", "T_max":"TA_max", 
-                           "Jahr":"YYYY", "Monat":"MM", "Tag":"DD", 
+                add_t_min=add_t_min, add_t_max=add_t_max,
+                file_names={"N":"PREC.txt", "T":"TA.txt", "ET":"PET.txt"},
+                col_names={"N":"PREC", "ET":"PET",
+                           "T":"TA", "T_min":"TA_min", "T_max":"TA_max",
+                           "Jahr":"YYYY", "Monat":"MM", "Tag":"DD",
                            "Stunde":"hh", "Minute":"mm"},
                 add_meta=False,
                 keep_date_parts=True,
