@@ -4197,27 +4197,30 @@ class GroupStation(object):
                 dir=dir, period=period, kinds=kind,
                 agg_to="10 min", r_r0=r_r0, split_date=True,
                 nas_allowed=False,
-                add_t_min=add_t_min, add_t_max=add_t_max, 
+                add_t_min=add_t_min, add_t_max=add_t_max,
                 file_names={"N":"PREC.txt", "T":"TEMP.txt", "ET":"PET.txt"},
-                col_names={"N":"PREC", "ET":"PET", 
-                           "T":"TA", "T_min":"TA_min", "T_max":"TA_max", 
-                           "Jahr":"YYYY", "Monat":"MM", "Tag":"DD", 
+                col_names={"N":"PREC", "ET":"PET",
+                           "T":"TA", "T_min":"TA_min", "T_max":"TA_max",
+                           "Jahr":"YYYY", "Monat":"MM", "Tag":"DD",
                            "Stunde":"hh", "Minute":"mm"},
                 add_meta=False,
+                keep_date_parts=True,
                 **kwargs)
         else:
             return self.create_ts(
                 dir=dir, period=period, kinds=kind,
                 agg_to="10 min", r_r0=r_r0, split_date=True,
                 nas_allowed=False,
-                add_t_min=add_t_min, add_t_max=add_t_max, 
+                add_t_min=add_t_min, add_t_max=add_t_max,
                 **kwargs)
 
-    def create_ts(self, dir, period=(None, None), kinds="best", paras="all",
+    def create_ts(self, dir, period=(None, None),
+                  kinds="best", paras="all",
                   agg_to="10 min", r_r0=None, split_date=False,
                   nas_allowed=True, add_na_share=False,
                   add_t_min=False, add_t_max=False,
                   add_meta=True, file_names={}, col_names={},
+                  keep_date_parts=False,
                   **kwargs):
         """Create the timeserie files as csv.
 
@@ -4289,6 +4292,11 @@ class GroupStation(object):
             e.g.{"N":"PREC", "T":"TEMP", "ET":"ET", "Jahr":"YYYY", "Monat":"MM", "Tag":"DD", "Stunde":"HH", "Minute":"MN"}
             If an empty dictionary is given, then the standard names are used.
             The default is {}.
+        keep_date_parts : bool, optional
+            only used if split_date is True.
+            Should the date parts that are not needed, e.g. hour value for daily timeseries, be kept?
+            If False, then the columns that are not needed are dropped.
+            The default is False.
         **kwargs:
             additional parameters for Station.get_df
 
@@ -4368,16 +4376,8 @@ class GroupStation(object):
                 warnings.warn("There were NAs in the timeserie for Station {stid}.".format(
                     stid=self.id))
 
-            # get the number of columns
-            num_col = 1
-            if split_date:
-                num_col += AGG_TO[agg_to]["split"][para]
-            else:
-                num_col += 1
-
             # special operations for et
             if para == "et" and r_r0 is not None:
-                num_col += 1
                 if type(r_r0)==int or type(r_r0)==float:
                     df = df.join(
                         pd.Series([r_r0]*len(df), name="R/R0", index=df.index))
@@ -4387,23 +4387,24 @@ class GroupStation(object):
                     df = df.join(
                         pd.Series(r_r0, name="R/R0", index=df.index))
 
-            # create header
-            if add_meta:
-                header = ("Name: " + name + "\t" * (num_col-1) + "\n" +
-                        "Lat: " + y + "   ,Lon: " + x + "\t" * (num_col-1) + "\n")
-            else:
-                header = ""
-
             # create tables
             if split_date:
+                n_parts = 5 if keep_date_parts else AGG_TO[agg_to]["split"][para]
                 df = self._split_date(df.index)\
-                        .iloc[:, 0:AGG_TO[agg_to]["split"][para]]\
+                        .iloc[:, 0:n_parts]\
                         .join(df)
             else:
                 df.reset_index(inplace=True)
 
             # rename columns if user asked for
             df.rename(col_names, axis=1, inplace=True)
+
+            # create header
+            if add_meta:
+                header = ("Name: " + name + "\t" * (len(df.columns)-1) + "\n" +
+                        "Lat: " + y + "   ,Lon: " + x + "\t" * (len(df.columns)-1) + "\n")
+            else:
+                header = ""
 
             # get file name
             if para.upper() in file_names:
@@ -4420,7 +4421,7 @@ class GroupStation(object):
                 to_csv_kwargs = dict(line_terminator="\n")
             str_df = header + df.to_csv(
                 sep="\t", decimal=".", index=False, **to_csv_kwargs)
-            
+
             if do_zip:
                 dir.writestr(f"{self.id}/{file_name}", str_df)
             else:

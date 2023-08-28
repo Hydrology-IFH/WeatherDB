@@ -1325,7 +1325,8 @@ class GroupStations(object):
     def create_ts(self, dir, period=(None, None), kinds="best",
                   stids="all", agg_to="10 min", r_r0=None, split_date=False,
                   nas_allowed=True, add_na_share=False,
-                  add_t_min=False, add_t_max=False, **kwargs):
+                  add_t_min=False, add_t_max=False, 
+                  **kwargs):
         """Download and create the weather tables as csv files.
 
         Parameters
@@ -1535,6 +1536,7 @@ class GroupStations(object):
                            "Jahr":"YYYY", "Monat":"MM", "Tag":"DD", 
                            "Stunde":"hh", "Minute":"mm"},
                 add_meta=False,
+                keep_date_parts=True,
                 **kwargs)
         else:
             return self.create_ts(
