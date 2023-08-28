@@ -4198,7 +4198,7 @@ class GroupStation(object):
                 agg_to="10 min", r_r0=r_r0, split_date=True,
                 nas_allowed=False,
                 add_t_min=add_t_min, add_t_max=add_t_max,
-                file_names={"N":"PREC.txt", "T":"TEMP.txt", "ET":"PET.txt"},
+                file_names={"N":"PREC.txt", "T":"TA.txt", "ET":"PET.txt"},
                 col_names={"N":"PREC", "ET":"PET",
                            "T":"TA", "T_min":"TA_min", "T_max":"TA_max",
                            "Jahr":"YYYY", "Monat":"MM", "Tag":"DD",
@@ -4284,12 +4284,12 @@ class GroupStation(object):
             The default is True.
         file_names : dict, optional
             A dictionary with the file names for the different parameters.
-            e.g.{"N":"PREC.txt", "T":"TEMP.txt", "ET":"ET.txt"}
+            e.g.{"N":"PREC.txt", "T":"TA.txt", "ET":"ET.txt"}
             If an empty dictionary is given, then the standard names are used.
             The default is {}.
         col_names : dict, optional
             A dictionary with the column names for the different parameters.
-            e.g.{"N":"PREC", "T":"TEMP", "ET":"ET", "Jahr":"YYYY", "Monat":"MM", "Tag":"DD", "Stunde":"HH", "Minute":"MN"}
+            e.g.{"N":"PREC", "T":"TA", "ET":"ET", "Jahr":"YYYY", "Monat":"MM", "Tag":"DD", "Stunde":"HH", "Minute":"MN"}
             If an empty dictionary is given, then the standard names are used.
             The default is {}.
         keep_date_parts : bool, optional
