@@ -80,6 +80,12 @@ Sometimes there are several consecutive 10 minutes values that are exactly the s
 
 It is assumed, that filling the measurements up with values from the neighbor stations is more accurate than this dissemination. Therefor 3 consecutive same measurements are deleted, if their "Qualitätsnorm" from the DWD is not 3 (meaning that the measurements didn't get a good quality control from the DWD).
 
+### treshold
+
+Sometimes there are very high measurement values in the DWD data. Therefor a treshold of $50 mm / 10 min$ is applied. This treshold is higher then any KOSTRA 2020 precipitation with a return period of 100 years, which are around $30 mm / 10 min$. Values above this treshold are considered as erroneous.
+
+Furthermore negativ values are filtered.
+
 ## gap filling
 
 To have complete timeseries, the gaps in the quality checked timeseries are filled with data from the neighbor stations. The neighboring stations are selected in the order of horizontal difference for the precipitation stations and in order of the elevation weighted distance (see chapter quality check - Temperature and Evapotranspiration) for T and ET stations. This is done by regionalising the neighbors measurements value to the station that is gap filled. Starting with the nearest neighbor station all available stations are taken until the timeserie is completely filled.

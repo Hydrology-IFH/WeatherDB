@@ -2971,7 +2971,8 @@ class StationN(StationNBase):
                 (CASE WHEN ((ts.timestamp IN (SELECT timestamp FROM tstps_failed))
                         OR ((ts.timestamp - INTERVAL '6h')::date IN (
                             SELECT date FROM dates_failed))
-                        OR ts."raw" < 0)
+                        OR ts."raw" < 0
+                        OR ts."raw" >= 50*{decim})
                     THEN NULL
                     ELSE ts."raw" END) as qc
             FROM timeseries."{stid}_{para}" ts
