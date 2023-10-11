@@ -27,7 +27,7 @@ import pyproj
 import geopandas as gpd
 from packaging import version
 
-from .lib.connections import DB_ENG, check_superuser
+from .db.connections import DB_ENG, check_superuser
 from .lib.max_fun.import_DWD import dwd_id_to_str, get_dwd_file
 from .lib.utils import TimestampPeriod, get_cdc_file_list
 from .lib.max_fun.geometry import polar_line, raster2points

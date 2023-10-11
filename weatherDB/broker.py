@@ -4,7 +4,7 @@ This submodule has only one class Broker. This one is used to do actions on all 
 # libraries
 import logging
 from sqlalchemy import text as sqltxt
-from .lib.connections import DB_ENG
+from .db.connections import DB_ENG
 from .stations import StationsN, StationsND, StationsT, StationsET
 from packaging import version as pv
 from . import __version__ as __version__
