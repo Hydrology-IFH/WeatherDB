@@ -7,3 +7,4 @@ rasterio
 sqlalchemy>2.0
 psycopg2-binary
 GeoAlchemy2
+alembic
