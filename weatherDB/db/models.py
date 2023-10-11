@@ -29,7 +29,7 @@ class MetaN(Base):
     __tablename__ = 'meta_n'
 
     station_id: Mapped[int] = mapped_column(primary_key=True)
-    is_real: Mapped[bool] = mapped_column(server_default='true')
+    is_real: Mapped[bool] = mapped_column(default=True)
     raw_from: Mapped[Optional[datetime]]
     raw_until: Mapped[Optional[datetime]]
     hist_until: Mapped[Optional[datetime]]
@@ -41,9 +41,9 @@ class MetaN(Base):
     corr_until: Mapped[Optional[datetime]]
     last_imp_from: Mapped[Optional[datetime]]
     last_imp_until: Mapped[Optional[datetime]]
-    last_imp_qc: Mapped[bool] = mapped_column(server_default='false')
-    last_imp_filled: Mapped[bool] = mapped_column(server_default='false')
-    last_imp_corr: Mapped[bool] = mapped_column(server_default='false')
+    last_imp_qc: Mapped[bool] = mapped_column(default=False)
+    last_imp_filled: Mapped[bool] = mapped_column(default=False)
+    last_imp_corr: Mapped[bool] = mapped_column(default=False)
     stationshoehe: Mapped[int]
     stationsname: Mapped[str30]
     bundesland: Mapped[str30]
@@ -61,7 +61,7 @@ class MetaND(Base):
     __tablename__ = 'meta_n_d'
 
     station_id: Mapped[int] = mapped_column(primary_key=True)
-    is_real: Mapped[bool] = mapped_column(server_default='true')
+    is_real: Mapped[bool] = mapped_column(default=True)
     raw_from: Mapped[Optional[datetime]]
     raw_until: Mapped[Optional[datetime]]
     hist_until: Mapped[Optional[datetime]]
@@ -71,7 +71,7 @@ class MetaND(Base):
     filled_until: Mapped[Optional[datetime]]
     last_imp_from: Mapped[Optional[datetime]]
     last_imp_until: Mapped[Optional[datetime]]
-    last_imp_filled: Mapped[bool] = mapped_column(server_default='false')
+    last_imp_filled: Mapped[bool] = mapped_column(default=False)
     stationshoehe: Mapped[int]
     stationsname: Mapped[str30]
     bundesland: Mapped[str30]
@@ -83,7 +83,7 @@ class MetaET(Base):
     __tablename__ = 'meta_et'
 
     station_id: Mapped[int] = mapped_column(primary_key=True)
-    is_real: Mapped[bool] = mapped_column(server_default='true')
+    is_real: Mapped[bool] = mapped_column(default=True)
     raw_from: Mapped[Optional[datetime]]
     raw_until: Mapped[Optional[datetime]]
     hist_until: Mapped[Optional[datetime]]
@@ -93,8 +93,8 @@ class MetaET(Base):
     filled_until: Mapped[Optional[datetime]]
     last_imp_from: Mapped[Optional[datetime]]
     last_imp_until: Mapped[Optional[datetime]]
-    last_imp_qc: Mapped[bool] = mapped_column(server_default='false')
-    last_imp_filled: Mapped[bool] = mapped_column(server_default='false')
+    last_imp_qc: Mapped[bool] = mapped_column(default=False)
+    last_imp_filled: Mapped[bool] = mapped_column(default=False)
     stationshoehe: Mapped[int]
     stationsname: Mapped[str30]
     bundesland: Mapped[str30]
@@ -106,7 +106,7 @@ class MetaT(Base):
     __tablename__ = 'meta_t'
 
     station_id: Mapped[int] = mapped_column(primary_key=True)
-    is_real: Mapped[bool] = mapped_column(server_default='true')
+    is_real: Mapped[bool] = mapped_column(default=True)
     raw_from: Mapped[Optional[datetime]]
     raw_until: Mapped[Optional[datetime]]
     hist_until: Mapped[Optional[datetime]]
@@ -116,8 +116,8 @@ class MetaT(Base):
     filled_until: Mapped[Optional[datetime]]
     last_imp_from: Mapped[Optional[datetime]]
     last_imp_until: Mapped[Optional[datetime]]
-    last_imp_qc: Mapped[bool] = mapped_column(server_default='false')
-    last_imp_filled: Mapped[bool] = mapped_column(server_default='false')
+    last_imp_qc: Mapped[bool] = mapped_column(default=False)
+    last_imp_filled: Mapped[bool] = mapped_column(default=False)
     stationshoehe: Mapped[int]
     stationsname: Mapped[str30]
     bundesland: Mapped[str30]

@@ -21,7 +21,7 @@ import zipfile
 from pathlib import Path
 from sqlalchemy import text as sqltxt
 
-from .lib.connections import DB_ENG, check_superuser
+from .db.connections import DB_ENG, check_superuser
 from .lib.utils import TimestampPeriod, get_cdc_file_list
 from .lib.max_fun.import_DWD import get_dwd_meta
 from .station import (StationBase,
