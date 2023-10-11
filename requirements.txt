@@ -3,6 +3,7 @@ shapely
 pandas
 numpy
 progressbar2
-sqlalchemy
 rasterio
+sqlalchemy>2.0
 psycopg2-binary
+GeoAlchemy2
