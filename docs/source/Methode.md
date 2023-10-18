@@ -118,7 +118,11 @@ N_{neighbor} * \dfrac{N_{station,ma,summer}}{N_{neighbor,ma,summer}} \space if\s
 
 For the precipitation and evapotranpiration stations only the closest station with quality checked data is taken to fill missing values. For the temperature stations the median of the regionalised values from the 5 closest stations (but not more than 100 km away)  to fill missing values.
 
-For the precipitation values the 10 minutes values are furthermore adjusted to the daily measurements. Therefor the daily sum is computed. Then the quotient with the daily measurement is calculated and multiplied to every 10 minute measurement. So the difference to the daily measurement is added relatively to the measured value. In the end the gap filled 10 minutes precipitation values sum up to the same daily values as the daily values from the DWD.
+### adjuting precipitation to daily station measurements
+
+For the precipitation values the 10 minutes values are furthermore adjusted to the daily measurements. Therefor the daily sum is computed from the 10 minutes data. Then the quotient with the daily measurement is calculated and multiplied to every 10 minute measurement. So the difference to the daily measurement is added relatively to the measured value. In the end the gap filled 10 minutes precipitation values sum up to the same daily values as the daily values from the DWD.
+
+But to prevent creating high peaks, there is an additional routine. If e.g. the neighbooring station has only one 10 minute measurement with rain, but the daily station measurement is high (e.g. $50mm/day$), this scaling routine would create a very high 10 minutes measurement ( in this example $50mm/10min$). To prevent this, the scalling can add at maximum $10mm/10min$ and is not allowed to create single peaks with more than $5mm/10min$ (see chapter about single peaks in the quality control chapter). If the scaling would exceed those tresholds, it is cutten to those tresholds, which has the side effect, that the daily measurement of that day isn't matching the 10 minute measurements anymore. But this is seen as the best compromise.
 
 ## Richter correction
 
