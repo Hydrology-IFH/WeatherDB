@@ -2952,7 +2952,7 @@ class StationN(StationNBase):
                 ON ts.timestamp = tsa.timestamp + INTERVAL '10 min'
             WHERE ts.raw > 5*{decim} AND tsb.raw = 0 AND tsa.raw = 0
                 AND ts.timestamp BETWEEN {min_tstp} AND {max_tstp}
-        """
+        """.format(**sql_format_dict)
 
         # make sql for timestamps where 3 times same value in a row
         sql_tstps_failed = """
