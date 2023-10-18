@@ -1,5 +1,16 @@
 # Change-log
 
+## Version 0.0.42
+
+- add a quality check for precipitations: remove single peaks above 5 mm/10min
+- change the method to scale 10 minute precipitation to daily measurements:
+  - Add a maximum treshold of changing the measurement to add at maximum $10mm/10min$, if the scaling would like to add more rain, then it is cutten to this maximum.
+  - prevent creating single peaks higher than $5mm/10min$ through this scaling process. If the scalling would create higher single peaks, then the value is set to $5mm/10min$
+
+## Version 0.0.41
+
+- add a maximum treshold of 50mm/10min as a quality check for precipitations
+
 ## Version 0.0.40
 
 - change roger_toolbox format to keep minute and hour values even if daily aggregation
