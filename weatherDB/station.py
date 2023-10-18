@@ -1208,7 +1208,7 @@ class StationBase:
             If None is given, the maximum or minimal possible Timestamp is taken.
             The default is (None, None).
         """
-        period = self._check_period(period=period, kinds=["raw"])
+        period = self._check_period(period=period, kinds=["raw"], nas_allowed=True)
 
         # create update sql
         sql_qc = """
@@ -2942,6 +2942,18 @@ class StationN(StationNBase):
                 SELECT NULL::date as date
             """
 
+        # remove single peaks above 5mm/10min
+        sql_single_peaks = """
+            SELECT ts.timestamp
+            FROM timeseries."{stid}_{para}" ts
+            INNER JOIN timeseries."{stid}_{para}" tsb
+                ON ts.timestamp = tsb.timestamp - INTERVAL '10 min'
+            INNER JOIN timeseries."{stid}_{para}" tsa
+                ON ts.timestamp = tsa.timestamp + INTERVAL '10 min'
+            WHERE ts.raw > 5*{decim} AND tsb.raw = 0 AND tsa.raw = 0
+                AND ts.timestamp BETWEEN {min_tstp} AND {max_tstp}
+        """
+
         # make sql for timestamps where 3 times same value in a row
         sql_tstps_failed = """
             WITH tstps_df as (
@@ -2962,11 +2974,14 @@ class StationN(StationNBase):
             SELECT tstp_1 AS timestamp FROM tstps_df
             UNION SELECT tstp_2 FROM tstps_df
             UNION SELECT tstp_3 FROM tstps_df
-        """.format(**sql_format_dict)
+            UNION ({sql_single_peaks})
+        """.format(sql_single_peaks=sql_single_peaks,
+                   **sql_format_dict)
 
+        # create sql for new qc values
         sql_new_qc = """
             WITH tstps_failed as ({sql_tstps_failed}),
-                    dates_failed AS ({sql_dates_failed})
+                 dates_failed AS ({sql_dates_failed})
             SELECT ts.timestamp,
                 (CASE WHEN ((ts.timestamp IN (SELECT timestamp FROM tstps_failed))
                         OR ((ts.timestamp - INTERVAL '6h')::date IN (

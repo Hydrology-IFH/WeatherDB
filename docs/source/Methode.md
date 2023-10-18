@@ -86,6 +86,10 @@ Sometimes there are very high measurement values in the DWD data. Therefor a tre
 
 Furthermore negativ values are filtered.
 
+### single peaks
+
+Sometimes there are very high single peaks in the DWD raw data. As high precipitations are highly unprobable to happen only in one 10 minute range, those data points are regarded as faulty. More precisely data points higher than $5 mm / 10 min$ where there was no rain before and after the measurement is removed.
+
 ## gap filling
 
 To have complete timeseries, the gaps in the quality checked timeseries are filled with data from the neighbor stations. The neighboring stations are selected in the order of horizontal difference for the precipitation stations and in order of the elevation weighted distance (see chapter quality check - Temperature and Evapotranspiration) for T and ET stations. This is done by regionalising the neighbors measurements value to the station that is gap filled. Starting with the nearest neighbor station all available stations are taken until the timeserie is completely filled.

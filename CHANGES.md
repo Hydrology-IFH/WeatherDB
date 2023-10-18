@@ -1,5 +1,13 @@
 # Change-log
 
+## Version 0.0.42
+
+- add a quality check for precipitations: remove single peaks above 5 mm/10min
+
+## Version 0.0.41
+
+- add a maximum treshold of 50mm/10min as a quality check for precipitations
+
 ## Version 0.0.40
 
 - change roger_toolbox format to keep minute and hour values even if daily aggregation
