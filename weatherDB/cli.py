@@ -35,13 +35,13 @@ def quality_check():
     broker = weatherDB.broker.Broker()
     broker.quality_check()
 
-@click.command(short_help="Do the filling up of the complete database.")
+@click.command(short_help="Do the filling of the complete database.")
 def fillup():
     click.echo("starting filling up")
     broker = weatherDB.broker.Broker()
     broker.fillup()
 
-@click.command(short_help="Do the richter correction up of the complete database.")
+@click.command(short_help="Do the richter correction of the complete database.")
 def richter_correct():
     click.echo("starting richter correction")
     broker = weatherDB.broker.Broker()

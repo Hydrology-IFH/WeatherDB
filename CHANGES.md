@@ -2,6 +2,7 @@
 
 ## Version 0.0.43
 
+- add check for active broker session to more methods of Broker
 - reorganize the cli interface. Now there is also the option to only do the quality control, richter correction, filling or update the raw data without updating all of the database. Furthermore the database version can get set to the actual version.
 
 ## Version 0.0.42
