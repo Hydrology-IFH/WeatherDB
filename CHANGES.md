@@ -1,5 +1,9 @@
 # Change-log
 
+## Version 0.0.43
+
+- reorganize the cli interface. Now there is also the option to only do the quality control, richter correction, filling or update the raw data without updating all of the database. Furthermore the database version can get set to the actual version.
+
 ## Version 0.0.42
 
 - add a quality check for precipitations: remove single peaks above 5 mm/10min
