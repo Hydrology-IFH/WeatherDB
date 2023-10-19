@@ -54,11 +54,13 @@ class Broker(object):
             Can be one, some or all of ["n_d", "n", "t", "et"].
             The default is ["n_d", "n", "t", "et"].
         """
+        self.check_is_broker_active()
         log.info("="*79 + "\nBroker update_raw starts")
         self._check_paras(paras)
         for stations in self.stations:
             if stations._para in paras:
                 stations.update_raw(only_new=only_new)
+        self.set_is_broker_active(False)
 
     def update_meta(self, paras=["n_d", "n", "t", "et"]):
         """Update the meta file from the CDC Server to the Database.
@@ -123,6 +125,7 @@ class Broker(object):
             Should the daily precipitation data get filled up if the 10 minute precipitation data gets quality checked.
             The default is True.
         """
+        self.check_is_broker_active()
         self._check_paras(paras=paras, valid_paras=["n", "t", "et"])
         log.info("="*79 + "\nBroker quality_check starts")
 
@@ -132,6 +135,7 @@ class Broker(object):
         for stations in self.stations:
             if stations._para in paras:
                 stations.quality_check()
+        self.set_is_broker_active(False)
 
     def last_imp_quality_check(self, paras=["n", "t", "et"], with_fillup_nd=True):
         """Quality check the last imported data.
@@ -170,11 +174,13 @@ class Broker(object):
             Can be one, some or all of ["n_d", "n", "t", "et"].
             The default is ["n_d", "n", "t", "et"].
         """
+        self.check_is_broker_active()
         log.info("="*79 + "\nBroker fillup starts")
         self._check_paras(paras)
         for stations in self.stations:
             if stations._para in paras:
                 stations.fillup()
+        self.set_is_broker_active(False)
 
     def last_imp_fillup(self, paras=["n", "t", "et"]):
         """Fillup the last imported data.
@@ -195,14 +201,18 @@ class Broker(object):
     def richter_correct(self):
         """Richter correct all of the precipitation data.
         """
+        self.check_is_broker_active()
         log.info("="*79 + "\nBroker: last_imp_corr starts")
         self.stations_n.richter_correct()
+        self.set_is_broker_active(False)
 
     def last_imp_corr(self):
         """Richter correct the last imported precipitation data.
         """
+        self.check_is_broker_active()
         log.info("="*79 + "\nBroker: last_imp_corr starts")
         self.stations_n.last_imp_corr()
+        self.check_is_broker_active()
 
     def update_db(self, paras=["n_d", "n", "t", "et"]):
         """The regular Update of the database.
