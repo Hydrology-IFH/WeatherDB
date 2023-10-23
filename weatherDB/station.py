@@ -3479,9 +3479,9 @@ class StationN(StationNBase):
                         CASE WHEN tsb.filled = 0 AND tsa.filled = 0
                              THEN LEAST(ts.filled * coef, 5*{decim})
                              ELSE CASE WHEN ((ts.filled * coef) - ts.filled) <= (10 * {decim})
-                                            THEN ts.filled * coef
-                                            ELSE ts.filled + (10 * {decim})
-                                        END
+                                       THEN LEAST(ts.filled * coef, 50*{decim})
+                                       ELSE LEAST(ts.filled + (10 * {decim}), 50*{decim})
+                                  END
                              END as filled
                     FROM new_filled_{stid}_{para} ts
                     INNER JOIN (
