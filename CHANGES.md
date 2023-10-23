@@ -1,5 +1,9 @@
 # Change-log
 
+## Version
+
+- add a check in the post fillup scalling method to not exceed the maximum treshold of $50mm/10min$
+
 ## Version 0.0.43
 
 - add check for active broker session to more methods of Broker
@@ -14,7 +18,7 @@
 
 ## Version 0.0.41
 
-- add a maximum treshold of 50mm/10min as a quality check for precipitations
+- add a maximum treshold of $50mm/10min$ as a quality check for precipitations
 
 ## Version 0.0.40
 
