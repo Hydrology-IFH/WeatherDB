@@ -1,6 +1,10 @@
 # Change-log
 
-## Version
+## Version 0.0.45
+
+- remove REGNIE from data-sources, ass the DWD is not providing it anymore -> wasn't really used anymore
+
+## Version 0.0.44
 
 - add a check in the post fillup scalling method to not exceed the maximum treshold of $50mm/10min$
 
