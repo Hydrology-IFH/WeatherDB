@@ -51,17 +51,6 @@ RASTERS = {
         "dtype": int,
         "abbreviation": "dwd"
     },
-    "regnie_grid": { # kept for now
-        "srid": 3035,
-        "db_table": "regnie_grid_1991_2020",
-        "bands": {
-            1: "n_regnie_wihj",
-            2: "n_regnie_sohj",
-            3: "n_regnie_year"
-        },
-        "dtype": int,
-        "abbreviation": "regnie"
-    },
     "hyras_grid": {
         "srid": 3035,
         "db_table": "hyras_grid_1991_2020",
@@ -3525,16 +3514,14 @@ class StationN(StationNBase):
         if type(period) != TimestampPeriod:
             period= TimestampPeriod(*period)
 
-        # update difference to regnie and hyras
+        # update difference to dwd_grid and hyras
         if period.is_empty() or period[0].year < pd.Timestamp.now().year:
             sql_diff_ma = """
                 UPDATE meta_n
-                SET quot_filled_regnie = quots.quot_regnie*100,
-                    quot_filled_dwd_grid = quots.quot_dwd*100,
+                SET quot_filled_dwd_grid = quots.quot_dwd*100,
                     quot_filled_hyras = quots.quot_hyras*100
                 FROM (
-                    SELECT df_ma.ys / (srv.n_regnie_year*{decimals}) AS quot_regnie,
-                        df_ma.ys / (srv.n_dwd_year*{decimals}) AS quot_dwd,
+                    SELECT df_ma.ys / (srv.n_dwd_year*{decimals}) AS quot_dwd,
                         df_ma.ys / (srv.n_hyras_year*{decimals}) AS quot_hyras
                     FROM (
                         SELECT avg(df_a.yearly_sum) as ys
