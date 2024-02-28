@@ -28,13 +28,13 @@ Install
 To install the package use PIP to install the Github repository:
 
 ```{cmd}
-pip install git+https://github.com/Hydrology-IFH/WeatherDB
+pip install git+https://gitlab.rz.uni-freiburg.de/hydrology/weatherdb.git
 ```
 
 Or to upgrade use:
 
 ```{cmd}
-pip install git+https://github.com/Hydrology-IFH/WeatherDB --upgrade
+pip install git+https://gitlab.rz.uni-freiburg.de/hydrology/weatherdb.git --upgrade
 ```
 
 Get started
