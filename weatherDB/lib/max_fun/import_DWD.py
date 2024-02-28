@@ -8,29 +8,17 @@ __copyright__ = "Copyright 2021, Max Schmit"
 # libraries
 import geopandas as gpd
 import pandas as pd
-from datetime import datetime
 from zipfile import ZipFile
 import ftplib
 import re
 from io import BytesIO
 import traceback
 import logging
-from pathlib import Path
 import time
 import random
 
-from socket import gethostname
-
 # logger
 log = logging.getLogger(__name__)
-if not log.hasHandlers():
-    this_dir = Path(__file__).parent
-    log_dir = Path(this_dir).joinpath("logs")
-    if not log_dir.is_dir(): log_dir.mkdir()
-    log_fh = logging.FileHandler(
-        log_dir.joinpath("DWD_import_" + gethostname() + ".txt"))
-    log_fh.setLevel(logging.DEBUG)
-    log.addHandler(log_fh)
 
 CDC_HOST = "opendata.dwd.de"
 
@@ -73,7 +61,7 @@ def _dwd_date_parser(date_ser):
     """
     if type(date_ser) != pd.Series:
         raise ValueError("date_str must be a pd.Series of str")
-        
+
     # test if list or single str
     char_num = len(date_ser.iloc[0])
 
@@ -85,7 +73,7 @@ def _dwd_date_parser(date_ser):
     elif char_num == 12:
         return pd.to_datetime(date_ser, format='%Y%m%d%H%M')
     else:
-        raise ValueError("there was an error while converting the following  to a correct datetime"+ 
+        raise ValueError("there was an error while converting the following  to a correct datetime"+
                          date_ser.head())
 
 
@@ -168,7 +156,7 @@ def get_dwd_file(zip_filepath):
     else:
         raise ImportError("ERROR: No file could be imported, as there is " +
                           "just a setup for observation and derived datas")
-    
+
     # convert dates to datetime
     for col in ["MESS_DATUM", "Datum"]:
         if col in df.columns:
