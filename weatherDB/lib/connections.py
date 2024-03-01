@@ -31,7 +31,7 @@ else:
             import secretSettings_weatherDB as secrets
         except ImportError:
             raise ImportError("The secretSettings_weatherDB.py file was not found on your system.\n Please put the file somewhere on your sys.path directories or add the directory of the file to your sys.path/PYTHONPATH environment variable. For more information see the docs.")
-    
+
     # backwards compatibility of renaming secret values
     if hasattr(secrets, "DB_WEA_USER"):
         secrets.DB_USER = secrets.DB_WEA_USER
@@ -55,10 +55,9 @@ else:
     # check if user has super user privileges
     with DB_ENG.connect() as con:
         DB_ENG.is_superuser = con.execute(sqltxt("""
-            SELECT 'weather_owner' in (
-                SELECT rolname FROM pg_auth_members
-                LEFT JOIN pg_roles ON oid=roleid
-                WHERE member = (SELECT oid FROM pg_roles WHERE rolname='{user}'));
+                SELECT count(*)!=0 FROM pg_auth_members pam
+                WHERE member = (SELECT oid FROM pg_roles WHERE rolname='{user}')
+                    AND roleid = (SELECT oid FROM pg_roles WHERE rolname='weather_owner');
             """.format(user=DB_ENG.url.username))).first()[0]
 
 # decorator function to overwrite methods
