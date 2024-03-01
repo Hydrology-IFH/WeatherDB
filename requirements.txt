@@ -6,3 +6,4 @@ progressbar2
 sqlalchemy
 rasterio
 psycopg2-binary
+requests
