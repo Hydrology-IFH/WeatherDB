@@ -15,3 +15,5 @@ docs/source/README.md
 docs/html/*
 docs/html
 docs/source/Methode.html
+weatherDB/config/config.ini
+weatherDB/config/config_sys.ini

@@ -9,7 +9,7 @@ import re
 
 from pandas import Timestamp, NaT, Timedelta
 import datetime
-from .connections import CDC_HOST
+from ..db.connections import CDC_HOST
 
 
 # functions
@@ -63,7 +63,7 @@ def get_cdc_file_list(ftp_folders):
 # classes
 class TimestampPeriod(object):
     """A class to save a Timespan with a minimal and maximal Timestamp.
-    """    
+    """
     _COMPARE = {
         "inner": {
             0: max,
@@ -94,7 +94,7 @@ class TimestampPeriod(object):
         """
         # check if input is a date or a timestamp
         if ((type(start) == datetime.date and type(end) == datetime.date) or
-            (type(start) == str and not self._REGEX_HAS_TIME.match(start) and 
+            (type(start) == str and not self._REGEX_HAS_TIME.match(start) and
              type(end) == str and not self._REGEX_HAS_TIME.match(end))):
             self.is_date = True
         else:
@@ -143,7 +143,7 @@ class TimestampPeriod(object):
         -------
         TimestampPeriod
             A new TimespanPeriod object uniting both TimestampPeriods.
-        """        
+        """
         other = self._check_period(other)
 
         # check for daily period in elements
@@ -151,13 +151,13 @@ class TimestampPeriod(object):
         tdsself = [Timedelta(0), Timedelta(0)]
         if self.is_date and not other.is_date and not other.is_empty():
             tdsself[1] = Timedelta(
-                hours=other.end.hour, 
-                minutes=other.end.minute, 
+                hours=other.end.hour,
+                minutes=other.end.minute,
                 seconds=other.end.second)
         elif not self.is_date and other.is_date and not self.is_empty():
             tdsother[1] = Timedelta(
-                hours=self.end.hour, 
-                minutes=self.end.minute, 
+                hours=self.end.hour,
+                minutes=self.end.minute,
                 seconds=self.end.second)
 
         # check if empty and inner
@@ -167,8 +167,8 @@ class TimestampPeriod(object):
         # get the united period
         period = [None, None]
         for i in range(2):
-            comp_list = [val + td 
-                for val, td in zip([self[i], other[i]], 
+            comp_list = [val + td
+                for val, td in zip([self[i], other[i]],
                                    [tdsself[i], tdsother[i]])
                 if type(val) == Timestamp]
             if len(comp_list) > 0:
@@ -207,7 +207,7 @@ class TimestampPeriod(object):
 
     def __iter__(self):
         return self.get_period().__iter__()
-    
+
     def __str__(self):
         msg = "TimestampPeriod: {0} - {1}"
         if self.is_date:
@@ -220,7 +220,7 @@ class TimestampPeriod(object):
 
     def __eq__(self, other):
         other = self._check_period(other)
-        
+
         if self.start == other.start and self.end == other.end:
             return True
         else:
@@ -230,8 +230,8 @@ class TimestampPeriod(object):
         return not self.__eq__(other)
 
     def has_NaT(self):
-        """Has the TimestampPeriod at least one NaT. 
-        
+        """Has the TimestampPeriod at least one NaT.
+
         This means that the start or end is not given.
         Normally this should never happen, because it makes no sense.
 
@@ -240,12 +240,12 @@ class TimestampPeriod(object):
         bool
             True if the TimestampPeriod has at least on NaT.
             False if the TimestampPeriod has at least a start or a end.
-        """    
+        """
         return any([tstp is NaT for tstp in self])
 
     def has_only_NaT(self):
-        """Has the TimestampPeriod only NaT, meaning is empty. 
-        
+        """Has the TimestampPeriod only NaT, meaning is empty.
+
         This means that the start and end is not given.
 
         Returns
@@ -253,12 +253,12 @@ class TimestampPeriod(object):
         bool
             True if the TimestampPeriod is empty.
             False if the TimestampPeriod has a start and an end.
-        """    
+        """
         return all([tstp is NaT for tstp in self])
-    
+
     def is_empty(self):
-        """Is the TimestampPeriod empty. 
-        
+        """Is the TimestampPeriod empty.
+
         This means that the start and end is not given.
 
         Returns
@@ -266,7 +266,7 @@ class TimestampPeriod(object):
         bool
             True if the TimestampPeriod is empty.
             False if the TimestampPeriod has a start and an end.
-        """        
+        """
         return self.has_only_NaT()
 
     def strftime(self, format="%Y-%m-%d %H:%M:%S"):
@@ -277,14 +277,14 @@ class TimestampPeriod(object):
         Parameters
         ----------
         format : str, optional
-            The Timestamp-format to use. 
+            The Timestamp-format to use.
             The Default is "%Y-%m-%d %H:%M:%S"
 
         Returns
         -------
         list of 2 strings
             A list of the start and end of the TimestampPeriod as formated string.
-        """        
+        """
         out = [tstp.strftime(format) if tstp is not NaT else None
                     for tstp in self.get_period()]
         return out
@@ -304,7 +304,7 @@ class TimestampPeriod(object):
             True if this TimestampPeriod is inside the other.
             Meaning that the start is higher or equal than the others starts
             and the end is smaller than the others end.
-        """        
+        """
         other = self._check_period(other)
         if self.start >= other.start and self.end <= other.end:
             return True
@@ -336,14 +336,14 @@ class TimestampPeriod(object):
         Parameters
         ----------
         format : str, optional
-            The Timestamp-format to use. 
+            The Timestamp-format to use.
             The Default is "'%Y%m%d %H:%M'"
 
         Returns
         -------
         dict
             a dictionary with 2 keys (min_tstp, max_tstp) and the corresponding Timestamp as formated string.
-        """        
+        """
         period_str = self.strftime(format=format)
         period_str = [str(el).replace("None", "NULL") for el in period_str]
         return dict(min_tstp=period_str[0], max_tstp=period_str[1])
@@ -356,7 +356,7 @@ class TimestampPeriod(object):
         pd.Timedelta
             The interval of this TimestampPeriod.
             E.G. Timedelta(2 days 12:30:12)
-        """        
+        """
         return self.end - self.start
 
     def get_middle(self):
@@ -374,7 +374,7 @@ class TimestampPeriod(object):
             if middle.tzinfo is None:
                 middle = middle.tz_localize(self.tzinfo)
         return middle
-    
+
     def copy(self):
         """Copy this TimestampPeriod.
 
@@ -382,7 +382,7 @@ class TimestampPeriod(object):
         -------
         TimestampPeriod
             a new TimestampPeriod object that is equal to this one.
-        """        
+        """
         new = TimestampPeriod(self.start, self.end)
         new.is_date = self.is_date
         return new

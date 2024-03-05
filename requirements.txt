@@ -9,3 +9,4 @@ psycopg2-binary
 GeoAlchemy2
 alembic
 requests
+keyring
