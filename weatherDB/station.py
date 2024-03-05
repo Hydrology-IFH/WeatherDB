@@ -4117,15 +4117,16 @@ class GroupStation(object):
             The maximum Timestamp Period
         """
         kinds = self._check_kinds(kinds)
+        max_period = None
         for stat in self.station_parts:
             max_period_i = stat.get_max_period(
                 kinds=kinds, nas_allowed=nas_allowed)
-            if "max_period" in locals():
+            if max_period is None:
+                max_period = max_period_i
+            else:
                 max_period = max_period.union(
                     max_period_i,
                     how="outer" if nas_allowed else "inner")
-            else:
-                max_period = max_period_i
 
         return max_period
 
