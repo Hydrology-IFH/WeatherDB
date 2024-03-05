@@ -105,14 +105,20 @@ class MetaN(MetaBase, MetaBaseQC):
 
 class MetaND(MetaBase):
     __tablename__ = 'meta_n_d'
+    __table_args__ = dict(
+        comment="The Meta informations of the daily precipitation stations.")
 
 
 class MetaET(MetaBase, MetaBaseQC):
     __tablename__ = 'meta_et'
+    __table_args__ = dict(
+        comment="The Meta informations of the evapotranspiration stations.")
 
 
 class MetaT(MetaBase, MetaBaseQC):
     __tablename__ = 'meta_t'
+    __table_args__ = dict(
+        comment="The Meta informations of the temperature stations.")
 
 
 class RawFiles(Base):
@@ -262,3 +268,15 @@ class NeededDownloadTime(Base):
     output_size: Mapped[int] = mapped_column(
         comment="The size of the created output file in bytes")
 
+
+class Settings(Base):
+    __tablename__ = 'settings'
+    __table_args__ = dict(
+        comment="This table saves settings values for the script-databse connection. E.G. the latest package version that updated the database.")
+    key: Mapped[str] = mapped_column(
+        sa.String(20),
+        primary_key=True,
+        comment="The key of the setting")
+    value: Mapped[str] = mapped_column(
+        sa.String(20),
+        comment="The value of the setting")
