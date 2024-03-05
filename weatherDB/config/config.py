@@ -1,6 +1,7 @@
 import configparser
 from pathlib import Path
 import keyring
+from getpass import getpass
 
 # set the file paths for the config files
 DEFAULT_CONFIG_FILE = Path(__file__).parent/'config_default.ini'
@@ -16,11 +17,7 @@ config.read(SYS_CONFIG_FILE)
 if USER_CONFIG_FILE.exists():
     config.read(USER_CONFIG_FILE)
     if "PASSWORD" in config["database"]:
-        keyring.set_password(
-            "weatherDB",
-            config["database"]["USER"],
-            config["database"]["PASSWORD"])
-        config.remove_option("database", "PASSWORD")
+        raise PermissionError("The password should not be in the config.ini file. Please use set.")
     config.write(SYS_CONFIG_FILE.open('w'))
 
 # define functions
@@ -71,15 +68,19 @@ def set_config(section, option, value):
 
     _set_config(section, option, value)
 
-def set_db_credentials(user, password):
+def set_db_credentials(user=None, password=None):
     """Set the database credentials for the weatherDB database.
 
     Parameters
     ----------
-    user : str
+    user : str, optional
         The username for the database.
-    password : str
+        If not given, the function will ask for it.
+        The default is None.
+    password : str, optional
         The password for the database user.
+        If not given, the function will ask for it.
+        The default is None.
     """
     # remove old password
     try:
@@ -87,6 +88,29 @@ def set_db_credentials(user, password):
     except:
         pass
 
+    # check if user is given
+    if user is None:
+        user = input("Please enter the username for the database: ")
+    if password is None:
+        password = getpass("Please enter the password for the given database user: ")
+
     # set new credentials
     _set_config("database", "USER", user)
     keyring.set_password("weatherDB", user, password)
+
+def get_db_credentials():
+    """Get the database credentials for the weatherDB database.
+
+    Returns
+    -------
+    str, str
+        The username and the password for the database.
+    """
+    if "user" not in config["database"]:
+        print("No database credentials found. Please set them.")
+        set_db_credentials()
+
+    user = config["database"]["user"]
+    password = keyring.get_password("weatherDB", user)
+
+    return user, password

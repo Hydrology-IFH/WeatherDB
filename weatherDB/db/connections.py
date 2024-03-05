@@ -2,8 +2,7 @@
 import sqlalchemy
 from sqlalchemy import text as sqltxt
 import os
-from ..config.config import config
-import keyring
+from ..config.config import config, get_db_credentials
 
 # DB connection
 ###############
@@ -16,17 +15,17 @@ elif "WEATHERDB_MODULE_INSTALLING" in os.environ:
     DB_ENG = type("test", (), {"is_superuser":False})()
 else:
     # create the engine
+    user, pwd = get_db_credentials()
     DB_ENG = sqlalchemy.create_engine(
         "postgresql://{user}:{pwd}@{host}:{port}/{database}".format(
-            user=config["database"]["USER"],
-            pwd=keyring.get_password(
-                "weatherDB",
-                config["database"]["USER"]),
+            user=user,
+            pwd=pwd,
             host=config["database"]["HOST"],
             database=config["database"]["DATABASE"],
             port=config["database"]["PORT"]
             )
         )
+    del user, pwd
 
     # check if user has super user privileges
     with DB_ENG.connect() as con:
