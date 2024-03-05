@@ -73,7 +73,7 @@ def _dwd_date_parser(date_ser):
     """
     if type(date_ser) != pd.Series:
         raise ValueError("date_str must be a pd.Series of str")
-        
+
     # test if list or single str
     char_num = len(date_ser.iloc[0])
 
@@ -85,7 +85,7 @@ def _dwd_date_parser(date_ser):
     elif char_num == 12:
         return pd.to_datetime(date_ser, format='%Y%m%d%H%M')
     else:
-        raise ValueError("there was an error while converting the following  to a correct datetime"+ 
+        raise ValueError("there was an error while converting the following  to a correct datetime"+
                          date_ser.head())
 
 
@@ -168,7 +168,7 @@ def get_dwd_file(zip_filepath):
     else:
         raise ImportError("ERROR: No file could be imported, as there is " +
                           "just a setup for observation and derived datas")
-    
+
     # convert dates to datetime
     for col in ["MESS_DATUM", "Datum"]:
         if col in df.columns:
@@ -452,11 +452,3 @@ def get_dwd_meta(ftp_folder, min_years=0, max_hole_d=9999):
 
     # return
     return meta
-
-
-# debug
-if False:
-    meta = get_dwd_meta(
-        ftp_folder="climate_environment/CDC/observations_germany/climate/10_minutes/precipitation/historical/",
-        min_years=11, max_hole_d=365)
-    print(len(meta))
