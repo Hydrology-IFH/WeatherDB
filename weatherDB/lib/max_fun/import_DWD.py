@@ -8,29 +8,17 @@ __copyright__ = "Copyright 2021, Max Schmit"
 # libraries
 import geopandas as gpd
 import pandas as pd
-from datetime import datetime
 from zipfile import ZipFile
 import ftplib
 import re
 from io import BytesIO
 import traceback
 import logging
-from pathlib import Path
 import time
 import random
 
-from socket import gethostname
-
 # logger
 log = logging.getLogger(__name__)
-if not log.hasHandlers():
-    this_dir = Path(__file__).parent
-    log_dir = Path(this_dir).joinpath("logs")
-    if not log_dir.is_dir(): log_dir.mkdir()
-    log_fh = logging.FileHandler(
-        log_dir.joinpath("DWD_import_" + gethostname() + ".txt"))
-    log_fh.setLevel(logging.DEBUG)
-    log.addHandler(log_fh)
 
 CDC_HOST = "opendata.dwd.de"
 
