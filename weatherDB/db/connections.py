@@ -3,6 +3,7 @@ import sqlalchemy
 from sqlalchemy import text as sqltxt
 import os
 from ..config.config import config
+import keyring
 
 # DB connection
 ###############
@@ -18,7 +19,9 @@ else:
     DB_ENG = sqlalchemy.create_engine(
         "postgresql://{user}:{pwd}@{host}:{port}/{database}".format(
             user=config["database"]["USER"],
-            pwd=config["database"]["PASSWORD"],
+            pwd=keyring.get_password(
+                "weatherDB",
+                config["database"]["USER"]),
             host=config["database"]["HOST"],
             database=config["database"]["DATABASE"],
             port=config["database"]["PORT"]

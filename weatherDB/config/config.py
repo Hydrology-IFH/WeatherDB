@@ -1,7 +1,6 @@
 import configparser
 from pathlib import Path
 import keyring
-from warnings import warn
 
 # set the file paths for the config files
 DEFAULT_CONFIG_FILE = Path(__file__).parent/'config_default.ini'
@@ -9,11 +8,10 @@ SYS_CONFIG_FILE = Path(__file__).parent/'config_sys.ini' # set by this module
 USER_CONFIG_FILE = Path(__file__).parent/'config.ini' # optional
 
 # read the default config file
-default_config = configparser.ConfigParser()
-default_config.read(DEFAULT_CONFIG_FILE)
+config = configparser.ConfigParser()
+config.read(DEFAULT_CONFIG_FILE)
 
 # read the user config file
-config = configparser.ConfigParser(defaults=default_config)
 config.read(SYS_CONFIG_FILE)
 if USER_CONFIG_FILE.exists():
     config.read(USER_CONFIG_FILE)
