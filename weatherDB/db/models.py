@@ -204,43 +204,26 @@ class StationsRasterValues(Base):
     station_id: Mapped[int] = mapped_column(
         primary_key=True,
         comment="The DWD-ID of the station.")
-    n_dwd_wihj: Mapped[sint] = mapped_column(
+    dwd_p_wihj: Mapped[sint] = mapped_column(
         comment="The multi-annual mean precipitation sum of the winter half-year from the multi-annual DWD grid (1991-2020).")
-    n_dwd_sohj: Mapped[sint] = mapped_column(
+    dwd_p_sohj: Mapped[sint] = mapped_column(
         comment="The multi-annual mean precipitation sum of the summer half-year from the multi-annual DWD grid (1991-2020).")
-    n_dwd_year: Mapped[sint] = mapped_column(
+    dwd_p_year: Mapped[sint] = mapped_column(
         comment="The multi-annual mean yearly precipitation sum from the multi-annual DWD grid (1991-2020).")
-    t_dwd_year: Mapped[int] = mapped_column(
+    dwd_t_year: Mapped[int] = mapped_column(
         comment="The multi-annual mean yearly temperature from the multi-annual DWD grid (1991-2020).")
-    et_dwd_year: Mapped[sint] = mapped_column(
+    dwd_et_year: Mapped[sint] = mapped_column(
         comment="The multi-annual mean yearly evapotranspiration from the multi-annual DWD grid (1991-2020).")
-    dist_dwd: Mapped[sint] = mapped_column(
+    dwd_dist: Mapped[sint] = mapped_column(
         comment="The distance to the nearest DWD grid cell.")
-    n_regnie_wihj: Mapped[sint] = mapped_column(
-        comment="The multi-annual mean precipitation sum of the winter half-year from the multi-annual REGNIE grid (1991-2020).")
-    n_regnie_sohj: Mapped[sint] = mapped_column(
-        comment="The multi-annual mean precipitation sum of the summer half-year from the multi-annual REGNIE grid (1991-2020).")
-    n_regnie_year: Mapped[sint] = mapped_column(
-        comment="The multi-annual mean yearly precipitation sum from the multi-annual REGNIE grid (1991-2020).")
-    dist_regnie: Mapped[sint] = mapped_column(
-        comment="The distance to the nearest REGNIE grid cell.")
-    n_hyras_wihj: Mapped[sint] = mapped_column(
+    hyras_p_wihj: Mapped[sint] = mapped_column(
         comment="The multi-annual mean precipitation sum of the winter half-year from the multi-annual HYRAS grid (1991-2020).")
-    n_hyras_sohj: Mapped[sint] = mapped_column(
+    hyras_p_sohj: Mapped[sint] = mapped_column(
         comment="The multi-annual mean precipitation sum of the summer half-year from the multi-annual HYRAS grid (1991-2020).")
-    n_hyras_year: Mapped[sint] = mapped_column(
+    hyras_p_year: Mapped[sint] = mapped_column(
         comment="The multi-annual mean yearly precipitation sum from the multi-annual HYRAS grid (1991-2020).")
-    dist_hyras: Mapped[sint] = mapped_column(
+    hyras_dist: Mapped[sint] = mapped_column(
         comment="The distance to the nearest HYRAS grid cell.")
-    s_r_f: Mapped[float] = mapped_column(
-        comment="The solar radiation factor (SRF) of the station. Calculated as the quotient between the solar radiation of the DEM grid to a flat DEM.")
-    r_s: Mapped[float] = mapped_column(
-        comment="The global solar radiation at the stations location used to calculate the SRF.")
-    dist_sol: Mapped[sint] = mapped_column(
-        comment="The distance to the nearest solar radiation grid cell.")
-    geometry: Mapped[str] = mapped_column(
-        Geometry('POINT', 25832),
-        comment="The stations location in the UTM32 coordinate reference system (EPSG:25832)")
 
 
 class NeededDownloadTime(Base):
