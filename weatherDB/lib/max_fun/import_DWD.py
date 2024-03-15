@@ -41,7 +41,7 @@ def dwd_id_to_str(id):
         string of normal DWD Station id.
 
     """
-    return str(int(id) + 100000)[1:6]
+    return f"{id:0>5}"
 
 
 def _dwd_date_parser(date_ser):
