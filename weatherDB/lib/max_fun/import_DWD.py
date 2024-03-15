@@ -208,14 +208,13 @@ def get_dwd_data(station_id, ftp_folder):
             zipfilenames.extend(list(filter(comp.match, ftp.nlst(ftp_folder))))
 
     if len(zipfilenames) == 0:
-        log.debug("There is no file for the Station " + station_id + " in " +
-                  "ftp://opendata.dwd.de/" + ftp_folder)
+        log.debug(f"There is no file for the Station {station_id} in ftp://{CDC_HOST}/{ftp_folder}")
         return None
     elif len(zipfilenames) > 1:
-        log.info("There are several files for the Station " + station_id +
-                 " in: \nftp://opendata.dwd.de/" + ftp_folder +
-                 "\nthey will get concatenated together! \n" +
-                 "These are the files:\n" + "\n".join(zipfilenames))
+        log.info(
+            f"There are several files for the Station {station_id} in: \nftp://{CDC_HOST}/{ftp_folder}" +
+            "\nthey will get concatenated together! \nThese are the files:\n" +
+            "\n".join(zipfilenames))
 
     # import every file and merge data
     for zipfilename in zipfilenames:
@@ -230,8 +229,7 @@ def get_dwd_data(station_id, ftp_folder):
                 df_all = pd.concat([df_all, df_new])
                 df_all.reset_index(drop=True, inplace=True)
         except IndexError:
-            log.info("The following file could not get imported " +
-                        str(zipfilename))
+            log.info(f"The following file could not get imported {str(zipfilename)}")
 
     # check for duplicates in date column
     try:
@@ -243,8 +241,8 @@ def get_dwd_data(station_id, ftp_folder):
 
     # check if everything worked
     if "df_all" not in locals():
-        raise ImportError("The file(s) for the dwd station " +
-                          str(station_id) + " couldn't get imported.")
+        raise ImportError(
+            f"The file(s) for the dwd station {station_id} couldn't get imported.")
 
     return df_all
 
@@ -332,14 +330,15 @@ def get_dwd_meta(ftp_folder, min_years=0, max_hole_d=9999):
         meta_file = list(filter(re.compile(pattern).match, ftp_files))
 
     if len(meta_file) == 0:
-        log.info("There is no file matching the pattern: " + pattern +
-              "\nin the folder: ftp://opendata.dwd.de/" + str(ftp_folder))
+        log.info(
+            f"There is no file matching the pattern '{pattern}'"+
+            f"\nin the folder: ftp://{CDC_HOST}/{str(ftp_folder)}")
         return None
     elif len(meta_file) > 1:
-        log.info("There are more than one files matching the pattern: " +
-                  pattern + " in the folder:\nftp://opendata.dwd.de/" +
-                  str(ftp_folder) + "\nonly the first file is returned: " +
-                  meta_file[0])
+        log.info(
+            f"There are more than one files matching the pattern: {pattern}" +
+            f" in the folder:\nftp://{CDC_HOST}/{str(ftp_folder)}" +
+            f"\nonly the first file is returned: {meta_file[0]}")
 
     # import meta file
     try:
