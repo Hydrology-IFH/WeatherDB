@@ -44,6 +44,3 @@ def check_superuser(methode):
     else:
         return no_super_user
 
-# DWD - CDC FTP Server
-CDC_HOST = "opendata.dwd.de"
-

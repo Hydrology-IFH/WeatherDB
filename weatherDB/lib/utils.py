@@ -9,8 +9,9 @@ import re
 
 from pandas import Timestamp, NaT, Timedelta
 import datetime
-from ..db.connections import CDC_HOST
 
+# DWD - CDC FTP Server
+CDC_HOST = "opendata.dwd.de"
 
 # functions
 def get_ftp_file_list(ftp_conn, ftp_folders):
