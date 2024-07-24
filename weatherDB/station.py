@@ -65,10 +65,10 @@ RASTERS = {
     "local":{
         "dgm1": {
             "fp": DATA_DIR.joinpath("dgms/DGM25.tif"),
-            "crs":pyproj.CRS.from_epsg(3035)},
+            "crs": pyproj.CRS.from_epsg(3035)},
         "dgm2": {
             "fp": DATA_DIR.joinpath("dgms/dgm80.tif"),
-            "crs":pyproj.CRS.from_epsg(25832)}
+            "crs": pyproj.CRS.from_epsg(25832)}
     }
 }
 RICHTER_CLASSES = {
@@ -119,6 +119,7 @@ class StationBase:
     """
     # because those parameters need to get defined in the real classes:
     _ftp_folder_base = ["None"]  # the base folder on the CDC-FTP server
+    _ftp_zip_regex_prefix = None  # a Regular expression prefix of the zip files on the CDC-FTP server, prefixes the station_id
     _date_col = None  # The name of the date column on the CDC server
     _para = None  # The parameter string "n", "t", or "et"
     _para_long = None  # The parameter as a long descriptive string
@@ -1073,7 +1074,11 @@ class StationBase:
             )
 
         # filter for station
-        comp = re.compile(r".*_" + self.id_str + r"[_\.].*")
+        if self._ftp_zip_regex_prefix is not None:
+            comp = re.compile(
+                self._ftp_zip_regex_prefix + self.id_str + r"[_\.].*")
+        else:
+            comp = re.compile(r".*_" + self.id_str + r"[_\.].*")
         zipfiles_CDC = list(filter(
             lambda x: comp.match(x[0]),
             ftp_file_list
