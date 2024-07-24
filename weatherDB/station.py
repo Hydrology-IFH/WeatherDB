@@ -3788,12 +3788,13 @@ class StationT(StationTETBase):
 
 
 class StationET(StationTETBase):
-    """A class to work with and download potential Evapotranspiration (VPGB) data for one station."""
+    """A class to work with and download potential Evapotranspiration (VPGFAO) data for one station."""
     _ftp_folder_base = ["climate_environment/CDC/derived_germany/soil/daily/"]
+    _ftp_zip_regex_prefix = ".*_v2_"
     _date_col = "Datum"
     _para = "et"
     _para_long = "Evapotranspiration"
-    _cdc_col_names_imp = ["VPGB"]
+    _cdc_col_names_imp = ["VPGFAO"]
     _unit = "mm/Tag"
     _decimals = 10
     _ma_cols = ["et_dwd_year"]
