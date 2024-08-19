@@ -11,9 +11,6 @@ from . import __version__ as __version__
 
 log = logging.getLogger(__name__)
 
-if not db_engine.is_superuser:
-    raise PermissionError("You are no super user of the Database and therefor the Broker class is not available.")
-
 class Broker(object):
     """A class to manage and update the database.
 
@@ -22,6 +19,9 @@ class Broker(object):
     This class is only working with super user privileges.
     """
     def __init__(self):
+        if not db_engine.is_superuser:
+            raise PermissionError("You are no super user of the Database and therefor the Broker class is not available.")
+
         self.stations_nd = StationsND()
         self.stations_t = StationsT()
         self.stations_et = StationsET()
