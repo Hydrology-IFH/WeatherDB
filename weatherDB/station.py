@@ -27,7 +27,7 @@ import pyproj
 import geopandas as gpd
 from packaging import version
 
-from .db.connections import DB_ENG, check_superuser
+from .db.connections import db_engine, check_superuser
 from .lib.max_fun.import_DWD import dwd_id_to_str, get_dwd_file
 from .lib.utils import TimestampPeriod, get_cdc_file_list
 from .lib.max_fun.geometry import polar_line, raster2points
@@ -440,7 +440,7 @@ class StationBase:
             tstp_dtype=self._tstp_dtype,
             interval=self._interval,
             min_tstp=MIN_TSTP.strftime("%Y-%m-%d %H:%M"))
-        with DB_ENG.connect()\
+        with db_engine.connect()\
                 .execution_options(isolation_level="AUTOCOMMIT")\
                 as con:
             con.execute(sqltxt(sql))
@@ -481,7 +481,7 @@ class StationBase:
         else:
             self._create_timeseries_table()
 
-        with DB_ENG.connect()\
+        with db_engine.connect()\
                 .execution_options(isolation_level="AUTOCOMMIT")\
                 as con:
             # create groups of 1000 values to insert
@@ -528,7 +528,7 @@ class StationBase:
             stid=self.id, para=self._para,
             why=why.replace("'", "''"))
 
-        with DB_ENG.connect().execution_options(isolation_level="AUTOCOMMIT") as con:
+        with db_engine.connect().execution_options(isolation_level="AUTOCOMMIT") as con:
             con.execute(sqltxt(sql))
         log.debug(
             "The {para_long} Station with ID {stid} got droped from the database."
@@ -552,7 +552,7 @@ class StationBase:
             sets=", ".join(sets)
         )
 
-        with DB_ENG.connect()\
+        with db_engine.connect()\
                 .execution_options(isolation_level="AUTOCOMMIT")\
                 as con:
             con.execute(sqltxt(sql_update))
@@ -569,7 +569,7 @@ class StationBase:
         while not done:
             attempts += 1
             try:
-                with DB_ENG.connect() as con:
+                with db_engine.connect() as con:
                     con.execution_options(isolation_level="AUTOCOMMIT"
                                         ).execute(sqltxt(sql))
                 done = True
@@ -612,7 +612,7 @@ class StationBase:
             WHERE station_id={stid};
         """.format(stid=self.id, para=self._para, state=state)
 
-        with DB_ENG.connect() as con:
+        with db_engine.connect() as con:
             con.execute(sqltxt(sql))
 
     def isin_db(self):
@@ -630,7 +630,7 @@ class StationBase:
                 from information_schema.columns
                 where table_schema='timeseries');
             """.format(para=self._para, stid=self.id)
-        with DB_ENG.connect() as con:
+        with db_engine.connect() as con:
             result = con.execute(sqltxt(sql)).first()[0]
 
         return result
@@ -643,7 +643,7 @@ class StationBase:
         bool
             True if Station is in meta table.
         """
-        with DB_ENG.connect() as con:
+        with db_engine.connect() as con:
             result = con.execute(sqltxt("""
             SELECT EXISTS(SELECT station_id FROM meta_{para} WHERE station_id={stid});
             """.format(stid=self.id, para=self._para)))
@@ -671,7 +671,7 @@ class StationBase:
             regio_cols_test=" AND ".join(
                 [col + " IS NOT NULL" for col in self._ma_cols]))
 
-        with DB_ENG.connect() as con:
+        with db_engine.connect() as con:
             result = con.execute(sqltxt(sql))
         return result.first()[0]
 
@@ -704,7 +704,7 @@ class StationBase:
             FROM meta_{para}
             WHERE station_id= {stid}
         """.format(stid=self.id, para=self._para)
-        with DB_ENG.connect() as con:
+        with db_engine.connect() as con:
             res = con.execute(sqltxt(sql))
         return res.first()[0]
 
@@ -735,7 +735,7 @@ class StationBase:
             WHERE station_id = {stid}
         """.format(stid=self.id, para=self._para, kind=kind)
 
-        with DB_ENG.connect() as con:
+        with db_engine.connect() as con:
             res = con.execute(sqltxt(sql))
 
         return res.first()[0]
@@ -771,7 +771,7 @@ class StationBase:
                 format="'{}'".format(self._tstp_format_db))
         )
 
-        with DB_ENG.connect() as con:
+        with db_engine.connect() as con:
             con.execute(sqltxt(sql))
 
     @check_superuser
@@ -840,28 +840,7 @@ class StationBase:
         # write to stations_raster_values table
         if new_mas is not None and any(new_mas):
             # multi annual values were found
-            sql_update = """
-                INSERT INTO stations_raster_values(station_id, geometry, {ma_cols})
-                    Values ({stid}, ST_TRANSFORM('{geom}'::geometry, 25832), {values})
-                    ON CONFLICT (station_id) DO UPDATE SET
-                    {update};
-            """.format(
-                stid=self.id,
-                geom=self.get_geom(format=None),
-                ma_cols=', '.join(
-                    [str(key) for key in self._ma_raster["bands"].values()] +
-                    ["dist_" + self._ma_raster["abbreviation"]]),
-                values=str(new_mas).replace("None", "NULL")[1:-1] + f", {dist}",
-                update=", ".join(
-                    ["{key} = EXCLUDED.{key}".format(key=key)
-                        for key in self._ma_raster["bands"].values()] +
-                    ["{key} = EXCLUDED.{key}".format(
-                        key="dist_" + self._ma_raster["abbreviation"])]
-                ))
-            with DB_ENG.connect()\
-                    .execution_options(isolation_level="AUTOCOMMIT")\
-                    as con:
-                con.execute(sqltxt(sql_update))
+            with Session(db_engine) as session:
         elif drop_when_error:
             # there was no multi annual data found from the raster
             self._drop(
@@ -929,7 +908,7 @@ class StationBase:
                 format="'{}'".format(self._tstp_format_db)))
 
         # execute meta update
-        with DB_ENG.connect()\
+        with db_engine.connect()\
                 .execution_options(isolation_level="AUTOCOMMIT") as con:
             con.execute(sqltxt(sql_update_meta))
 
@@ -1011,7 +990,7 @@ class StationBase:
                     zipfiles.index,
                     zipfiles["modtime"].dt.strftime("%Y%m%d %H:%M").values)]
             )
-        with DB_ENG.connect().execution_options(isolation_level="AUTOCOMMIT") as con:
+        with db_engine.connect().execution_options(isolation_level="AUTOCOMMIT") as con:
             con.execute(sqltxt(f'''
                 INSERT INTO raw_files(para, filepath, modtime)
                 VALUES {update_values}
@@ -1094,7 +1073,7 @@ class StationBase:
                         + "'",
                     para=self._para)
             zipfiles_DB = pd.read_sql(
-                sql_db_modtimes, con=DB_ENG
+                sql_db_modtimes, con=db_engine
             ).set_index("filepath")
 
             # check for updated files
@@ -1514,7 +1493,7 @@ class StationBase:
             WHERE station_id = {stid}
         """.format(stid=self.id, para=self._para, kind=kind)
 
-        with DB_ENG.connect() as con:
+        with db_engine.connect() as con:
             con.execute(sqltxt(sql))
 
     @check_superuser
@@ -1576,7 +1555,7 @@ class StationBase:
         """.format(col_clause=col_clause, para=cls._para)
 
         # get the result
-        return pd.read_sql(sql,con=DB_ENG, index_col="info")["explanation"]
+        return pd.read_sql(sql,con=db_engine, index_col="info")["explanation"]
 
     def get_meta(self, infos="all"):
         """Get Information from the meta table.
@@ -1611,7 +1590,7 @@ class StationBase:
             stid=self.id, para=self._para,
             cols=cols)
 
-        with DB_ENG.connect() as con:
+        with db_engine.connect() as con:
             res = con.execute(sqltxt(sql))
         keys = res.keys()
         values = [val.replace(tzinfo=timezone.utc) if type(val) == datetime else val for val in res.first()]
@@ -1782,7 +1761,7 @@ class StationBase:
         # get response from server
         if "return_sql" in kwargs:
             return sql
-        res = pd.read_sql(sql, DB_ENG)
+        res = pd.read_sql(sql, db_engine)
 
         # set index
         res["station_id"] = self.id
@@ -1837,7 +1816,7 @@ class StationBase:
                 WHERE station_id = {stid};
             """.format(**sql_format_dict)
 
-        with DB_ENG.connect() as con:
+        with db_engine.connect() as con:
             res = con.execute(sql)
 
         return TimestampPeriod(*res.first())
@@ -1885,7 +1864,7 @@ class StationBase:
                 FROM timeseries."{stid}_{para}"
                 WHERE "{kind}" is not NULL
             """.format(stid=self.id, kind=kind, para=self._para)
-            with DB_ENG.connect() as con:
+            with db_engine.connect() as con:
                 respond = con.execute(sqltxt(sql))
 
             return TimestampPeriod(*respond.first())
@@ -1922,7 +1901,7 @@ class StationBase:
                 FROM timeseries."{stid}_{para}";
                 """.format(
                     stid=self.id, para=self._para)
-            with DB_ENG.connect() as con:
+            with db_engine.connect() as con:
                 res = con.execute(sqltxt(sql_max_tstp))
             max_period = TimestampPeriod(*res.first())
         else:
@@ -2048,7 +2027,7 @@ class StationBase:
         if "return_sql" in kwargs and kwargs["return_sql"]:
             return sql_nearest_stids
 
-        with DB_ENG.connect() as con:
+        with db_engine.connect() as con:
             result = con.execute(sqltxt(sql_nearest_stids))
             nearest_stids = [res[0] for res in result.all()]
         return nearest_stids
@@ -2064,22 +2043,12 @@ class StationBase:
             For N the winter and summer half yearly sum is returned in tuple.
             The returned unit is mm or °C.
         """
-        sql = """
-            SELECT {ma_cols}
-            FROM stations_raster_values
-            WHERE station_id = {stid}
-        """.format(
-            ma_cols=", ".join(self._ma_cols),
-            stid=self.id
-        )
-
-        with DB_ENG.connect() as con:
-            res = con.execute(sqltxt(sql)).first()
+        with Session(db_engine) as session:
 
         # Update ma values if no result returned
         if res is None:
             self.update_ma()
-            with DB_ENG.connect() as con:
+            with Session(db_engine) as session:
                 res = con.execute(sqltxt(sql)).first()
 
         if res[0] is None:
@@ -2312,7 +2281,7 @@ class StationBase:
         if "return_sql" in kwargs and kwargs["return_sql"]:
             return sql
 
-        df = pd.read_sql(sql, con=DB_ENG, index_col="timestamp")
+        df = pd.read_sql(sql, con=db_engine, index_col="timestamp")
 
         # convert filled_by to Int16, pandas Integer with NA support
         if "filled_by" in kinds and df["filled_by"].dtype != object:
@@ -2411,7 +2380,7 @@ class StationBase:
         )
 
         df = pd.read_sql(
-            sql, con=DB_ENG, index_col="timestamp")
+            sql, con=db_engine, index_col="timestamp")
 
         # change index to pandas DatetimeIndex if necessary
         if type(df.index) != pd.DatetimeIndex:
@@ -2567,7 +2536,7 @@ and not in the precipitation meta table in the DB""")
              WHERE station_id = {stid})
         """.format(stid=self.id, para=self._para)
 
-        with DB_ENG.connect().execution_options(isolation_level="AUTOCOMMIT") as con:
+        with db_engine.connect().execution_options(isolation_level="AUTOCOMMIT") as con:
             con.execute(sqltxt(sql))
 
     def isin_meta_n(self):
@@ -2578,7 +2547,7 @@ and not in the precipitation meta table in the DB""")
         bool
             True if Station is in the precipitation meta table.
         """
-        with DB_ENG.connect() as con:
+        with db_engine.connect() as con:
             result = con.execute(sqltxt("""
             SELECT {stid} in (SELECT station_id FROM meta_n);
             """.format(stid=self.id)))
@@ -2899,7 +2868,7 @@ class StationN(StationNBase):
                 WHERE table_schema = 'timeseries'
                     AND table_name = '{stid}_{para}_d'
             );""".format(**sql_format_dict)
-        with DB_ENG.connect() as con:
+        with db_engine.connect() as con:
             daily_exists = con.execute(sqltxt(sql_check_d)).first()[0]
 
         # create sql for dates where the aggregated 10 minutes measurements are 0
@@ -3028,7 +2997,7 @@ class StationN(StationNBase):
                 corr int4
             );
         '''.format(stid=self.id, para=self._para)
-        with DB_ENG.connect() as con:
+        with db_engine.connect() as con:
             con.execute(sqltxt(sql_add_table))
 
     @staticmethod
@@ -3411,7 +3380,7 @@ class StationN(StationNBase):
                         HAVING count("filled") > 364 * 6 *24) df_y) df_avg
                 WHERE station_id={stid};""".format(**sql_format_dict)
 
-            with DB_ENG.connect() as con:
+            with db_engine.connect() as con:
                 con.execute(sqltxt(sql_diff_filled))
 
         # update filled time in meta table
@@ -3542,7 +3511,7 @@ class StationN(StationNBase):
             #execute sql or return
             if "return_sql" in kwargs and kwargs["return_sql"]:
                 return (str(super_ret) + "\n" + sql_diff_ma)
-            with DB_ENG.connect() as con:
+            with db_engine.connect() as con:
                 con.execute(sqltxt(sql_diff_ma))
 
     def get_corr(self, **kwargs):
@@ -3574,13 +3543,13 @@ class StationN(StationNBase):
             WHERE station_id = {stid}
         """.format(stid=self.id, para=self._para)
 
-        with DB_ENG.connect() as con:
+        with db_engine.connect() as con:
             res = con.execute(sqltxt(sql)).first()
 
         # check result
         if res is None:
             if update_if_fails:
-                if DB_ENG.is_superuser:
+                if db_engine.is_superuser:
                     self.update_richter_class()
                     # update_if_fails is False to not get an endless loop
                     return self.get_richter_class(update_if_fails=False)
@@ -3662,7 +3631,7 @@ class StationND(StationNBase, StationCanVirtualBase):
                 filled_by int2
             );
         '''.format(stid=self.id, para=self._para)
-        with DB_ENG.connect() as con:
+        with db_engine.connect() as con:
             con.execute(sqltxt(sql_add_table))
 
 
@@ -3704,7 +3673,7 @@ class StationT(StationTETBase):
                 filled_by smallint[{self._filled_by_n}] NULL DEFAULT NULL
                 );
         '''
-        with DB_ENG.connect() as con:
+        with db_engine.connect() as con:
             con.execute(sqltxt(sql_add_table))
 
     def _get_sql_new_qc(self, period):
@@ -3810,7 +3779,7 @@ class StationET(StationTETBase):
                 filled_by smallint NULL DEFAULT NULL
                 );
         '''.format(stid=self.id, para=self._para)
-        with DB_ENG.connect() as con:
+        with db_engine.connect() as con:
             con.execute(sqltxt(sql_add_table))
 
     def _get_sql_new_qc(self, period):

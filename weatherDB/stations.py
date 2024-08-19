@@ -21,7 +21,7 @@ import zipfile
 from pathlib import Path
 from sqlalchemy import text as sqltxt
 
-from .db.connections import DB_ENG, check_superuser
+from .db.connections import db_engine, check_superuser
 from .lib.utils import TimestampPeriod, get_cdc_file_list
 from .lib.max_fun.import_DWD import get_dwd_meta
 from .station import (StationBase,
@@ -118,7 +118,7 @@ class StationsBase:
             FROM droped_stations
             WHERE para ='{para}';
         """.format(para=self._para)
-        with DB_ENG.connect() as con:
+        with db_engine.connect() as con:
             droped_stids = con.execute(sqltxt(sql_get_droped)).all()
         droped_stids = [row[0] for row in droped_stids
                         if row[0] in meta.index]
@@ -151,7 +151,7 @@ class StationsBase:
         meta.rename(dict(zip(meta.columns, columns)), axis=1, inplace=True)
 
         # check if columns are initiated in DB
-        with DB_ENG.connect() as con:
+        with db_engine.connect() as con:
             columns_db = con.execute(sqltxt(
                 """
                 SELECT column_name
@@ -210,7 +210,7 @@ class StationsBase:
         sql = sql[:-2] + ";"
 
         # run sql command
-        with DB_ENG.connect().execution_options(isolation_level="AUTOCOMMIT") as con:
+        with db_engine.connect().execution_options(isolation_level="AUTOCOMMIT") as con:
             con.execute(sqltxt(sql))
 
     @check_superuser
@@ -323,7 +323,7 @@ class StationsBase:
             sql += where_clause
 
         # execute queries to db
-        with DB_ENG.connect() as con:
+        with db_engine.connect() as con:
             meta = pd.read_sql(
                 sql, con,
                 index_col="station_id")
@@ -652,7 +652,7 @@ class StationsBase:
 
         # save start time as variable to db
         if (type(stids) == str) and (stids == "all"):
-            with DB_ENG.connect() as con:
+            with db_engine.connect() as con:
                 con.execute(sqltxt("""
                     UPDATE para_variables
                     SET start_tstp_last_imp='{start_tstp}'::timestamp,
@@ -1067,7 +1067,7 @@ class GroupStations(object):
         if not hasattr(self, "_valid_stids"):
             sql ="""
             SELECT station_id FROM meta_n"""
-            with DB_ENG.connect() as con:
+            with db_engine.connect() as con:
                 res = con.execute(sqltxt(sql))
             self._valid_stids = [el[0] for el in res.all()]
         return self._valid_stids
@@ -1451,7 +1451,7 @@ class GroupStations(object):
                 f.stat().st_size for f in dir.glob('**/*') if f.is_file())
 
         # save needed time to db
-        if DB_ENG.is_superuser:
+        if db_engine.is_superuser:
             sql_save_time = """
                 INSERT INTO needed_download_time(timestamp, quantity, aggregate, timespan, zip, pc, duration, output_size)
                 VALUES (now(), '{quantity}', '{agg_to}', '{timespan}', '{zip}', '{pc}', '{duration}', '{out_size}');
@@ -1463,7 +1463,7 @@ class GroupStations(object):
                 zip="true" if dir.suffix ==".zip" else "false",
                 pc=socket.gethostname(),
                 out_size=out_size)
-            with DB_ENG.connect().execution_options(isolation_level="AUTOCOMMIT") as con:
+            with db_engine.connect().execution_options(isolation_level="AUTOCOMMIT") as con:
                 con.execute(sqltxt(sql_save_time))
 
         # create log message

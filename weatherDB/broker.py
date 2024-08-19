@@ -4,14 +4,14 @@ This submodule has only one class Broker. This one is used to do actions on all 
 # libraries
 import logging
 from sqlalchemy import text as sqltxt
-from .db.connections import DB_ENG
+from .db.connections import db_engine
 from .stations import StationsN, StationsND, StationsT, StationsET
 from packaging import version as pv
 from . import __version__ as __version__
 
 log = logging.getLogger(__name__)
 
-if not DB_ENG.is_superuser:
+if not db_engine.is_superuser:
     raise PermissionError("You are no super user of the Database and therefor the Broker class is not available.")
 
 class Broker(object):
@@ -271,7 +271,7 @@ class Broker(object):
     def vacuum(self, do_analyze=True):
         sql = "VACUUM {anlyze};".format(
             analyze="ANALYZE" if do_analyze else "")
-        with DB_ENG.connect() as con:
+        with db_engine.connect() as con:
             con.execute(sqltxt(sql))
 
     def get_setting(self, key):
@@ -287,7 +287,7 @@ class Broker(object):
         value: str
             The version of the database.
         """
-        with DB_ENG.connect() as con:
+        with db_engine.connect() as con:
             res = con.execute(
                 sqltxt(f"SELECT value FROM settings WHERE key='{key}';")
                 ).fetchone()
@@ -306,7 +306,7 @@ class Broker(object):
         value : str
             The value of the setting.
         """
-        with DB_ENG.connect() as con:
+        with db_engine.connect() as con:
             con.execute(sqltxt(
                 f"""INSERT INTO settings
                 VALUES ('{key}', '{value}')
