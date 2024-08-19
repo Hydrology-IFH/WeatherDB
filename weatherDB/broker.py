@@ -284,8 +284,8 @@ class Broker(object):
 
         Returns
         -------
-        value: str
-            The version of the database.
+        value: str or None
+            The settings value.
         """
         with DB_ENG.connect() as con:
             res = con.execute(

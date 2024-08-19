@@ -1,7 +1,8 @@
 # libraries
 import sqlalchemy
 from sqlalchemy import text as sqltxt
-import sys, os
+import sys
+import os
 from pathlib import Path
 
 # DB connection

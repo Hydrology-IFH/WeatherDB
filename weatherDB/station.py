@@ -21,7 +21,7 @@ from sqlalchemy import text as sqltxt
 
 import rasterio as rio
 import rasterio.mask
-from shapely.geometry import Point, MultiLineString
+from shapely.geometry import MultiLineString
 import shapely.wkt
 import pyproj
 import geopandas as gpd
