@@ -10,3 +10,4 @@ GeoAlchemy2
 alembic
 requests
 keyring
+tkinter

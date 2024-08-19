@@ -2,11 +2,11 @@ import configparser
 from pathlib import Path
 import keyring
 from getpass import getpass
+import shutil
 
 # set the file paths for the config files
 DEFAULT_CONFIG_FILE = Path(__file__).parent/'config_default.ini'
 SYS_CONFIG_FILE = Path(__file__).parent/'config_sys.ini' # set by this module
-USER_CONFIG_FILE = Path(__file__).parent/'config.ini' # optional
 
 # read the default config file
 config = configparser.ConfigParser()
@@ -14,11 +14,6 @@ config.read(DEFAULT_CONFIG_FILE)
 
 # read the user config file
 config.read(SYS_CONFIG_FILE)
-if USER_CONFIG_FILE.exists():
-    config.read(USER_CONFIG_FILE)
-    if "PASSWORD" in config["database"]:
-        raise PermissionError("The password should not be in the config.ini file. Please use set.")
-    config.write(SYS_CONFIG_FILE.open('w'))
 
 # define functions
 def _set_config(section, option, value):
@@ -37,7 +32,9 @@ def _set_config(section, option, value):
     value : str, int or bool
         The new value for the option.
     """
-    if value != config.get(section, option):
+    if section not in config.sections():
+        config.add_section(section)
+    if option not in config[section] or (value != config.get(section, option)):
         config.set(section, option, value)
         with open(SYS_CONFIG_FILE, 'w') as configfile:
             config.write(configfile)
@@ -114,3 +111,53 @@ def get_db_credentials():
     password = keyring.get_password("weatherDB", user)
 
     return user, password
+
+def init_user_config(user_config_file=None):
+    """Create a new user config file.
+
+    Parameters
+    ----------
+    user_config_file : str or Path, optional
+        The path to the new user config file.
+        If not given, the function will ask for it.
+        The default is None.
+    """
+    if user_config_file is None:
+        from tkinter import Tk
+        from tkinter import filedialog
+        tkroot = Tk()
+        tkroot.attributes('-topmost', True)
+        tkroot.iconify()
+        user_config_file = filedialog.asksaveasfilename(
+            defaultextension=".ini",
+            filetypes=[("INI files", "*.ini")],
+            title="Where do you want to save the user config file?",
+            initialdir=Path("~").expanduser(),
+            initialfile="WeatherDB_config.ini",
+            confirmoverwrite=True,
+        )
+        tkroot.destroy()
+
+    # copy the default config file to the user config file
+    shutil.copyfile(DEFAULT_CONFIG_FILE, user_config_file)
+
+    _set_config("main", "user_config_file", str(user_config_file))
+
+    print(f"User config file created at {user_config_file}")
+    print("Please edit the file to your needs and reload user config with load_user_config() or by reloading the module.")
+
+def load_user_config(raise_error=True):
+    """(re)load the user config file.
+    """
+    if user_config_file:=config.get("main", "user_config_file", fallback=False):
+        if Path(user_config_file).exists():
+            config.read(user_config_file)
+            if "PASSWORD" in config["database"]:
+                raise PermissionError("For security reasons the password isn't allowed to be in the config file. Please use set_db_credentials to set the password.")
+            config.write(SYS_CONFIG_FILE.open('w'))
+        else:
+            raise FileNotFoundError(f"User config file not found at {user_config_file}")
+    elif raise_error:
+        raise FileNotFoundError("No user config file defined.")
+
+load_user_config(raise_error=False)
