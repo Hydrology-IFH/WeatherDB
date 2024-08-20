@@ -1,3 +1,6 @@
+"""
+The configuration module for the weatherDB module.
+"""
 import configparser
 from pathlib import Path
 import keyring
@@ -6,7 +9,7 @@ import shutil
 
 # set the file paths for the config files
 DEFAULT_CONFIG_FILE = Path(__file__).parent/'config_default.ini'
-SYS_CONFIG_FILE = Path(__file__).parent/'config_sys.ini' # set by this module
+SYS_CONFIG_FILE = Path(__file__).parent/'config_sys.ini' # to save the last configurations
 
 # read the default configuration file
 config = configparser.ConfigParser(
@@ -14,10 +17,7 @@ config = configparser.ConfigParser(
     converters={
         "list": lambda x: [v.strip() for v in x.replace("\n", "").split(",")]}
 )
-config.read(DEFAULT_CONFIG_FILE)
 
-# read the system configuration file
-config.read(SYS_CONFIG_FILE)
 
 # define functions
 # ----------------
@@ -172,4 +172,13 @@ def load_user_config(raise_error=True):
     elif raise_error:
         raise FileNotFoundError("No user config file defined.")
 
+# load the configuration
+# ----------------------
+
+# add module path to the config
+_set_config("main", "module_path", str(Path(__file__).parent.parent))
+
+# read the configuration files
+config.read(DEFAULT_CONFIG_FILE)
+config.read(SYS_CONFIG_FILE)
 load_user_config(raise_error=False)
