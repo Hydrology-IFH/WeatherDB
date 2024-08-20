@@ -9,7 +9,9 @@ DEFAULT_CONFIG_FILE = Path(__file__).parent/'config_default.ini'
 SYS_CONFIG_FILE = Path(__file__).parent/'config_sys.ini' # set by this module
 
 # read the default configuration file
-config = configparser.ConfigParser()
+config = configparser.ConfigParser(
+    interpolation=configparser.ExtendedInterpolation()
+)
 config.read(DEFAULT_CONFIG_FILE)
 
 # read the system configuration file
@@ -17,6 +19,12 @@ config.read(SYS_CONFIG_FILE)
 
 # define functions
 # ----------------
+
+def save_config():
+    """Save the current configuration to the system configuration file.
+    """
+    with open(SYS_CONFIG_FILE, 'w') as configfile:
+        config.write(configfile)
 
 # setting configuration
 def _set_config(section, option, value):
@@ -39,8 +47,7 @@ def _set_config(section, option, value):
         config.add_section(section)
     if option not in config[section] or (value != config.get(section, option)):
         config.set(section, option, value)
-        with open(SYS_CONFIG_FILE, 'w') as configfile:
-            config.write(configfile)
+        save_config()
 
 # changing configuration
 def set_config(section, option, value):
@@ -157,7 +164,7 @@ def load_user_config(raise_error=True):
             config.read(user_config_file)
             if "PASSWORD" in config["database"]:
                 raise PermissionError("For security reasons the password isn't allowed to be in the config file. Please use set_db_credentials to set the password.")
-            config.write(SYS_CONFIG_FILE.open('w'))
+            save_config()
         else:
             raise FileNotFoundError(f"User config file not found at {user_config_file}")
     elif raise_error:
