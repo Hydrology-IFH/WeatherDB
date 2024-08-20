@@ -12,6 +12,7 @@ weatherDB.egg-info
 weatherDB.egg-info/*
 dist/*
 docs/source/README.md
+docs/source/CHANGES.md
 docs/html/*
 docs/html
 docs/source/Methode.html

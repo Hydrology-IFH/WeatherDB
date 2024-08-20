@@ -200,30 +200,22 @@ class RichterValues(Base):
 
 class StationsRasterValues(Base):
     __tablename__ = 'stations_raster_values'
+    __table_args__ = dict(
+        comment="The multi annual climate raster values for each station.")
 
     station_id: Mapped[int] = mapped_column(
         primary_key=True,
         comment="The DWD-ID of the station.")
-    dwd_p_wihj: Mapped[sint] = mapped_column(
-        comment="The multi-annual mean precipitation sum of the winter half-year from the multi-annual DWD grid (1991-2020).")
-    dwd_p_sohj: Mapped[sint] = mapped_column(
-        comment="The multi-annual mean precipitation sum of the summer half-year from the multi-annual DWD grid (1991-2020).")
-    dwd_p_year: Mapped[sint] = mapped_column(
-        comment="The multi-annual mean yearly precipitation sum from the multi-annual DWD grid (1991-2020).")
-    dwd_t_year: Mapped[int] = mapped_column(
-        comment="The multi-annual mean yearly temperature from the multi-annual DWD grid (1991-2020).")
-    dwd_et_year: Mapped[sint] = mapped_column(
-        comment="The multi-annual mean yearly evapotranspiration from the multi-annual DWD grid (1991-2020).")
-    dwd_dist: Mapped[sint] = mapped_column(
-        comment="The distance to the nearest DWD grid cell.")
-    hyras_p_wihj: Mapped[sint] = mapped_column(
-        comment="The multi-annual mean precipitation sum of the winter half-year from the multi-annual HYRAS grid (1991-2020).")
-    hyras_p_sohj: Mapped[sint] = mapped_column(
-        comment="The multi-annual mean precipitation sum of the summer half-year from the multi-annual HYRAS grid (1991-2020).")
-    hyras_p_year: Mapped[sint] = mapped_column(
-        comment="The multi-annual mean yearly precipitation sum from the multi-annual HYRAS grid (1991-2020).")
-    hyras_dist: Mapped[sint] = mapped_column(
-        comment="The distance to the nearest HYRAS grid cell.")
+    raster_name: Mapped[str] = mapped_column(
+        primary_key=True,
+        comment="The name of the raster. e.g. 'dwd' or 'hyras'")
+    parameter: Mapped[str] = mapped_column(
+        primary_key=True,
+        comment="The parameter of the raster. e.g. 'p_wihj', 'p_sohj', 'p_year', 't_year', 'et_year'")
+    value: Mapped[int] = mapped_column(
+        comment="The value of the raster for the station.")
+    distance: Mapped[float] = mapped_column(
+        comment="The distance of the station to the raster value in meters.")
 
 
 class NeededDownloadTime(Base):

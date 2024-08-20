@@ -13,64 +13,34 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import warnings
 import zipfile
-
+from packaging import version
 import numpy as np
 import pandas as pd
 from sqlalchemy.exc import OperationalError
 from sqlalchemy import text as sqltxt
-
+import sqlalchemy as sqa
+from sqlalchemy.orm import Session
 import rasterio as rio
 import rasterio.mask
-from shapely.geometry import Point, MultiLineString
+from shapely.geometry import MultiLineString
 import shapely.wkt
 import pyproj
 import geopandas as gpd
-from packaging import version
+from rasterstats import zonal_stats
+from contextlib import nullcontext
 
 from .db.connections import db_engine, check_superuser
 from .lib.max_fun.import_DWD import dwd_id_to_str, get_dwd_file
 from .lib.utils import TimestampPeriod, get_cdc_file_list
 from .lib.max_fun.geometry import polar_line, raster2points
+from .config import config
+from .db.models import  StationsRasterValues
 
 # Variables
 MIN_TSTP = datetime.strptime("19940101", "%Y%m%d").replace(tzinfo=timezone.utc)
 # all timestamps in the database are in UTC
 THIS_DIR = Path(__file__).parent.resolve()
 DATA_DIR = THIS_DIR.parents[2].joinpath("data")
-RASTERS = {
-    "dwd_grid": {
-        "srid": 3035,
-        "db_table": "dwd_grid_1991_2020",
-        "bands": {
-            1: "n_dwd_wihj",
-            2: "n_dwd_sohj",
-            3: "n_dwd_year",
-            4: "t_dwd_year",  # is in 0.1°C
-            5: "et_dwd_year"
-        },
-        "dtype": int,
-        "abbreviation": "dwd"
-    },
-    "hyras_grid": {
-        "srid": 3035,
-        "db_table": "hyras_grid_1991_2020",
-        "bands": {
-            1: "n_hyras_wihj",
-            2: "n_hyras_sohj",
-            3: "n_hyras_year"
-        },
-        "dtype": int,
-        "abbreviation": "hyras"
-    },
-    "local":{
-        "dgm1": {
-            "fp": DATA_DIR.joinpath("dgms/DGM25.tif"),
-            "crs":pyproj.CRS.from_epsg(3035)},
-        "dgm2": {
-            "fp": DATA_DIR.joinpath("dgms/dgm80.tif"),
-            "crs":pyproj.CRS.from_epsg(25832)}
-    }
-}
 RICHTER_CLASSES = {
     "no-protection": {
         "min_horizon": 0,
@@ -135,11 +105,11 @@ class StationBase:
     # The valid kinds to use. Must be a column in the timeseries tables.
     _valid_kinds = ["raw", "qc",  "filled", "filled_by"]
     _best_kind = "filled"  # the kind that is best for simulations
-    _ma_cols = []  # the columns in the db to use to calculate the coefficients, 2 values: wi/so or one value:yearly
+    _ma_para_keys = []  # the key names of the band names in the config file. Specifies the parameter in the db to use to calculate the coefficients, 2 values: wi/so or one value:yearly
     # The sign to use to calculate the coefficient and to use the coefficient.
     _coef_sign = ["/", "*"]
     # The multi annual raster to use to calculate the multi annual values
-    _ma_raster = RASTERS["dwd_grid"]
+    _ma_raster_name = "dwd" # section name in the config file (data:rasters:...)
     # the postgresql data type of the timestamp column, e.g. "date" or "timestamp"
     _tstp_dtype = None
     _interval = None  # The interval of the timeseries e.g. "1 day" or "10 min"
@@ -174,7 +144,7 @@ class StationBase:
         self.id = int(id)
         self.id_str = str(id)
 
-        if type(self._ftp_folder_base) == str:
+        if isinstance(self._ftp_folder_base, str):
             self._ftp_folder_base = [self._ftp_folder_base]
 
         # create ftp_folders in order of importance
@@ -188,6 +158,9 @@ class StationBase:
 
         # initiate the dictionary to store the last checked periods
         self._cached_periods = dict()
+
+        # overwrite values from config
+        self._ma_raster = config[f"data:rasters:{self._ma_raster_name}"]
 
     def _check_isin_meta(self):
             if self.isin_meta():
@@ -402,6 +375,23 @@ class StationBase:
         """
         if not self.isin_db():
             self._create_timeseries_table()
+
+    def _get_ma_raster_bands(self):
+        """Get the raster bands for the station."""
+        if not hasattr(self, "_ma_raster_bands"):
+            self._ma_raster_bands = [
+                self._ma_raster[key]
+                for key in self._get_ma_raster_band_keys()]
+        return self._ma_raster_bands
+
+    def _get_ma_raster_band_keys(self):
+        """Get the raster band keys for the station. E.g. P_WIHJ"""
+        if not hasattr(self, "_ma_raster_band_keys"):
+            self._ma_raster_band_keys = [
+                key
+                for key in self._ma_raster.keys()
+                if key.startswith("band_")]
+        return self._ma_raster_band_keys
 
     @check_superuser
     def _create_timeseries_table(self):
@@ -650,6 +640,7 @@ class StationBase:
         return result.first()[0]
 
     def isin_ma(self):
+        # TODO: implement StationRasterValues ORM
         """Check if Station is already in the multi annual table.
 
         Returns
@@ -669,7 +660,7 @@ class StationBase:
         """.format(
             stid=self.id,
             regio_cols_test=" AND ".join(
-                [col + " IS NOT NULL" for col in self._ma_cols]))
+                [col + " IS NOT NULL" for col in self._ma_para_keys]))
 
         with db_engine.connect() as con:
             result = con.execute(sqltxt(sql))
@@ -783,64 +774,36 @@ class StationBase:
         if skip_if_exist and self.isin_ma():
             return None
 
-        # get the srid or proj4
-        if "proj4" in self._ma_raster:
-            sql_geom = f"ST_SETSRID(ST_TRANSFORM(geometry, '{self._ma_raster['proj4']}'), {self._ma_raster['srid']})"
-        else:
-            sql_geom = f"ST_TRANSFORM(geometry, {self._ma_raster['srid']})"
-
-        # create sql statement
-        sql_new_mas = """
-            SELECT {calc_line}
-            FROM   rasters.{raster_name} AS r
-            JOIN  (SELECT {sql_geom} AS geom
-                   FROM meta_{para}
-                   WHERE station_id={stid}) AS stat
-            ON   ST_Intersects(r.rast, stat.geom);
-        """.format(
-            stid=self.id, para=self._para,
-            raster_name=self._ma_raster["db_table"],
-            sql_geom=sql_geom,
-            calc_line=", ".join(
-                ["ST_VALUE(r.rast, {i}, stat.geom) as {name}"
-                        .format(i=i, name=self._ma_raster["bands"][i])
-                    for i in range(1, len(self._ma_raster["bands"])+1)])
-        )
-
-        with DB_ENG.connect() as con:
-            new_mas = con.execute(sqltxt(sql_new_mas)).first()
-
-        # check for nearby cells if no cell was found:
-        dist = 0
-        if new_mas is None or (new_mas is not None and not any(new_mas)):
-            for dist in range(0, 1000, 50):
-                sql_nearby = """
-                    SELECT {calc_line}
-                    FROM rasters.{raster_name} r
-                    JOIN (SELECT {sql_geom} AS geom
-                        FROM meta_{para}
-                        WHERE station_id={stid}) AS stat
-                        ON ST_Intersects(r.rast, stat.geom)
-                    WHERE ST_Intersects(r.rast, 1, ST_Buffer(stat.geom, {dist}));
-                    """.format(
-                        stid=self.id,
-                        para=self._para,
-                        sql_geom=sql_geom,
-                        raster_name=self._ma_raster["db_table"],
-                        dist=dist,
-                        calc_line=", ".join(
-                            ["(ST_SummaryStats(r.rast, {i})).mean as {name}"
-                                    .format(i=i, name=self._ma_raster["bands"][i])
-                                for i in range(1, len(self._ma_raster["bands"])+1)]))
-                with DB_ENG.connect() as con:
-                    new_mas = con.execute(sqltxt(sql_nearby)).first()
-                if new_mas is not None and any(new_mas):
-                    break
+        # get multi annual raster values, starting at point location up to 1000m
+        dist = -50
+        new_mas = None
+        ma_raster_bands = self._get_ma_raster_bands()
+        while (new_mas is None or (new_mas is not None and not any(new_mas))) \
+               and dist <= 1000:
+            dist += 50
+            new_mas = self._get_raster_value(
+                raster_conf=self._ma_raster,
+                bands=ma_raster_bands,
+                dist=dist)
 
         # write to stations_raster_values table
         if new_mas is not None and any(new_mas):
             # multi annual values were found
             with Session(db_engine) as session:
+                session.execute(
+                    sqa.orm.insert(StationsRasterValues)\
+                        .on_conflict_do_update(
+                            index_elements=["station_id", "raster_name", "parameter"],
+                        ),
+                    [dict(station_id=self.id,
+                          raster_name=self._ma_raster_name,
+                          parameter=key,
+                          value=val,
+                          distance=dist)
+                     for key, val in zip(self._get_ma_raster_band_keys(),
+                                         new_mas.items())]
+                )
+
         elif drop_when_error:
             # there was no multi annual data found from the raster
             self._drop(
@@ -1220,6 +1183,7 @@ class StationBase:
 
     @check_superuser
     def fillup(self, period=(None, None), **kwargs):
+        # TODO: implement StationRasterValues ORM
         """Fill up missing data with measurements from nearby stations.
 
         Parameters
@@ -1237,12 +1201,12 @@ class StationBase:
 
         sql_format_dict = dict(
             stid=self.id, para=self._para,
-            ma_cols=", ".join(self._ma_cols),
+            ma_cols=", ".join(self._ma_para_keys),
             coef_sign=self._coef_sign,
             base_col="qc" if "qc" in self._valid_kinds else "raw",
             cond_mas_not_null=" OR ".join([
                 "ma_other.{ma_col} IS NOT NULL".format(ma_col=ma_col)
-                    for ma_col in self._ma_cols]),
+                    for ma_col in self._ma_para_keys]),
             filled_by_col="NULL::smallint AS filled_by",
             exit_cond="SUM((filled IS NULL)::int) = 0",
             extra_unfilled_period_where="",
@@ -1264,18 +1228,18 @@ class StationBase:
                 cond_period=""))
 
         # check if winter/summer or only yearly regionalisation
-        if len(self._ma_cols) == 1:
+        if len(self._ma_para_keys) == 1:
             sql_format_dict.update(dict(
                 is_winter_col="",
                 coef_calc="ma_stat.{ma_col}{coef_sign[0]}ma_other.{ma_col}::float AS coef"
                 .format(
-                    ma_col=self._ma_cols[0],
+                    ma_col=self._ma_para_keys[0],
                     coef_sign=self._coef_sign),
                 coef_format="i.coef",
                 filled_calc="round(nb.{base_col} {coef_sign[1]} %3$s, 0)::int"
                 .format(**sql_format_dict)
             ))
-        elif len(self._ma_cols) == 2:
+        elif len(self._ma_para_keys) == 2:
             sql_format_dict.update(dict(
                 is_winter_col=""",
                     CASE WHEN EXTRACT(MONTH FROM timestamp) IN (1, 2, 3, 10, 11, 12)
@@ -1286,7 +1250,7 @@ class StationBase:
                     "ma_stat.{ma_col[0]}{coef_sign[0]}ma_other.{ma_col[0]}::float AS coef_wi, \n" + " "*24 +
                     "ma_stat.{ma_col[1]}{coef_sign[0]}ma_other.{ma_col[1]}::float AS coef_so"
                 ).format(
-                    ma_col=self._ma_cols,
+                    ma_col=self._ma_para_keys,
                     coef_sign=self._coef_sign),
                 coef_format="i.coef_wi, \n" + " " * 24 + "i.coef_so",
                 filled_calc="""
@@ -2043,45 +2007,102 @@ class StationBase:
             For N the winter and summer half yearly sum is returned in tuple.
             The returned unit is mm or °C.
         """
+        sql_select = sqa\
+            .select(StationsRasterValues.parameter, StationsRasterValues.value)\
+            .where((StationsRasterValues.station_id == self.id) &
+                   (StationsRasterValues.raster_name == self._ma_raster) &
+                   StationsRasterValues.parameter.isin(self._ma_para_keys))
         with Session(db_engine) as session:
+            res = session.execute(sql_select).all()
 
         # Update ma values if no result returned
         if res is None:
             self.update_ma()
             with Session(db_engine) as session:
-                res = con.execute(sqltxt(sql)).first()
+                res = session.execute(sql_select).all()
 
         if res[0] is None:
             return None
         else:
-            return list(res)
+            res_dict = dict(zip(res))
+            return [res_dict[col] for col in self._ma_para_keys]
 
     def get_ma(self):
         return self.get_multi_annual()
 
-    def get_raster_value(self, raster):
-        if type(raster) == str:
-            raster = RASTERS[raster]
+    def _get_raster_value(self, raster_conf, bands="all", dist=0):
+        """Get the value of a raster file for this station.
 
-        sql = """
-            WITH stat_geom AS (
-                SELECT ST_TRANSFORM(geometry, {raster_srid}) AS geom
-                FROM meta_{para}
-                WHERE station_id={stid}
-            )
-            SELECT ST_VALUE(rast, 1, (SELECT geom FROM stat_geom)) as slope
-            FROM rasters.{raster_name}
-            WHERE ST_INTERSECTS(rast, (SELECT geom FROM stat_geom));
-        """.format(
-            stid=self.id, para=self._para,
-            raster_name=raster["db_table"],
-            raster_srid=raster["srid"]
-        )
-        # return sql
-        with DB_ENG.connect() as con:
-            value = con.execute(sqltxt(sql)).first()[0]
+        Parameters
+        ----------
+        raster_conf : dict or configparser.SectionProxy
+            The configuration of the raster file.
+        bands : str or int or list of str or int, optional
+            The band to get the value from.
+            If "all" then all bands are returned.
+            If int, then the band with the respective number is returned.
+            If str, then the band is first checked to be a key in the raster_conf and then this band is returned.
+            If no key in raster_conf, then name is checked against the raster names and this band is returned.
+            The default is "all".
+        dist : int, optional
+            The distance to the station in the rasters CRS.
+            Only works for rasters with projected CRS.
+            The default is 0.
 
-        return raster["dtype"](value)
+        Returns
+        -------
+        int or float
+            The rasters value at the stations position
+
+        Raises
+        ------
+        ValueError
+            If the raster is not in a projected coordinate system and dist > 0.
+        """
+        file = Path(raster_conf["file"])
+        with rio.open(file) as src:
+            # get the CRS
+            epsg = src.crs.to_epsg()
+            if epsg is None:
+                epsg = raster_conf["srid"]
+
+            # get the station geom
+            stat_geom = self.get_geom_shp(crs=epsg)
+
+            # get the bands indexes
+            if isinstance(bands, str) and bands.lower() == "all":
+                indexes = src.indexes
+            else:
+                if not isinstance(bands, list):
+                    bands = [bands]
+                indexes = []
+                for band in bands:
+                    if isinstance(bands, int) & (band in src.indexes):
+                        indexes.append(band)
+                    else:
+                        if band in raster_conf:
+                            band = raster_conf[band]
+                        if band in src.descriptions:
+                            indexes.append(src.descriptions.index(band)+1)
+                        else:
+                            raise ValueError(
+                                f"The band {band} is not in the raster file {file}.")
+
+            # get the value
+            if dist==0:
+                return list(
+                    src.sample(stat_geom.coords, indexes=indexes)
+                    )[0]
+            else:
+                if not src.crs.is_projected:
+                    raise ValueError(
+                        f"Getting raster values for nearby raster cells is only allowed for projected rasters. Please use a prejected CRS for {file.resolve()}.")
+                return zonal_stats(
+                    stat_geom.buffer(dist),
+                    src,
+                    stats=["mean"],
+                    all_touched=True
+                    )[0]["mean"]
 
     def get_coef(self, other_stid, in_db_unit=False):
         """Get the regionalisation coefficients due to the height.
@@ -2776,8 +2797,8 @@ class StationTETBase(StationCanVirtualBase):
 class StationNBase(StationBase):
     _date_col = "MESS_DATUM"
     _decimals = 100
-    _ma_cols = ["n_hyras_wihj", "n_hyras_sohj"]
-    _ma_raster = RASTERS["hyras_grid"]
+    _ma_para_keys = ["p_wihj", "p_sohj"]
+    _ma_raster = "hyras"
 
     def get_adj(self, **kwargs):
         """Get the adjusted timeserie.
@@ -3038,20 +3059,17 @@ class StationN(StationNBase):
                 return horizon
 
         # check if files are available
-        for dgm_name in ["dgm1", "dgm2"]:
-            if not RASTERS["local"][dgm_name]["fp"].is_file():
+        dem_files = [Path(file) for file in config.getlist("data:rasters", "dems")]
+        for dem_file in dem_files:
+            if dem_file.is_file():
                 raise ValueError(
-                    "The {dgm_name} was not found in the data directory under: \n{fp}".format(
-                        dgm_name=dgm_name,
-                        fp=str(RASTERS["local"][dgm_name]["fp"])
-                    )
-                )
+                    f"The DEM file was not found in the data directory under: \n{dem_file}")
 
         # get the horizon value
         radius = 75000 # this value got defined because the maximum height is around 4000m for germany
 
-        with rio.open(RASTERS["local"]["dgm1"]["fp"]) as dgm1,\
-            rio.open(RASTERS["local"]["dgm2"]["fp"]) as dgm2:
+        with rio.open(dem_files[0]) as dgm1,\
+            rio.open(dem_files[1]) if len(dem_files)>1 else nullcontext() as dgm2:
             # sample station heights from the first DGM
             geom1 = self.get_geom_shp(crs=dgm1.crs.to_epsg())
             xy = [geom1.x, geom1.y]
@@ -3108,11 +3126,11 @@ class StationN(StationNBase):
                         [line_parts,
                         pd.DataFrame(
                             {"Start_point":  dgm_gpd.iloc[-1]["geometry"],
-                            "radius": radius - dgm1_max_dist},
+                             "radius": radius - dgm1_max_dist},
                             index=[line_parts.index.max()+1])])
 
                 # check if parts are missing and fill
-                if len(line_parts) > 0:
+                if len(line_parts) > 0 & (dgm2 is not None):
                     # sample station heights from the second DGM
                     geom2 = self.get_geom_shp(crs=dgm2.crs.to_epsg())
                     stat_h2 = list(dgm2.sample(
@@ -3646,7 +3664,7 @@ class StationT(StationTETBase):
     _db_col_names_imp = ["raw", "raw_min", "raw_max"]
     _unit = "°C"
     _decimals = 10
-    _ma_cols = ["t_dwd_year"]
+    _ma_para_keys = ["t_year"]
     _coef_sign = ["-", "+"]
     _agg_fun = "avg"
     _valid_kinds = ["raw", "raw_min", "raw_max", "qc",
@@ -3760,7 +3778,7 @@ class StationET(StationTETBase):
     _cdc_col_names_imp = ["VPGB"]
     _unit = "mm/Tag"
     _decimals = 10
-    _ma_cols = ["et_dwd_year"]
+    _ma_para_keys = ["et_year"]
     _sql_add_coef_calc = "* ma.exp_fact::float/ma_stat.exp_fact::float"
     _fillup_max_dist = 100000
 

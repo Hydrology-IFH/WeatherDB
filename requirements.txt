@@ -10,4 +10,5 @@ GeoAlchemy2
 alembic
 requests
 keyring
+rasterstats
 tkinter
