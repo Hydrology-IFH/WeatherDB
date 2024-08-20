@@ -172,13 +172,48 @@ def load_user_config(raise_error=True):
     elif raise_error:
         raise FileNotFoundError("No user config file defined.")
 
+def set_user_config_file(user_config_file=None):
+    """Define the user config file.
+
+    Parameters
+    ----------
+    user_config_file : str, Path or None, optional
+        The path to the user config file.
+        If None, the function will open a filedialog to select the file.
+        The default is None.
+    """
+    if user_config_file is None:
+        from tkinter import Tk
+        from tkinter import filedialog
+        tkroot = Tk()
+        tkroot.attributes('-topmost', True)
+        tkroot.iconify()
+        user_config_file = filedialog.askopenfilename(
+            defaultextension=".ini",
+            filetypes=[("INI files", "*.ini")],
+            title="Select the User configuration file",
+            initialdir=Path("~").expanduser(),
+            initialfile="WeatherDB_config.ini",
+        )
+        tkroot.destroy()
+
+    if not Path(user_config_file).exists():
+        raise FileNotFoundError(
+            f"User config file not found at {user_config_file}")
+
+    _set_config("main", "user_config_file", str(user_config_file))
+    load_user_config()
+
 # load the configuration
 # ----------------------
-
-# add module path to the config
-_set_config("main", "module_path", str(Path(__file__).parent.parent))
 
 # read the configuration files
 config.read(DEFAULT_CONFIG_FILE)
 config.read(SYS_CONFIG_FILE)
 load_user_config(raise_error=False)
+
+# set the module path
+_set_config(
+    "main",
+    "module_path",
+    Path(__file__).parent.parent.resolve().as_posix())
