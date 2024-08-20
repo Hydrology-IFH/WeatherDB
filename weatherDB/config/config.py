@@ -10,7 +10,9 @@ SYS_CONFIG_FILE = Path(__file__).parent/'config_sys.ini' # set by this module
 
 # read the default configuration file
 config = configparser.ConfigParser(
-    interpolation=configparser.ExtendedInterpolation()
+    interpolation=configparser.ExtendedInterpolation(),
+    converters={
+        "list": lambda x: [v.strip() for v in x.replace("\n", "").split(",")]}
 )
 config.read(DEFAULT_CONFIG_FILE)
 
