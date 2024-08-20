@@ -15,9 +15,21 @@ class DB_ENGINE:
         return self.get_db_engine().connect(*args, **kwargs)
 
     def get_db_engine(self):
-        if self._engine is not None:
-            return self._engine
+        """Get the sqlalchemy database engine.
 
+        Returns the last created engine if possible or creates a new one.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
+        if self._engine is None:
+            self.create_engine()
+
+        return self._engine
+
+    def create_engine(self):
         # check if in Sphinx creation mode
         if "RTD_documentation_import" in os.environ:
             from mock_alchemy.mocking import UnifiedAlchemyMagicMock
@@ -37,11 +49,14 @@ class DB_ENGINE:
                 database=config["database"]["DATABASE"],
                 port=config["database"]["PORT"]
                 ))
-
-            del user, pwd
-
             self.check_is_superuser()
+
         return self._engine
+
+    def reload_config(self):
+        """Reload the configuration and create a new engine.
+        """
+        self.create_engine()
 
     def check_is_superuser(self):
         with self.connect() as con:

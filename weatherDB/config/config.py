@@ -8,14 +8,17 @@ import shutil
 DEFAULT_CONFIG_FILE = Path(__file__).parent/'config_default.ini'
 SYS_CONFIG_FILE = Path(__file__).parent/'config_sys.ini' # set by this module
 
-# read the default config file
+# read the default configuration file
 config = configparser.ConfigParser()
 config.read(DEFAULT_CONFIG_FILE)
 
-# read the user config file
+# read the system configuration file
 config.read(SYS_CONFIG_FILE)
 
 # define functions
+# ----------------
+
+# setting configuration
 def _set_config(section, option, value):
     """The internal function to set a configuration option for the weatherDB module.
 
