@@ -1,8 +1,8 @@
 import click
-import sys, os
-sys.path.insert(
-    0,
-    os.path.split(os.path.abspath(os.path.split(__file__)[0]))[0])
+import sys
+from pathlib import Path
+
+sys.path.insert(0, Path(__file__).resolve().parent.parent.as_posix())
 import weatherDB
 
 @click.group(help="This is the Command line interface of the weatherDB package.",
@@ -10,12 +10,18 @@ import weatherDB
 @click.option('--do-logging/--no-logging',
               is_flag=True, default=True, show_default=True,
               help="Should a Log-file be written?")
-def cli(do_logging):
+@click.option('--connection', '-c',
+              type=str, default=None,
+              help="The connection to use. Default is the value from the configuration file.")
+def cli(do_logging, connection=None):
     if do_logging:
         click.echo("logging is on")
         weatherDB.setup_file_logging()
     else:
         weatherDB.setup_file_logging(False)
+
+    if connection is not None:
+        weatherDB.config.set("database", "connection", connection)
 
 @cli.command(short_help="Update the complete database. Get the newest data from DWD and treat it.")
 def update_db():

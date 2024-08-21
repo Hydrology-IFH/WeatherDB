@@ -12,3 +12,4 @@ requests
 keyring
 rasterstats
 tkinter
+click
