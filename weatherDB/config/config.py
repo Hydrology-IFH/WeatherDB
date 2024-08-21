@@ -9,7 +9,6 @@ import shutil
 
 # set the file paths for the config files
 DEFAULT_CONFIG_FILE = Path(__file__).parent/'config_default.ini'
-SYS_CONFIG_FILE = Path(__file__).parent/'config_sys.ini' # to save the last configurations
 
 # read the default configuration file
 config = configparser.ConfigParser(
@@ -21,12 +20,6 @@ config = configparser.ConfigParser(
 
 # define functions
 # ----------------
-
-def save_config():
-    """Save the current configuration to the system configuration file.
-    """
-    with open(SYS_CONFIG_FILE, 'w') as configfile:
-        config.write(configfile)
 
 # setting configuration
 def _set_config(section, option, value):
@@ -49,7 +42,6 @@ def _set_config(section, option, value):
         config.add_section(section)
     if option not in config[section] or (value != config.get(section, option)):
         config.set(section, option, value)
-        save_config()
 
 # changing configuration
 def set_config(section, option, value):
@@ -166,7 +158,6 @@ def load_user_config(raise_error=True):
             config.read(user_config_file)
             if "PASSWORD" in config["database"]:
                 raise PermissionError("For security reasons the password isn't allowed to be in the config file. Please use set_db_credentials to set the password.")
-            save_config()
         else:
             raise FileNotFoundError(f"User config file not found at {user_config_file}")
     elif raise_error:
@@ -209,7 +200,6 @@ def set_user_config_file(user_config_file=None):
 
 # read the configuration files
 config.read(DEFAULT_CONFIG_FILE)
-config.read(SYS_CONFIG_FILE)
 load_user_config(raise_error=False)
 
 # set the module path
