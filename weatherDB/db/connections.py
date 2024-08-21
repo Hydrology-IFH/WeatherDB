@@ -3,13 +3,50 @@ import sqlalchemy
 from sqlalchemy import text as sqltxt
 from sqlalchemy import URL
 import os
-from ..config.config import config, get_db_credentials
+from ..config.config import config
 
 # DB connection
 ###############
-class DB_ENGINE:
+class DBEngine:
     _engine = None
     _is_superuser = None
+
+    def __init__(self):
+        self._config_listener_connection = (
+            "database",
+            "connection",
+            self._connection_update)
+        self._config_listener_subsection = (
+            f"database.{config.get('database', 'connection')}",
+            None,
+            self._subsection_update)
+        config.add_listener(*self._config_listener_connection)
+        config.add_listener(*self._config_listener_subsection)
+
+    def __del__(self):
+        config.remove_listener(*self._config_listener_connection)
+        config.remove_listener(*self._config_listener_subsection)
+
+    def _connection_update(self):
+        """Listener if another database subsection is selected."""
+        # first remove the old section listener
+        config.remove_listener(*self._config_listener_subsection)
+
+        # add the new section listener
+        self._config_listener_subsection = (
+            f"database.{config.get('database', 'connection')}",
+            None,
+            self._subsection_update)
+        config.add_listener(*self._config_listener_subsection)
+
+        # create a new engine
+        self.create_engine()
+
+    def _subsection_update(self):
+        """Listener if there was a configuration change in the actual database subsection."""
+        # remove engine to get recreated on next usage
+        self._engine = None
+
 
     def connect(self, *args, **kwargs):
         return self.get_db_engine().connect(*args, **kwargs)
@@ -21,7 +58,7 @@ class DB_ENGINE:
 
         Returns
         -------
-        _type_
+        sqlalchemy.engine.base.Engine
             _description_
         """
         if self._engine is None:
@@ -40,14 +77,17 @@ class DB_ENGINE:
             self.is_superuser = True
         else:
             # create the engine
-            user, pwd = get_db_credentials()
+            con_key = config.get("database", "connection")
+            con_sect_key = f"database.{con_key}"
+            con_section = config[con_sect_key]
+            user, pwd = config.get_db_credentials()
             self._engine = sqlalchemy.create_engine(URL.create(
                 drivername="postgresql+psycopg2",
                 username=user,
                 password=pwd,
-                host=config["database"]["HOST"],
-                database=config["database"]["DATABASE"],
-                port=config["database"]["PORT"]
+                host=con_section["HOST"],
+                database=con_section["DATABASE"],
+                port=con_section["PORT"]
                 ))
             self.check_is_superuser()
 
@@ -77,7 +117,7 @@ class DB_ENGINE:
     def is_superuser(self, value):
         raise PermissionError("You are not allowed to change the superuser status of the database connection.")
 
-db_engine = DB_ENGINE()
+db_engine = DBEngine()
 
 # decorator function to overwrite methods
 def check_superuser(methode):
