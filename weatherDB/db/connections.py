@@ -81,10 +81,10 @@ db_engine = DB_ENGINE()
 
 # decorator function to overwrite methods
 def check_superuser(methode):
-    def no_super_user(*args, **kwargs):
-        raise PermissionError("You are no super user of the Database and therefor this function is not available.")
-    if DB_ENGINE.is_superuser:
-        return methode
-    else:
-        return no_super_user
+    def wrapper(*args, **kwargs):
+        if db_engine.is_superuser:
+            return methode(*args, **kwargs)
+        else:
+            raise PermissionError("You are no super user of the Database and therefor this function is not available.")
+    return wrapper
 
