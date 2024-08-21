@@ -1,6 +1,6 @@
 from alembic.config import Config
 from alembic import command
-from .connections import db_engine
+from ..connections import db_engine
 
 def migrate_db():
     # Run Alembic migrations to update the database schema

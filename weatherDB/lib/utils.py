@@ -14,6 +14,7 @@ import datetime
 CDC_HOST = "opendata.dwd.de"
 
 # functions
+# ---------
 def get_ftp_file_list(ftp_conn, ftp_folders):
     """Get a list of files in the folders with their modification dates.
 
@@ -62,6 +63,7 @@ def get_cdc_file_list(ftp_folders):
     return files
 
 # classes
+# -------
 class TimestampPeriod(object):
     """A class to save a Timespan with a minimal and maximal Timestamp.
     """

@@ -9,6 +9,8 @@ from .stations import StationsN, StationsND, StationsT, StationsET
 from packaging import version as pv
 from . import __version__ as __version__
 
+__all__ = ["Broker"]
+
 log = logging.getLogger(__name__)
 
 class Broker(object):
@@ -244,6 +246,19 @@ class Broker(object):
             self.last_imp_fillup(paras=paras)
             self.last_imp_corr()
             self.set_is_broker_active(False)
+
+    def create_db_schema(self):
+        """Create the database schema.
+        """
+        # create the tables
+        from .db.models import Base
+        Base.metadata.create_all(db_engine.get_db_engine())
+
+        # tell alembic that the actual database schema is up-to-date
+        from alembic.config import Config
+        from alembic import command
+        alembic_cfg = Config("alembic/alembic.ini")
+        command.upgrade(alembic_cfg, "head")
 
     def initiate_db(self):
         """Initiate the Database.
