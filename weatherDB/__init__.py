@@ -7,9 +7,10 @@ __version__ = "0.0.45"
 
 if not ("WEATHERDB_MODULE_INSTALLING" in os.environ \
         and os.environ["WEATHERDB_MODULE_INSTALLING"]=="True"):
-    from .logging import remove_old_logs, setup_file_logging
+    from .utils.logging import remove_old_logs, setup_file_logging
 
     remove_old_logs()
+    setup_file_logging()
 
     # import classes
     from . import station, stations, broker
