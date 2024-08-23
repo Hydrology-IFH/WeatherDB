@@ -145,7 +145,9 @@ class ConfigParser(configparser.ConfigParser):
         """Get a list of values from a configuration option.
 
         This function parses the configuration option seperated by commas and returns a list of values."""
-        return [v.strip() for v in self.get(section, option).replace("\n", "").split(",")]
+        if raw_value:= self.get(section, option, fallback=None):
+            return [v.strip() for v in raw_value.replace("\n", "").split(",")]
+        return []
 
     def _get_db_key_section(self, db_key=None):
         """Get the database section for the weatherDB database.
