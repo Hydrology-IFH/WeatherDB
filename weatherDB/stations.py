@@ -871,6 +871,7 @@ class StationsBase:
         else:
             kinds=kwargs.pop("kinds")
         stats = self.get_stations(only_real=False, stids=stids)
+        df_all = None
         for stat in pb.progressbar(stats, line_breaks=False):
             df = stat.get_df(kinds=kinds, **kwargs)
             if df is None:
@@ -886,14 +887,9 @@ class StationsBase:
                 df.columns = pd.MultiIndex.from_product(
                     [[stat.id], df.columns],
                     names=["Station ID", "kind"])
-            if "df_all" in locals():
-                df_all = df_all.join(df)
-            else:
-                df_all = df
-        if "df_all" in locals():
-            return df_all
-        else:
-            None
+            df_all = pd.concat([df_all, df], axis=1)
+
+        return df_all
 
 
 class StationsTETBase(StationsBase):
@@ -1091,10 +1087,11 @@ class GroupStations(object):
 
     def _check_period(self, period, stids, kinds, nas_allowed=True):
         # get max_period of stations
+        max_period = None
         for stid in stids:
             max_period_i = self._GroupStation(stid).get_max_period(
                 kinds=kinds, nas_allowed=nas_allowed)
-            if "max_period" in locals():
+            if max_period is not None:
                 max_period = max_period.union(
                     max_period_i,
                     how="outer" if nas_allowed else "inner"
