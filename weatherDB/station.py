@@ -24,7 +24,6 @@ import rasterio as rio
 import rasterio.mask
 from shapely.geometry import MultiLineString
 import shapely.wkt
-import pyproj
 import geopandas as gpd
 from rasterstats import zonal_stats
 from contextlib import nullcontext
@@ -109,7 +108,7 @@ class StationBase:
     # The sign to use to calculate the coefficient and to use the coefficient.
     _coef_sign = ["/", "*"]
     # The multi annual raster to use to calculate the multi annual values
-    _ma_raster_name = "dwd" # section name in the config file (data:rasters:...)
+    _ma_raster_key = "dwd" # section name in the config file (data:rasters:...)
     # the postgresql data type of the timestamp column, e.g. "date" or "timestamp"
     _tstp_dtype = None
     _interval = None  # The interval of the timeseries e.g. "1 day" or "10 min"
@@ -159,8 +158,9 @@ class StationBase:
         # initiate the dictionary to store the last checked periods
         self._cached_periods = dict()
 
-        # overwrite values from config
-        self._ma_raster = config[f"data:rasters:{self._ma_raster_name}"]
+    @property
+    def _ma_raster_conf(self):
+        return config[f"data:rasters:{self._ma_raster_key}"]
 
     def _check_isin_meta(self):
             if self.isin_meta():
@@ -376,22 +376,18 @@ class StationBase:
         if not self.isin_db():
             self._create_timeseries_table()
 
-    def _get_ma_raster_bands(self):
-        """Get the raster bands for the station."""
-        if not hasattr(self, "_ma_raster_bands"):
-            self._ma_raster_bands = [
-                self._ma_raster[key]
-                for key in self._get_ma_raster_band_keys()]
-        return self._ma_raster_bands
+    @property
+    def _ma_raster_bands(self):
+        """Get all the raster bands of the stations multi annual raster file."""
+        return [self._ma_raster_conf[key]
+                for key in self._ma_raster_band_keys]
 
-    def _get_ma_raster_band_keys(self):
+    @property
+    def _ma_raster_band_keys(self):
         """Get the raster band keys for the station. E.g. P_WIHJ"""
-        if not hasattr(self, "_ma_raster_band_keys"):
-            self._ma_raster_band_keys = [
-                key
-                for key in self._ma_raster.keys()
+        return [key
+                for key in self._ma_raster_conf.keys()
                 if key.startswith("band_")]
-        return self._ma_raster_band_keys
 
     @db_engine.deco_create_privilege
     def _create_timeseries_table(self):
@@ -777,12 +773,12 @@ class StationBase:
         # get multi annual raster values, starting at point location up to 1000m
         dist = -50
         new_mas = None
-        ma_raster_bands = self._get_ma_raster_bands()
+        ma_raster_bands = self._ma_raster_bands
         while (new_mas is None or (new_mas is not None and not any(new_mas))) \
                and dist <= 1000:
             dist += 50
             new_mas = self._get_raster_value(
-                raster_conf=self._ma_raster,
+                raster_conf=self._ma_raster_conf,
                 bands=ma_raster_bands,
                 dist=dist)
 
@@ -793,22 +789,21 @@ class StationBase:
                 session.execute(
                     sqa.orm.insert(StationsRasterValues)\
                         .on_conflict_do_update(
-                            index_elements=["station_id", "raster_name", "parameter"],
+                            index_elements=["station_id", "raster_key", "parameter"],
                         ),
                     [dict(station_id=self.id,
-                          raster_name=self._ma_raster_name,
+                          raster_key=self._ma_raster_key,
                           parameter=key,
                           value=val,
                           distance=dist)
-                     for key, val in zip(self._get_ma_raster_band_keys(),
+                     for key, val in zip(self._ma_raster_band_keys,
                                          new_mas.items())]
                 )
 
         elif drop_when_error:
             # there was no multi annual data found from the raster
             self._drop(
-                why="no multi-annual data was found from 'rasters.{raster_name}'"
-                .format(raster_name=self._ma_raster["db_table"]))
+                why=f"no multi-annual data was found from 'data:rasters:{self._ma_raster_key}'")
 
     def _update_last_imp_period_meta(self, period):
         """Update the meta timestamps for a new import."""
@@ -2010,7 +2005,7 @@ class StationBase:
         sql_select = sqa\
             .select(StationsRasterValues.parameter, StationsRasterValues.value)\
             .where((StationsRasterValues.station_id == self.id) &
-                   (StationsRasterValues.raster_name == self._ma_raster) &
+                   (StationsRasterValues.raster_key == self._ma_raster) &
                    StationsRasterValues.parameter.isin(self._ma_para_keys))
         with Session(db_engine) as session:
             res = session.execute(sql_select).all()

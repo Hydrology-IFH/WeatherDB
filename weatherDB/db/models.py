@@ -206,7 +206,7 @@ class StationsRasterValues(Base):
     station_id: Mapped[int] = mapped_column(
         primary_key=True,
         comment="The DWD-ID of the station.")
-    raster_name: Mapped[str] = mapped_column(
+    raster_key: Mapped[str] = mapped_column(
         primary_key=True,
         comment="The name of the raster. e.g. 'dwd' or 'hyras'")
     parameter: Mapped[str] = mapped_column(
