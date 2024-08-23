@@ -15,3 +15,4 @@ if not ("WEATHERDB_MODULE_INSTALLING" in os.environ \
     from . import station, stations, broker
     from .station import StationN, StationND, StationT, StationET, GroupStation
     from .stations import StationsN, StationsND, StationsT, StationsET, GroupStations
+    from .config import config
