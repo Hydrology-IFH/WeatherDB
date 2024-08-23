@@ -29,7 +29,7 @@ import geopandas as gpd
 from rasterstats import zonal_stats
 from contextlib import nullcontext
 
-from .db.connections import db_engine, check_superuser
+from .db.connections import db_engine
 from .lib.max_fun.import_DWD import dwd_id_to_str, get_dwd_file
 from .lib.utils import TimestampPeriod, get_cdc_file_list
 from .lib.max_fun.geometry import polar_line, raster2points
@@ -364,12 +364,12 @@ class StationBase:
             if self._cached_periods[key]["time"] < time_limit:
                 self._cached_periods.pop(key)
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def _check_ma(self):
         if not self.isin_ma():
             self.update_ma()
 
-    @check_superuser
+    @db_engine.deco_create_privilege
     def _check_isin_db(self):
         """Check if the station has already a timeserie and if not create one.
         """
@@ -393,12 +393,12 @@ class StationBase:
                 if key.startswith("band_")]
         return self._ma_raster_band_keys
 
-    @check_superuser
+    @db_engine.deco_create_privilege
     def _create_timeseries_table(self):
         """Create the timeseries table in the DB if it is not yet existing."""
         pass
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def _expand_timeserie_to_period(self):
         """Expand the timeserie to the complete possible time range"""
         # The interval of 9h and 30 seconds is due to the fact, that the fact that t and et data for the previous day is only updated around 9 on the following day
@@ -435,14 +435,14 @@ class StationBase:
                 as con:
             con.execute(sqltxt(sql))
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def _update_db_timeserie(self, df, kinds):
         """Update the timeseries table on the database with new DataFrame.
 
         Parameters
         ----------
         df : pandas.Series of integers
-            A Serie with a DatetimeIndex and the values to update in the width Database.
+            A Serie with a DatetimeIndex and the values to update in the Database.
             The values need to be in the database unit. So you might have to multiply your values with self._decimals and convert to integers.
         kinds : str or list of str
             The data kinds to update.
@@ -501,7 +501,7 @@ class StationBase:
                 # run sql command
                 con.execute(sqltxt(sql_insert))
 
-    @check_superuser
+    @db_engine.deco_delete_privilege
     def _drop(self, why="No reason given"):
         """Drop this station from the database. (meta table and timeseries)
         """
@@ -524,7 +524,7 @@ class StationBase:
             "The {para_long} Station with ID {stid} got droped from the database."
             .format(stid=self.id, para_long=self._para_long))
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def _update_meta(self, cols, values):
         sets = []
         for col, value in zip(cols, values):
@@ -547,7 +547,7 @@ class StationBase:
                 as con:
             con.execute(sqltxt(sql_update))
 
-    @check_superuser
+    @db_engine.deco_all_privileges
     def _execute_long_sql(self, sql, description="treated"):
         done = False
         attempts = 0
@@ -594,7 +594,7 @@ class StationBase:
                     desc=description)
             )
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def _set_is_real(self, state=True):
         sql = """
             UPDATE meta_{para}
@@ -731,7 +731,7 @@ class StationBase:
 
         return res.first()[0]
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def update_period_meta(self, kind):
         """Update the time period in the meta file.
 
@@ -765,7 +765,7 @@ class StationBase:
         with db_engine.connect() as con:
             con.execute(sqltxt(sql))
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def update_ma(self, skip_if_exist=True, drop_when_error=True):
         """Update the multi annual values in the stations_raster_values table.
 
@@ -875,7 +875,7 @@ class StationBase:
                 .execution_options(isolation_level="AUTOCOMMIT") as con:
             con.execute(sqltxt(sql_update_meta))
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def update_raw(self, only_new=True, ftp_file_list=None, remove_nas=True):
         """Download data from CDC and upload to database.
 
@@ -1110,7 +1110,7 @@ class StationBase:
         else:
             return None
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def _get_sql_new_qc(self, period=(None, None)):
         """Create the SQL statement for the new quality checked data.
 
@@ -1128,7 +1128,7 @@ class StationBase:
         """
         pass  # define in the specific classes
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def quality_check(self, period=(None, None), **kwargs):
         """Quality check the raw data for a given period.
 
@@ -1181,7 +1181,7 @@ class StationBase:
         if last_imp_period.inside(period):
             self._mark_last_imp_done(kind="qc")
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def fillup(self, period=(None, None), **kwargs):
         # TODO: implement StationRasterValues ORM
         """Fill up missing data with measurements from nearby stations.
@@ -1413,7 +1413,7 @@ class StationBase:
             elif period.contains(self.get_last_imp_period()):
                 self._mark_last_imp_done(kind="filled")
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def _sql_fillup_extra_dict(self, **kwargs):
         """Get the sql statement for the fill to calculate the filling of additional columns.
 
@@ -1436,7 +1436,7 @@ class StationBase:
                 "extra_exec_cols": "",
                 "extra_after_loop_extra_col": ""}
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def _mark_last_imp_done(self, kind):
         """Mark the last import for the given kind as done.
 
@@ -1460,18 +1460,18 @@ class StationBase:
         with db_engine.connect() as con:
             con.execute(sqltxt(sql))
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def last_imp_quality_check(self):
         """Do the quality check of the last import.
         """
         if not self.is_last_imp_done(kind="qc"):
             self.quality_check(period=self.get_last_imp_period())
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def last_imp_qc(self):
         self.last_imp_quality_check()
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def last_imp_fillup(self, _last_imp_period=None):
         """Do the gap filling of the last import.
         """
@@ -3004,7 +3004,7 @@ class StationN(StationNBase):
 
         return df
 
-    @check_superuser
+    @db_engine.deco_create_privilege
     def _create_timeseries_table(self):
         """Create the timeseries table in the DB if it is not yet existing."""
         sql_add_table = '''
@@ -3036,7 +3036,7 @@ class StationN(StationNBase):
                 richter_class = key
         return richter_class
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def update_horizon(self, skip_if_exist=True):
         """Update the horizon angle (Horizontabschirmung) in the meta table.
 
@@ -3190,7 +3190,7 @@ class StationN(StationNBase):
 
         return horizon
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def update_richter_class(self, skip_if_exist=True):
         """Update the richter class in the meta table.
 
@@ -3224,7 +3224,7 @@ class StationN(StationNBase):
 
         return richter_class
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def richter_correct(self, period=(None, None), **kwargs):
         """Do the richter correction on the filled data for the given period.
 
@@ -3404,11 +3404,11 @@ class StationN(StationNBase):
         # update filled time in meta table
         self.update_period_meta(kind="corr")
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def corr(self, *args, **kwargs):
         return self.richter_correct(*args, **kwargs)
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def last_imp_richter_correct(self, _last_imp_period=None):
         """Do the richter correction of the last import.
 
@@ -3433,12 +3433,12 @@ class StationN(StationNBase):
                 stid=self.id, para_long=self._para_long
             ))
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def last_imp_corr(self, _last_imp_period=None):
         """A wrapper for last_imp_richter_correct()."""
         return self.last_imp_richter_correct(_last_imp_period=_last_imp_period)
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def _sql_fillup_extra_dict(self, **kwargs):
         fillup_extra_dict = super()._sql_fillup_extra_dict(**kwargs)
 
@@ -3493,7 +3493,7 @@ class StationN(StationNBase):
 
         return fillup_extra_dict
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def fillup(self, period=(None, None), **kwargs):
         super_ret = super().fillup(period=period, **kwargs)
 
@@ -3638,7 +3638,7 @@ class StationND(StationNBase, StationCanVirtualBase):
 
         return df_all, max_hist_tstp
 
-    @check_superuser
+    @db_engine.deco_create_privilege
     def _create_timeseries_table(self):
         """Create the timeseries table in the DB if it is not yet existing."""
         sql_add_table = '''
@@ -3726,7 +3726,7 @@ class StationT(StationTETBase):
 
         return sql_new_qc
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def _sql_fillup_extra_dict(self, **kwargs):
         # additional parts to calculate the filling of min and max
         fillup_extra_dict = super()._sql_fillup_extra_dict(**kwargs)

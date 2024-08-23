@@ -18,11 +18,11 @@ class Broker(object):
 
     Can get used to update all the stations and parameters at once.
 
-    This class is only working with super user privileges.
+    This class is only working with SELECT and UPDATE user privileges. Even Better is to also have DELETE and INSERT privileges.
     """
     def __init__(self):
-        if not db_engine.is_superuser:
-            raise PermissionError("You are no super user of the Database and therefor the Broker class is not available.")
+        if not db_engine.update_privilege & db_engine.select_privilege:
+            raise PermissionError("You don't have enough privileges to use the Broker. The database user must have SELECT and UPDATE privileges.")
 
         self.stations_nd = StationsND()
         self.stations_t = StationsT()
@@ -247,6 +247,7 @@ class Broker(object):
             self.last_imp_corr()
             self.set_is_broker_active(False)
 
+    @db_engine.deco_is_superuser
     def create_db_schema(self):
         """Create the database schema.
         """
@@ -260,6 +261,7 @@ class Broker(object):
         alembic_cfg = Config("alembic/alembic.ini")
         command.upgrade(alembic_cfg, "head")
 
+    @db_engine.deco_all_privileges
     def initiate_db(self):
         """Initiate the Database.
 

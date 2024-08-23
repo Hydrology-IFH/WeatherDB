@@ -21,7 +21,7 @@ import zipfile
 from pathlib import Path
 from sqlalchemy import text as sqltxt
 
-from .db.connections import db_engine, check_superuser
+from .db.connections import db_engine
 from .lib.utils import TimestampPeriod, get_cdc_file_list
 from .lib.max_fun.import_DWD import get_dwd_meta
 from .station import (StationBase,
@@ -100,7 +100,7 @@ class StationsBase:
 
         return meta
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def update_meta(self):
         """Update the meta table by comparing to the CDC server.
 
@@ -135,7 +135,7 @@ class StationsBase:
             "The {para_long} meta table got successfully updated."\
                 .format(para_long=self._para_long))
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def _update_db_meta(self, meta):
         """Update a meta table on the database with new DataFrame.
 
@@ -213,7 +213,7 @@ class StationsBase:
         with db_engine.connect().execution_options(isolation_level="AUTOCOMMIT") as con:
             con.execute(sqltxt(sql))
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def update_period_meta(self, stids="all"):
         """Update the period in the meta table of the raw data.
 
@@ -592,7 +592,7 @@ class StationsBase:
             pbar.variables["last_station"] = stat.id
             pbar.update(pbar.value + 1)
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def update_raw(self, only_new=True, only_real=True, stids="all",
             remove_nas=True, do_mp=True, **kwargs):
         """Download all stations data from CDC and upload to database.
@@ -662,7 +662,7 @@ class StationsBase:
                     para=self._para,
                     start_tstp=start_tstp.strftime("%Y%m%d %H:%M"))))
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def last_imp_quality_check(self, stids="all", do_mp=False, **kwargs):
         """Do the quality check of the last import.
 
@@ -688,7 +688,7 @@ class StationsBase:
             name="quality check {para} data".format(para=self._para.upper()),
             do_mp=do_mp, **kwargs)
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def last_imp_fillup(self, stids="all", do_mp=False, **kwargs):
         """Do the gap filling of the last import.
 
@@ -722,7 +722,7 @@ class StationsBase:
             kwds=dict(_last_imp_period=period),
             do_mp=do_mp, **kwargs)
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def quality_check(self, period=(None, None), only_real=True, stids="all",
             do_mp=False, **kwargs):
         """Quality check the raw data for a given period.
@@ -754,7 +754,7 @@ class StationsBase:
             kwds=dict(period=period),
             do_mp=do_mp, **kwargs)
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def update_ma(self, stids="all", do_mp=False, **kwargs):
         """Update the multi annual values for the stations.
 
@@ -787,7 +787,7 @@ class StationsBase:
             name="update ma-values for {para}".format(para=self._para.upper()),
             do_mp=do_mp, **kwargs)
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def fillup(self, only_real=False, stids="all", do_mp=False, **kwargs):
         """Fill up the quality checked data with data from nearby stations to get complete timeseries.
 
@@ -822,7 +822,7 @@ class StationsBase:
             name="fillup {para} data".format(para=self._para.upper()),
             do_mp=do_mp, **kwargs)
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def update(self, only_new=True, **kwargs):
         """Make a complete update of the stations.
 
@@ -897,7 +897,7 @@ class StationsBase:
 
 
 class StationsTETBase(StationsBase):
-    @check_superuser
+    @db_engine.deco_update_privilege
     def fillup(self, only_real=False, stids="all"):
         # create virtual stations if necessary
         if not only_real:
@@ -919,7 +919,7 @@ class StationsN(StationsBase):
     _StationClass = StationN
     _timeout_raw_imp = 360
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def update_richter_class(self, stids="all", do_mp=True, **kwargs):
         """Update the Richter exposition class.
 
@@ -947,7 +947,7 @@ class StationsN(StationsBase):
             kwds=kwargs,
             do_mp=do_mp)
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def richter_correct(self, stids="all", **kwargs):
         """Richter correct the filled data.
 
@@ -972,7 +972,7 @@ class StationsN(StationsBase):
             name="richter correction on {para}".format(para=self._para.upper()),
             do_mp=False, **kwargs)
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def last_imp_corr(self, stids="all", do_mp=False, **kwargs):
         """Richter correct the filled data for the last imported period.
 
@@ -1009,7 +1009,7 @@ class StationsN(StationsBase):
             name="richter correction on {para}".format(para=self._para.upper()),
             do_mp=do_mp, **kwargs)
 
-    @check_superuser
+    @db_engine.deco_update_privilege
     def update(self, only_new=True, **kwargs):
         """Make a complete update of the stations.
 
