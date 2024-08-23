@@ -1,7 +1,8 @@
 from alembic import context
 import re
 
-from ..connections import db_engine
+import weatherDB as wdb
+from weatherDB.db.models import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -9,23 +10,24 @@ config = context.config
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-# in console do: weatherDB\db>alembic revision --autogenerate -m "comment" --rev-id "V1.0.0"
-from ..models import Base
+# in console do: weatherDB>alembic -c alembic\alembic.ini revision --autogenerate -m "comment" --rev-id "V1.0.0"
 target_metadata = Base.metadata
 
+# check for alembic database copnnection in the weatherDB config
+# ##############################################################
+db_engine = config.attributes.get("engine", None)
+if wdb.config.has_section('database:alembic') and db_engine is None:
+    print("Setting the database connection to the users configuration of 'database:alembic'.")
+    wdb.config.set('database', 'connection', "alembic")
+    db_engine = wdb.db.get_engine()
 
 # get other values from config
 # ############################
-# def exclude_tables_from_config(config_):
-#     tables_ = config_.get("tables", None)
-#     if tables_ is not None:
-#         tables = tables_.split(",")
-#     return tables
-
-# Changes from: https://gist.github.com/utek/6163250#gistcomment-3851168
-exclude_tables = re.sub(r"\s+", '',  # replace whitespace
-                    config.get_main_option('exclude', '')).split(',')
-print(config.get_main_option('exclude', ''))
+exclude_tables = re.sub(
+    r"\s+",
+    '',
+    config.get_main_option('exclude_tables', '')
+).split(',')
 
 def include_object(object, name, type_, *args, **kwargs):
     return not (type_ == 'table' and name in exclude_tables)

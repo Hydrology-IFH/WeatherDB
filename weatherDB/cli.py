@@ -11,7 +11,7 @@ import weatherDB
               is_flag=True, default=True, show_default=True,
               help="Should a Log-file be written?")
 @click.option('--connection', '-c',
-              type=str, default=None,
+              type=str, default=None, show_default=False,
               help="The connection to use. Default is the value from the configuration file.")
 def cli(do_logging, connection=None):
     if do_logging:
@@ -21,6 +21,7 @@ def cli(do_logging, connection=None):
         weatherDB.setup_file_logging(False)
 
     if connection is not None:
+        print(f"setting the connection to {connection}")
         weatherDB.config.set("database", "connection", connection)
 
 @cli.command(short_help="Update the complete database. Get the newest data from DWD and treat it.")

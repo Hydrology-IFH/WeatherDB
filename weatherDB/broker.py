@@ -4,9 +4,13 @@ This submodule has only one class Broker. This one is used to do actions on all 
 # libraries
 import logging
 from sqlalchemy import text as sqltxt
-from .db.connections import db_engine
-from .stations import StationsN, StationsND, StationsT, StationsET
 from packaging import version as pv
+from pathlib import Path
+import textwrap
+
+from .db.connections import db_engine
+from .config import config
+from .stations import StationsN, StationsND, StationsT, StationsET
 from . import __version__ as __version__
 
 __all__ = ["Broker"]
@@ -251,15 +255,54 @@ class Broker(object):
     def create_db_schema(self):
         """Create the database schema.
         """
-        # create the tables
+        # add POSTGIS extension
+        with db_engine.connect() as con:
+            con.execute(sqltxt("CREATE EXTENSION IF NOT EXISTS postgis;"))
+            con.commit()
+
+        # check for existing tables
         from .db.models import Base
+        with db_engine.connect() as con:
+            res = con.execute(sqltxt(
+                "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
+                ).fetchall()
+            existing_tables = [table[0] for table in res]
+            problem_tables = [table for table in Base.metadata.tables
+                                    if table in existing_tables]
+
+        if len(problem_tables)>0:
+            print("The following tables already exist on the database:\n - " +
+                  "\n - ".join([table for table in problem_tables]))
+            print(textwrap.dedent(
+                """What do you want to do?
+                - [D] : Drop all the tables and recreate them again.
+                - [E] : Exit the creation of the schema."""))
+            while True:
+                answer = input("Your choice: ").upper()
+                if answer == "D":
+                    print("Dropping the tables.")
+                    with db_engine.connect() as con:
+                        for table in problem_tables:
+                            con.execute(sqltxt(f"DROP TABLE {table} CASCADE;"))
+                        con.commit()
+                    break
+                elif answer == "E":
+                    print("Exiting the creation of the schema.")
+                    return
+                else:
+                    print("Please enter a valid answer.")
+
+        # create the tables
+        print("Creating the tables.")
         Base.metadata.create_all(db_engine.get_db_engine())
 
         # tell alembic that the actual database schema is up-to-date
         from alembic.config import Config
         from alembic import command
-        alembic_cfg = Config("alembic/alembic.ini")
-        command.upgrade(alembic_cfg, "head")
+        alembic_cfg = Config(
+            Path(config.get("main", "module_path"))/"alembic"/"alembic.ini",
+            attributes={"engine": db_engine.get_db_engine()})
+        command.stamp(alembic_cfg, "head")
 
     @db_engine.deco_all_privileges
     def initiate_db(self):
@@ -286,7 +329,7 @@ class Broker(object):
         self.set_is_broker_active(False)
 
     def vacuum(self, do_analyze=True):
-        sql = "VACUUM {anlyze};".format(
+        sql = "VACUUM {analyze};".format(
             analyze="ANALYZE" if do_analyze else "")
         with db_engine.connect() as con:
             con.execute(sqltxt(sql))
