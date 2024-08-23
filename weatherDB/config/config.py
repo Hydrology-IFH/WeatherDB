@@ -7,6 +7,7 @@ import keyring
 from getpass import getpass
 import shutil
 import sqlalchemy as sa
+import textwrap
 
 __all__ = ["config"]
 
@@ -30,7 +31,7 @@ class ConfigParser(configparser.ConfigParser):
         # read the configuration files
         self.read(self._DEFAULT_CONFIG_FILE)
         self._read_main_config()
-        self.load_user_config(raise_error=False)
+        self.load_user_config(raise_undefined_error=False)
 
     def add_listener(self, section, option, callback):
         """Add a callback function to be called when a configuration option is changed.
@@ -286,7 +287,7 @@ class ConfigParser(configparser.ConfigParser):
         print(f"User config file created at {user_config_file}")
         print("Please edit the file to your needs and reload user config with load_user_config() or by reloading the module.")
 
-    def load_user_config(self, raise_error=True):
+    def load_user_config(self, raise_undefined_error=True):
         """(re)load the user config file.
         """
         if user_config_file:=self.get("main", "user_config_file", fallback=False):
@@ -297,13 +298,30 @@ class ConfigParser(configparser.ConfigParser):
                         raise PermissionError(
                             "For security reasons the password isn't allowed to be in the config file.\nPlease use set_db_credentials to set the password.")
                     self.read_string(f_cont)
-                # if "PASSWORD" in config["database"]:
-                #     raise PermissionError(
-                #         "For security reasons the password isn't allowed to be in the config file.\nPlease use set_db_credentials to set the password.")
             else:
-                raise FileNotFoundError(
-                    f"User config file not found at {user_config_file}.\nPlease set the user config file with set_user_config_file.")
-        elif raise_error:
+                print(textwrap.dedent(f"""
+                    User config file not found at {user_config_file}.
+                    What do you want to do:
+                    - [R] : Remove the user config file location
+                    - [D] : Define a new user config file location
+                    - [C] : Create a new user config file with default values
+                    - [I] : Ignore error"""))
+                while True:
+                    user_dec = input("Enter the corresponding letter: ").upper()
+                    if user_dec == "R":
+                        self.remove_option("main", "user_config_file")
+                        break
+                    elif user_dec == "D":
+                        self.set_user_config_file()
+                        break
+                    elif user_dec == "C":
+                        self.create_user_config()
+                        break
+                    elif user_dec == "I":
+                        break
+                    else:
+                        print("Invalid input. Please try again and use one of the given letters.")
+        elif raise_undefined_error:
             raise FileNotFoundError("No user config file defined.")
 
     def set_user_config_file(self, user_config_file=None):
