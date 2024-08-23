@@ -9,8 +9,6 @@ import shutil
 import sqlalchemy as sa
 import textwrap
 
-__all__ = ["config"]
-
 # create the config parser class
 class ConfigParser(configparser.ConfigParser):
     _DEFAULT_CONFIG_FILE = Path(__file__).parent.resolve()/'config_default.ini'
@@ -109,8 +107,6 @@ class ConfigParser(configparser.ConfigParser):
         if section not in self.sections():
             self.add_section(section)
         if option not in self[section] or (value != self.get(section, option)):
-            prev_value = self.get(section, option, fallback=None)
-
             super().set(section, option, value)
 
             # fire the change listeners
@@ -168,7 +164,7 @@ class ConfigParser(configparser.ConfigParser):
         """
         if db_key is None:
             db_key = self.get("database", "connection")
-        db_sect = self[f"database.{db_key}"]
+        db_sect = self[f"database:{db_key}"]
         return db_key, f"weatherDB_{db_sect.get('host')}", db_sect
 
     def set_db_credentials(
@@ -227,7 +223,7 @@ class ConfigParser(configparser.ConfigParser):
             pass
 
         # set new credentials
-        self._set(f"database.{db_key}", "USER", user)
+        self._set(f"database:{db_key}", "USER", user)
         keyring.set_password(keyring_key, user, password)
 
     def get_db_credentials(self, db_key=None):
@@ -356,6 +352,3 @@ class ConfigParser(configparser.ConfigParser):
         self._set("main", "user_config_file", str(user_config_file))
         self.load_user_config()
 
-
-# initiate the config parser
-config = ConfigParser()

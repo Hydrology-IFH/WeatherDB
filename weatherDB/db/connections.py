@@ -3,7 +3,7 @@ import sqlalchemy
 from sqlalchemy import text as sqltxt
 from sqlalchemy import URL
 import os
-from ..config.config import config
+from ..config import config
 
 # DB connection
 ###############
@@ -17,7 +17,7 @@ class DBEngine:
             "connection",
             self._connection_update)
         self._config_listener_subsection = (
-            f"database.{config.get('database', 'connection')}",
+            f"database:{config.get('database', 'connection')}",
             None,
             self._reset_engine)
         config.add_listener(*self._config_listener_connection)
@@ -34,7 +34,7 @@ class DBEngine:
 
         # add the new section listener
         self._config_listener_subsection = (
-            f"database.{config.get('database', 'connection')}",
+            f"database:{config.get('database', 'connection')}",
             None,
             self._reset_engine)
         config.add_listener(*self._config_listener_subsection)
@@ -82,7 +82,7 @@ class DBEngine:
         else:
             # create the engine
             con_key = config.get("database", "connection")
-            con_sect_key = f"database.{con_key}"
+            con_sect_key = f"database:{con_key}"
             con_section = config[con_sect_key]
             user, pwd = config.get_db_credentials()
             self._engine = sqlalchemy.create_engine(URL.create(
