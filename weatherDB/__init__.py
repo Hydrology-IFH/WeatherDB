@@ -7,7 +7,7 @@ __version__ = "0.0.45"
 
 if not ("WEATHERDB_MODULE_INSTALLING" in os.environ \
         and os.environ["WEATHERDB_MODULE_INSTALLING"]=="True"):
-    from .lib.wdb_logging import remove_old_logs, setup_file_logging
+    from .logging import remove_old_logs, setup_file_logging
 
     remove_old_logs()
 

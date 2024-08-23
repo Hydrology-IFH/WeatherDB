@@ -22,8 +22,8 @@ from pathlib import Path
 from sqlalchemy import text as sqltxt
 
 from .db.connections import db_engine
-from .lib.utils import TimestampPeriod, get_cdc_file_list
-from .lib.max_fun.import_DWD import get_dwd_meta
+from .utils.dwd import get_dwd_meta, get_cdc_file_list
+from .utils import TimestampPeriod
 from .station import (StationBase,
     StationND,  StationN,
     StationT, StationET,

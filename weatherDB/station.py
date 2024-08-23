@@ -29,9 +29,9 @@ from rasterstats import zonal_stats
 from contextlib import nullcontext
 
 from .db.connections import db_engine
-from .lib.max_fun.import_DWD import dwd_id_to_str, get_dwd_file
-from .lib.utils import TimestampPeriod, get_cdc_file_list
-from .lib.max_fun.geometry import polar_line, raster2points
+from .utils.dwd import get_cdc_file_list, dwd_id_to_str, get_dwd_file
+from .utils.TimestampPeriod import TimestampPeriod
+from .utils.geometry import polar_line, raster2points
 from .config import config
 from .db.models import  StationsRasterValues
 

@@ -1,11 +1,13 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""A collection of functions to import data from the DWD-CDC Server."""
+"""
+Some utilities functions to get data from the DWD-CDC server.
 
-__author__ = "Max Schmit"
-__copyright__ = "Copyright 2021, Max Schmit"
-
+Based on `max_fun` package on https://github.com/maxschmi/max_fun
+Created by Max Schmit, 2021
+"""
 # libraries
+import dateutil
+import ftplib
+import pathlib
 import geopandas as gpd
 import pandas as pd
 from zipfile import ZipFile
@@ -17,15 +19,14 @@ import logging
 import time
 import random
 
+# DWD - CDC FTP Server
+CDC_HOST = "opendata.dwd.de"
+
 # logger
 log = logging.getLogger(__name__)
 
-CDC_HOST = "opendata.dwd.de"
-
 # basic functions
 # ----------------
-
-
 def dwd_id_to_str(id):
     """
     Convert a station id to normal DWD format as str.
@@ -42,7 +43,6 @@ def dwd_id_to_str(id):
 
     """
     return f"{id:0>5}"
-
 
 def _dwd_date_parser(date_ser):
     """
@@ -76,8 +76,54 @@ def _dwd_date_parser(date_ser):
         raise ValueError("there was an error while converting the following  to a correct datetime"+
                          date_ser.head())
 
+# functions
+# ---------
+def get_ftp_file_list(ftp_conn, ftp_folders):
+    """Get a list of files in the folders with their modification dates.
 
-# main functions
+    Parameters
+    ----------
+    ftp_conn : ftplib.FTP
+        Ftp connection.
+    ftp_folders : list of str or pathlike object
+        The directories on the ftp server to look for files.
+
+    Returns
+    -------
+    list of tuples of strs
+        A list of Tuples. Every tuple stands for one file.
+        The tuple consists of (filepath, modification date).
+    """
+    # check types
+    if type(ftp_folders) == str:
+        ftp_folders = [ftp_folders]
+    for i, ftp_folder in enumerate(ftp_folders):
+        if issubclass(type(ftp_folder), pathlib.Path):
+            ftp_folders[i] = ftp_folder.as_posix()
+
+    try:
+        ftp_conn.voidcmd("NOOP")
+    except ftplib.all_errors:
+        ftp_conn.connect()
+
+    # get files and modification dates
+    files = []
+    for ftp_folder in ftp_folders:
+        lines = []
+        ftp_conn.dir(ftp_folder, lines.append)
+        for line in lines:
+            parts = line.split(maxsplit=9)
+            filepath = ftp_folder + parts[8]
+            modtime = dateutil.parser.parse(parts[5] + " " + parts[6] + " " + parts[7])
+            files.append((filepath, modtime))
+
+    return files
+
+def get_cdc_file_list(ftp_folders):
+    with ftplib.FTP(CDC_HOST) as ftp_con:
+        ftp_con.login()
+        files = get_ftp_file_list(ftp_con, ftp_folders)
+    return files
 
 def get_dwd_file(zip_filepath):
     """
@@ -163,128 +209,6 @@ def get_dwd_file(zip_filepath):
             df[col] = _dwd_date_parser(df[col])
 
     return df
-
-def get_dwd_data(station_id, ftp_folder):
-    """
-    Get the weather data for one station from the DWD server.
-
-    Parameters
-    ----------
-    station_id : str or int
-        Number of the station to get the weather data from.
-    ftp_folder : str
-        the base folder where to look for the stations_id file.
-        e.g. ftp_folder = "climate_environment/CDC/observations_germany/climate/hourly/precipitation/historical/".
-        If the parent folder, where "recent"/"historical" folder is inside, both the historical and recent data gets merged.
-
-    Returns
-    -------
-    pandas.DataFrame
-        The DataFrame of the selected file in the zip folder.
-
-    """
-    # check folder to be derived or observation type
-    if re.search("observations", ftp_folder):
-        station_id = dwd_id_to_str(station_id)
-        date_col = "MESS_DATUM"
-    elif re.search("derived", ftp_folder):
-        station_id = str(int(station_id))
-        date_col = "Datum"
-
-    # test if recent or historical specified
-    if re.search(r"((observations)|(derived))(?!.*((historical)|(recent))[\/]*$)", ftp_folder):
-        if (ftp_folder[-1] != "/"):
-            ftp_folder += "/"
-        ftp_folders = [ftp_folder + "historical", ftp_folder + "recent"]
-    else:
-        ftp_folders = [ftp_folder]
-
-    # test if station is in folder or even several times
-    comp = re.compile(r".*_" + station_id + r"[_\.].*")
-    zipfilenames = []
-    with ftplib.FTP(CDC_HOST) as ftp:
-        ftp.login()
-        for ftp_folder in ftp_folders:
-            zipfilenames.extend(list(filter(comp.match, ftp.nlst(ftp_folder))))
-
-    if len(zipfilenames) == 0:
-        log.debug(f"There is no file for the Station {station_id} in ftp://{CDC_HOST}/{ftp_folder}")
-        return None
-    elif len(zipfilenames) > 1:
-        log.info(
-            f"There are several files for the Station {station_id} in: \nftp://{CDC_HOST}/{ftp_folder}" +
-            "\nthey will get concatenated together! \nThese are the files:\n" +
-            "\n".join(zipfilenames))
-
-    # import every file and merge data
-    for zipfilename in zipfilenames:
-        try:
-            if "df_all" not in locals():
-                df_all = get_dwd_file(zipfilename)
-            else:
-                df_new = get_dwd_file(zipfilename)
-                # cut out if already in previous file
-                df_new = df_new[~df_new[date_col].isin(df_all[date_col])]
-                # concatenat the dfs
-                df_all = pd.concat([df_all, df_new])
-                df_all.reset_index(drop=True, inplace=True)
-        except IndexError:
-            log.info(f"The following file could not get imported {str(zipfilename)}")
-
-    # check for duplicates in date column
-    try:
-        df_all.set_index(date_col, inplace=True)
-        if df_all.index.has_duplicates:
-            df_all = df_all.groupby(df_all.index).mean()
-    except:
-        pass
-
-    # check if everything worked
-    if "df_all" not in locals():
-        raise ImportError(
-            f"The file(s) for the dwd station {station_id} couldn't get imported.")
-
-    return df_all
-
-def _concat_dwd_data(df1, df2):
-    """Concatenet 2 dwd stations dataframes to one.
-
-    Is usefull for concatenating several dataframes of the same station together
-    or historical and recent datas.
-
-    Parameters
-    ----------
-    df1 : pd.DataFrame
-        the first DataFrame of one DWD Station.
-    df2 : pd.DataFrame
-        the second DataFrame of one DWD Station.
-
-    Returns
-    -------
-    pd.DataFrame
-        a new DataFrame that contain the data of the 2 input DFs.
-    """
-    # get Date column name
-    if "MESS_DATUM" in df1.columns:
-        datecolumn = "MESS_DATUM"
-    else:
-        datecolumn = "Datum"
-
-    # check for which df is oldest
-    if df1[datecolumn].min() < df2[datecolumn].min():
-        df_old = df1
-        df_young = df2
-    else:
-        df_old = df2
-        df_young = df1
-
-    # check if overlapping data
-    if df_old[datecolumn].max() > df_young[datecolumn].min():
-        df_young = df_young.loc[df_young[datecolumn] > df_old[datecolumn].max()]
-    df_concat = pd.concat([df_old, df_young])
-    df_concat.reset_index(drop=True, inplace=True)
-
-    return df_concat
 
 def get_dwd_meta(ftp_folder, min_years=0, max_hole_d=9999):
     """

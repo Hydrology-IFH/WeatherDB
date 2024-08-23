@@ -1,69 +1,7 @@
-"""
-Some utilities functions and classes that are used in the module.
-"""
-# libraries
-import dateutil
-import ftplib
-import pathlib
 import re
-
 from pandas import Timestamp, NaT, Timedelta
 import datetime
 
-# DWD - CDC FTP Server
-CDC_HOST = "opendata.dwd.de"
-
-# functions
-# ---------
-def get_ftp_file_list(ftp_conn, ftp_folders):
-    """Get a list of files in the folders with their modification dates.
-
-    Parameters
-    ----------
-    ftp_conn : ftplib.FTP
-        Ftp connection.
-    ftp_folders : list of str or pathlike object
-        The directories on the ftp server to look for files.
-
-    Returns
-    -------
-    list of tuples of strs
-        A list of Tuples. Every tuple stands for one file.
-        The tuple consists of (filepath, modification date).
-    """
-    # check types
-    if type(ftp_folders) == str:
-        ftp_folders = [ftp_folders]
-    for i, ftp_folder in enumerate(ftp_folders):
-        if issubclass(type(ftp_folder), pathlib.Path):
-            ftp_folders[i] = ftp_folder.as_posix()
-
-    try:
-        ftp_conn.voidcmd("NOOP")
-    except ftplib.all_errors:
-        ftp_conn.connect()
-
-    # get files and modification dates
-    files = []
-    for ftp_folder in ftp_folders:
-        lines = []
-        ftp_conn.dir(ftp_folder, lines.append)
-        for line in lines:
-            parts = line.split(maxsplit=9)
-            filepath = ftp_folder + parts[8]
-            modtime = dateutil.parser.parse(parts[5] + " " + parts[6] + " " + parts[7])
-            files.append((filepath, modtime))
-
-    return files
-
-def get_cdc_file_list(ftp_folders):
-    with ftplib.FTP(CDC_HOST) as ftp_con:
-        ftp_con.login()
-        files = get_ftp_file_list(ftp_con, ftp_folders)
-    return files
-
-# classes
-# -------
 class TimestampPeriod(object):
     """A class to save a Timespan with a minimal and maximal Timestamp.
     """
