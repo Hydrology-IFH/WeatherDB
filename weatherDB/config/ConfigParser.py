@@ -12,7 +12,7 @@ import textwrap
 # create the config parser class
 class ConfigParser(configparser.ConfigParser):
     _DEFAULT_CONFIG_FILE = Path(__file__).parent.resolve()/'config_default.ini'
-    _MAIN_CONFIG_FILE = Path(__file__).parent.resolve()/'config_main.ini'
+    _MAIN_CONFIG_FILE = Path(__file__).parent.resolve()/"configs"/'config_main.ini'
 
     def __init__(self, *args, **kwargs):
         super().__init__(

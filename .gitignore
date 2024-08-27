@@ -1,20 +1,32 @@
 __pycache__
-logs
+
+# Ignore the created distribution files
 build
-sync.ffs_db
-*.log
-_build
-latex
-Makefile
-make.bat
 dist
 weatherDB.egg-info
 weatherDB.egg-info/*
 dist/*
+
+# Ignore the created docs files
 docs/source/README.md
 docs/source/CHANGES.md
 docs/html/*
 docs/html
 docs/source/Methode.html
+latex
+_build
+
+# Ignore the user specifiv created files
 data/
-weatherDB/config/config_main.ini
+*.log
+logs
+
+# ignore the main (system) configuration file as it is user specific
+weatherDB/config/configs/config_main.ini
+
+# ignore docker files
+*.docker-secret
+*.docker-env
+
+# other system files
+sync.ffs_db
