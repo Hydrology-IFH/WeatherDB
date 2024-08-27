@@ -1,4 +1,4 @@
-include secretSettings_example.py
 include requirements.txt
 include LICENSE
+include weatherDB/config/config_default.ini
 global-exclude logs/*

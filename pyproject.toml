@@ -1,0 +1,50 @@
+[project]
+name = "weatherDB"
+dynamic = ["version", "readme"]
+description = "This is a package to work with and to create the Weather Database which handles, checks, fills and corrects DWD Weather Station data."
+authors = [
+    { name = "Max Schmit", email = "max.schmit@hydrology.uni-freiburg.de" }
+]
+classifiers = [
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Topic :: Scientific/Engineering :: Hydrology",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English"
+]
+dependencies = [
+    "geopandas",
+    "shapely",
+    "pandas",
+    "numpy",
+    "progressbar2",
+    "rasterio",
+    "sqlalchemy>2.0",
+    "psycopg2-binary",
+    "GeoAlchemy2",
+    "alembic",
+    "requests",
+    "keyring",
+    "rasterstats",
+    "click"
+]
+license = { file = "LICENSE" }
+
+[project.scripts]
+weatherDB = "weatherDB.cli:cli"
+
+[build-system]
+requires = [
+    "setuptools>=42",
+    "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+version = {attr = "weatherDB.__version__"}
+readme = {file = "README.md"}
+
+[tool.setuptools.packages]
+find = {}  # Scan the project directory with the default parameters
