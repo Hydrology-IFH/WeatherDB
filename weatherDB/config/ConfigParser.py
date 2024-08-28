@@ -406,6 +406,7 @@ class ConfigParser(configparser.ConfigParser):
 
         # update the value in the user config file
         section = section.replace(".",":").lower()
+        option = option.upper()
         value_set = False
         with open(self.user_config_file, "r") as f:
             ucf_lines = f.readlines()
@@ -424,6 +425,19 @@ class ConfigParser(configparser.ConfigParser):
 
                 # set value if option is found
                 if in_section and re.match(f"(;\s*)*{option.lower()}\s*=", line_c):
+                    # check if multiline option
+                    j = 0
+                    while i+j<=len(ucf_lines) and \
+                        (ucf_lines[i+j].split(";")[0].strip().endswith(",") or
+                         ucf_lines[i+j].strip().startswith(";")):
+                        j += 1
+
+                    # remove the old additional values
+                    if j > 0:
+                        for k in range(j):
+                            ucf_lines[i+k+1] = ""
+
+                    # set the value
                     ucf_lines[i] = f"{option} = {value}\n"
                     value_set = True
                     break
