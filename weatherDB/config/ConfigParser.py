@@ -252,6 +252,30 @@ class ConfigParser(configparser.ConfigParser):
 
         return db_sect["user"], keyring.get_password(keyring_key, db_sect["user"])
 
+    @property
+    def has_user_config(self):
+        """Check if a user config file is defined.
+
+        Returns
+        -------
+        bool
+            True if a user config file is defined, False otherwise.
+        """
+        return self.get("main", "user_config_file", fallback=False) is not False
+
+    @property
+    def user_config_file(self):
+        """Get the path to the user config file.
+
+        Returns
+        -------
+        str or None
+            The path to the user config file.
+        """
+        if self.has_user_config:
+            return self.get("main", "user_config_file")
+        return None
+
     def create_user_config(self, user_config_file=None):
         """Create a new user config file.
 
@@ -289,7 +313,8 @@ class ConfigParser(configparser.ConfigParser):
     def load_user_config(self, raise_undefined_error=True):
         """(re)load the user config file.
         """
-        if user_config_file:=self.get("main", "user_config_file", fallback=False):
+        if self.has_user_config:
+            user_config_file = self.user_config_file
             if Path(user_config_file).exists():
                 with open(user_config_file) as f:
                     f_cont = f.read()
@@ -373,8 +398,7 @@ class ConfigParser(configparser.ConfigParser):
             If no user config file is defined.
         """
         # check if user config file is defined
-        user_config_file = self.get("main", "user_config_file", fallback=False)
-        if not user_config_file:
+        if not self.has_user_config:
             raise ValueError("No user config file defined.\nPlease create a user config file with create_user_config() or define an existiing user configuration file with set_user_config_file, before updating the user config.")
 
         # update the value in the config
@@ -383,7 +407,7 @@ class ConfigParser(configparser.ConfigParser):
         # update the value in the user config file
         section = section.replace(".",":").lower()
         value_set = False
-        with open(user_config_file, "r") as f:
+        with open(self.user_config_file, "r") as f:
             ucf_lines = f.readlines()
             in_section = False
             for i, line in enumerate(ucf_lines):
@@ -414,5 +438,5 @@ class ConfigParser(configparser.ConfigParser):
                 {option} = {value}"""))
 
         # write the new user config file
-        with open(user_config_file, "w") as f:
+        with open(self.user_config_file, "w") as f:
             f.writelines(ucf_lines)
