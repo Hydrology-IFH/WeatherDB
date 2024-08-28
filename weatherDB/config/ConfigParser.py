@@ -8,6 +8,7 @@ from getpass import getpass
 import shutil
 import sqlalchemy as sa
 import textwrap
+import re
 
 # create the config parser class
 class ConfigParser(configparser.ConfigParser):
@@ -354,3 +355,64 @@ class ConfigParser(configparser.ConfigParser):
         self._set("main", "user_config_file", str(user_config_file))
         self.load_user_config()
 
+    def update_user_config(self, section, option, value):
+        """Update a specific value in the user config file.
+
+        Parameters
+        ----------
+        section : str
+            The section of the configuration file.
+        option : str
+            The option of the configuration file.
+        value : str, int or bool
+            The new value for the option.
+
+        Raises
+        ------
+        ValueError
+            If no user config file is defined.
+        """
+        # check if user config file is defined
+        user_config_file = self.get("main", "user_config_file", fallback=False)
+        if not user_config_file:
+            raise ValueError("No user config file defined.\nPlease create a user config file with create_user_config() or define an existiing user configuration file with set_user_config_file, before updating the user config.")
+
+        # update the value in the config
+        self.set(section, option, value)
+
+        # update the value in the user config file
+        section = section.replace(".",":").lower()
+        value_set = False
+        with open(user_config_file, "r") as f:
+            ucf_lines = f.readlines()
+            in_section = False
+            for i, line in enumerate(ucf_lines):
+                line_c = line.strip().lower()
+
+                # get section
+                if re.match(r"\[.*\]", line_c):
+                    if in_section and not value_set:
+                        print("Option not found in section and is therefor added at the end of the section.")
+                        ucf_lines.insert(i, f"; Option added by config.update_user_config-call.\n{option} = {value}\n\n")
+                        value_set = True
+
+                    in_section = line_c.startswith(f"[{section}]")
+
+                # set value if option is found
+                if in_section and re.match(f"(;\s*)*{option.lower()}\s*=", line_c):
+                    ucf_lines[i] = f"{option} = {value}\n"
+                    value_set = True
+                    break
+
+        # add the option if not found in the section
+        if not value_set:
+            print("Section not found and is therefor added at the end of the file.")
+            ucf_lines.append(textwrap.dedent(f"""
+
+                [{section}]
+                ; Option and section added by config.update_user_config-call.
+                {option} = {value}"""))
+
+        # write the new user config file
+        with open(user_config_file, "w") as f:
+            f.writelines(ucf_lines)
