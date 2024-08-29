@@ -32,6 +32,7 @@ class ConfigParser(configparser.ConfigParser):
         self.read(self._DEFAULT_CONFIG_FILE)
         self._read_main_config()
         self.load_user_config(raise_undefined_error=False)
+        self.load_environment_variables()
 
     def add_listener(self, section, option, callback):
         """Add a callback function to be called when a configuration option is changed.
@@ -499,3 +500,50 @@ class ConfigParser(configparser.ConfigParser):
         # write the new user config file
         with open(self.user_config_file, "w") as f:
             f.writelines(ucf_lines)
+
+    def load_environment_variables(self):
+        """Load the environment variables into the configuration.
+
+        The following environment variables are possible to use:
+        - WEATHERDB_USER_CONFIG_FILE : The path to the user config file.
+        - WEATHERDB_HANDLE_NON_EXISTING_CONFIG : What to do if the user config file is not existing at the specified location.
+        - WEATHERDB_DB_USER : The username for the database.
+        - WEATHERDB_DB_PASSWORD : The password for the database user.
+        - WEATHERDB_DB_HOST : The host for the database.
+        - WEATHERDB_DB_PORT : The port for the database.
+        - WEATHERDB_DB_DATABASE : The database name.
+        - WEATHERDB_DATA_BASE_PATH : The base path for the data directory.
+        """
+        # database connection variables
+        db_vars = ["WEATHERDB_DB_USER", "WEATHERDB_DB_PASSWORD", "WEATHERDB_DB_HOST", "WEATHERDB_DB_PORT", "WEATHERDB_DB_DATABASE"]
+        var_exists = [var for var in db_vars if var in os.environ ]
+        if len(var_exists)==len(db_vars):
+            self.set(
+                "database:environment_variables",
+                "host",
+                os.environ.get("WEATHERDB_DB_HOST"))
+            self.set(
+                "database:environment_variables",
+                "port",
+                os.environ.get("WEATHERDB_DB_PORT"))
+            self.set(
+                "database:environment_variables",
+                "database",
+                os.environ.get("WEATHERDB_DB_DATABASE"))
+            self.set_db_credentials(
+                "environment_variables",
+                os.environ["WEATHERDB_DB_USER"],
+                os.environ["WEATHERDB_DB_PASSWORD"])
+            self.set("database", "connection", "environment_variables")
+        elif len(var_exists)>0:
+            print(textwrap.dedent(f"""
+                Only some database environment variables are set ({', '.join(var_exists)}).
+                To configure your database with environment variables all needed variables are needed.
+                Please set the following missing environment variables:"""))
+            for var in db_vars:
+                if var not in var_exists:
+                    print(f" - {var}")
+
+        # data directory
+        if "WEATHERDB_DATA_BASE_PATH" in os.environ:
+            self.set("data", "base_path", os.environ.get("WEATHERDB_DATA_BASE_PATH"))
