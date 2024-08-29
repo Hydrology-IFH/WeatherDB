@@ -2,7 +2,7 @@
 import sqlalchemy
 from sqlalchemy import text as sqltxt
 from sqlalchemy import URL
-import os
+# import os
 from ..config import config
 
 # DB connection
@@ -72,28 +72,30 @@ class DBEngine:
 
     def create_engine(self):
         # check if in Sphinx creation mode
-        if "RTD_documentation_import" in os.environ:
-            from mock_alchemy.mocking import UnifiedAlchemyMagicMock
-            self._engine = UnifiedAlchemyMagicMock()
-            self.is_superuser = True
-        elif "WEATHERDB_MODULE_INSTALLING" in os.environ:
-            self._engine = type("test", (), {})()
-            self.is_superuser = True
-        else:
-            # create the engine
-            con_key = config.get("database", "connection")
-            con_sect_key = f"database:{con_key}"
-            con_section = config[con_sect_key]
-            user, pwd = config.get_db_credentials()
-            self._engine = sqlalchemy.create_engine(URL.create(
-                drivername="postgresql+psycopg2",
-                username=user,
-                password=pwd,
-                host=con_section["HOST"],
-                database=con_section["DATABASE"],
-                port=con_section["PORT"]
-                ))
-            self._check_is_superuser()
+        # if "RTD_documentation_import" in os.environ:
+        #     from mock_alchemy.mocking import UnifiedAlchemyMagicMock
+        #     self._engine = UnifiedAlchemyMagicMock()
+        #     self.is_superuser = True
+        #     self._select_privilege = True
+        #     self._create_privilege = True
+        #     self._update_privilege = True
+        #     self._insert_privilege = True
+        #     self._delete_privilege = True
+        # else:
+        # create the engine
+        con_key = config.get("database", "connection")
+        con_sect_key = f"database:{con_key}"
+        con_section = config[con_sect_key]
+        user, pwd = config.get_db_credentials()
+        self._engine = sqlalchemy.create_engine(URL.create(
+            drivername="postgresql+psycopg2",
+            username=user,
+            password=pwd,
+            host=con_section["HOST"],
+            database=con_section["DATABASE"],
+            port=con_section["PORT"]
+            ))
+        self._check_is_superuser()
 
         return self._engine
 
