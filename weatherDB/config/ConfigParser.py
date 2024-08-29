@@ -9,6 +9,7 @@ import shutil
 import sqlalchemy as sa
 import textwrap
 import re
+import os
 
 # create the config parser class
 class ConfigParser(configparser.ConfigParser):
@@ -261,7 +262,7 @@ class ConfigParser(configparser.ConfigParser):
         bool
             True if a user config file is defined, False otherwise.
         """
-        return self.get("main", "user_config_file", fallback=False) is not False
+        return self.has_option("main", "user_config_file") or "WEATHERDB_USER_CONFIG_FILE" in os.environ
 
     @property
     def user_config_file(self):
@@ -273,7 +274,9 @@ class ConfigParser(configparser.ConfigParser):
             The path to the user config file.
         """
         if self.has_user_config:
-            return self.get("main", "user_config_file")
+            if user_config := self.get("main", "user_config_file", fallback=None):
+                return user_config
+            return os.environ.get("WEATHERDB_USER_CONFIG_FILE", None)
         return None
 
     def create_user_config(self, user_config_file=None):
