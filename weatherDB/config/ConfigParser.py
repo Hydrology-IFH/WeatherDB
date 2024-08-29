@@ -286,24 +286,46 @@ class ConfigParser(configparser.ConfigParser):
         ----------
         user_config_file : str or Path, optional
             The path to the new user config file.
-            If not given, the function will ask for it.
+            If not given, the function will use the config.user_config_file if available or ask for it.
+            If set to "ask", the function will allways open a filedialog to select the file.
             The default is None.
         """
         if user_config_file is None:
-            from tkinter import Tk
-            from tkinter import filedialog
-            tkroot = Tk()
-            tkroot.attributes('-topmost', True)
-            tkroot.iconify()
-            user_config_file = filedialog.asksaveasfilename(
-                defaultextension=".ini",
-                filetypes=[("INI files", "*.ini")],
-                title="Where do you want to save the user config file?",
-                initialdir=Path("~").expanduser(),
-                initialfile="WeatherDB_config.ini",
-                confirmoverwrite=True,
-            )
-            tkroot.destroy()
+            if self.has_user_config:
+                user_config_file = self.user_config_file
+            else:
+                user_config_file = "ask"
+
+        # ask for the user config file
+        if user_config_file == "ask":
+            try:
+                from tkinter import Tcl
+                from tkinter import filedialog
+                tkroot = Tcl()
+                tkroot.attributes('-topmost', True)
+                tkroot.iconify()
+                user_config_file = filedialog.asksaveasfilename(
+                    defaultextension=".ini",
+                    filetypes=[("INI files", "*.ini")],
+                    title="Where do you want to save the user config file?",
+                    initialdir=Path("~").expanduser(),
+                    initialfile="WeatherDB_config.ini",
+                    confirmoverwrite=True,
+                )
+                tkroot.destroy()
+            except ImportError:
+                while True:
+                    user_config_file = Path(input("Please enter the path to the user config file: "))
+                    if user_config_file.parent.exists():
+                        if user_config_file.suffix != ".ini":
+                            print("The file has to be an INI file.")
+                            continue
+                        if user_config_file.exists():
+                            print("The file already exists. Please choose another path.")
+                            continue
+                        break
+                    else:
+                        print("Invalid path. Please try again.")
 
         # copy the default config file to the user config file
         shutil.copyfile(self._DEFAULT_CONFIG_FILE, user_config_file)
@@ -313,8 +335,25 @@ class ConfigParser(configparser.ConfigParser):
         print(f"User config file created at {user_config_file}")
         print("Please edit the file to your needs and reload user config with load_user_config() or by reloading the module.")
 
-    def load_user_config(self, raise_undefined_error=True):
+    def load_user_config(self,
+                         raise_undefined_error=True,
+                         if_not_existing=os.environ.get("WEATHERDB_HANDLE_NON_EXISTING_CONFIG", "ask")):
         """(re)load the user config file.
+
+        Parameters
+        ----------
+        raise_undefined_error : bool, optional
+            Raise an error if no user config file is defined.
+            The default is True.
+        if_not_existing : str, optional
+            What to do if the user config file is not existing at the specified location.
+            The options are:
+            - "ask" : Ask the user what to do.
+            - "ignore" : Ignore the error and continue.
+            - "create" : Create a new user config file.
+            - "define" : Define a new user config file location.
+            - "remove" : Remove the user config file location.
+            The default is the value of the environment variable "WEATHERDB_HANDLE_NON_EXISTING_CONFIG" or if undefined "ask".
         """
         if self.has_user_config:
             user_config_file = self.user_config_file
@@ -326,28 +365,31 @@ class ConfigParser(configparser.ConfigParser):
                             "For security reasons the password isn't allowed to be in the config file.\nPlease use set_db_credentials to set the password.")
                     self.read_string(f_cont)
             else:
-                print(textwrap.dedent(f"""
-                    User config file not found at {user_config_file}.
-                    What do you want to do:
-                    - [R] : Remove the user config file location
-                    - [D] : Define a new user config file location
-                    - [C] : Create a new user config file with default values
-                    - [I] : Ignore error"""))
-                while True:
-                    user_dec = input("Enter the corresponding letter: ").upper()
-                    if user_dec == "R":
-                        self.remove_option("main", "user_config_file")
-                        break
-                    elif user_dec == "D":
-                        self.set_user_config_file()
-                        break
-                    elif user_dec == "C":
-                        self.create_user_config()
-                        break
-                    elif user_dec == "I":
-                        break
-                    else:
-                        print("Invalid input. Please try again and use one of the given letters.")
+                print(f"User config file not found at {user_config_file}.")
+                # get user decision what to do
+                if if_not_existing.lower() == "ask":
+                    print(textwrap.dedent("""
+                        What do you want to do:
+                        - [R] : Remove the user config file location
+                        - [D] : Define a new user config file location
+                        - [C] : Create a new user config file with default values
+                        - [I] : Ignore error"""))
+                    while True:
+                        user_dec = input("Enter the corresponding letter: ").upper()
+                        if user_dec in ["R", "D", "C", "I"]:
+                            break
+                        else:
+                            print("Invalid input. Please try again and use one of the given letters.")
+                else:
+                    user_dec = if_not_existing[0].upper()
+
+                # do the user decision
+                if user_dec == "R":
+                    self.remove_option("main", "user_config_file")
+                elif user_dec == "D":
+                    self.set_user_config_file()
+                elif user_dec == "C":
+                    self.create_user_config()
         elif raise_undefined_error:
             raise FileNotFoundError("No user config file defined.")
 
