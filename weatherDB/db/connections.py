@@ -128,8 +128,14 @@ class DBEngine:
             return True
         else:
             with self.connect() as con:
+                if privilege == "CREATE":
+                    return con.execute(sqltxt(
+                        f"SELECT pg_catalog.has_schema_privilege('public', '{privilege}');"
+                    )).first()[0]
                 return con.execute(sqltxt(
-                    f"SELECT pg_catalog.has_schema_privilege(current_user, 'public', '{privilege}');"
+                    f"""SELECT bool_and(pg_catalog.has_table_privilege(table_name, '{privilege}'))
+                       FROM information_schema.TABLES
+                       WHERE table_schema=CURRENT_SCHEMA AND table_type='BASE TABLE';"""
                 )).first()[0]
 
     def _check_select_privilege(self):
