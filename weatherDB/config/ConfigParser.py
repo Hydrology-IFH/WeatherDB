@@ -530,10 +530,19 @@ class ConfigParser(configparser.ConfigParser):
                 "database:environment_variables",
                 "database",
                 os.environ.get("WEATHERDB_DB_DATABASE"))
+
+            # get password from file if it is a path, to work with docker secrets
+            password = os.environ.get("WEATHERDB_DB_PASSWORD")
+            if Path(password).exists():
+                with open(password, "r") as f:
+                    password = f.read().strip()
+            else:
+                password = os.environ.get("WEATHERDB_DB_PASSWORD")
+
             self.set_db_credentials(
                 "environment_variables",
                 os.environ["WEATHERDB_DB_USER"],
-                os.environ["WEATHERDB_DB_PASSWORD"])
+                password)
             self.set("database", "connection", "environment_variables")
         elif len(var_exists)>0:
             print(textwrap.dedent(f"""
