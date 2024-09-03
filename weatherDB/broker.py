@@ -46,7 +46,7 @@ class Broker(object):
                     "The given parameter {para} is not valid.".format(
                         para=para))
 
-    def update_raw(self, only_new=True, paras=["n_d", "n", "t", "et"]):
+    def update_raw(self, only_new=True, paras=["n_d", "n", "t", "et"], **kwargs):
         """Update the raw data from the DWD-CDC server to the database.
 
         Parameters
@@ -59,16 +59,18 @@ class Broker(object):
             The parameters for which to do the actions.
             Can be one, some or all of ["n_d", "n", "t", "et"].
             The default is ["n_d", "n", "t", "et"].
+        **kwargs : dict
+            The keyword arguments to pass to the update_raw method of the stations
         """
         self.check_is_broker_active()
         log.info("="*79 + "\nBroker update_raw starts")
         self._check_paras(paras)
         for stations in self.stations:
             if stations._para in paras:
-                stations.update_raw(only_new=only_new)
+                stations.update_raw(only_new=only_new, **kwargs)
         self.set_is_broker_active(False)
 
-    def update_meta(self, paras=["n_d", "n", "t", "et"]):
+    def update_meta(self, paras=["n_d", "n", "t", "et"], **kwargs):
         """Update the meta file from the CDC Server to the Database.
 
         Parameters
@@ -77,14 +79,16 @@ class Broker(object):
             The parameters for which to do the actions.
             Can be one, some or all of ["n_d", "n", "t", "et"].
             The default is ["n_d", "n", "t", "et"].
+        **kwargs : dict
+            The keyword arguments to pass to update_meta method of the stations
         """
         log.info("="*79 + "\nBroker update_meta starts")
         self._check_paras(paras)
         for stations in self.stations:
             if stations._para in paras:
-                stations.update_meta()
+                stations.update_meta(**kwargs)
 
-    def update_ma(self, paras=["n_d", "n", "t", "et"]):
+    def update_ma(self, paras=["n_d", "n", "t", "et"], **kwargs):
         """Update the multi-annual data from raster to table.
 
         Parameters
@@ -93,14 +97,16 @@ class Broker(object):
             The parameters for which to do the actions.
             Can be one, some or all of ["n_d", "n", "t", "et"].
             The default is ["n_d", "n", "t", "et"].
+        **kwargs : dict
+            The keyword arguments to pass to update_ma method of the stations
         """
         log.info("="*79 + "\nBroker update_ma starts")
         self._check_paras(paras)
         for stations in self.stations:
             if stations._para in paras:
-                stations.update_ma()
+                stations.update_ma(**kwargs)
 
-    def update_period_meta(self, paras=["n_d", "n", "t", "et"]):
+    def update_period_meta(self, paras=["n_d", "n", "t", "et"], **kwargs):
         """Update the periods in the meta table.
 
         Parameters
@@ -109,6 +115,8 @@ class Broker(object):
             The parameters for which to do the actions.
             Can be one, some or all of ["n_d", "n", "t", "et"].
             The default is ["n_d", "n", "t", "et"].
+        **kwargs : dict
+            The keyword arguments to pass to update_period_meta method of the stations
         """
         self._check_paras(paras=paras,
                           valid_paras=["n_d", "n", "t", "et"])
@@ -116,9 +124,9 @@ class Broker(object):
 
         for stations in self.stations:
             if stations._para in paras:
-                stations.update_period_meta()
+                stations.update_period_meta(**kwargs)
 
-    def quality_check(self, paras=["n", "t", "et"], with_fillup_nd=True):
+    def quality_check(self, paras=["n", "t", "et"], with_fillup_nd=True, **kwargs):
         """Do the quality check on the stations raw data.
 
         Parameters
@@ -130,20 +138,22 @@ class Broker(object):
         with_fillup_nd : bool, optional
             Should the daily precipitation data get filled up if the 10 minute precipitation data gets quality checked.
             The default is True.
+        **kwargs : dict
+            The keyword arguments to pass to quality_check method of the stations
         """
         self.check_is_broker_active()
         self._check_paras(paras=paras, valid_paras=["n", "t", "et"])
         log.info("="*79 + "\nBroker quality_check starts")
 
         if with_fillup_nd and "n" in paras:
-            self.stations_nd.fillup()
+            self.stations_nd.fillup(**kwargs)
 
         for stations in self.stations:
             if stations._para in paras:
-                stations.quality_check()
+                stations.quality_check(**kwargs)
         self.set_is_broker_active(False)
 
-    def last_imp_quality_check(self, paras=["n", "t", "et"], with_fillup_nd=True):
+    def last_imp_quality_check(self, paras=["n", "t", "et"], with_fillup_nd=True, **kwargs):
         """Quality check the last imported data.
 
         Also fills up the daily precipitation data if the 10 minute precipitation data should get quality checked.
@@ -157,6 +167,9 @@ class Broker(object):
         with_fillup_nd : bool, optional
             Should the daily precipitation data get filled up if the 10 minute precipitation data gets quality checked.
             The default is True.
+        **kwargs : dict
+            The keyword arguments to pass to last_imp_quality_check method of the stations.
+            If with_fillup_nd is True, the keyword arguments are also passed to the last_imp_fillup method of the stations_nd.
         """
         log.info("="*79 + "\nBroker last_imp_quality_check starts")
         self._check_paras(
@@ -164,13 +177,13 @@ class Broker(object):
             valid_paras=["n", "t", "et"])
 
         if with_fillup_nd and "n" in paras:
-            self.stations_nd.last_imp_fillup()
+            self.stations_nd.last_imp_fillup(**kwargs)
 
         for stations in self.stations:
             if stations._para in paras:
-                stations.last_imp_quality_check()
+                stations.last_imp_quality_check(**kwargs)
 
-    def fillup(self, paras=["n", "t", "et"]):
+    def fillup(self, paras=["n", "t", "et"], **kwargs):
         """Fillup the timeseries.
 
         Parameters
@@ -179,16 +192,18 @@ class Broker(object):
             The parameters for which to do the actions.
             Can be one, some or all of ["n_d", "n", "t", "et"].
             The default is ["n_d", "n", "t", "et"].
+        **kwargs : dict
+            The keyword arguments to pass to fillup method of the stations
         """
         self.check_is_broker_active()
         log.info("="*79 + "\nBroker fillup starts")
         self._check_paras(paras)
         for stations in self.stations:
             if stations._para in paras:
-                stations.fillup()
+                stations.fillup(**kwargs)
         self.set_is_broker_active(False)
 
-    def last_imp_fillup(self, paras=["n", "t", "et"]):
+    def last_imp_fillup(self, paras=["n", "t", "et"], **kwargs):
         """Fillup the last imported data.
 
         Parameters
@@ -197,30 +212,42 @@ class Broker(object):
             The parameters for which to do the actions.
             Can be one, some or all of ["n_d", "n", "t", "et"].
             The default is ["n_d", "n", "t", "et"].
+        **kwargs : dict
+            The keyword arguments to pass to last_imp_fillup method of the stations
         """
         log.info("="*79 + "\nBroker last_imp_fillup starts")
         self._check_paras(paras)
         for stations in self.stations:
             if stations._para in paras:
-                stations.last_imp_fillup()
+                stations.last_imp_fillup(**kwargs)
 
-    def richter_correct(self):
+    def richter_correct(self, **kwargs):
         """Richter correct all of the precipitation data.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            The keyword arguments to pass to richter_correct method of the stations_n
         """
         self.check_is_broker_active()
         log.info("="*79 + "\nBroker: last_imp_corr starts")
-        self.stations_n.richter_correct()
+        self.stations_n.richter_correct(**kwargs)
         self.set_is_broker_active(False)
 
-    def last_imp_corr(self):
+    def last_imp_corr(self, **kwargs):
         """Richter correct the last imported precipitation data.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            The keyword arguments to pass to last_imp_corr method of the stations
         """
         self.check_is_broker_active()
         log.info("="*79 + "\nBroker: last_imp_corr starts")
-        self.stations_n.last_imp_corr()
+        self.stations_n.last_imp_corr(**kwargs)
         self.check_is_broker_active()
 
-    def update_db(self, paras=["n_d", "n", "t", "et"]):
+    def update_db(self, paras=["n_d", "n", "t", "et"], **kwargs):
         """The regular Update of the database.
 
         Downloads new data.
@@ -233,6 +260,8 @@ class Broker(object):
             The parameters for which to do the actions.
             Can be one, some or all of ["n_d", "n", "t", "et"].
             The default is ["n_d", "n", "t", "et"].
+        **kwargs : dict
+            The keyword arguments to pass to the called methods of the stations
         """
         log.info("="*79 + "\nBroker update_db starts")
         self._check_paras(paras)
@@ -242,13 +271,13 @@ class Broker(object):
             log.info("--> There is a new version of the python script. Therefor the database is recalculated completly")
             self.initiate_db()
         else:
-            self.update_meta(paras=paras)
-            self.update_raw(paras=paras)
+            self.update_meta(paras=paras, **kwargs)
+            self.update_raw(paras=paras, **kwargs)
             if "n_d" in paras:
                 paras.remove("n_d")
-            self.last_imp_quality_check(paras=paras)
-            self.last_imp_fillup(paras=paras)
-            self.last_imp_corr()
+            self.last_imp_quality_check(paras=paras, **kwargs)
+            self.last_imp_fillup(paras=paras, **kwargs)
+            self.last_imp_corr(**kwargs)
             self.set_is_broker_active(False)
 
     @db_engine.deco_is_superuser
@@ -305,27 +334,37 @@ class Broker(object):
         command.stamp(alembic_cfg, "head")
 
     @db_engine.deco_all_privileges
-    def initiate_db(self):
+    def initiate_db(self, **kwargs):
         """Initiate the Database.
 
         Downloads all the data from the CDC server for the first time.
         Updates the multi-annual data and the richter-class for all the stations.
         Quality checks and fills up the timeseries.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            The keyword arguments to pass to the called methods of the stations
         """
         log.info("="*79 + "\nBroker initiate_db starts")
         self.check_is_broker_active()
+
         self.update_meta(
-            paras=["n_d", "n", "t", "et"])
+            paras=["n_d", "n", "t", "et"], **kwargs)
         self.update_raw(
             paras=["n_d", "n", "t", "et"],
-            only_new=False)
+            only_new=False,
+            **kwargs)
         self.update_ma(
-            paras=["n_d", "n", "t", "et"])
-        self.stations_n.update_richter_class()
-        self.quality_check(paras=["n", "t", "et"])
-        self.fillup(paras=["n", "t", "et"])
-        self.richter_correct()
+            paras=["n_d", "n", "t", "et"],
+            **kwargs)
+        self.stations_n.update_richter_class(**kwargs)
+        self.quality_check(paras=["n", "t", "et"], **kwargs)
+        self.fillup(paras=["n", "t", "et"], **kwargs)
+        self.richter_correct(**kwargs)
+
         self.set_db_version()
+
         self.set_is_broker_active(False)
 
     def vacuum(self, do_analyze=True):
