@@ -47,12 +47,12 @@ class StationsBase:
     _timeout_raw_imp = 240
 
     def __init__(self):
-        if type(self) == StationsBase:
+        if type(self) is StationsBase:
             raise NotImplementedError("""
             The StationsBase is only a wrapper class an is not working on its own.
             Please use StationN, StationND, StationT or StationET instead""")
         self._ftp_folder_base = self._StationClass._ftp_folder_base
-        if type(self._ftp_folder_base) == str:
+        if type(self._ftp_folder_base) is str:
             self._ftp_folder_base = [self._ftp_folder_base]
 
         # create ftp_folders in order of importance
@@ -81,7 +81,7 @@ class StationsBase:
             # add new stations
             meta = pd.concat(
                 [meta, meta_new[~meta_new.index.isin(meta.index)]])
-            if type(meta_new)==gpd.GeoDataFrame:
+            if type(meta_new) is gpd.GeoDataFrame:
                 meta = gpd.GeoDataFrame(meta, crs=meta_new.crs)
 
             # check for wider timespan
@@ -278,7 +278,7 @@ class StationsBase:
             The meta DataFrame.
         """
         # make sure columns is of type list
-        if type(infos) == str:
+        if type(infos) is str:
             if infos=="all":
                 infos = self.get_meta_explanation(infos="all").index.to_list()
                 if "geometry_utm" in infos:
@@ -311,7 +311,7 @@ class StationsBase:
         if only_real:
             where_clause = " WHERE is_real=true"
         if stids != "all":
-            if type(stids) != list:
+            if type(stids) is not list:
                 stids = [stids,]
             if "where_clause" not in locals():
                 where_clause = " WHERE "
@@ -337,7 +337,7 @@ class StationsBase:
                     meta, crs="EPSG:" + srid, geometry=geom_col)
 
         # strip whitespaces in string columns
-        for col in meta.columns[meta.dtypes == object]:
+        for col in meta.columns[meta.dtypes is object]:
             try:
                 meta[col] = meta[col].str.strip()
             except:
@@ -373,7 +373,7 @@ class StationsBase:
         meta = self.get_meta(
             infos=["station_id"], only_real=only_real, stids=stids)
 
-        if (type(stids) == str) and (stids == "all"):
+        if (type(stids) is str) and (stids == "all"):
             stations = [
                 self._StationClass(stid, _skip_meta_check=True)
                 for stid in meta.index]
@@ -543,7 +543,8 @@ class StationsBase:
             # check results until all finished
             finished = [False] * num_stations
             while (True):
-                if all(finished): break
+                if all(finished):
+                    break
 
                 for result in [result for i, result in enumerate(results)
                                     if not finished[i]]:
@@ -586,7 +587,6 @@ class StationsBase:
         pbar = self._get_progressbar(max_value=num_stations, name=name)
 
         # start processes
-        results = []
         for stat in stations:
             getattr(stat, method)(**kwds)
             pbar.variables["last_station"] = stat.id
@@ -651,7 +651,7 @@ class StationsBase:
             do_mp=do_mp, **kwargs)
 
         # save start time as variable to db
-        if (type(stids) == str) and (stids == "all"):
+        if (type(stids) is str) and (stids == "all"):
             with db_engine.connect() as con:
                 con.execute(sqltxt("""
                     UPDATE para_variables
@@ -1069,11 +1069,11 @@ class GroupStations(object):
         return self._valid_stids
 
     def _check_paras(self, paras):
-        if type(paras)==str and paras != "all":
+        if type(paras) is str and paras != "all":
             paras = [paras,]
 
         valid_paras=["n", "t", "et"]
-        if (type(paras) == str) and (paras == "all"):
+        if (type(paras) is str) and (paras == "all"):
             return valid_paras
         else:
             paras_new = []
@@ -1099,7 +1099,7 @@ class GroupStations(object):
             else:
                 max_period=max_period_i
 
-        if type(period) != TimestampPeriod:
+        if type(period) is not TimestampPeriod:
             period = TimestampPeriod(*period)
         if period.is_empty():
             return max_period
@@ -1115,7 +1115,7 @@ class GroupStations(object):
 
         It checks against the Precipitation stations.
         """
-        if (type(stids) == str) and (stids == "all"):
+        if (type(stids) is str) and (stids == "all"):
             return self.get_valid_stids()
         else:
             valid_stids = self.get_valid_stids()
@@ -1148,7 +1148,7 @@ class GroupStations(object):
             If the directory is not valid. E.G. it is a file path.
         """
         # check types
-        if type(dir) == str:
+        if type(dir) is str:
             dir = Path(dir)
 
         # check directory
@@ -1239,7 +1239,7 @@ class GroupStations(object):
                 meta_all = meta_para
             else:
                 meta_all = pd.concat([meta_all, meta_para], axis=0)
-                if type(meta_para)==gpd.GeoDataFrame:
+                if type(meta_para) is gpd.GeoDataFrame:
                     meta_all = gpd.GeoDataFrame(meta_all, crs=meta_para.crs)
 
         if len(paras)==1:
@@ -1301,7 +1301,7 @@ class GroupStations(object):
         kwargs.update({"_skip_meta_check":True})
         valid_stids = self.get_valid_stids()
 
-        if (type(stids) == str) and (stids == "all"):
+        if (type(stids) is str) and (stids == "all"):
             stations = [
                 self._GroupStation(stid, **kwargs)
                 for stid in valid_stids]
