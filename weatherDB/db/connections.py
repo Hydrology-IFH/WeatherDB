@@ -53,9 +53,9 @@ class DBEngine:
         self._delete_privilege = None
 
     def connect(self, *args, **kwargs):
-        return self.get_db_engine().connect(*args, **kwargs)
+        return self.get_engine().connect(*args, **kwargs)
 
-    def get_db_engine(self):
+    def get_engine(self):
         """Get the sqlalchemy database engine.
 
         Returns the last created engine if possible or creates a new one.
@@ -98,6 +98,14 @@ class DBEngine:
         self._check_is_superuser()
 
         return self._engine
+
+    @property
+    def engine(self):
+        return self.get_engine()
+
+    @engine.setter
+    def engine(self, value):
+        raise PermissionError("You are not allowed to change the engine of the database connection.\nPlease change the configuration to change the database connection.")
 
     def reload_config(self):
         """Reload the configuration and create a new engine.

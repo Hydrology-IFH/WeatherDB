@@ -294,14 +294,14 @@ class Broker(object):
 
         # create the tables
         print("Creating the tables.")
-        Base.metadata.create_all(db_engine.get_db_engine())
+        Base.metadata.create_all(db_engine.get_engine())
 
         # tell alembic that the actual database schema is up-to-date
         from alembic.config import Config
         from alembic import command
         alembic_cfg = Config(
             Path(config.get("main", "module_path"))/"alembic"/"alembic.ini",
-            attributes={"engine": db_engine.get_db_engine()})
+            attributes={"engine": db_engine.get_engine()})
         command.stamp(alembic_cfg, "head")
 
     @db_engine.deco_all_privileges

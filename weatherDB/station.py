@@ -38,8 +38,6 @@ from .db.models import  StationsRasterValues
 # Variables
 MIN_TSTP = datetime.strptime("19940101", "%Y%m%d").replace(tzinfo=timezone.utc)
 # all timestamps in the database are in UTC
-THIS_DIR = Path(__file__).parent.resolve()
-DATA_DIR = THIS_DIR.parents[2].joinpath("data")
 RICHTER_CLASSES = {
     "no-protection": {
         "min_horizon": 0,
