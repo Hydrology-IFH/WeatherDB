@@ -513,6 +513,10 @@ class ConfigParser(configparser.ConfigParser):
         - WEATHERDB_DB_PORT : The port for the database.
         - WEATHERDB_DB_DATABASE : The database name.
         - WEATHERDB_DATA_BASE_PATH : The base path for the data directory.
+        - WEATHERDB_LOGGING_HANDLER : The logging handler to use. Possible values are "console" and "file".
+        - WEATHERDB_LOGGING_LEVEL : The logging level to use. Possible values are "DEBUG", "INFO", "WARNING", "ERROR" and "CRITICAL".
+        - WEATHERDB_LOGGING_DIRECTORY : The directory to store the log files.
+        - WEATHERDB_LOGGING_FILE : The file name for the log file.
         """
         # database connection variables
         db_vars = ["WEATHERDB_DB_USER", "WEATHERDB_DB_PASSWORD", "WEATHERDB_DB_HOST", "WEATHERDB_DB_PORT", "WEATHERDB_DB_DATABASE"]
@@ -553,6 +557,12 @@ class ConfigParser(configparser.ConfigParser):
                 if var not in var_exists:
                     print(f" - {var}")
 
-        # data directory
-        if "WEATHERDB_DATA_BASE_PATH" in os.environ:
-            self.set("data", "base_path", os.environ.get("WEATHERDB_DATA_BASE_PATH"))
+        # other environment variable settings
+        for env_key, (section, option) in {
+                "WEATHERDB_DATA_BASE_PATH": ("data", "base_path"),
+                "WEATHERDB_LOGGING_HANDLER": ("logging", "handlers"),
+                "WEATHERDB_LOGGING_LEVEL": ("logging", "level"),
+                "WEATHERDB_LOGGING_DIRECTORY": ("logging", "directory"),
+                "WEATHERDB_LOGGING_FILE": ("logging", "file")}.items():
+            if env_key in os.environ:
+                self.set(section, option, os.environ.get(env_key))
