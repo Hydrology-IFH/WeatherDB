@@ -165,19 +165,17 @@ class StationsBase:
                 )).all()
             columns_db = [col[0] for col in columns_db]
 
-        col_mask = [col in columns_db for col in columns]
-        if False in col_mask:
+        problem_cols = [col for col in columns if col not in columns_db]
+        if len(problem_cols) > 0:
             warnings.warn("""
                 The meta_{para} column '{cols}' is not initiated in the database.
                 This column is therefor skiped.
                 Please review the DB or the code.
                 """.format(
                     para=self._para,
-                    cols=", ".join(
-                        [col for col, mask in zip(columns, col_mask)
-                             if not mask]))
+                    cols=", ".join(problem_cols))
                     )
-            columns = columns[col_mask]
+            columns = [col for col in columns if col in columns_db]
 
         # change date columns
         for colname, col in \
