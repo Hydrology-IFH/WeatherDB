@@ -1,4 +1,6 @@
 include requirements.txt
 include LICENSE
 include weatherDB/config/config_default.ini
+include weatherDB/alembic/alembic.ini
+include weatherDB/alembic/script.py.mako
 global-exclude logs/*
