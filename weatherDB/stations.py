@@ -337,7 +337,7 @@ class StationsBase:
                     meta, crs="EPSG:" + srid, geometry=geom_col)
 
         # strip whitespaces in string columns
-        for col in meta.columns[meta.dtypes is object]:
+        for col in meta.columns[meta.dtypes == "object"]:
             try:
                 meta[col] = meta[col].str.strip()
             except:
