@@ -28,6 +28,7 @@ dependencies = [
     "alembic",
     "requests",
     "keyring",
+    "keyrings.alt ; sys_platform == 'linux'",
     "rasterstats",
     "click"
 ]
