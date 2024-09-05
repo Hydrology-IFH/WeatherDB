@@ -101,7 +101,7 @@ class StationsBase:
         return meta
 
     @db_engine.deco_update_privilege
-    def update_meta(self):
+    def update_meta(self, **kwargs):
         """Update the meta table by comparing to the CDC server.
 
         The "von_datum" and "bis_datum" is ignored because it is better to set this by the filled period of the stations in the database.
@@ -111,6 +111,10 @@ class StationsBase:
             "The {para_long} meta table gets updated."\
                 .format(para_long=self._para_long))
         meta = self.download_meta()
+
+        # check if Abgabe is in meta
+        if "Abgabe" in meta.columns:
+            meta.drop("Abgabe", axis=1, inplace=True)
 
         # get droped stations and delete from meta file
         sql_get_droped = """

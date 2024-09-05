@@ -11,7 +11,6 @@ import pathlib
 import geopandas as gpd
 import pandas as pd
 from zipfile import ZipFile
-import ftplib
 import re
 from io import BytesIO
 import traceback
@@ -59,7 +58,7 @@ def _dwd_date_parser(date_ser):
         The date as datetime.
 
     """
-    if type(date_ser) != pd.Series:
+    if type(date_ser) is not pd.Series:
         raise ValueError("date_str must be a pd.Series of str")
 
     # test if list or single str
@@ -95,7 +94,7 @@ def get_ftp_file_list(ftp_conn, ftp_folders):
         The tuple consists of (filepath, modification date).
     """
     # check types
-    if type(ftp_folders) == str:
+    if type(ftp_folders) is str:
         ftp_folders = [ftp_folders]
     for i, ftp_folder in enumerate(ftp_folders):
         if issubclass(type(ftp_folder), pathlib.Path):
@@ -267,16 +266,20 @@ def get_dwd_meta(ftp_folder, min_years=0, max_hole_d=9999):
     # import meta file
     try:
         if re.search("observations", ftp_folder):
-            meta = pd.read_table("ftp://opendata.dwd.de/" + meta_file[0],
-                                 skiprows=2, encoding="WINDOWS-1252",
-                                 sep=r"\s{2,}|(?<=\d)\s{1}(?=[\w])",  # two or more white spaces or one space after word or digit and followed by word
-                                 names=["Stations_id", "von_datum",
-                                        "bis_datum", "Stationshoehe",
-                                        "geoBreite", "geoLaenge",
-                                        "Stationsname", "Bundesland"],
-                                 parse_dates=["von_datum", "bis_datum"],
-                                 index_col="Stations_id",
-                                 engine="python")
+            with ftplib.FTP(CDC_HOST) as ftp:
+                ftp.login()
+                with BytesIO() as meta_cont:
+                    ftp.retrbinary("RETR " + meta_file[0], meta_cont.write)
+                    colnames = meta_cont.getvalue().decode("WINDOWS-1252").split("\n")[0].split()
+                    meta = pd.read_table(
+                        meta_cont,
+                        skiprows=2,
+                        encoding="WINDOWS-1252",
+                        sep=r"\s{2,}|(?<=\d)\s{1}(?=[\w])",  # two or more white spaces or one space after word or digit and followed by word
+                        names=colnames,
+                        parse_dates=[col for col in colnames if "datum" in col.lower()],
+                        index_col="Stations_id",
+                        engine="python")
         elif re.search("derived", ftp_folder):
             meta = pd.read_table("ftp://opendata.dwd.de/" + meta_file[0],
                                  encoding="WINDOWS-1252", sep=";", skiprows=1,
