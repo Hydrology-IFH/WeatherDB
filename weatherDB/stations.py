@@ -101,11 +101,19 @@ class StationsBase:
         return meta
 
     @db_engine.deco_update_privilege
-    def update_meta(self, **kwargs):
+    def update_meta(self, stids="all", **kwargs):
         """Update the meta table by comparing to the CDC server.
 
         The "von_datum" and "bis_datum" is ignored because it is better to set this by the filled period of the stations in the database.
         Often the CDC period is not correct.
+
+        Parameters
+        ----------
+        stids: string  or list of int, optional
+            The Stations for which to compute.
+            Can either be "all", for all possible stations
+            or a list with the Station IDs.
+            The default is "all".
         """
         log.info(
             "The {para_long} meta table gets updated."\
@@ -127,6 +135,12 @@ class StationsBase:
         droped_stids = [row[0] for row in droped_stids
                         if row[0] in meta.index]
         meta.drop(droped_stids, inplace=True)
+
+        # check if only some stids should be updated
+        if stids != "all":
+            if type(stids) is not list:
+                stids = [stids,]
+            meta.drop([stid for stid in meta.index if stid not in stids], inplace=True)
 
         # to have a meta entry for every station before looping over them
         if "von_datum" in meta.columns and "bis_datum" in meta.columns:
