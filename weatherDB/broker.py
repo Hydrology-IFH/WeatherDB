@@ -281,8 +281,17 @@ class Broker(object):
             self.set_is_broker_active(False)
 
     @db_engine.deco_is_superuser
-    def create_db_schema(self):
+    def create_db_schema(self, if_exists=None):
         """Create the database schema.
+
+        Parameters
+        ----------
+        if_exists : str, optional
+            What to do if the tables already exist.
+            If None the user gets asked.
+            If "D" or "drop" the tables get dropped and recreated.
+            If "E" er "exit" the creation of the schema gets exited.
+            The default
         """
         # add POSTGIS extension
         with db_engine.connect() as con:
@@ -302,24 +311,31 @@ class Broker(object):
         if len(problem_tables)>0:
             print("The following tables already exist on the database:\n - " +
                   "\n - ".join([table for table in problem_tables]))
-            print(textwrap.dedent(
-                """What do you want to do?
-                - [D] : Drop all the tables and recreate them again.
-                - [E] : Exit the creation of the schema."""))
-            while True:
-                answer = input("Your choice: ").upper()
-                if answer == "D":
-                    print("Dropping the tables.")
-                    with db_engine.connect() as con:
-                        for table in problem_tables:
-                            con.execute(sqltxt(f"DROP TABLE {table} CASCADE;"))
-                        con.commit()
-                    break
-                elif answer == "E":
-                    print("Exiting the creation of the schema.")
-                    return
-                else:
-                    print("Please enter a valid answer.")
+
+            # ask the user what to do if if_exists is None
+            if if_exists is None:
+                print(textwrap.dedent(
+                    """What do you want to do?
+                    - [D] : Drop all the tables and recreate them again.
+                    - [E] : Exit the creation of the schema."""))
+                while True:
+                    answer = input("Your choice: ").upper()
+                    if answer == "D" or answer == "E":
+                        if_exists = answer
+                        break
+                    else:
+                        print("Please enter a valid answer.")
+
+            # execute the choice
+            if if_exists == "D":
+                print("Dropping the tables.")
+                with db_engine.connect() as con:
+                    for table in problem_tables:
+                        con.execute(sqltxt(f"DROP TABLE {table} CASCADE;"))
+                    con.commit()
+            elif if_exists == "E":
+                print("Exiting the creation of the schema.")
+                return
 
         # create the tables
         print("Creating the tables.")
