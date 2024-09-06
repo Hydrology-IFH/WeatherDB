@@ -12,7 +12,7 @@ import geopandas as gpd
 import pandas as pd
 from zipfile import ZipFile
 import re
-from io import BytesIO
+from io import BytesIO, StringIO
 import traceback
 import logging
 import time
@@ -209,7 +209,7 @@ def get_dwd_file(zip_filepath):
 
     return df
 
-def get_dwd_meta(ftp_folder, min_years=0, max_hole_d=9999):
+def get_dwd_meta(ftp_folder):
     """
     Get the meta file from the ftp_folder on the DWD server.
 
@@ -224,18 +224,6 @@ def get_dwd_meta(ftp_folder, min_years=0, max_hole_d=9999):
     ftp_folder : str
         The path to the directory where to search for the meta file.
         e.g. "climate_environment/CDC/observations_germany/climate/hourly/precipitation/recent/".
-    min_years : int, optional
-        filter the list of stations by a minimum amount of years,
-        that they have data for. 0 if the data should not get filtered.
-        Only works if the meta file has a timerange defined,
-        e.g. in "observations".
-        The default is 0.
-    max_hole_d : int
-        The maximum amount of days missing in the data allowed.
-        If there are several files for one station and the time hole is bigger
-        than this value, the older "von_datum" is overwritten
-        in the meta GeoDataFrame.
-        The default is 2.
 
     Returns
     -------
@@ -268,13 +256,15 @@ def get_dwd_meta(ftp_folder, min_years=0, max_hole_d=9999):
         if re.search("observations", ftp_folder):
             with ftplib.FTP(CDC_HOST) as ftp:
                 ftp.login()
-                with BytesIO() as meta_cont:
-                    ftp.retrbinary("RETR " + meta_file[0], meta_cont.write)
-                    colnames = meta_cont.getvalue().decode("WINDOWS-1252").split("\n")[0].split()
+                with BytesIO() as bio, StringIO() as sio:
+                    ftp.retrbinary("RETR " + meta_file[0], bio.write)
+                    sio.write(bio.getvalue().decode("WINDOWS-1252").replace("\r\n", "\n"))
+                    colnames = sio.getvalue().split("\n")[0].split()
+                    sio.seek(0)
                     meta = pd.read_table(
-                        meta_cont,
+                        sio,
                         skiprows=2,
-                        encoding="WINDOWS-1252",
+                        lineterminator="\n",
                         sep=r"\s{2,}|(?<=\d)\s{1}(?=[\w])",  # two or more white spaces or one space after word or digit and followed by word
                         names=colnames,
                         parse_dates=[col for col in colnames if "datum" in col.lower()],
@@ -305,7 +295,7 @@ def get_dwd_meta(ftp_folder, min_years=0, max_hole_d=9999):
         print("Error while converting DataFrame to GeoDataFrame," +
               " maybe the columns aren't named 'geoLaenge' and geoBreite'" +
               "\nhere is the header of the DataFrame:\n")
-        meta.head()
+        print(meta.head())
         return None
 
     # delete entries where there is no file in the ftp-folder
@@ -326,7 +316,6 @@ def get_dwd_meta(ftp_folder, min_years=0, max_hole_d=9999):
         zip_files.sort()
         zip_files.append(zip_files[0])  # else the last entry won't get tested
         last_sid, last_from_date, last_to_date = None, None, None
-        max_hole_d_td = pd.Timedelta(days=max_hole_d+1)
 
         for zip_file in zip_files:
             # get new files dates
@@ -340,8 +329,6 @@ def get_dwd_meta(ftp_folder, min_years=0, max_hole_d=9999):
 
             # compare with previous file's dates
             if last_sid and (sid == last_sid):
-                if (from_date - last_to_date) > max_hole_d_td:
-                    last_from_date = from_date
                 last_to_date = to_date
             else:
                 # compare last values with meta file dates
@@ -355,14 +342,6 @@ def get_dwd_meta(ftp_folder, min_years=0, max_hole_d=9999):
                 last_to_date = to_date
                 last_from_date = from_date
                 last_sid = sid
-
-    # delete entries that do not exceed the minimum amount of years
-    if "bis_datum" and "von_datum" in meta:
-        days = meta.bis_datum - meta.von_datum
-        meta = meta[days >= pd.Timedelta(str(min_years * 365.25) + " d")]
-    else:
-        log.error("the meta file has no time columns, therefor the table " +
-                  "can't get filtered for the available years")
 
     # return
     return meta
