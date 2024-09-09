@@ -31,6 +31,7 @@ class MetaBase(Base):
         comment="official DWD-ID of the station")
     is_real: Mapped[bool] = mapped_column(
         default=True,
+        server_default=sa.sql.expression.true(),
         comment=" 'Is this station a real station with own measurements or only a virtual station, to have complete timeseries for every precipitation station.")
     raw_from: Mapped[Optional[datetime]] = mapped_column(
         comment="The timestamp from when on own \"raw\" data is available")
@@ -48,6 +49,7 @@ class MetaBase(Base):
         comment="The maximal timestamp of the last import, that might not yet have been treated")
     last_imp_filled: Mapped[bool] = mapped_column(
         default=False,
+        server_default=sa.sql.expression.false(),
         comment="Got the last import already filled?")
     stationshoehe: Mapped[int] = mapped_column(
         comment="The stations height above the ground in meters")
@@ -67,12 +69,13 @@ class MetaBaseQC(Base):
 
     last_imp_qc: Mapped[bool] = mapped_column(
         default=False,
+        server_default=sa.sql.expression.false(),
         comment="Got the last import already quality checked?")
     qc_from: Mapped[Optional[datetime]] = mapped_column(
         comment="The timestamp from when on quality checked(\"qc\") data is available")
     qc_until: Mapped[Optional[datetime]] = mapped_column(
         comment="The timestamp until when quality checked(\"qc\") data is available")
-    qc_droped: Mapped[float] = mapped_column(
+    qc_droped: Mapped[Optional[float]] = mapped_column(
         comment="The percentage of droped values during the quality check")
 
 # declare all database tables
@@ -84,23 +87,24 @@ class MetaN(MetaBase, MetaBaseQC):
 
     last_imp_corr: Mapped[bool] = mapped_column(
         default=False,
+        server_default=sa.sql.expression.false(),
         comment="Got the last import already Richter corrected?")
     corr_from: Mapped[Optional[datetime]] = mapped_column(
         comment="The timestamp from when on corrected data is available")
     corr_until: Mapped[Optional[datetime]] = mapped_column(
         comment="The timestamp until when corrected data is available")
-    horizon: Mapped[float] = mapped_column(
+    horizon: Mapped[Optional[float]] = mapped_column(
         comment="The horizon angle in degrees, how it got defined by Richter(1995).")
-    richter_class: Mapped[str] = mapped_column(
+    richter_class: Mapped[Optional[str]] = mapped_column(
         sa.String(),
         comment="The Richter exposition class, that got derived from the horizon angle.")
-    quot_filled_hyras: Mapped[float] = mapped_column(
+    quot_filled_hyras: Mapped[Optional[float]] = mapped_column(
         comment="The quotient betwen the mean yearly value from the filled timeserie to the multi annual yearly mean HYRAS value (1991-2020)")
-    quot_filled_regnie: Mapped[float] = mapped_column(
+    quot_filled_regnie: Mapped[Optional[float]] = mapped_column(
         comment="The quotient betwen the mean yearly value from the filled timeserie to the multi annual yearly mean REGNIE value (1991-2020)")
-    quot_filled_dwd_grid: Mapped[float] = mapped_column(
+    quot_filled_dwd_grid: Mapped[Optional[float]] = mapped_column(
         comment="The quotient betwen the mean yearly value from the filled timeserie to the multi annual yearly mean DWD grid value (1991-2020)")
-    quot_corr_filled: Mapped[float] = mapped_column(
+    quot_corr_filled: Mapped[Optional[float]] = mapped_column(
         comment="The quotient betwen the mean yearly value from the Richter corrected timeserie to the mean yearly value from the filled timeserie")
 
 class MetaND(MetaBase):
