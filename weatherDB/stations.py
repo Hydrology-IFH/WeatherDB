@@ -341,7 +341,8 @@ class StationsBase:
         # execute queries to db
         with db_engine.connect() as con:
             meta = pd.read_sql(
-                sql, con,
+                sqltxt(sql),
+                con,
                 index_col="station_id")
 
         # change to GeoDataFrame if geometry column was selected

@@ -1029,7 +1029,8 @@ class StationBase:
                         + "'",
                     para=self._para)
             zipfiles_DB = pd.read_sql(
-                sql_db_modtimes, con=db_engine
+                sqltxt(sql_db_modtimes),
+                con=db_engine.engine
             ).set_index("filepath")
 
             # check for updated files
@@ -1512,7 +1513,10 @@ class StationBase:
         """.format(col_clause=col_clause, para=cls._para)
 
         # get the result
-        return pd.read_sql(sql,con=db_engine, index_col="info")["explanation"]
+        return pd.read_sql(
+            sqltxt(sql),
+            con=db_engine.engine,
+            index_col="info")["explanation"]
 
     def get_meta(self, infos="all"):
         """Get Information from the meta table.
@@ -1718,7 +1722,7 @@ class StationBase:
         # get response from server
         if "return_sql" in kwargs:
             return sql
-        res = pd.read_sql(sql, db_engine)
+        res = pd.read_sql(sqltxt(sql), db_engine.engine)
 
         # set index
         res["station_id"] = self.id
@@ -2295,7 +2299,10 @@ class StationBase:
         if "return_sql" in kwargs and kwargs["return_sql"]:
             return sql
 
-        df = pd.read_sql(sql, con=db_engine, index_col="timestamp")
+        df = pd.read_sql(
+            sqltxt(sql),
+            con=db_engine.engine,
+            index_col="timestamp")
 
         # convert filled_by to Int16, pandas Integer with NA support
         if "filled_by" in kinds and df["filled_by"].dtype != object:
@@ -2394,7 +2401,9 @@ class StationBase:
         )
 
         df = pd.read_sql(
-            sql, con=db_engine, index_col="timestamp")
+            sqltxt(sql),
+            con=db_engine.engine,
+            index_col="timestamp")
 
         # change index to pandas DatetimeIndex if necessary
         if type(df.index) is not pd.DatetimeIndex:
