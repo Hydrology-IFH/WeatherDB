@@ -29,7 +29,14 @@ def remove_old_logs(max_days=14):
         except:
             pass
 
-def setup_file_logging():
+def setup_logging_handlers():
+    """Setup the logging handlers depending on the configuration.
+
+    Raises
+    ------
+    ValueError
+        If the handler type is not known.
+    """
     # get log dir
     log_dir = _get_log_dir()
     if not log_dir.is_dir(): log_dir.mkdir()
@@ -91,4 +98,4 @@ def setup_file_logging():
         handler.setLevel(config.get("logging", "level", fallback=logging.DEBUG))
 
 # add config listener
-config.add_listener("logging", None, setup_file_logging)
+config.add_listener("logging", None, setup_logging_handlers)
