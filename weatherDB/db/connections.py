@@ -2,7 +2,8 @@
 import sqlalchemy
 from sqlalchemy import text as sqltxt
 from sqlalchemy import URL
-# import os
+import functools
+
 from ..config import config
 
 # DB connection
@@ -42,6 +43,8 @@ class DBEngine:
         # create a new engine
         self.create_engine()
 
+    # Engine and Session
+    # ##################
     def _reset_engine(self):
         """Reset the engine to None to force a recreation on next usage."""
         self._engine = None
@@ -284,74 +287,82 @@ class DBEngine:
     def all_privileges(self, value):
         self._privilege_setters("all_privileges")
 
-    def deco_is_superuser(self, methode):
+    def deco_is_superuser(self, target):
         """Decorator to check if the user is a superuser."""
+        @functools.wraps(target)
         def wrapper(*args, **kwargs):
             if self.is_superuser:
-                return methode(*args, **kwargs)
+                return target(*args, **kwargs)
             else:
                 raise PermissionError("You are no super user of the Database and therefor this function is not available.")
         return wrapper
 
-    def deco_select_privilege(self, methode):
+    def deco_select_privilege(self, target):
         """Decorator to check if the user has the SELECT privilege."""
+        @functools.wraps(target)
         def wrapper(*args, **kwargs):
             if self.select_privilege:
-                return methode(*args, **kwargs)
+                return target(*args, **kwargs)
             else:
                 raise PermissionError("You have no select privilege on the database and therefor this function is not available.")
         return wrapper
 
-    def deco_update_privilege(self, methode):
+    def deco_update_privilege(self, target):
         """Decorator to check if the user has the UPDATE privilege."""
+        @functools.wraps(target)
         def wrapper(*args, **kwargs):
             if self.update_privilege:
-                return methode(*args, **kwargs)
+                return target(*args, **kwargs)
             else:
                 raise PermissionError("You have no update privilege on the database and therefor this function is not available.")
         return wrapper
 
-    def deco_insert_privilege(self, methode):
+    def deco_insert_privilege(self, target):
         """Decorator to check if the user has the INSERT privilege."""
+        @functools.wraps(target)
         def wrapper(*args, **kwargs):
             if self.insert_privilege:
-                return methode(*args, **kwargs)
+                return target(*args, **kwargs)
             else:
                 raise PermissionError("You have no insert privilege on the database and therefor this function is not available.")
         return wrapper
 
-    def deco_upsert_privilege(self, methode):
+    def deco_upsert_privilege(self, target):
         """Decorator to check if the user has the INSERT and UPDATE privilege."""
+        @functools.wraps(target)
         def wrapper(*args, **kwargs):
             if self.upsert_privilege:
-                return methode(*args, **kwargs)
+                return target(*args, **kwargs)
             else:
                 raise PermissionError("You have no upsert privilege on the database and therefor this function is not available.")
         return wrapper
 
-    def deco_create_privilege(self, methode):
+    def deco_create_privilege(self, target):
         """Decorator to check if the user has the CREATE privilege."""
+        @functools.wraps(target)
         def wrapper(*args, **kwargs):
             if self.create_privilege:
-                return methode(*args, **kwargs)
+                return target(*args, **kwargs)
             else:
                 raise PermissionError("You are no admin user of the Database and therefor this function is not available.")
         return wrapper
 
-    def deco_delete_privilege(self, methode):
+    def deco_delete_privilege(self, target):
         """Decorator to check if the user has the DELETE privilege."""
+        @functools.wraps(target)
         def wrapper(*args, **kwargs):
             if self.delete_privilege:
-                return methode(*args, **kwargs)
+                return target(*args, **kwargs)
             else:
                 raise PermissionError("You have no delete privilege on the database and therefor this function is not available.")
         return wrapper
 
-    def deco_all_privileges(self, methode):
+    def deco_all_privileges(self, target):
         """Decorator to check if the user has all (SELECT, UPDATE, INSERT, DELETE, CREATE) privileges."""
+        @functools.wraps(target)
         def wrapper(*args, **kwargs):
             if self.all_privileges:
-                return methode(*args, **kwargs)
+                return target(*args, **kwargs)
             else:
                 raise PermissionError("You are no super user of the Database and therefor this function is not available.")
         return wrapper

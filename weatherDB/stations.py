@@ -1478,8 +1478,9 @@ class GroupStations(object):
                 zip="true" if dir.suffix ==".zip" else "false",
                 pc=socket.gethostname(),
                 out_size=out_size)
-            with db_engine.connect().execution_options(isolation_level="AUTOCOMMIT") as con:
+            with db_engine.connect() as con:
                 con.execute(sqltxt(sql_save_time))
+                con.commit()
 
         # create log message
         log.debug(
