@@ -660,8 +660,6 @@ class StationsBase:
         start_tstp = datetime.datetime.now()
 
         # get FTP file list
-        # CDC.login()
-
         ftp_file_list = get_cdc_file_list(
             # ftp_conn=get_cdc_con(), #CDC,
             ftp_folders=self._ftp_folders)

@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 from sqlalchemy.exc import OperationalError
 from sqlalchemy import text as sqltxt
-import sqlalchemy as sqa
+import sqlalchemy as sa
 from sqlalchemy.orm import Session
 import rasterio as rio
 import rasterio.mask
@@ -632,7 +632,6 @@ class StationBase:
         return result.first()[0]
 
     def isin_ma(self):
-        # TODO: implement StationRasterValues ORM
         """Check if Station is already in the multi annual table.
 
         Returns
@@ -640,23 +639,13 @@ class StationBase:
         bool
             True if Station is in multi annual table.
         """
-
-        sql = """
-            SELECT
-                CASE WHEN {stid} in (select station_id from stations_raster_values)
-                     THEN (SELECT {regio_cols_test}
-                           FROM stations_raster_values
-                           WHERE station_id={stid})
-                     ELSE FALSE
-                END;
-        """.format(
-            stid=self.id,
-            regio_cols_test=" AND ".join(
-                [col + " IS NOT NULL" for col in self._ma_para_keys]))
-
-        with db_engine.connect() as con:
-            result = con.execute(sqltxt(sql))
-        return result.first()[0]
+        sql_select = sa.exists()\
+            .where((StationsRasterValues.station_id == self.id) &
+                   (StationsRasterValues.raster_key == self._ma_raster_key) &
+                   StationsRasterValues.parameter.in_(self._ma_para_keys) &
+                   StationsRasterValues.value.isnot(None))
+        with db_engine.session() as session:
+            return session.query(sql_select).scalar()
 
     def is_virtual(self):
         """Check if the station is a real station or only a virtual one.
@@ -796,7 +785,7 @@ class StationBase:
             # multi annual values were found
             with Session(db_engine) as session:
                 session.execute(
-                    sqa.orm.insert(StationsRasterValues)\
+                    sa.orm.insert(StationsRasterValues)\
                         .on_conflict_do_update(
                             index_elements=["station_id", "raster_key", "parameter"],
                         ),
@@ -2022,11 +2011,11 @@ class StationBase:
             For N the winter and summer half yearly sum is returned in tuple.
             The returned unit is mm or °C.
         """
-        sql_select = sqa\
+        sql_select = sa\
             .select(StationsRasterValues.parameter, StationsRasterValues.value)\
             .where((StationsRasterValues.station_id == self.id) &
-                   (StationsRasterValues.raster_key == self._ma_raster) &
-                   StationsRasterValues.parameter.isin(self._ma_para_keys))
+                   (StationsRasterValues.raster_key == self._ma_raster_key) &
+                   StationsRasterValues.parameter.in_(self._ma_para_keys))
         with Session(db_engine) as session:
             res = session.execute(sql_select).all()
 
@@ -2819,7 +2808,7 @@ class StationNBase(StationBase):
     _date_col = "MESS_DATUM"
     _decimals = 100
     _ma_para_keys = ["p_wihj", "p_sohj"]
-    _ma_raster = "hyras"
+    _ma_raster_key = "hyras"
 
     def get_adj(self, **kwargs):
         """Get the adjusted timeserie.
