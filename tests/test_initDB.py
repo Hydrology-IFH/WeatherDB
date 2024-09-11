@@ -3,21 +3,12 @@ import sys
 import sqlalchemy as sa
 import argparse
 from pathlib import Path
-import os
+import pandas as pd
 
-import weatherDB as wdb
 from weatherDB.db import models
 
 sys.path.insert(0, Path(__file__).parent.resolve().as_posix())
 from baseTest import BaseTestCases
-
-# set test database connection
-if wdb.config.has_section("database:test"):
-    wdb.config.set("database", "connection", "test")
-elif os.environ.get("DOCKER_ENV", None) == "test":
-    wdb.config.set("database", "connection", "environment_variables")
-else:
-    raise ValueError("No test database credentials found in environment variables or configuration file.")
 
 # get cli variables
 parser = argparse.ArgumentParser(description="InitDB Test CLI arguments")
@@ -49,7 +40,7 @@ class InitDBTestCases(BaseTestCases):
         self.broker.update_meta(**kwargs)
 
     def step_update_raw(self, **kwargs):
-        self.broker.update_raw(**kwargs)
+        self.broker.update_raw(only_new=False, **kwargs)
 
     def step_update_ma(self, **kwargs):
         self.broker.update_ma(**kwargs)
@@ -119,13 +110,36 @@ class InitDBTestCases(BaseTestCases):
                         msg=f"Station {stat.id} of {stat._para_long} Station has no multi annual data.")
 
     def check_update_raw(self):
+        from weatherDB.station import StationCanVirtualBase
         for stats in self.broker.stations:
-            for stat in stats:
-                raw = stat.get_raw(stids=self.test_stids)
+            df_raw = stats.get_df(
+                kinds="raw",
+                stids=self.test_stids,
+                skip_missing_stids=True)
+
+            with self.subTest(msg="Check number of stations in df_raw"):
+                if isinstance(stats._StationClass, StationCanVirtualBase):
+                    max_stids = len(self.test_stids)
+                else:
+                    max_stids = len(stats.get_stations(
+                        stids=self.test_stids,
+                        skip_missing_stids=True)
+                    )
                 self.assertEqual(
-                    len(raw),
-                    len(self.test_stids),
-                    msg="Number of stations in raw data does not match number of test stations.")
+                    len(df_raw.columns),
+                    max_stids,
+                    msg=f"Number of {stats._para_long} stations in raw data does not match number of test stations.")
+
+            with self.subTest(msg="Check if not only NA values"):
+                self.assertFalse(
+                    df_raw.isna().all().all(),
+                    msg=f"The raw data is NA for every {stats._para_long} station.")
+
+            with self.subTest(msg="Check time range"):
+                self.assertGreaterEqual(
+                    df_raw.index.min(),
+                    pd.Timestamp("1994-01-01 00:00:00+0000"),
+                    msg=f"The raw data for {stats._para_long} stations starts before 1994-01-01.")
 
     def check_update_richter_class(self):
         with self.db_engine.connect() as conn:
@@ -181,7 +195,10 @@ class InitDBTestCases(BaseTestCases):
         # run steps
         for step in steps:
             try:
-                getattr(self, f"step_{step}")(stids=self.test_stids)
+                getattr(self, f"step_{step}")(
+                    stids=self.test_stids,
+                    skip_missing_stids=True
+                )
             except Exception as e:
                 self.log.exception(e)
                 self.fail("{} failed ({}: {})".format(step, type(e), e))
