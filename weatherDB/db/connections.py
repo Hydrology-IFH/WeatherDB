@@ -45,6 +45,7 @@ class DBEngine:
     def _reset_engine(self):
         """Reset the engine to None to force a recreation on next usage."""
         self._engine = None
+        self._session = None
         self._is_superuser = None
         self._select_privilege = None
         self._create_privilege = None
@@ -106,6 +107,38 @@ class DBEngine:
     @engine.setter
     def engine(self, value):
         raise PermissionError("You are not allowed to change the engine of the database connection.\nPlease change the configuration to change the database connection.")
+
+    def create_session(self):
+        """Create a new session from the engine.
+
+        Returns
+        -------
+        sqlalchemy.orm.session.Session
+            _description_
+        """
+        self._session = sqlalchemy.orm.sessionmaker(bind=self.get_engine())
+        return self._session
+
+    def get_session(self):
+        """Get a session from the engine.
+
+        Returns
+        -------
+        sqlalchemy.orm.session.Session
+            _description_
+        """
+        if self._session is None:
+            return self.create_session()
+        else:
+            return self._session
+
+    @property
+    def session(self):
+        return self.get_session()
+
+    @session.setter
+    def session(self, value):
+        raise PermissionError("You are not allowed to change the session of the database connection.\nPlease change the configuration to change the database connection.")
 
     def reload_config(self):
         """Reload the configuration and create a new engine.
