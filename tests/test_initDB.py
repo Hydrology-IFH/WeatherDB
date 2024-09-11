@@ -37,6 +37,13 @@ class InitDBTestCases(BaseTestCases):
         else:
             cls.log.debug("Working with previous database state.")
 
+    def run(self, result=None):
+        if result is None:
+            result = self.defaultTestResult()
+        self._resultForDoCleanups = result
+        self.test_result = result  # Store the result object
+        super().run(result)
+
     # steps for initiating the database
     def step_update_meta(self, **kwargs):
         self.broker.update_meta(**kwargs)
@@ -165,7 +172,7 @@ class InitDBTestCases(BaseTestCases):
             highest_step = self.broker.get_setting("highest_run_step")
             if highest_step is None:
                 self.log.debug("Adding all lower steps to run...")
-                steps = STEPS[:STEPS.index(steps[-1])]
+                steps = STEPS[:STEPS.index(steps[-1])+1]
             else:
                 if (STEPS.index(highest_step)+1) < STEPS.index(steps[0]):
                     self.log.debug("Adding lower steps to run...")
@@ -179,30 +186,16 @@ class InitDBTestCases(BaseTestCases):
                 self.log.exception(e)
                 self.fail("{} failed ({}: {})".format(step, type(e), e))
 
-            with self.subTest(step=step):
+            with self.subTest(msg=f"Check step: {step}"):
                 getattr(self, f"check_{step}")()
+
+            with self.subTest(msg=f"Check broker active state after step: {step}"):
                 self.check_broker_inactive()
 
-        # save highest run step
-        self.broker.set_setting("highest_run_step", steps[-1])
-
-class FilledTestCases(BaseTestCases):
-    @classmethod
-    def setUpClass(cls):
-        with cls.db_engine.connect() as conn:
-            conn.execute(sa.schema.DropSchema("public", cascade=True, if_exists=True))
-            conn.execute(sa.schema.DropSchema("timeseries", cascade=True, if_exists=True))
-
-        with cls.db_engine.connect() as conn:
-            conn.execute(sa.schema.CreateSchema("public", if_not_exists=True))
-
-        wdb.config.set("database", "connection", "test")
-
-    @classmethod
-    def tearDownClass(cls):
-        with cls.db_engine.connect() as conn:
-            conn.execute(sa.schema.DropSchema("public", cascade=True))
-            conn.execute(sa.schema.DropSchema("timeseries", cascade=True))
+            # save highest run step
+            if len(self.test_result.failures) == 0:
+                self.log.debug(f"Setting highest run step to {step}")
+                self.broker.set_setting("highest_run_step", step)
 
 # cli entry point
 if __name__ == "__main__":

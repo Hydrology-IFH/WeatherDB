@@ -29,4 +29,4 @@ class BaseTestCases(unittest.TestCase):
             conn.commit()
 
     def check_broker_inactive(self):
-        self.assertFalse(self.broker.active, msg="Broker is still marked as active.")
+        self.assertFalse(self.broker.is_broker_active, msg="Broker is still marked as active.")
