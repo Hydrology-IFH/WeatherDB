@@ -329,7 +329,12 @@ class ConfigParser(configparser.ConfigParser):
                         print("Invalid path. Please try again.")
 
         # copy the default config file to the user config file
-        shutil.copyfile(self._DEFAULT_CONFIG_FILE, user_config_file)
+        with open(user_config_file, "a") as user_f, \
+             open(self._DEFAULT_CONFIG_FILE, "r") as def_f:
+            for line in def_f.readlines():
+                if not re.match(r"^\[|;", line):
+                    line = "; " + line
+                user_f.write(line)
 
         self._set("main", "user_config_file", str(user_config_file))
 
