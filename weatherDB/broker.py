@@ -317,10 +317,11 @@ class Broker(object):
                 print(textwrap.dedent(
                     """What do you want to do?
                     - [D] : Drop all the tables and recreate them again.
+                    - [I] : Ignore those tables and continue with the creation of the schema.
                     - [E] : Exit the creation of the schema."""))
                 while True:
                     answer = input("Your choice: ").upper()
-                    if answer == "D" or answer == "E":
+                    if answer in ["D", "E", "I"]:
                         if_exists = answer
                         break
                     else:
@@ -339,7 +340,12 @@ class Broker(object):
 
         # create the tables
         print("Creating the tables.")
-        Base.metadata.create_all(db_engine.get_engine())
+        Base.metadata.create_all(db_engine.get_engine(), checkfirst=True)
+
+        # create the schema for the timeseries
+        with db_engine.connect() as con:
+            con.execute(sqltxt("CREATE SCHEMA IF NOT EXISTS timeseries;"))
+            con.commit()
 
         # tell alembic that the actual database schema is up-to-date
         from alembic.config import Config
