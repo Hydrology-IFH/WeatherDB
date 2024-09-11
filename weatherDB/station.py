@@ -802,6 +802,7 @@ class StationBase:
             self._drop(
                 why=f"no multi-annual data was found from 'data:rasters:{self._ma_raster_key}'")
 
+    @db_engine.deco_update_privilege
     def _update_last_imp_period_meta(self, period):
         """Update the meta timestamps for a new import."""
         #check period format
@@ -820,47 +821,31 @@ class StationBase:
 
         # create update sql
         sql_update_meta = '''
-            INSERT INTO meta_{para} as meta
-                (station_id, raw_from, raw_until, last_imp_from, last_imp_until
-                    {last_imp_cols})
-            VALUES ({stid}, {min_tstp}, {max_tstp}, {min_tstp},
-                    {max_tstp}{last_imp_values})
-            ON CONFLICT (station_id) DO UPDATE SET
-                raw_from = LEAST (meta.raw_from, EXCLUDED.raw_from),
-                raw_until = GREATEST (meta.raw_until, EXCLUDED.raw_until),
+            UPDATE meta_{para} meta SET
+                raw_from = LEAST (meta.raw_from, {min_tstp}),
+                raw_until = GREATEST (meta.raw_until, {max_tstp}),
                 last_imp_from = CASE WHEN {last_imp_test}
-                                    THEN EXCLUDED.last_imp_from
-                                    ELSE LEAST(meta.last_imp_from,
-                                            EXCLUDED.last_imp_from)
+                                    THEN {min_tstp}
+                                    ELSE LEAST(meta.last_imp_from, {min_tstp})
                                     END,
                 last_imp_until = CASE WHEN {last_imp_test}
-                                    THEN EXCLUDED.last_imp_until
-                                    ELSE GREATEST(meta.last_imp_until,
-                                                EXCLUDED.last_imp_until)
+                                    THEN {max_tstp}
+                                    ELSE GREATEST(meta.last_imp_until, {max_tstp})
                                     END
-                {last_imp_conflicts};
+                {last_imps};
             '''.format(
-            para=self._para,
-            stid=self.id,
-            last_imp_values=(
-                ", " +
-                ", ".join(["FALSE"] * len(last_imp_valid_kinds))
-            ) if len(last_imp_valid_kinds) > 0 else "",
-            last_imp_cols=(
-                ", last_imp_" +
-                ", last_imp_".join(last_imp_valid_kinds)
-            ) if len(last_imp_valid_kinds) > 0 else "",
-            last_imp_conflicts=(
-                ", last_imp_" +
-                " = FALSE, last_imp_".join(last_imp_valid_kinds) +
-                " = FALSE"
-            ) if len(last_imp_valid_kinds) > 0 else "",
-            last_imp_test=(
-                "meta.last_imp_" +
-                " AND meta.last_imp_".join(last_imp_valid_kinds)
-            ) if len(last_imp_valid_kinds) > 0 else "true",
-            **period.get_sql_format_dict(
-                format="'{}'".format(self._tstp_format_db)))
+                para=self._para,
+                stid=self.id,
+                last_imps=(
+                        ", last_imp_" +
+                        " = FALSE, last_imp_".join(last_imp_valid_kinds) +
+                        " = FALSE"
+                    ) if len(last_imp_valid_kinds) > 0 else "",
+                last_imp_test=(
+                        "meta.last_imp_" +
+                        " AND meta.last_imp_".join(last_imp_valid_kinds)
+                    ) if len(last_imp_valid_kinds) > 0 else "true",
+                **period.get_sql_format_dict(format=f"'{self._tstp_format_db}'"))
 
         # execute meta update
         with db_engine.connect() as con:
@@ -3023,6 +3008,7 @@ class StationN(StationNBase):
         '''.format(stid=self.id, para=self._para)
         with db_engine.connect() as con:
             con.execute(sqltxt(sql_add_table))
+            con.commit()
 
     @staticmethod
     def _check_period_extra(period):
@@ -3654,6 +3640,7 @@ class StationND(StationNBase, StationCanVirtualBase):
         '''.format(stid=self.id, para=self._para)
         with db_engine.connect() as con:
             con.execute(sqltxt(sql_add_table))
+            con.commit()
 
 
 class StationT(StationTETBase):
@@ -3696,6 +3683,7 @@ class StationT(StationTETBase):
         '''
         with db_engine.connect() as con:
             con.execute(sqltxt(sql_add_table))
+            con.commit()
 
     def _get_sql_new_qc(self, period):
         # inversion possible?
@@ -3802,6 +3790,7 @@ class StationET(StationTETBase):
         '''.format(stid=self.id, para=self._para)
         with db_engine.connect() as con:
             con.execute(sqltxt(sql_add_table))
+            con.commit()
 
     def _get_sql_new_qc(self, period):
         # inversion possible?
