@@ -724,7 +724,7 @@ class StationBase:
         return res.first()[0]
 
     @db_engine.deco_update_privilege
-    def update_period_meta(self, kind):
+    def update_period_meta(self, kind, **kwargs):
         """Update the time period in the meta file.
 
         Compute teh filled period of a timeserie and save in the meta table.
@@ -738,6 +738,8 @@ class StationBase:
             If "best" is given, then depending on the parameter of the station the best kind is selected.
             For Precipitation this is "corr" and for the other this is "filled".
             For the precipitation also "corr" are valid.
+        kwargs : dict, optional
+            Additional keyword arguments catch all, but unused here.
         """
         kind = self._check_kind_tstp_meta(kind)
         period = self.get_filled_period(kind=kind)
@@ -758,10 +760,21 @@ class StationBase:
             con.execute(sqltxt(sql))
 
     @db_engine.deco_update_privilege
-    def update_ma(self, skip_if_exist=True, drop_when_error=True):
+    def update_ma(self, skip_if_exist=True, drop_when_error=True, **kwargs):
         """Update the multi annual values in the stations_raster_values table.
 
         Get new values from the raster and put in the table.
+
+        Parameters
+        ----------
+        skip_if_exist : bool, optional
+            Skip the update if the stations multi annual data is already in the table.
+            The default is True.
+        drop_when_error : bool, optional
+            Drop the station from the database if there is an error.
+            The default is True.
+        kwargs : dict, optional
+            Additional keyword arguments catch all, but unused here.
         """
         if skip_if_exist and self.isin_ma():
             return None
@@ -854,7 +867,7 @@ class StationBase:
             con.commit()
 
     @db_engine.deco_update_privilege
-    def update_raw(self, only_new=True, ftp_file_list=None, remove_nas=True):
+    def update_raw(self, only_new=True, ftp_file_list=None, remove_nas=True, **kwargs):
         """Download data from CDC and upload to database.
 
         Parameters
@@ -871,6 +884,8 @@ class StationBase:
             Remove the NAs from the downloaded data before updating it to the database.
             This has computational advantages.
             The default is True.
+        kwargs : dict
+            Additional keyword arguments catch all, but unused here.
 
         Returns
         -------
@@ -1118,6 +1133,8 @@ class StationBase:
             The minimum and maximum Timestamp for which to get the timeseries.
             If None is given, the maximum or minimal possible Timestamp is taken.
             The default is (None, None).
+        kwargs : dict, optional
+            Additional keyword arguments catch all, but unused here.
         """
         period = self._check_period(period=period, kinds=["raw"], nas_allowed=True)
 
@@ -1441,19 +1458,34 @@ class StationBase:
             con.execute(sqltxt(sql))
 
     @db_engine.deco_update_privilege
-    def last_imp_quality_check(self):
+    def last_imp_quality_check(self, **kwargs):
         """Do the quality check of the last import.
+
+        Parameters
+        ----------
+        kwargs : dict, optional
+            Additional keyword arguments passed to the quality_check function.
         """
         if not self.is_last_imp_done(kind="qc"):
-            self.quality_check(period=self.get_last_imp_period())
+            self.quality_check(period=self.get_last_imp_period(), **kwargs)
 
     @db_engine.deco_update_privilege
-    def last_imp_qc(self):
-        self.last_imp_quality_check()
+    def last_imp_qc(self, **kwargs):
+        self.last_imp_quality_check(**kwargs)
 
     @db_engine.deco_update_privilege
-    def last_imp_fillup(self, _last_imp_period=None):
+    def last_imp_fillup(self, _last_imp_period=None, **kwargs):
         """Do the gap filling of the last import.
+
+        Parameters
+        ----------
+        _last_imp_period : weatherDB.utils.TimestampPeriod or (tuple or list of datetime.datetime or None), optional
+            The minimum and maximum Timestamp for which to do the gap filling.
+            If None is given, the last import period is taken.
+            This is only for internal use, to speed up the process if run in a batch.
+            The default is None.
+        kwargs : dict, optional
+            Additional keyword arguments passed to the fillup function.
         """
         if not self.is_last_imp_done(kind="filled"):
             if _last_imp_period is None:
@@ -1461,7 +1493,7 @@ class StationBase:
             else:
                 period = _last_imp_period
 
-            self.fillup(period=period)
+            self.fillup(period=period, **kwargs)
 
     @classmethod
     def get_meta_explanation(cls, infos="all"):
@@ -1487,16 +1519,16 @@ class StationBase:
                 infos = [infos]
             col_clause =" AND column_name IN ('{cols}')".format(
                 cols="', '".join(list(infos)))
-        sql = """
-        SELECT cols.column_name AS info,
-            (SELECT pg_catalog.col_description(c.oid, cols.ordinal_position::int)
-             FROM pg_catalog.pg_class c
-             WHERE c.oid  = (SELECT cols.table_name::regclass::oid)
-               AND c.relname = cols.table_name
-            ) as explanation
-        FROM information_schema.columns cols
-        WHERE cols.table_name = 'meta_{para}'{col_clause};
-        """.format(col_clause=col_clause, para=cls._para)
+        sql = f"""
+            SELECT cols.column_name AS info,
+                (SELECT pg_catalog.col_description(c.oid, cols.ordinal_position::int)
+                FROM pg_catalog.pg_class c
+                WHERE c.oid  = (SELECT cols.table_name::regclass::oid)
+                AND c.relname = cols.table_name
+                ) as explanation
+            FROM information_schema.columns cols
+            WHERE cols.table_name = 'meta_{cls._para}'{col_clause};
+        """
 
         # get the result
         return pd.read_sql(
@@ -3027,7 +3059,7 @@ class StationN(StationNBase):
         return richter_class
 
     @db_engine.deco_update_privilege
-    def update_horizon(self, skip_if_exist=True):
+    def update_horizon(self, skip_if_exist=True, **kwargs):
         """Update the horizon angle (Horizontabschirmung) in the meta table.
 
         Get new values from the raster and put in the table.
@@ -3037,6 +3069,8 @@ class StationN(StationNBase):
         skip_if_exist : bool, optional
             Skip updating the value if there is already a value in the meta table.
             The default is True.
+        kwargs : dict, optional
+            Additional keyword arguments catch all, but unused here.
 
         Returns
         -------
@@ -3181,7 +3215,7 @@ class StationN(StationNBase):
         return horizon
 
     @db_engine.deco_update_privilege
-    def update_richter_class(self, skip_if_exist=True):
+    def update_richter_class(self, skip_if_exist=True, **kwargs):
         """Update the richter class in the meta table.
 
         Get new values from the raster and put in the table.
@@ -3191,6 +3225,8 @@ class StationN(StationNBase):
         skip_if_exist : bool, optional
             Skip updating the value if there is already a value in the meta table.
             The default is True
+        kwargs : dict, optional
+            Additional keyword arguments catch all, but unused here.
 
         Returns
         -------
@@ -3224,6 +3260,8 @@ class StationN(StationNBase):
             The minimum and maximum Timestamp for which to get the timeseries.
             If None is given, the maximum or minimal possible Timestamp is taken.
             The default is (None, None).
+        kwargs : dict, optional
+            Additional keyword arguments catch all, but unused here.
 
         Raises
         ------
@@ -3399,15 +3437,17 @@ class StationN(StationNBase):
         return self.richter_correct(*args, **kwargs)
 
     @db_engine.deco_update_privilege
-    def last_imp_richter_correct(self, _last_imp_period=None):
+    def last_imp_richter_correct(self, _last_imp_period=None, **kwargs):
         """Do the richter correction of the last import.
 
         Parameters
         ----------
-        _last_imp_period : _type_, optional
+        _last_imp_period : weatherDB.utils.TimestampPeriod, optional
             Give the overall period of the last import.
             This is only for intern use of the stationsN method to not compute over and over again the period.
             The default is None.
+        kwargs : dict, optional
+            Additional keyword arguments passed to the richter_correct method.
         """
         if not self.is_last_imp_done(kind="corr"):
             if _last_imp_period is None:
@@ -3416,7 +3456,9 @@ class StationN(StationNBase):
                 period = _last_imp_period
 
             self.richter_correct(
-                period=period)
+                period=period,
+                **kwargs
+            )
 
         else:
             log.info("The last import of {para_long} Station {stid} was already richter corrected and is therefor skiped".format(
@@ -3424,9 +3466,9 @@ class StationN(StationNBase):
             ))
 
     @db_engine.deco_update_privilege
-    def last_imp_corr(self, _last_imp_period=None):
+    def last_imp_corr(self, _last_imp_period=None, **kwargs):
         """A wrapper for last_imp_richter_correct()."""
-        return self.last_imp_richter_correct(_last_imp_period=_last_imp_period)
+        return self.last_imp_richter_correct(_last_imp_period=_last_imp_period, **kwargs)
 
     @db_engine.deco_update_privilege
     def _sql_fillup_extra_dict(self, **kwargs):

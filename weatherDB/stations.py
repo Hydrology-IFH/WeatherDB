@@ -231,7 +231,7 @@ class StationsBase:
             con.commit()
 
     @db_engine.deco_update_privilege
-    def update_period_meta(self, stids="all"):
+    def update_period_meta(self, stids="all", **kwargs):
         """Update the period in the meta table of the raw data.
 
         Parameters
@@ -241,6 +241,8 @@ class StationsBase:
             Can either be "all", for all possible stations
             or a list with the Station IDs.
             The default is "all".
+        kwargs : dict, optional
+            The additional keyword arguments are passed to the get_stations method.
 
         Raises
         ------
@@ -248,10 +250,10 @@ class StationsBase:
             If the given stids (Station_IDs) are not all valid.
         """
         self._run_simple_loop(
-            stations=self.get_stations(only_real=True, stids=stids),
+            stations=self.get_stations(only_real=True, stids=stids, **kwargs),
             method="update_period_meta",
             name="update period in meta",
-            kwargs={}
+            kwargs=kwargs
         )
 
     @classmethod
@@ -363,7 +365,7 @@ class StationsBase:
 
         return meta
 
-    def get_stations(self, only_real=True, stids="all"):
+    def get_stations(self, only_real=True, stids="all", skip_missing_stids=False, **kwargs):
         """Get a list with all the stations as Station-objects.
 
         Parameters
@@ -377,6 +379,12 @@ class StationsBase:
             Can either be "all", for all possible stations
             or a list with the Station IDs.
             The default is "all".
+        skip_missing_stids: bool, optional
+            Should the method skip the missing stations from input stids?
+            If False, then a ValueError is raised if a station is not found.
+            The default is False.
+        kwargs : dict, optional
+            The additional keyword arguments aren't used in this method.
 
         Returns
         -------
@@ -401,12 +409,12 @@ class StationsBase:
                 self._StationClass(stid, _skip_meta_check=True)
                 for stid in meta.index
                 if stid in stids]
-            stations_ids = [stat.id for stat in stations]
-            if len(stations) != len(stids):
+            if (not skip_missing_stids) and (len(stations) != len(stids)):
+                stations_ids = [stat.id for stat in stations]
                 raise ValueError(
                     "It was not possible to create a {para_long} Station with the following IDs: {stids}".format(
                         para_long=self._para_long,
-                        stids = ", ".join([str(stid) for stid in stids if stid in stations_ids])
+                        stids = ", ".join([str(stid) for stid in stids if stid not in stations_ids])
                     ))
 
         return stations
@@ -446,6 +454,7 @@ class StationsBase:
                 This will result in holes being ignored when they are at the end or at the beginning of the timeserie.
                 If period = (None, None) is given, then this parameter is set to True.
                 The default is False.
+            Furthermore the kwargs are passed to the get_stations method.
 
         Returns
         -------
@@ -459,7 +468,7 @@ class StationsBase:
             If the input parameters were not correct.
         """
         # check input parameters
-        stations = self.get_stations(stids=stids, only_real=True)
+        stations = self.get_stations(stids=stids, only_real=True, **kwargs)
 
         # iter stations
         first = True
@@ -500,7 +509,7 @@ class StationsBase:
         return pbar
 
     def _run_method(self, stations, method, name, kwds=dict(),
-            do_mp=True, processes=mp.cpu_count()-1):
+            do_mp=True, processes=mp.cpu_count()-1, **kwargs):
         """Run methods of the given stations objects in multiprocessing/threading mode.
 
         Parameters
@@ -641,7 +650,7 @@ class StationsBase:
             This has computational advantages.
             The default is True.
         kwargs : dict, optional
-            The additional keyword arguments for the _run_method method
+            The additional keyword arguments for the _run_method and get_stations method
 
         Raises
         ------
@@ -659,7 +668,7 @@ class StationsBase:
 
         # run the tasks in multiprocessing mode
         self._run_method(
-            stations=self.get_stations(only_real=only_real, stids=stids),
+            stations=self.get_stations(only_real=only_real, stids=stids, **kwargs),
             method="update_raw",
             name="download raw {para} data".format(para=self._para.upper()),
             kwds=dict(
@@ -698,10 +707,10 @@ class StationsBase:
             or a list with the Station IDs.
             The default is "all".
         kwargs : dict, optional
-            The additional keyword arguments for the _run_method method
+            The additional keyword arguments for the _run_method and get_stations method
         """
         self._run_method(
-            stations=self.get_stations(only_real=True, stids=stids),
+            stations=self.get_stations(only_real=True, stids=stids, **kwargs),
             method="last_imp_quality_check",
             name="quality check {para} data".format(para=self._para.upper()),
             do_mp=do_mp, **kwargs)
@@ -724,9 +733,9 @@ class StationsBase:
             or a list with the Station IDs.
             The default is "all".
         kwargs : dict, optional
-            The additional keyword arguments for the _run_method method
+            The additional keyword arguments for the _run_method and get_stations method
         """
-        stations = self.get_stations(only_real=False, stids=stids)
+        stations = self.get_stations(only_real=False, stids=stids, **kwargs)
         period = stations[0].get_last_imp_period(all=True)
         period_log = period.strftime("%Y-%m-%d %H:%M")
         log.info("The {para_long} Stations fillup of the last import is started for the period {min_tstp} - {max_tstp}".format(
@@ -738,7 +747,8 @@ class StationsBase:
             method="last_imp_fillup",
             name="fillup {para} data".format(para=self._para.upper()),
             kwds=dict(_last_imp_period=period),
-            do_mp=do_mp, **kwargs)
+            do_mp=do_mp,
+            **kwargs)
 
     @db_engine.deco_update_privilege
     def quality_check(self, period=(None, None), only_real=True, stids="all",
@@ -763,14 +773,15 @@ class StationsBase:
             If the most computation of a method is done in the postgresql database, then threading is enough to speed the process up.
             The default is False.
         kwargs : dict, optional
-            The additional keyword arguments for the _run_method method
+            The additional keyword arguments for the _run_method and get_stations method
         """
         self._run_method(
-            stations=self.get_stations(only_real=only_real, stids=stids),
+            stations=self.get_stations(only_real=only_real, stids=stids, **kwargs),
             method="quality_check",
             name="quality check {para} data".format(para=self._para.upper()),
             kwds=dict(period=period),
-            do_mp=do_mp, **kwargs)
+            do_mp=do_mp,
+            **kwargs)
 
     @db_engine.deco_update_privilege
     def update_ma(self, stids="all", do_mp=False, **kwargs):
@@ -792,7 +803,7 @@ class StationsBase:
             If the most computation of a method is done in the postgresql database, then threading is enough to speed the process up.
             The default is False.
         kwargs : dict, optional
-            The additional keyword arguments for the _run_method method
+            The additional keyword arguments for the _run_method and get_stations method
 
         Raises
         ------
@@ -800,10 +811,11 @@ class StationsBase:
             If the given stids (Station_IDs) are not all valid.
         """
         self._run_method(
-            stations=self.get_stations(only_real=False, stids=stids),
+            stations=self.get_stations(only_real=False, stids=stids, **kwargs),
             method="update_ma",
             name="update ma-values for {para}".format(para=self._para.upper()),
-            do_mp=do_mp, **kwargs)
+            do_mp=do_mp,
+            **kwargs)
 
     @db_engine.deco_update_privilege
     def fillup(self, only_real=False, stids="all", do_mp=False, **kwargs):
@@ -827,7 +839,7 @@ class StationsBase:
             If the most computation of a method is done in the postgresql database, then threading is enough to speed the process up.
             The default is False.
         kwargs : dict, optional
-            The additional keyword arguments for the _run_method method
+            The additional keyword arguments for the _run_method and get_stations method
 
         Raises
         ------
@@ -835,10 +847,11 @@ class StationsBase:
             If the given stids (Station_IDs) are not all valid.
         """
         self._run_method(
-            stations=self.get_stations(only_real=only_real, stids=stids),
+            stations=self.get_stations(only_real=only_real, stids=stids, **kwargs),
             method="fillup",
             name="fillup {para} data".format(para=self._para.upper()),
-            do_mp=do_mp, **kwargs)
+            do_mp=do_mp,
+            **kwargs)
 
     @db_engine.deco_update_privilege
     def update(self, only_new=True, **kwargs):
@@ -874,7 +887,8 @@ class StationsBase:
             The default is "all".
         kwargs: optional keyword arguments
             Those keyword arguments are passed to the get_df function of the station class.
-            can be period, agg_to, kinds
+            Possible parameters are period, agg_to, kinds.
+            Furthermore the kwargs are passed to the get_stations method.
 
         Returns
         -------
@@ -888,7 +902,7 @@ class StationsBase:
             kinds=[kwargs.pop("kind")]
         else:
             kinds=kwargs.pop("kinds")
-        stats = self.get_stations(only_real=False, stids=stids)
+        stats = self.get_stations(only_real=False, stids=stids, **kwargs)
         df_all = None
         for stat in pb.progressbar(stats, line_breaks=False):
             df = stat.get_df(kinds=kinds, **kwargs)
@@ -947,7 +961,7 @@ class StationsN(StationsBase):
             or a list with the Station IDs.
             The default is "all".
         kwargs : dict, optional
-            The keyword arguments to be handed to the station.StationN.update_richter_class method.
+            The keyword arguments to be handed to the station.StationN.update_richter_class and get_stations method.
 
         Raises
         ------
@@ -955,7 +969,7 @@ class StationsN(StationsBase):
             If the given stids (Station_IDs) are not all valid.
         """
         self._run_method(
-            stations=self.get_stations(only_real=True, stids=stids),
+            stations=self.get_stations(only_real=True, stids=stids, **kwargs),
             method="update_richter_class",
             name="update richter class for {para}".format(para=self._para.upper()),
             kwds=kwargs,
@@ -973,7 +987,7 @@ class StationsN(StationsBase):
             or a list with the Station IDs.
             The default is "all".
         kwargs : dict, optional
-            The additional keyword arguments for the _run_method method
+            The additional keyword arguments for the _run_method and get_stations method
 
         Raises
         ------
@@ -981,7 +995,7 @@ class StationsN(StationsBase):
             If the given stids (Station_IDs) are not all valid.
         """
         self._run_method(
-            stations=self.get_stations(only_real=False, stids=stids),
+            stations=self.get_stations(only_real=False, stids=stids, **kwargs),
             method="richter_correct",
             name="richter correction on {para}".format(para=self._para.upper()),
             do_mp=False, **kwargs)
@@ -1004,14 +1018,14 @@ class StationsN(StationsBase):
             If the most computation of a method is done in the postgresql database, then threading is enough to speed the process up.
             The default is False.
         kwargs : dict, optional
-            The additional keyword arguments for the _run_method method
+            The additional keyword arguments for the _run_method and get_stations method
 
         Raises
         ------
         ValueError
             If the given stids (Station_IDs) are not all valid.
         """
-        stations = self.get_stations(only_real=True, stids=stids)
+        stations = self.get_stations(only_real=True, stids=stids, **kwargs)
         period = stations[0].get_last_imp_period(all=True)
         log.info("The {para_long} Stations fillup of the last import is started for the period {min_tstp} - {max_tstp}".format(
             para_long=self._para_long,
