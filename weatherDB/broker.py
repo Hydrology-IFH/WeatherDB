@@ -7,6 +7,7 @@ from sqlalchemy import text as sqltxt
 from packaging import version as pv
 from pathlib import Path
 import textwrap
+from contextlib import contextmanager
 
 from .db.connections import db_engine
 from .config import config
@@ -62,13 +63,13 @@ class Broker(object):
         **kwargs : dict
             The keyword arguments to pass to the update_raw method of the stations
         """
-        self.check_is_broker_active()
-        log.info("="*79 + "\nBroker update_raw starts")
         self._check_paras(paras)
-        for stations in self.stations:
-            if stations._para in paras:
-                stations.update_raw(only_new=only_new, **kwargs)
-        self.set_is_broker_active(False)
+        log.info("="*79 + "\nBroker update_raw starts")
+
+        with self.activate():
+            for stations in self.stations:
+                if stations._para in paras:
+                    stations.update_raw(only_new=only_new, **kwargs)
 
     def update_meta(self, paras=["n_d", "n", "t", "et"], **kwargs):
         """Update the meta file from the CDC Server to the Database.
@@ -82,11 +83,13 @@ class Broker(object):
         **kwargs : dict
             The keyword arguments to pass to update_meta method of the stations
         """
-        log.info("="*79 + "\nBroker update_meta starts")
         self._check_paras(paras)
-        for stations in self.stations:
-            if stations._para in paras:
-                stations.update_meta(**kwargs)
+        log.info("="*79 + "\nBroker update_meta starts")
+
+        with self.activate():
+            for stations in self.stations:
+                if stations._para in paras:
+                    stations.update_meta(**kwargs)
 
     def update_ma(self, paras=["n_d", "n", "t", "et"], **kwargs):
         """Update the multi-annual data from raster to table.
@@ -100,11 +103,13 @@ class Broker(object):
         **kwargs : dict
             The keyword arguments to pass to update_ma method of the stations
         """
-        log.info("="*79 + "\nBroker update_ma starts")
         self._check_paras(paras)
-        for stations in self.stations:
-            if stations._para in paras:
-                stations.update_ma(**kwargs)
+        log.info("="*79 + "\nBroker update_ma starts")
+
+        with self.activate():
+            for stations in self.stations:
+                if stations._para in paras:
+                    stations.update_ma(**kwargs)
 
     def update_period_meta(self, paras=["n_d", "n", "t", "et"], **kwargs):
         """Update the periods in the meta table.
@@ -121,10 +126,10 @@ class Broker(object):
         self._check_paras(paras=paras,
                           valid_paras=["n_d", "n", "t", "et"])
         log.info("="*79 + "\nBroker update_period_meta starts")
-
-        for stations in self.stations:
-            if stations._para in paras:
-                stations.update_period_meta(**kwargs)
+        with self.activate():
+            for stations in self.stations:
+                if stations._para in paras:
+                    stations.update_period_meta(**kwargs)
 
     def quality_check(self, paras=["n", "t", "et"], with_fillup_nd=True, **kwargs):
         """Do the quality check on the stations raw data.
@@ -141,17 +146,18 @@ class Broker(object):
         **kwargs : dict
             The keyword arguments to pass to quality_check method of the stations
         """
-        self.check_is_broker_active()
-        self._check_paras(paras=paras, valid_paras=["n", "t", "et"])
+        self._check_paras(
+            paras=paras,
+            valid_paras=["n", "t", "et"])
         log.info("="*79 + "\nBroker quality_check starts")
 
-        if with_fillup_nd and "n" in paras:
-            self.stations_nd.fillup(**kwargs)
+        with self.activate():
+            if with_fillup_nd and "n" in paras:
+                self.stations_nd.fillup(**kwargs)
 
-        for stations in self.stations:
-            if stations._para in paras:
-                stations.quality_check(**kwargs)
-        self.set_is_broker_active(False)
+            for stations in self.stations:
+                if stations._para in paras:
+                    stations.quality_check(**kwargs)
 
     def last_imp_quality_check(self, paras=["n", "t", "et"], with_fillup_nd=True, **kwargs):
         """Quality check the last imported data.
@@ -171,17 +177,18 @@ class Broker(object):
             The keyword arguments to pass to last_imp_quality_check method of the stations.
             If with_fillup_nd is True, the keyword arguments are also passed to the last_imp_fillup method of the stations_nd.
         """
-        log.info("="*79 + "\nBroker last_imp_quality_check starts")
         self._check_paras(
-            paras=paras,
-            valid_paras=["n", "t", "et"])
+                paras=paras,
+                valid_paras=["n", "t", "et"])
+        log.info("="*79 + "\nBroker last_imp_quality_check starts")
 
-        if with_fillup_nd and "n" in paras:
-            self.stations_nd.last_imp_fillup(**kwargs)
+        with self.activate():
+            if with_fillup_nd and "n" in paras:
+                self.stations_nd.last_imp_fillup(**kwargs)
 
-        for stations in self.stations:
-            if stations._para in paras:
-                stations.last_imp_quality_check(**kwargs)
+            for stations in self.stations:
+                if stations._para in paras:
+                    stations.last_imp_quality_check(**kwargs)
 
     def fillup(self, paras=["n", "t", "et"], **kwargs):
         """Fillup the timeseries.
@@ -195,13 +202,12 @@ class Broker(object):
         **kwargs : dict
             The keyword arguments to pass to fillup method of the stations
         """
-        self.check_is_broker_active()
         log.info("="*79 + "\nBroker fillup starts")
-        self._check_paras(paras)
-        for stations in self.stations:
-            if stations._para in paras:
-                stations.fillup(**kwargs)
-        self.set_is_broker_active(False)
+        with self.activate():
+            self._check_paras(paras)
+            for stations in self.stations:
+                if stations._para in paras:
+                    stations.fillup(**kwargs)
 
     def last_imp_fillup(self, paras=["n", "t", "et"], **kwargs):
         """Fillup the last imported data.
@@ -216,10 +222,11 @@ class Broker(object):
             The keyword arguments to pass to last_imp_fillup method of the stations
         """
         log.info("="*79 + "\nBroker last_imp_fillup starts")
-        self._check_paras(paras)
-        for stations in self.stations:
-            if stations._para in paras:
-                stations.last_imp_fillup(**kwargs)
+        with self.activate():
+            self._check_paras(paras)
+            for stations in self.stations:
+                if stations._para in paras:
+                    stations.last_imp_fillup(**kwargs)
 
     def richter_correct(self, **kwargs):
         """Richter correct all of the precipitation data.
@@ -229,10 +236,9 @@ class Broker(object):
         **kwargs : dict
             The keyword arguments to pass to richter_correct method of the stations_n
         """
-        self.check_is_broker_active()
         log.info("="*79 + "\nBroker: last_imp_corr starts")
-        self.stations_n.richter_correct(**kwargs)
-        self.set_is_broker_active(False)
+        with self.activate():
+            self.stations_n.richter_correct(**kwargs)
 
     def last_imp_corr(self, **kwargs):
         """Richter correct the last imported precipitation data.
@@ -242,10 +248,9 @@ class Broker(object):
         **kwargs : dict
             The keyword arguments to pass to last_imp_corr method of the stations
         """
-        self.check_is_broker_active()
         log.info("="*79 + "\nBroker: last_imp_corr starts")
-        self.stations_n.last_imp_corr(**kwargs)
-        self.check_is_broker_active()
+        with self.activate():
+            self.stations_n.last_imp_corr(**kwargs)
 
     def update_db(self, paras=["n_d", "n", "t", "et"], **kwargs):
         """The regular Update of the database.
@@ -265,20 +270,18 @@ class Broker(object):
         """
         log.info("="*79 + "\nBroker update_db starts")
         self._check_paras(paras)
-        self.check_is_broker_active()
-
-        if pv.parse(__version__) > self.get_db_version():
-            log.info("--> There is a new version of the python script. Therefor the database is recalculated completly")
-            self.initiate_db()
-        else:
-            self.update_meta(paras=paras, **kwargs)
-            self.update_raw(paras=paras, **kwargs)
-            if "n_d" in paras:
-                paras.remove("n_d")
-            self.last_imp_quality_check(paras=paras, **kwargs)
-            self.last_imp_fillup(paras=paras, **kwargs)
-            self.last_imp_corr(**kwargs)
-            self.set_is_broker_active(False)
+        with self.activate():
+            if pv.parse(__version__) > self.get_db_version():
+                log.info("--> There is a new version of the python script. Therefor the database is recalculated completly")
+                self.initiate_db()
+            else:
+                self.update_meta(paras=paras, **kwargs)
+                self.update_raw(paras=paras, **kwargs)
+                if "n_d" in paras:
+                    paras.remove("n_d")
+                self.last_imp_quality_check(paras=paras, **kwargs)
+                self.last_imp_fillup(paras=paras, **kwargs)
+                self.last_imp_corr(**kwargs)
 
     @db_engine.deco_is_superuser
     def create_db_schema(self, if_exists=None):
@@ -290,6 +293,7 @@ class Broker(object):
             What to do if the tables already exist.
             If None the user gets asked.
             If "D" or "drop" the tables get dropped and recreated.
+            If "I" or "ignore" the existing tables get ignored and the creation of the schema continues for the other.
             If "E" er "exit" the creation of the schema gets exited.
             The default
         """
@@ -369,25 +373,22 @@ class Broker(object):
             The keyword arguments to pass to the called methods of the stations
         """
         log.info("="*79 + "\nBroker initiate_db starts")
-        self.check_is_broker_active()
+        with self.activate():
+            self.update_meta(
+                paras=["n_d", "n", "t", "et"], **kwargs)
+            self.update_raw(
+                paras=["n_d", "n", "t", "et"],
+                only_new=False,
+                **kwargs)
+            self.update_ma(
+                paras=["n_d", "n", "t", "et"],
+                **kwargs)
+            self.stations_n.update_richter_class(**kwargs)
+            self.quality_check(paras=["n", "t", "et"], **kwargs)
+            self.fillup(paras=["n", "t", "et"], **kwargs)
+            self.richter_correct(**kwargs)
 
-        self.update_meta(
-            paras=["n_d", "n", "t", "et"], **kwargs)
-        self.update_raw(
-            paras=["n_d", "n", "t", "et"],
-            only_new=False,
-            **kwargs)
-        self.update_ma(
-            paras=["n_d", "n", "t", "et"],
-            **kwargs)
-        self.stations_n.update_richter_class(**kwargs)
-        self.quality_check(paras=["n", "t", "et"], **kwargs)
-        self.fillup(paras=["n", "t", "et"], **kwargs)
-        self.richter_correct(**kwargs)
-
-        self.set_db_version()
-
-        self.set_is_broker_active(False)
+            self.set_db_version()
 
     def vacuum(self, do_analyze=True):
         sql = "VACUUM {analyze};".format(
@@ -461,17 +462,8 @@ class Broker(object):
             raise TypeError("version must be of type pv.Version")
         self.set_setting("version", str(version))
 
-    def set_is_broker_active(self, is_active:bool):
-        """Set the state of the broker.
-
-        Parameters
-        ----------
-        is_active : bool
-            Whether the broker is active.
-        """
-        self.set_setting("is_broker_active", str(is_active))
-
-    def get_is_broker_active(self):
+    @property
+    def is_broker_active(self):
         """Get the state of the broker.
 
         Returns
@@ -481,15 +473,24 @@ class Broker(object):
         """
         return self.get_setting("is_broker_active") == "True"
 
-    def check_is_broker_active(self):
-        """Check if another broker instance is active and if so raise an error.
+    @is_broker_active.setter
+    def is_broker_active(self, is_active:bool):
+        """Set the state of the broker.
 
-        Raises
-        ------
-        RuntimeError
-            If the broker is not active.
+        Parameters
+        ----------
+        is_active : bool
+            Whether the broker is active.
         """
-        if self.get_is_broker_active():
-            raise RuntimeError("Another Broker is active and therefor this broker is not allowed to run.")
-        else:
-            self.set_is_broker_active(True)
+        self.set_setting("is_broker_active", str(is_active))
+
+    @contextmanager
+    def activate(self):
+        """Activate the broker in a context manager."""
+        try:
+            if self.is_broker_active:
+                raise RuntimeError("Another Broker is active and therefor this broker is not allowed to run.")
+            self.is_broker_active = True
+            yield self
+        finally:
+            self.is_broker_active = False
