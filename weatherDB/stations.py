@@ -109,7 +109,7 @@ class StationsBase:
 
         Parameters
         ----------
-        stids: string  or list of int, optional
+        stids: string or list of int, optional
             The Stations for which to compute.
             Can either be "all", for all possible stations
             or a list with the Station IDs.
@@ -226,8 +226,9 @@ class StationsBase:
         sql = sql[:-2] + ";"
 
         # run sql command
-        with db_engine.connect().execution_options(isolation_level="AUTOCOMMIT") as con:
+        with db_engine.connect() as con:
             con.execute(sqltxt(sql))
+            con.commit()
 
     @db_engine.deco_update_privilege
     def update_period_meta(self, stids="all"):
@@ -405,7 +406,7 @@ class StationsBase:
                 raise ValueError(
                     "It was not possible to create a {para_long} Station with the following IDs: {stids}".format(
                         para_long=self._para_long,
-                        stids = ", ".join([stid for stid in stids if stid in stations_ids])
+                        stids = ", ".join([str(stid) for stid in stids if stid in stations_ids])
                     ))
 
         return stations

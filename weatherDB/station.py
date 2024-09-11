@@ -424,10 +424,9 @@ class StationBase:
             tstp_dtype=self._tstp_dtype,
             interval=self._interval,
             min_tstp=MIN_TSTP.strftime("%Y-%m-%d %H:%M"))
-        with db_engine.connect()\
-                .execution_options(isolation_level="AUTOCOMMIT")\
-                as con:
+        with db_engine.connect() as con:
             con.execute(sqltxt(sql))
+            con.commit()
 
     @db_engine.deco_update_privilege
     def _update_db_timeserie(self, df, kinds):
@@ -465,9 +464,7 @@ class StationBase:
         else:
             self._create_timeseries_table()
 
-        with db_engine.connect()\
-                .execution_options(isolation_level="AUTOCOMMIT")\
-                as con:
+        with db_engine.connect() as con:
             # create groups of 1000 values to insert
             groups = np.array_split(df.index, (len(df)//1000)+1)
             for group in groups:
@@ -494,6 +491,7 @@ class StationBase:
 
                 # run sql command
                 con.execute(sqltxt(sql_insert))
+            con.commit()
 
     @db_engine.deco_delete_privilege
     def _drop(self, why="No reason given"):
@@ -512,8 +510,9 @@ class StationBase:
             stid=self.id, para=self._para,
             why=why.replace("'", "''"))
 
-        with db_engine.connect().execution_options(isolation_level="AUTOCOMMIT") as con:
+        with db_engine.connect() as con:
             con.execute(sqltxt(sql))
+            con.commit()
         log.debug(
             "The {para_long} Station with ID {stid} got droped from the database."
             .format(stid=self.id, para_long=self._para_long))
@@ -536,10 +535,9 @@ class StationBase:
             sets=", ".join(sets)
         )
 
-        with db_engine.connect()\
-                .execution_options(isolation_level="AUTOCOMMIT")\
-                as con:
+        with db_engine.connect() as con:
             con.execute(sqltxt(sql_update))
+            con.commit()
 
     @db_engine.deco_all_privileges
     def _execute_long_sql(self, sql, description="treated"):
@@ -554,8 +552,8 @@ class StationBase:
             attempts += 1
             try:
                 with db_engine.connect() as con:
-                    con.execution_options(isolation_level="AUTOCOMMIT"
-                                        ).execute(sqltxt(sql))
+                    con.execute(sqltxt(sql))
+                    con.commit()
                 done = True
             except OperationalError as err:
                 log_msg = ("There was an operational error for the {para_long} Station (ID:{stid})" +
@@ -797,6 +795,7 @@ class StationBase:
                      for key, val in zip(self._ma_raster_band_keys,
                                          new_mas.items())]
                 )
+                session.commit()
 
         elif drop_when_error:
             # there was no multi annual data found from the raster
@@ -864,9 +863,9 @@ class StationBase:
                 format="'{}'".format(self._tstp_format_db)))
 
         # execute meta update
-        with db_engine.connect()\
-                .execution_options(isolation_level="AUTOCOMMIT") as con:
+        with db_engine.connect() as con:
             con.execute(sqltxt(sql_update_meta))
+            con.commit()
 
     @db_engine.deco_update_privilege
     def update_raw(self, only_new=True, ftp_file_list=None, remove_nas=True):
@@ -946,11 +945,12 @@ class StationBase:
                     zipfiles.index,
                     zipfiles["modtime"].dt.strftime("%Y%m%d %H:%M").values)]
             )
-        with db_engine.connect().execution_options(isolation_level="AUTOCOMMIT") as con:
+        with db_engine.connect() as con:
             con.execute(sqltxt(f'''
                 INSERT INTO raw_files(para, filepath, modtime)
                 VALUES {update_values}
                 ON CONFLICT (para, filepath) DO UPDATE SET modtime = EXCLUDED.modtime;'''))
+            con.commit()
 
         # if empty skip updating meta filepath
         if len(selection_without_na) == 0:
@@ -2559,8 +2559,9 @@ and not in the precipitation meta table in the DB""")
              WHERE station_id = {stid})
         """.format(stid=self.id, para=self._para)
 
-        with db_engine.connect().execution_options(isolation_level="AUTOCOMMIT") as con:
+        with db_engine.connect() as con:
             con.execute(sqltxt(sql))
+            con.commit()
 
     def isin_meta_n(self):
         """Check if Station is in the precipitation meta table.

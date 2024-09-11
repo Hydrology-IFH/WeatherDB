@@ -390,7 +390,7 @@ class Broker(object):
             con.execute(sqltxt(sql))
 
     def get_setting(self, key):
-        """Get a specific settings value.
+        """Get a specific settings value from the database.
 
         Parameters
         ----------
@@ -399,8 +399,8 @@ class Broker(object):
 
         Returns
         -------
-        value: str
-            The version of the database.
+        value: str or None
+            The database settings value.
         """
         with db_engine.connect() as con:
             res = con.execute(
@@ -427,6 +427,7 @@ class Broker(object):
                 VALUES ('{key}', '{value}')
                 ON CONFLICT (key)
                     DO UPDATE SET value=EXCLUDED.value;"""))
+            con.commit()
 
     def get_db_version(self):
         """Get the package version that the databases state is at.
