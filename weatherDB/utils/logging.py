@@ -8,6 +8,12 @@ import os
 
 from ..config import config
 
+try:
+    import coloredlogs
+    cl_available = True
+except ImportError:
+    cl_available = False
+
 # set the log
 #############
 log = logging.getLogger(__name__.split(".")[0])
@@ -44,8 +50,19 @@ def setup_logging_handlers():
     # add filehandler if necessary
     log.setLevel(config.get("logging", "level", fallback=logging.DEBUG))
     handler_names = [h.get_name() for h in log.handlers]
+    format = config.get(
+        "logging",
+        "format",
+        raw=True,
+        fallback="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    level = config.get("logging", "level", fallback=logging.DEBUG)
     for handler_type in config.getlist("logging", "handlers"):
         handler_name = f"weatherDB_config:{handler_type}"
+
+        # check if coloredlogs is available
+        if cl_available and handler_type == "console":
+            coloredlogs.install(level=level, fmt=format, logger=log)
+            continue
 
         # get log file name
         if handler_type == "file":
@@ -89,13 +106,8 @@ def setup_logging_handlers():
 
         # set formatter and level
         handler.setFormatter(
-            logging.Formatter(
-                config.get(
-                    "logging",
-                    "format",
-                    raw=True,
-                    fallback="%(asctime)s - %(name)s - %(levelname)s - %(message)s")))
-        handler.setLevel(config.get("logging", "level", fallback=logging.DEBUG))
+            logging.Formatter(format))
+        handler.setLevel(level)
 
 # add config listener
 config.add_listener("logging", None, setup_logging_handlers)

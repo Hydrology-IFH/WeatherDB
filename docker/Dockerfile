@@ -11,7 +11,8 @@ COPY ../pyproject.toml ./pyproject.toml
 
 # Create a requirements.txt file from pyproject.toml
 RUN pip install toml
-RUN python -c "import toml; pyproject = toml.load('pyproject.toml'); deps = pyproject['project']['dependencies'];\
+RUN python -c "import toml; pyproject = toml.load('pyproject.toml');\
+deps = pyproject['project']['dependencies'] + pyproject['project']['optional-dependencies']['optionals'];\
 open('/src/requirements.txt', 'w').write('\\n'.join(deps))"
 
 # Install the dependencies

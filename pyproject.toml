@@ -37,6 +37,12 @@ license = { file = "LICENSE" }
 [project.scripts]
 weatherDB = "weatherDB.cli:cli"
 
+[project.optional-dependencies]
+optionals = [
+    "coloredlogs",
+    "colorama"
+]
+
 [build-system]
 requires = [
     "setuptools>=42",
