@@ -8,7 +8,7 @@ import os
 import weatherDB as wdb
 
 sys.path.insert(0, Path(__file__).parent.resolve().as_posix())
-from baseTest import BaseTestCases
+from baseTest import FreshDBTestCases
 
 # get cli variables
 parser = argparse.ArgumentParser(description="FreshDB Test CLI arguments")
@@ -42,7 +42,7 @@ def dem_rasters_available():
     return True
 
 # define TestCases class
-class FreshDBTestCases(BaseTestCases):
+class DownloadRastersTestCases(FreshDBTestCases):
 
     @classmethod
     def setUpClass(cls):

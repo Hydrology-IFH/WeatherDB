@@ -14,7 +14,7 @@ elif os.environ.get("DOCKER_ENV", None) == "test":
 else:
     raise ValueError("No test database credentials found in environment variables or configuration file.")
 
-# define TestCases class
+# define TestCases classes
 class BaseTestCases(unittest.TestCase):
     broker = wdb.broker.Broker()
     db_engine = wdb.db.connections.db_engine
@@ -30,3 +30,10 @@ class BaseTestCases(unittest.TestCase):
 
     def check_broker_inactive(self):
         self.assertFalse(self.broker.is_broker_active, msg="Broker is still marked as active.")
+
+class FreshDBTestCases(BaseTestCases):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.empty_db()
+        cls.broker.create_db_schema(if_exists="DROP")
