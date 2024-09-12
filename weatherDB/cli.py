@@ -9,16 +9,17 @@ import weatherDB
              chain=True)
 @click.option('--do-logging/--no-logging',
               is_flag=True, default=True, show_default=True,
-              help="Should a Log-file be written?")
+              help="Should the logging be done to the console?")
 @click.option('--connection', '-c',
               type=str, default=None, show_default=False,
               help="The connection to use. Default is the value from the configuration file.")
 def cli(do_logging, connection=None):
     if do_logging:
-        click.echo("logging is on")
-        weatherDB.setup_file_logging()
-    else:
-        weatherDB.setup_file_logging(False)
+        click.echo("logging to console is set on")
+        handlers = weatherDB.config.getlist("logging", "handler")
+        if "console" not in handlers:
+            handlers.append("console")
+            weatherDB.config.set("logging", "handler", handlers)
 
     if connection is not None:
         print(f"setting the connection to {connection}")
