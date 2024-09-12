@@ -1,5 +1,6 @@
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 import sys
 import argparse
 
@@ -43,7 +44,11 @@ class FreshDBTestCases(BaseTestCases):
     def test_download_ma_rasters(self):
         self.log.debug("Downloading multi annual raster files...")
         from weatherDB.utils.get_data import download_ma_rasters
-        download_ma_rasters(overwrite=True, update_user_config=True, which=["hyras", "dwd"])
+        with patch("builtins.input", return_value="y"):
+            download_ma_rasters(
+                overwrite=True,
+                update_user_config=True,
+                which=["hyras", "dwd"])
 
 # cli entry point
 if __name__ == "__main__":
