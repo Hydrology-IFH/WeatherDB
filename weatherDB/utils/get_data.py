@@ -121,7 +121,6 @@ def download_ma_rasters(which="all", overwrite=None, update_user_config=False):
             if update_user_config:
                 if config.has_user_config:
                     config.update_user_config(f"data:rasters:{file_key}", "file", str(file_path))
-                    return
                 else:
                     print(f"No user configuration file found, therefor the raster '{file_key}' is not set in the user configuration file.")
 
