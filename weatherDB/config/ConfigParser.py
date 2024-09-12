@@ -104,12 +104,14 @@ class ConfigParser(configparser.ConfigParser):
         option : str
             The option to be changed.
             See config_default.ini for available options and explanations.
-        value : str, int or bool
+        value : str, int, bool or list
             The new value for the option.
         """
         if section not in self.sections():
             self.add_section(section)
-        if option not in self[section] or (value != self.get(section, option)):
+        if isinstance(value, list):
+            value = ",\n\t".join([str(val) for val in value])
+        if option not in self[section] or (value.replace("\t", "") != self.get(section, option)):
             super().set(section, option, value)
 
             # fire the change listeners
@@ -129,7 +131,7 @@ class ConfigParser(configparser.ConfigParser):
         option : str
             The option to be changed.
             See config_default.ini for available options and explanations.
-        value : str, int or bool
+        value : str, int, bool or list
             The new value for the option.
 
         Raises
@@ -440,7 +442,7 @@ class ConfigParser(configparser.ConfigParser):
             The section of the configuration file.
         option : str
             The option of the configuration file.
-        value : str, int or bool
+        value : str, int, bool or list
             The new value for the option.
 
         Raises
@@ -454,6 +456,7 @@ class ConfigParser(configparser.ConfigParser):
 
         # update the value in the config
         self.set(section, option, value)
+        value = self.get(section, option)
 
         # update the value in the user config file
         section = section.replace(".",":").lower()
