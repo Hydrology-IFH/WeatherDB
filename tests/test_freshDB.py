@@ -31,6 +31,16 @@ def ma_rasters_available():
             return False
     return True
 
+def dem_rasters_available():
+    if wdb.config.has_option("data:rasters", "dems"):
+        for file in wdb.config.getlist("data:rasters", "dems"):
+            file = Path(file)
+            if not file.exists():
+                return False
+    else:
+        return False
+    return True
+
 # define TestCases class
 class FreshDBTestCases(BaseTestCases):
 
@@ -49,6 +59,17 @@ class FreshDBTestCases(BaseTestCases):
                 overwrite=True,
                 update_user_config=True,
                 which=["hyras", "dwd"])
+
+    @unittest.skipIf(not (do_complete or not dem_rasters_available()),
+                    "Using cached multi anual raster files, as 'WEATHERDB_TEST_COMPLETE' is not set or False and no system argument \"--complete\" was given.")
+    def test_download_dem(self):
+        self.log.debug("Downloading multi annual raster files...")
+        from weatherDB.utils.get_data import download_dem
+        with patch("builtins.input", return_value="y"):
+            download_dem(
+                overwrite=True,
+                extent=[7, 47.5, 8.7, 48.5],
+                update_user_config=True)
 
 # cli entry point
 if __name__ == "__main__":
