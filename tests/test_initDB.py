@@ -112,11 +112,23 @@ class InitDBTestCases(BaseTestCases):
     def check_update_raw(self):
         from weatherDB.station import StationCanVirtualBase
         for stats in self.broker.stations:
+            # check for existing timeseries table
+            inspect = sa.inspect(self.db_engine.engine)
+            meta = stats.get_meta(stids=self.test_stids)
+            for stid in meta.index:
+                with self.subTest(stid=stid, para=stats._para):
+                    self.assertTrue(
+                        inspect.has_table(f"{stid}_{stats._para}",
+                                            schema="timeseries"),
+                        msg=f"Timeseries table \"{stid}_{stats._para}\" not found in database.")
+
+            # get raw data
             df_raw = stats.get_df(
                 kinds="raw",
                 stids=self.test_stids,
                 skip_missing_stids=True)
 
+            # check number of stations in df_raw
             with self.subTest(msg="Check number of stations in df_raw"):
                 if isinstance(stats._StationClass, StationCanVirtualBase):
                     max_stids = len(self.test_stids)
@@ -130,11 +142,13 @@ class InitDBTestCases(BaseTestCases):
                     max_stids,
                     msg=f"Number of {stats._para_long} stations in raw data does not match number of test stations.")
 
+            # check for NA values
             with self.subTest(msg="Check if not only NA values"):
                 self.assertFalse(
                     df_raw.isna().all().all(),
                     msg=f"The raw data is NA for every {stats._para_long} station.")
 
+            # check for time range
             with self.subTest(msg="Check time range"):
                 self.assertGreaterEqual(
                     df_raw.index.min(),

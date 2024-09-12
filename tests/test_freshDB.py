@@ -1,7 +1,6 @@
 from pathlib import Path
 import unittest
 import sys
-import sqlalchemy as sa
 import argparse
 
 import os
@@ -38,19 +37,6 @@ class FreshDBTestCases(BaseTestCases):
     def setUpClass(cls):
         cls.empty_db()
         cls.broker.create_db_schema(if_exists="DROP")
-
-    def test_download_raw(self):
-        # method call
-        self.broker.update_raw(stids=self.test_stids)
-
-        # tests
-        inspect = sa.inspect(self.db_engine.engine)
-        for stid in self.test_stids:
-            for para in ["N", "T", "ND", "ET"]:
-                with self.subTest(stid=stid, para=para, inspect=inspect):
-                    self.assertTrue(
-                        inspect.has_table(f"{stid}_{para}", schema="timeseries"),
-                        msg=f"Timeseries table \"{stid}_{para}\" not found in database.")
 
     @unittest.skipIf(not (do_complete or not ma_rasters_available()),
                      "Using cached multi anual raster files, as 'WEATHERDB_TEST_COMPLETE' is not set or False and no system argument \"--complete\" was given.")
