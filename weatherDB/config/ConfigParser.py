@@ -464,36 +464,44 @@ class ConfigParser(configparser.ConfigParser):
         value_set = False
         with open(self.user_config_file, "r") as f:
             ucf_lines = f.readlines()
-            in_section = False
-            for i, line in enumerate(ucf_lines):
-                line_c = line.strip().lower()
+            for commented in [False, True]:
+                in_section = False
+                for i, line in enumerate(ucf_lines):
+                    line_c = line.strip().lower()
 
-                # get section
-                if re.match(r"\[.*\]", line_c):
-                    if in_section and not value_set:
-                        print("Option not found in section and is therefor added at the end of the section.")
-                        ucf_lines.insert(i, f"; Option added by config.update_user_config-call.\n{option} = {value}\n\n")
+                    # get section change
+                    if re.match(r"\[.*\]", line_c):
+                        if in_section:
+                            if not value_set and commented:
+                                print(i)
+                                print("Option not found in section and is therefor added at the end of the section.")
+                                ucf_lines.insert(i, f"; Option added by config.update_user_config-call.\n{option} = {value}\n\n")
+                                value_set = True
+                            break
+
+                        in_section = line_c.startswith(f"[{section}]")
+
+                    # set value if option is found
+                    if commented:
+                        re_comp = re.compile(f"(;\\s*){option.lower()}\\s*=")
+                    else:
+                        re_comp = re.compile(f"{option.lower()}\\s*=")
+                    if in_section and re_comp.match(line_c):
+                        # check if multiline option
+                        j = 0
+                        while i+j<len(ucf_lines) and \
+                            ucf_lines[i+j].strip(";").split(";")[0].strip().endswith(","):
+                            j += 1
+
+                        # remove the old additional values
+                        for k in range(i+1, i+j+1):
+                            ucf_lines[k] = ""
+
+                        # set the value
+                        ucf_lines[i] = f"{option} = {value}\n"
                         value_set = True
-
-                    in_section = line_c.startswith(f"[{section}]")
-
-                # set value if option is found
-                if in_section and re.match(f"(;\s*)*{option.lower()}\s*=", line_c):
-                    # check if multiline option
-                    j = 0
-                    while i+j<=len(ucf_lines) and \
-                        (ucf_lines[i+j].split(";")[0].strip().endswith(",") or
-                         ucf_lines[i+j].strip().startswith(";")):
-                        j += 1
-
-                    # remove the old additional values
-                    if j > 0:
-                        for k in range(j):
-                            ucf_lines[i+k+1] = ""
-
-                    # set the value
-                    ucf_lines[i] = f"{option} = {value}\n"
-                    value_set = True
+                        break
+                if value_set:
                     break
 
         # add the option if not found in the section
