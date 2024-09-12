@@ -12,7 +12,7 @@ services:
       WEATHERDB_DB_USER: postgres
       WEATHERDB_DB_PASSWORD: /run/secrets/db_password
       WEATHERDB_USER_CONFIG_FILE: /home/config_user.yaml
-      WEATHERDB_DATA_BASE_PATH: /home/data
+      WEATHERDB_DATA_BASE_DIR: /home/data
       WEATHERDB_HANDLE_NON_EXISTING_CONFIG: create
       DOCKER_ENV: main
     volumes:

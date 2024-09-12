@@ -3,7 +3,6 @@ This module has grouping classes for all the stations of one parameter. E.G. Sta
 Those classes can get used to do actions on all the stations.
 """
 # libraries
-# from multiprocessing import queues
 import warnings
 import traceback
 import pandas as pd
@@ -30,13 +29,12 @@ from .station import (StationBase,
     GroupStation)
 
 # set settings
+# ############
 try:# else I get strange errors with linux
     mp.set_start_method('spawn')
 except RuntimeError:
     pass
 
-# set log
-#########
 log = logging.getLogger(__name__)
 
 # Base class definitions

@@ -517,7 +517,7 @@ class ConfigParser(configparser.ConfigParser):
         - WEATHERDB_DB_HOST : The host for the database.
         - WEATHERDB_DB_PORT : The port for the database.
         - WEATHERDB_DB_DATABASE : The database name.
-        - WEATHERDB_DATA_BASE_PATH : The base path for the data directory.
+        - WEATHERDB_DATA_BASE_DIR : The base path for the data directory.
         - WEATHERDB_LOGGING_HANDLER : The logging handler to use. Possible values are "console" and "file".
         - WEATHERDB_LOGGING_LEVEL : The logging level to use. Possible values are "DEBUG", "INFO", "WARNING", "ERROR" and "CRITICAL".
         - WEATHERDB_LOGGING_DIRECTORY : The directory to store the log files.
@@ -564,7 +564,7 @@ class ConfigParser(configparser.ConfigParser):
 
         # other environment variable settings
         for env_key, (section, option) in {
-                "WEATHERDB_DATA_BASE_PATH": ("data", "base_path"),
+                "WEATHERDB_DATA_BASE_DIR": ("data", "base_dir"),
                 "WEATHERDB_LOGGING_HANDLER": ("logging", "handlers"),
                 "WEATHERDB_LOGGING_LEVEL": ("logging", "level"),
                 "WEATHERDB_LOGGING_DIRECTORY": ("logging", "directory"),
