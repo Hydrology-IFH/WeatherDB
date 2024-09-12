@@ -8,7 +8,7 @@ import os
 import weatherDB as wdb
 
 sys.path.insert(0, Path(__file__).parent.resolve().as_posix())
-from baseTest import FreshDBTestCases
+from baseTest import BaseTestCases
 
 # get cli variables
 parser = argparse.ArgumentParser(description="FreshDB Test CLI arguments")
@@ -42,12 +42,11 @@ def dem_rasters_available():
     return True
 
 # define TestCases class
-class DownloadRastersTestCases(FreshDBTestCases):
+class DownloadRastersTestCases(BaseTestCases):
 
     @classmethod
     def setUpClass(cls):
-        cls.empty_db()
-        cls.broker.create_db_schema(if_exists="DROP")
+        cls.broker.create_db_schema(if_exists="IGNORE")
 
     @unittest.skipIf(not (do_complete or not ma_rasters_available()),
                      "Using cached multi anual raster files, as 'WEATHERDB_TEST_COMPLETE' is not set or False and no system argument \"--complete\" was given.")
