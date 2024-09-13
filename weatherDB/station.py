@@ -23,8 +23,10 @@ from sqlalchemy.orm import Session
 import rasterio as rio
 import rasterio.mask
 from shapely.geometry import MultiLineString
-import shapely.wkt
+import shapely.wkb
+import shapely.ops
 import geopandas as gpd
+import pyproj
 from rasterstats import zonal_stats
 from contextlib import nullcontext
 
@@ -1566,53 +1568,43 @@ class StationBase:
         else:
             return dict(zip(keys, values))
 
-    def get_geom(self, format="EWKT", crs=None):
+    def get_geom(self, crs=None):
         """Get the point geometry of the station.
 
         Parameters
         ----------
-        format: str or None, optional
-            The format of the geometry to return.
-            Needs to be a format that is understood by Postgresql.
-            ST_AsXXXXX function needs to exist in postgresql language.
-            If None, then the binary representation is returned.
-            the default is "EWKT".
         crs: str, int or None, optional
+            The coordinate reference system of the geometry.
             If None, then the geometry is returned in WGS84 (EPSG:4326).
-            If string, then it should be one of "WGS84" or "UTM".
+            If string, then it should be in a pyproj readable format.
             If int, then it should be the EPSG code.
+            The default is None.
 
         Returns
         -------
-        str or bytes
-            string or bytes representation of the geometry,
-            depending on the selected format.
+        shapely.geometries.Point
+            The location of the station as shapely Point in the given coordinate reference system.
         """
-        # change WKT to Text, because Postgis function is ST_AsText for WKT
-        if format == "WKT":
-            format = "Text"
-
-        # check crs
-        utm=""
-        trans_fun=""
-        epsg=""
-        if isinstance(crs, str):
-            if crs.lower() == "utm":
-                utm="_utm"
-        elif isinstance(crs, int):
-            trans_fun="ST_TRANSFORM("
-            epsg=", {0})".format(crs)
         # get the geom
-        return self.get_meta(
-            infos=[
-                "{st_fun}({trans_fun}geometry{utm}{epsg})".format(
-                    st_fun="ST_As" + format if format else "",
-                    utm=utm,
-                    trans_fun=trans_fun,
-                    epsg=epsg)])
+        geom_wkb = self.get_meta(infos=["geometry"])
+        geom_shp = shapely.wkb.loads(geom_wkb.data.tobytes())
+
+        # transform
+        if crs is not None:
+            transformer = pyproj.Transformer.from_proj(
+                geom_wkb.srid,
+                crs, always_xy=True)
+            geom_shp = shapely.ops.transform(
+                transformer.transform, geom_shp)
+
+        return geom_shp
 
     def get_geom_shp(self, crs=None):
         """Get the geometry of the station as a shapely Point object.
+
+        .. deprecated:: 1.0.0
+            `get_geom_shp` is deprecated and will be removed in future releases.
+            It is replaced by `get_geom`.
 
         Parameters
         ----------
@@ -1626,7 +1618,10 @@ class StationBase:
         shapely.geometries.Point
             The location of the station as shapely Point.
         """
-        return shapely.wkt.loads(self.get_geom("Text", crs=crs))
+        warnings.warn(
+            "This function is deprecated and will disapear in future releases. Use get_geom instead.",
+            PendingDeprecationWarning)
+        return self.get_geom(crs=crs)
 
     def get_name(self):
         return self.get_meta(infos="stationsname")
@@ -2070,7 +2065,7 @@ class StationBase:
                 epsg = raster_conf["srid"]
 
             # get the station geom
-            stat_geom = self.get_geom_shp(crs=epsg)
+            stat_geom = self.get_geom(crs=epsg)
 
             # get the bands indexes
             if isinstance(bands, str) and bands.lower() == "all":
@@ -3083,7 +3078,7 @@ class StationN(StationNBase):
         with rio.open(dem_files[0]) as dgm1,\
             rio.open(dem_files[1]) if len(dem_files)>1 else nullcontext() as dgm2:
             # sample station heights from the first DGM
-            geom1 = self.get_geom_shp(crs=dgm1.crs.to_epsg())
+            geom1 = self.get_geom(crs=dgm1.crs.to_epsg())
             xy = [geom1.x, geom1.y]
             stat_h1 = list(dgm1.sample(
                 xy=[xy],
@@ -3144,7 +3139,7 @@ class StationN(StationNBase):
                 # check if parts are missing and fill
                 if len(line_parts) > 0 & (dgm2 is not None):
                     # sample station heights from the second DGM
-                    geom2 = self.get_geom_shp(crs=dgm2.crs.to_epsg())
+                    geom2 = self.get_geom(crs=dgm2.crs.to_epsg())
                     stat_h2 = list(dgm2.sample(
                         xy=[(geom2.x, geom2.y)],
                         indexes=1,
@@ -4171,8 +4166,24 @@ class GroupStation(object):
                     meta_all.update({stat._para:meta_para})
         return meta_all
 
-    def get_geom(self):
-        return self.station_parts[0].get_geom()
+    def get_geom(self, crs=None):
+        """Get the point geometry of the station.
+
+        Parameters
+        ----------
+        crs: str, int or None, optional
+            The coordinate reference system of the geometry.
+            If None, then the geometry is returned in WGS84 (EPSG:4326).
+            If string, then it should be in a pyproj readable format.
+            If int, then it should be the EPSG code.
+            The default is None.
+
+        Returns
+        -------
+        shapely.geometries.Point
+            The location of the station as shapely Point in the given coordinate reference system.
+        """
+        return self.station_parts[0].get_geom(crs=crs)
 
     def get_name(self):
         return self.station_parts[0].get_name()
@@ -4368,9 +4379,7 @@ class GroupStation(object):
 
         # prepare loop
         name_suffix = "_{stid:0>5}.txt".format(stid=self.id)
-        x, y = self.get_geom().split(";")[1]\
-                .replace("POINT(", "").replace(")", "")\
-                .split(" ")
+        x, y = self.get_geom().coords.xy
         name = self.get_name() + " (ID: {stid})".format(stid=self.id)
         do_zip = isinstance(dir, zipfile.ZipFile)
 
