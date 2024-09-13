@@ -3,6 +3,7 @@ import re
 
 import weatherDB as wdb
 from weatherDB.db.models import Base
+from weatherDB.db.connections import db_engine
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -15,11 +16,11 @@ target_metadata = Base.metadata
 
 # check for alembic database copnnection in the weatherDB config
 # ##############################################################
-db_engine = config.attributes.get("engine", None)
-if wdb.config.has_section('database:alembic') and db_engine is None:
+engine = config.attributes.get("engine", None)
+if wdb.config.has_section('database:alembic') and engine is None:
     print("Setting the database connection to the users configuration of 'database:alembic'.")
     wdb.config.set('database', 'connection', "alembic")
-    db_engine = wdb.db.get_engine()
+    engine = db_engine.engine
 
 # get other values from config
 # ############################
@@ -28,9 +29,27 @@ exclude_tables = re.sub(
     '',
     config.get_main_option('exclude_tables', '')
 ).split(',')
+valid_schemas = Base.metadata._schemas
+valid_tables = {
+    schema: [table.name
+             for table in wdb.db.models.Base.metadata.tables.values()
+             if table.schema == schema]
+    for schema in wdb.db.models.Base.metadata._schemas}
 
-def include_object(object, name, type_, *args, **kwargs):
-    return not (type_ == 'table' and name in exclude_tables)
+def include_name(name, type_, parent_names, *args,**kwargs):
+    if type_ == "schema":
+        return (name in valid_schemas) or (name is None)
+    else:
+        schema = parent_names["schema_name"] if parent_names["schema_name"] is not None else "public"
+        if schema not in valid_schemas:
+            return False
+
+        if type_ == "table":
+            return name in valid_tables.get(schema, []) and name not in exclude_tables
+
+        table = parent_names["table_name"]
+        return table in valid_tables.get(schema, []) and table not in exclude_tables
+
 
 # migration functions
 # ###################
@@ -41,11 +60,12 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    with db_engine.connect() as connection:
+    with engine.connect() as connection:
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
-            include_object=include_object
+            include_schemas=True,
+            include_name=include_name
         )
 
         with context.begin_transaction():

@@ -223,37 +223,37 @@ def upgrade() -> None:
         sa.Column(
             "horizon",
             sa.FLOAT(),
-            nullable=False,
+            nullable=True,
             comment="The horizon angle in degrees, how it got defined by Richter(1995).",
         ),
         sa.Column(
             "richter_class",
             sa.String(),
-            nullable=False,
+            nullable=True,
             comment="The Richter exposition class, that got derived from the horizon angle.",
         ),
         sa.Column(
             "quot_filled_hyras",
             sa.FLOAT(),
-            nullable=False,
+            nullable=True,
             comment="The quotient betwen the mean yearly value from the filled timeserie to the multi annual yearly mean HYRAS value (1991-2020)",
         ),
         sa.Column(
             "quot_filled_regnie",
             sa.FLOAT(),
-            nullable=False,
+            nullable=True,
             comment="The quotient betwen the mean yearly value from the filled timeserie to the multi annual yearly mean REGNIE value (1991-2020)",
         ),
         sa.Column(
             "quot_filled_dwd_grid",
             sa.FLOAT(),
-            nullable=False,
+            nullable=True,
             comment="The quotient betwen the mean yearly value from the filled timeserie to the multi annual yearly mean DWD grid value (1991-2020)",
         ),
         sa.Column(
             "quot_corr_filled",
             sa.FLOAT(),
-            nullable=False,
+            nullable=True,
             comment="The quotient betwen the mean yearly value from the Richter corrected timeserie to the mean yearly value from the filled timeserie",
         ),
         sa.Column(
@@ -381,7 +381,7 @@ def upgrade() -> None:
         sa.Column(
             "qc_droped",
             sa.FLOAT(),
-            nullable=False,
+            nullable=True,
             comment="The percentage of droped values during the quality check",
         ),
         sa.PrimaryKeyConstraint("station_id"),
@@ -650,7 +650,7 @@ def upgrade() -> None:
         sa.Column(
             "qc_droped",
             sa.FLOAT(),
-            nullable=False,
+            nullable=True,
             comment="The percentage of droped values during the quality check",
         ),
         sa.PrimaryKeyConstraint("station_id"),
@@ -863,7 +863,8 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("station_id", "raster_key", "parameter"),
         comment="The multi annual climate raster values for each station.",
     )
-    # ### end Alembic commands ###
+    # now the Indexes
+
 
 
 def downgrade() -> None:
