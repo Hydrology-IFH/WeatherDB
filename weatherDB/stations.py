@@ -46,7 +46,7 @@ class StationsBase:
     _timeout_raw_imp = 240
 
     def __init__(self):
-        if isinstance(self, StationsBase):
+        if type(self) == StationsBase:
             raise NotImplementedError("""
             The StationsBase is only a wrapper class an is not working on its own.
             Please use StationN, StationND, StationT or StationET instead""")
