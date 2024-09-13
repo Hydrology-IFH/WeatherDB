@@ -85,37 +85,73 @@ class StationBase:
     """This is the Base class for one Station.
     It is not working on it's own, because those parameters need to get defined in the real classes
     """
-    # because those parameters need to get defined in the real classes:
-    _ftp_folder_base = ["None"]  # the base folder on the CDC-FTP server
-    _date_col = None  # The name of the date column on the CDC server
-    _para = None  # The parameter string "n", "t", or "et"
-    _para_long = None  # The parameter as a long descriptive string
+    # those parameters need to get defined in the real classes:
+    ################################################################
+
+    # common settings
+    # ---------------
+    # The sqlalchemy model of the meta table
+    _MetaModel = MetaBase
+    # The parameter string "n", "t", or "et"
+    _para = None
+    # The parameter as a long descriptive string
+    _para_long = None
+    # The Unit as str
+    _unit = "None"
+    # the factor to change data to integers for the database
+    _decimals = 1
+    # the kinds that should not get multiplied with the amount of decimals, e.g. "qn"
+    _kinds_not_decimal = ["qn", "filled_by", "filled_share"]
+    # The valid kinds to use. Must be a column in the timeseries tables.
+    _valid_kinds = ["raw", "qc",  "filled", "filled_by"]
+    # the kind that is best for simulations
+    _best_kind = "filled"
+
+    # cdc dwd parameters
+    # ------------------
+    # the base folder on the CDC-FTP server
+    _ftp_folder_base = ["None"]
+    # The name of the date column on the CDC server
+    _cdc_date_col = None
     # the names of the CDC columns that get imported
     _cdc_col_names_imp = [None]
     # the corresponding column name in the DB of the raw import
     _db_col_names_imp = ["raw"]
-    # the kinds that should not get multiplied with the amount of decimals, e.g. "qn"
-    _kinds_not_decimal = ["qn", "filled_by", "filled_share"]
-    _tstp_format_db = None  # The format string for the strftime for the database to be readable
-    _tstp_format_human = "%Y-%m-%d %H:%M" # the format of the timestamp to be human readable
-    _unit = "None"  # The Unit as str
-    _decimals = 1  # the factor to change data to integers for the database
-    # The valid kinds to use. Must be a column in the timeseries tables.
-    _valid_kinds = ["raw", "qc",  "filled", "filled_by"]
-    _best_kind = "filled"  # the kind that is best for simulations
-    _ma_para_keys = []  # the key names of the band names in the config file. Specifies the parameter in the db to use to calculate the coefficients, 2 values: wi/so or one value:yearly
-    # The sign to use to calculate the coefficient and to use the coefficient.
+
+    # timestamp configurations
+    # ------------------------
+    # The format string for the strftime for the database to be readable
+    _tstp_format_db = None
+    # the format of the timestamp to be human readable
+    _tstp_format_human = "%Y-%m-%d %H:%M"
+    # the postgresql data type of the timestamp column, e.g. "date" or "timestamp"
+    _tstp_dtype = None
+    # The interval of the timeseries e.g. "1 day" or "10 min"
+    _interval = None
+
+    # aggregation
+    # -----------
+    # Similar to the interval, but same format ass in AGG_TO
+    _min_agg_to = None
+    # the sql aggregating function to use
+    _agg_fun = "sum"
+
+    # for regionalistaion
+    # -------------------
+    # the key names of the band names in the config file, without prefix "BAND_".
+    # Specifies the parameter in the db to use to calculate the coefficients, 2 values: wi/so or one value:yearly
+    _ma_para_keys = []
+    # The sign to use to calculate the coefficient (first element) and to use the coefficient (second coefficient).
     _coef_sign = ["/", "*"]
     # The multi annual raster to use to calculate the multi annual values
     _ma_raster_key = "dwd" # section name in the config file (data:rasters:...)
-    # the postgresql data type of the timestamp column, e.g. "date" or "timestamp"
-    _tstp_dtype = None
-    _interval = None  # The interval of the timeseries e.g. "1 day" or "10 min"
-    _min_agg_to = None # Similar to the interval, but same format ass in AGG_TO
-    _agg_fun = "sum" # the sql aggregating function to use
-    _filled_by_n = 1 # How many neighboring stations are used for the fillup procedure
-    _fillup_max_dist = None # The maximal distance in meters to use to get neighbor stations for the fillup. Only relevant if multiple stations are considered for fillup.
-    _MetaModel = MetaBase # The sqlalchemy model of the meta table
+
+    # for the fillup
+    # --------------
+    # How many neighboring stations are used for the fillup procedure
+    _filled_by_n = 1
+    # The maximal distance in meters to use to get neighbor stations for the fillup. Only relevant if multiple stations are considered for fillup.
+    _fillup_max_dist = None
 
     def __init__(self, id, _skip_meta_check=False):
         """Create a Station object.
@@ -1051,7 +1087,7 @@ class StationBase:
         max_hist_tstp = None
         for zf in zipfiles:
             df_new = get_dwd_file(zf)
-            df_new.set_index(self._date_col, inplace=True)
+            df_new.set_index(self._cdc_date_col, inplace=True)
             df_new = self._check_df_raw(df_new)
 
             # check if hist in query and get max tstp of it ##########
@@ -2593,11 +2629,14 @@ class StationTETBase(StationCanVirtualBase):
 
     This class adds methods that are only used by temperatur and evapotranspiration stations.
     """
-    _tstp_dtype = "date"
-    _interval = "1 day"
-    _min_agg_to = "day"
+    # timestamp configurations
     _tstp_format_db = "%Y%m%d"
     _tstp_format_human = "%Y-%m-%d"
+    _tstp_dtype = "date"
+    _interval = "1 day"
+
+    # aggregation
+    _min_agg_to = "day"
 
     def get_neighboor_stids(self, p_elev=(250, 1.5), **kwargs):
         """Get the 5 nearest stations to this station.
@@ -2804,8 +2843,13 @@ class StationTETBase(StationCanVirtualBase):
 
 
 class StationNBase(StationBase):
-    _date_col = "MESS_DATUM"
+    # common settings
     _decimals = 100
+
+    # cdc dwd parameters
+    _cdc_date_col = "MESS_DATUM"
+
+    # for regionalistaion
     _ma_para_keys = ["p_wihj", "p_sohj"]
     _ma_raster_key = "hyras"
 
@@ -2863,20 +2907,27 @@ class StationNBase(StationBase):
 # the different Station kinds:
 class StationN(StationNBase):
     """A class to work with and download 10 minutes precipitation data for one station."""
-    _ftp_folder_base = [
-        "climate_environment/CDC/observations_germany/climate/10_minutes/precipitation/"]
+    # common settings
+    _MetaModel = MetaN
     _para = "n"
     _para_long = "Precipitation"
-    _cdc_col_names_imp = ["RWS_10", "QN"]
-    _db_col_names_imp = ["raw", "qn"]
-    _tstp_format_db = "%Y%m%d %H:%M"
-    _tstp_dtype = "timestamp"
-    _interval = "10 min"
-    _min_agg_to = "10 min"
     _unit = "mm/10min"
     _valid_kinds = ["raw", "qn", "qc", "corr", "filled", "filled_by"]
     _best_kind = "corr"
-    _MetaModel = MetaN
+
+    # cdc dwd parameters
+    _ftp_folder_base = [
+        "climate_environment/CDC/observations_germany/climate/10_minutes/precipitation/"]
+    _cdc_col_names_imp = ["RWS_10", "QN"]
+    _db_col_names_imp = ["raw", "qn"]
+
+    # timestamp configurations
+    _tstp_format_db = "%Y%m%d %H:%M"
+    _tstp_dtype = "timestamp"
+    _interval = "10 min"
+
+    # aggregation
+    _min_agg_to = "10 min"
 
     def __init__(self, id, **kwargs):
         super().__init__(id, **kwargs)
@@ -3620,22 +3671,30 @@ class StationND(StationNBase, StationCanVirtualBase):
     Those station data are only downloaded to do some quality checks on the 10 minute data.
     Therefor there is no special quality check and richter correction done on this data.
     If you want daily precipitation data, better use the 10 minutes station(StationN) and aggregate to daily values."""
+
+    # common settings
+    _MetaModel = MetaND
+    _para = "n_d"
+    _para_long = "daily Precipitation"
+    _unit = "mm/day"
+    _valid_kinds = ["raw", "filled", "filled_by"]
+    _best_kind = "filled"
+
+    # cdc dwd parameters
     _ftp_folder_base = [
         "climate_environment/CDC/observations_germany/climate/daily/kl/",
         "climate_environment/CDC/observations_germany/climate/daily/more_precip/"]
-    _para = "n_d"
-    _para_long = "daily Precipitation"
     _cdc_col_names_imp = ["RSK"]
     _db_col_names_imp = ["raw"]
+
+    # timestamp configurations
     _tstp_format_db = "%Y%m%d"
     _tstp_format_human = "%Y-%m-%d"
     _tstp_dtype = "date"
     _interval = "1 day"
+
+    # aggregation
     _min_agg_to = "day"
-    _unit = "mm/day"
-    _valid_kinds = ["raw", "filled", "filled_by"]
-    _best_kind = "filled"
-    _MetaModel = MetaND
 
     # methods from the base class that should not be active for this class
     quality_check = property(doc='(!) Disallowed inherited')
@@ -3678,23 +3737,34 @@ class StationND(StationNBase, StationCanVirtualBase):
 
 class StationT(StationTETBase):
     """A class to work with and download temperaure data for one station."""
-    _ftp_folder_base = [
-        "climate_environment/CDC/observations_germany/climate/daily/kl/"]
-    _date_col = "MESS_DATUM"
+
+    # common settings
+    _MetaModel = MetaT
     _para = "t"
     _para_long = "Temperature"
-    _cdc_col_names_imp = ["TMK", "TNK", "TXK"]
-    _db_col_names_imp = ["raw", "raw_min", "raw_max"]
     _unit = "°C"
     _decimals = 10
-    _ma_para_keys = ["t_year"]
-    _coef_sign = ["-", "+"]
-    _agg_fun = "avg"
     _valid_kinds = ["raw", "raw_min", "raw_max", "qc",
                     "filled", "filled_min", "filled_max", "filled_by"]
+
+    # cdc dwd parameters
+    _ftp_folder_base = [
+        "climate_environment/CDC/observations_germany/climate/daily/kl/"]
+    _cdc_date_col = "MESS_DATUM"
+    _cdc_col_names_imp = ["TMK", "TNK", "TXK"]
+    _db_col_names_imp = ["raw", "raw_min", "raw_max"]
+
+    # aggregation
+    _agg_fun = "avg"
+
+    # for regionalistaion
+    _ma_para_keys = ["t_year"]
+    _coef_sign = ["-", "+"]
+
+    # # for the fillup
     _filled_by_n = 5
     _fillup_max_dist = 100e3
-    _MetaModel = MetaT
+
 
     def __init__(self, id, **kwargs):
         super().__init__(id, **kwargs)
@@ -3796,17 +3866,24 @@ class StationT(StationTETBase):
 
 class StationET(StationTETBase):
     """A class to work with and download potential Evapotranspiration (VPGB) data for one station."""
-    _ftp_folder_base = ["climate_environment/CDC/derived_germany/soil/daily/"]
-    _date_col = "Datum"
+
+    # common settings
+    _MetaModel = MetaET
     _para = "et"
-    _para_long = "Evapotranspiration"
-    _cdc_col_names_imp = ["VPGB"]
+    _para_long = "potential Evapotranspiration"
     _unit = "mm/Tag"
     _decimals = 10
+
+    # cdc dwd parameters
+    _ftp_folder_base = ["climate_environment/CDC/derived_germany/soil/daily/"]
+    _cdc_date_col = "Datum"
+    _cdc_col_names_imp = ["VPGB"]
+
+    # for regionalistaion
     _ma_para_keys = ["et_year"]
-    _sql_add_coef_calc = "* ma.exp_fact::float/ma_stat.exp_fact::float"
+
+    # for the fillup
     _fillup_max_dist = 100000
-    _MetaModel = MetaET
 
     def __init__(self, id, **kwargs):
         super().__init__(id, **kwargs)
