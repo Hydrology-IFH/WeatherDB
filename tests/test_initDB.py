@@ -102,7 +102,7 @@ class InitDBTestCases(BaseTestCases):
 
     def check_update_ma(self):
         for stats in self.broker.stations:
-            for stat in stats.get_stations(stids=self.test_stids):
+            for stat in stats.get_stations(stids=self.test_stids, skip_missing_stids=True):
                 mas = stat.get_ma()
                 with self.subTest(stat=stat, mas=mas):
                     self.assertTrue(

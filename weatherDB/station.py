@@ -19,7 +19,6 @@ import pandas as pd
 from sqlalchemy.exc import OperationalError
 from sqlalchemy import text as sqltxt
 import sqlalchemy as sa
-from sqlalchemy.orm import Session
 import rasterio as rio
 import rasterio.mask
 from shapely.geometry import MultiLineString
@@ -381,10 +380,10 @@ class StationBase:
     def _ma_raster_bands(self):
         """Get all the raster bands of the stations multi annual raster file."""
         return [self._ma_raster_conf[key]
-                for key in self._ma_raster_band_keys]
+                for key in self._ma_raster_band_conf_keys]
 
     @property
-    def _ma_raster_band_keys(self):
+    def _ma_raster_band_conf_keys(self):
         """Get the raster band keys for the station. E.g. P_WIHJ"""
         return [key
                 for key in self._ma_raster_conf.keys()
@@ -786,20 +785,24 @@ class StationBase:
         # write to stations_raster_values table
         if new_mas is not None and any(new_mas):
             # multi annual values were found
-            with Session(db_engine) as session:
-                session.execute(
-                    sa.orm.insert(StationsRasterValues)\
-                        .on_conflict_do_update(
-                            index_elements=["station_id", "raster_key", "parameter"],
-                        ),
-                    [dict(station_id=self.id,
-                          raster_key=self._ma_raster_key,
-                          parameter=key,
-                          value=val,
-                          distance=dist)
-                     for key, val in zip(self._ma_raster_band_keys,
-                                         new_mas.items())]
-                )
+            with db_engine.session() as session:
+                stmnt = sa.dialects.postgresql\
+                    .insert(StationsRasterValues)\
+                    .values([
+                        dict(station_id=self.id,
+                             raster_key=self._ma_raster_key,
+                             parameter=key,
+                             value=float(val),
+                             distance=dist)
+                        for key, val in zip(self._ma_para_keys,
+                                            new_mas)])
+                stmnt = stmnt\
+                    .on_conflict_do_update(
+                        index_elements=["station_id", "raster_key", "parameter"],
+                        set_=dict(value=stmnt.excluded.value,
+                                  distance=stmnt.excluded.distance)
+                    )
+                session.execute(stmnt)
                 session.commit()
 
         elif drop_when_error:
@@ -1998,7 +2001,7 @@ class StationBase:
 
         Returns
         -------
-        list or number
+        list or None
             The corresponding multi annual value.
             For T en ET the yearly value is returned.
             For N the winter and summer half yearly sum is returned in tuple.
@@ -2009,22 +2012,25 @@ class StationBase:
             .where((StationsRasterValues.station_id == self.id) &
                    (StationsRasterValues.raster_key == self._ma_raster_key) &
                    StationsRasterValues.parameter.in_(self._ma_para_keys))
-        with Session(db_engine) as session:
+        with db_engine.session() as session:
             res = session.execute(sql_select).all()
 
         # Update ma values if no result returned
         if res is None:
             self.update_ma()
-            with Session(db_engine) as session:
+            with db_engine.session() as session:
                 res = session.execute(sql_select).all()
 
-        if res[0] is None:
+        if len(res) == 0:
             return None
         else:
-            res_dict = dict(zip(res))
-            return [res_dict[col] for col in self._ma_para_keys]
+            res_dict = dict(res)
+            return [res_dict[col]*float(
+                        self._ma_raster_conf.get(f"factor_{col}", 1))
+                    for col in self._ma_para_keys]
 
     def get_ma(self):
+        """Wrapper for `get_multi_annual`."""
         return self.get_multi_annual()
 
     def _get_raster_value(self, raster_conf, bands="all", dist=0):
@@ -2048,7 +2054,7 @@ class StationBase:
 
         Returns
         -------
-        int or float
+        list of int or float
             The rasters value at the stations position
 
         Raises
