@@ -111,6 +111,8 @@ class StationBase:
     # ------------------
     # the base folder on the CDC-FTP server
     _ftp_folder_base = ["None"]
+    # a regex prefix to the default search regex to find the zip files on the CDC-FTP server
+    _ftp_zip_regex_prefix = None
     # The name of the date column on the CDC server
     _cdc_date_col = None
     # the names of the CDC columns that get imported
@@ -1040,7 +1042,11 @@ class StationBase:
             )
 
         # filter for station
-        comp = re.compile(r".*_" + self.id_str + r"[_\.].*")
+        if self._ftp_zip_regex_prefix is not None:
+            comp = re.compile(
+                self._ftp_zip_regex_prefix + self.id_str + r"[_\.].*")
+        else:
+            comp = re.compile(r".*_" + self.id_str + r"[_\.].*")
         zipfiles_CDC = list(filter(
             lambda x: comp.match(x[0]),
             ftp_file_list
@@ -3876,8 +3882,9 @@ class StationET(StationTETBase):
 
     # cdc dwd parameters
     _ftp_folder_base = ["climate_environment/CDC/derived_germany/soil/daily/"]
+    _ftp_zip_regex_prefix = ".*_v2_"
     _cdc_date_col = "Datum"
-    _cdc_col_names_imp = ["VPGB"]
+    _cdc_col_names_imp = ["VPFAO"]
 
     # for regionalistaion
     _ma_para_keys = ["et_year"]
