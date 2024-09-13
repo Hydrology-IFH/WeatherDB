@@ -3,7 +3,7 @@ from sqlalchemy.sql import func
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
-from datetime import datetime, timedelta
+from datetime import timedelta, timezone
 from typing import Optional
 from typing_extensions import Annotated
 from geoalchemy2 import Geometry
@@ -12,13 +12,30 @@ from geoalchemy2 import Geometry
 sint = Annotated[int, 2]
 str30 = Annotated[str, 30]
 
+class UTCDateTime(sa.types.TypeDecorator):
+    impl = sa.types.DateTime
+    cache_ok = True
+
+    def process_bind_param(self, value, engine):
+        if value is None:
+            return
+        if value.utcoffset() is None:
+            raise ValueError(
+                'Got naive datetime while timezone-aware is expected'
+            )
+        return value.astimezone(timezone.utc)
+
+    def process_result_value(self, value, engine):
+        if value is not None:
+            return value.replace(tzinfo=timezone.utc)
+
 # define base class for all database tables
 class Base(DeclarativeBase):
     registry = sa.orm.registry(
         type_annotation_map={
             sint: sa.SmallInteger(),
-            datetime: sa.TIMESTAMP(),
-            float: sa.FLOAT(),
+            UTCDateTime: UTCDateTime(),
+            float: sa.Float(),
             str30: sa.CHAR(30),
         }
     )
@@ -33,19 +50,19 @@ class MetaBase(Base):
         default=True,
         server_default=sa.sql.expression.true(),
         comment=" 'Is this station a real station with own measurements or only a virtual station, to have complete timeseries for every precipitation station.")
-    raw_from: Mapped[Optional[datetime]] = mapped_column(
+    raw_from: Mapped[Optional[UTCDateTime]] = mapped_column(
         comment="The timestamp from when on own \"raw\" data is available")
-    raw_until: Mapped[Optional[datetime]] = mapped_column(
+    raw_until: Mapped[Optional[UTCDateTime]] = mapped_column(
         comment="The timestamp until when own \"raw\" data is available")
-    hist_until: Mapped[Optional[datetime]] = mapped_column(
+    hist_until: Mapped[Optional[UTCDateTime]] = mapped_column(
         comment="The timestamp until when own \"raw\" data is available")
-    filled_from: Mapped[Optional[datetime]] = mapped_column(
+    filled_from: Mapped[Optional[UTCDateTime]] = mapped_column(
         comment="The timestamp from when on filled data is available")
-    filled_until: Mapped[Optional[datetime]] = mapped_column(
+    filled_until: Mapped[Optional[UTCDateTime]] = mapped_column(
         comment="The timestamp until when filled data is available")
-    last_imp_from: Mapped[Optional[datetime]] = mapped_column(
+    last_imp_from: Mapped[Optional[UTCDateTime]] = mapped_column(
         comment="The minimal timestamp of the last import, that might not yet have been treated")
-    last_imp_until: Mapped[Optional[datetime]] = mapped_column(
+    last_imp_until: Mapped[Optional[UTCDateTime]] = mapped_column(
         comment="The maximal timestamp of the last import, that might not yet have been treated")
     last_imp_filled: Mapped[bool] = mapped_column(
         default=False,
@@ -71,9 +88,9 @@ class MetaBaseQC(Base):
         default=False,
         server_default=sa.sql.expression.false(),
         comment="Got the last import already quality checked?")
-    qc_from: Mapped[Optional[datetime]] = mapped_column(
+    qc_from: Mapped[Optional[UTCDateTime]] = mapped_column(
         comment="The timestamp from when on quality checked(\"qc\") data is available")
-    qc_until: Mapped[Optional[datetime]] = mapped_column(
+    qc_until: Mapped[Optional[UTCDateTime]] = mapped_column(
         comment="The timestamp until when quality checked(\"qc\") data is available")
     qc_droped: Mapped[Optional[float]] = mapped_column(
         comment="The percentage of droped values during the quality check")
@@ -83,15 +100,16 @@ class MetaBaseQC(Base):
 class MetaN(MetaBase, MetaBaseQC):
     __tablename__ = 'meta_n'
     __table_args__ = dict(
+        schema='public',
         comment="The Meta informations of the precipitation stations.")
 
     last_imp_corr: Mapped[bool] = mapped_column(
         default=False,
         server_default=sa.sql.expression.false(),
         comment="Got the last import already Richter corrected?")
-    corr_from: Mapped[Optional[datetime]] = mapped_column(
+    corr_from: Mapped[Optional[UTCDateTime]] = mapped_column(
         comment="The timestamp from when on corrected data is available")
-    corr_until: Mapped[Optional[datetime]] = mapped_column(
+    corr_until: Mapped[Optional[UTCDateTime]] = mapped_column(
         comment="The timestamp until when corrected data is available")
     horizon: Mapped[Optional[float]] = mapped_column(
         comment="The horizon angle in degrees, how it got defined by Richter(1995).")
@@ -110,24 +128,28 @@ class MetaN(MetaBase, MetaBaseQC):
 class MetaND(MetaBase):
     __tablename__ = 'meta_n_d'
     __table_args__ = dict(
+        schema='public',
         comment="The Meta informations of the daily precipitation stations.")
 
 
 class MetaET(MetaBase, MetaBaseQC):
     __tablename__ = 'meta_et'
     __table_args__ = dict(
+        schema='public',
         comment="The Meta informations of the evapotranspiration stations.")
 
 
 class MetaT(MetaBase, MetaBaseQC):
     __tablename__ = 'meta_t'
     __table_args__ = dict(
+        schema='public',
         comment="The Meta informations of the temperature stations.")
 
 
 class RawFiles(Base):
     __tablename__ = 'raw_files'
     __table_args__ = dict(
+        schema='public',
         comment="The files that got imported from the CDC Server.")
 
     para: Mapped[str] = mapped_column(
@@ -136,13 +158,14 @@ class RawFiles(Base):
     filepath: Mapped[str] = mapped_column(
         primary_key=True,
         comment="The filepath on the CDC Server")
-    modtime: Mapped[datetime] = mapped_column(
+    modtime: Mapped[UTCDateTime] = mapped_column(
         comment="The modification time on the CDC Server of the coresponding file")
 
 
 class DropedStations(Base):
     __tablename__ = 'droped_stations'
     __table_args__ = dict(
+        schema='public',
         comment="This table is there to save the station ids that got droped, so they wont GET recreated")
 
     station_id: Mapped[int] = mapped_column(
@@ -155,7 +178,7 @@ class DropedStations(Base):
     why: Mapped[str] = mapped_column(
         sa.Text(),
         comment="The reason why the station got droped")
-    timestamp: Mapped[datetime] = mapped_column(
+    timestamp: Mapped[UTCDateTime] = mapped_column(
         server_default=func.now(),
         comment="The timestamp when the station got droped")
 
@@ -163,21 +186,23 @@ class DropedStations(Base):
 class ParaVariables(Base):
     __tablename__ = 'para_variables'
     __table_args__ = dict(
+        schema='public',
         comment="This table is there to save specific variables that are nescesary for the functioning of the scripts")
 
     para: Mapped[str] = mapped_column(
         sa.String(3),
         primary_key=True,
         comment="The parameter for which the variables are valid. e.g. n/n_d/t/et.")
-    start_tstp_last_imp: Mapped[Optional[datetime]] = mapped_column(
+    start_tstp_last_imp: Mapped[Optional[UTCDateTime]] = mapped_column(
         comment="At what timestamp did the last complete import start. This is then the maximum timestamp for which to expand the timeseries to.")
-    max_tstp_last_imp: Mapped[Optional[datetime]] = mapped_column(
+    max_tstp_last_imp: Mapped[Optional[UTCDateTime]] = mapped_column(
         comment="The maximal timestamp of the last imports raw data of all the timeseries")
 
 
 class RichterValues(Base):
     __tablename__ = 'richter_values'
     __table_args__ = dict(
+        schema='public',
         comment="The Richter values for the equation.")
 
     precipitation_typ: Mapped[str] = mapped_column(
@@ -205,6 +230,7 @@ class RichterValues(Base):
 class StationsRasterValues(Base):
     __tablename__ = 'stations_raster_values'
     __table_args__ = dict(
+        schema='public',
         comment="The multi annual climate raster values for each station.")
 
     station_id: Mapped[int] = mapped_column(
@@ -225,8 +251,9 @@ class StationsRasterValues(Base):
 class NeededDownloadTime(Base):
     __tablename__ = 'needed_download_time'
     __table_args__ = dict(
+        schema='public',
         comment="Saves the time needed to save the timeseries. This helps predicting download time")
-    timestamp: Mapped[datetime] = mapped_column(
+    timestamp: Mapped[UTCDateTime] = mapped_column(
         server_default=func.now(),
         primary_key=True,
         comment="The timestamp when the download hapend.")
@@ -251,6 +278,7 @@ class NeededDownloadTime(Base):
 class Settings(Base):
     __tablename__ = 'settings'
     __table_args__ = dict(
+        schema='public',
         comment="This table saves settings values for the script-databse connection. E.G. the latest package version that updated the database.")
     key: Mapped[str] = mapped_column(
         sa.String(20),

@@ -91,14 +91,15 @@ class DBEngine:
         con_sect_key = f"database:{con_key}"
         con_section = config[con_sect_key]
         user, pwd = config.get_db_credentials()
-        self._engine = sqlalchemy.create_engine(URL.create(
-            drivername="postgresql+psycopg2",
-            username=user,
-            password=pwd,
-            host=con_section["HOST"],
-            database=con_section["DATABASE"],
-            port=con_section["PORT"]
-            ))
+        self._engine = sqlalchemy.create_engine(
+            URL.create(
+                drivername="postgresql+psycopg2",
+                username=user,
+                password=pwd,
+                host=con_section["HOST"],
+                database=con_section["DATABASE"],
+                port=con_section["PORT"]),
+            connect_args={"options": "-c timezone=utc"})
         self._check_is_superuser()
 
         return self._engine
