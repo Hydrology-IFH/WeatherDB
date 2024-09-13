@@ -58,7 +58,7 @@ def _dwd_date_parser(date_ser):
         The date as datetime.
 
     """
-    if type(date_ser) is not pd.Series:
+    if not isinstance(date_ser, pd.Series):
         raise ValueError("date_str must be a pd.Series of str")
 
     # test if list or single str
@@ -94,10 +94,10 @@ def get_ftp_file_list(ftp_conn, ftp_folders):
         The tuple consists of (filepath, modification date).
     """
     # check types
-    if type(ftp_folders) is str:
+    if isinstance(ftp_folders, str):
         ftp_folders = [ftp_folders]
     for i, ftp_folder in enumerate(ftp_folders):
-        if issubclass(type(ftp_folder), pathlib.Path):
+        if isinstance(ftp_folder, pathlib.Path):
             ftp_folders[i] = ftp_folder.as_posix()
 
     try:
@@ -132,9 +132,7 @@ def get_dwd_file(zip_filepath):
     ----------
     zip_filepath : str
         Path to the file on the server. e.g.
-
         - "/climate_environment/CDC/observations_germany/climate/10_minutes/air_temperature/recent/10minutenwerte_TU_00044_akt.zip"
-
         - "/climate_environment/CDC/derived_germany/soil/daily/historical/derived_germany_soil_daily_historical_73.txt.gz"
 
     Returns

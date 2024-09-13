@@ -34,9 +34,9 @@ class TimestampPeriod(object):
             The default is "UTC".
         """
         # check if input is a date or a timestamp
-        if ((type(start) == datetime.date and type(end) == datetime.date) or
-            (type(start) == str and not self._REGEX_HAS_TIME.match(start) and
-             type(end) == str and not self._REGEX_HAS_TIME.match(end))):
+        if ((isinstance(start, datetime.date) and isinstance(end, datetime.date)) or
+            (isinstance(start, str) and not self._REGEX_HAS_TIME.match(start) and
+             isinstance(end, str) and not self._REGEX_HAS_TIME.match(end))):
             self.is_date = True
         else:
             self.is_date = False
@@ -44,7 +44,7 @@ class TimestampPeriod(object):
         # convert to correct timestamp format
         period = list([start, end])
         for i, tstp in enumerate(period):
-            if type(tstp) != Timestamp:
+            if isinstance(tstp, Timestamp):
                 period[i] = Timestamp(tstp)
 
             # check timezone
@@ -60,7 +60,7 @@ class TimestampPeriod(object):
 
     @staticmethod
     def _check_period(period):
-        if type(period) != TimestampPeriod:
+        if isinstance(period, TimestampPeriod):
             period = TimestampPeriod(*period)
         return period
 
@@ -111,7 +111,7 @@ class TimestampPeriod(object):
             comp_list = [val + td
                 for val, td in zip([self[i], other[i]],
                                    [tdsself[i], tdsother[i]])
-                if type(val) == Timestamp]
+                if isinstance(val, Timestamp)]
             if len(comp_list) > 0:
                 period[i] = self._COMPARE[how][i](comp_list)
 
@@ -124,7 +124,7 @@ class TimestampPeriod(object):
             # if both were data periods, then the result should also be a date period
             return TimestampPeriod(
                 *[val.date() for val in period
-                             if type(val) == Timestamp])
+                             if isinstance(val, Timestamp)])
         else:
             return TimestampPeriod(*period)
 

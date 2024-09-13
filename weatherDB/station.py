@@ -190,7 +190,7 @@ class StationBase:
         ValueError
             If the given kind is not a string.
         """
-        if type(kind) is not str:
+        if not isinstance(kind, str):
             raise ValueError("The given kind is not a string.")
 
         if kind == "best":
@@ -244,7 +244,7 @@ class StationBase:
             returns a list of strings of valid kinds
         """
         # check kinds
-        if type(kinds) is str:
+        if isinstance(kinds, str):
             kinds = [kinds]
         else:
             kinds = kinds.copy() # because else the original variable is changed
@@ -305,7 +305,7 @@ class StationBase:
                     para_long=self._para_long, stid=self.id, kinds="', '".join(kinds)))
 
         # get period if None providen
-        if type(period) is not TimestampPeriod:
+        if not isinstance(period, TimestampPeriod):
             period = TimestampPeriod(*period)
         else:
             period = period.copy()
@@ -808,7 +808,7 @@ class StationBase:
     def _update_last_imp_period_meta(self, period):
         """Update the meta timestamps for a new import."""
         #check period format
-        if type(period) is not TimestampPeriod:
+        if not isinstance(period, TimestampPeriod):
             period = TimestampPeriod(*period)
 
         # update meta file
@@ -1201,7 +1201,7 @@ class StationBase:
         )
 
         # make condition for period
-        if type(period) is not TimestampPeriod:
+        if not isinstance(period, TimestampPeriod):
                 period = TimestampPeriod(*period)
         if not period.is_empty():
             sql_format_dict.update(dict(
@@ -1501,10 +1501,10 @@ class StationBase:
             a pandas Series with the information names as index and the explanation as values.
         """
         # check which information to get
-        if (type(infos) is str) and (infos == "all"):
+        if isinstance(infos, str) and (infos == "all"):
             col_clause = ""
         else:
-            if type(infos) is str:
+            if isinstance(infos, str):
                 infos = [infos]
             col_clause =" AND column_name IN ('{cols}')".format(
                 cols="', '".join(list(infos)))
@@ -1544,10 +1544,9 @@ class StationBase:
             If only one information is asked for, then it is returned as single value and not as subdict.
         """
         # check which information to get
-        if (type(infos) is str) and (infos == "all"):
-            cols = "*"
+        if isinstance(infos, str) and (infos == "all"):
         else:
-            if type(infos) is str:
+            if isinstance(infos, str):
                 infos = [infos]
             cols = ", ".join(list(infos))
 
@@ -1597,10 +1596,10 @@ class StationBase:
         utm=""
         trans_fun=""
         epsg=""
-        if type(crs) is str:
+        if isinstance(crs, str):
             if crs.lower() == "utm":
                 utm="_utm"
-        elif type(crs) is int:
+        elif isinstance(crs, int):
             trans_fun="ST_TRANSFORM("
             epsg=", {0})".format(crs)
         # get the geom
@@ -1682,9 +1681,9 @@ class StationBase:
         period = self._check_period(
             period, nas_allowed=not crop_period, kinds=[kind])
 
-        if type(weeks) is not list:
+        if not isinstance(weeks, list):
             weeks = [weeks]
-        if not all([type(el) is int for el in weeks]):
+        if not all([isinstance(el, int) for el in weeks]):
             raise ValueError(
                 "Not all the elements of the weeks input parameters where integers.")
 
@@ -2316,7 +2315,7 @@ class StationBase:
             df["filled_by"] = df["filled_by"].astype("Int16")
 
         # change index to pandas DatetimeIndex if necessary
-        if type(df.index) is not pd.DatetimeIndex:
+        if not isinstance(df.index, pd.DatetimeIndex):
             df.set_index(pd.DatetimeIndex(df.index), inplace=True)
 
         # set Timezone to UTC
@@ -2413,7 +2412,7 @@ class StationBase:
             index_col="timestamp")
 
         # change index to pandas DatetimeIndex if necessary
-        if type(df.index) is not pd.DatetimeIndex:
+        if not isinstance(df.index, pd.DatetimeIndex):
             df.set_index(pd.DatetimeIndex(df.index), inplace=True)
 
         return df
@@ -3258,7 +3257,7 @@ class StationN(StationNBase):
             If no richter class was found for this station.
         """
         # check if period is given
-        if type(period) is not TimestampPeriod:
+        if not isinstance(period, TimestampPeriod):
             period = TimestampPeriod(*period)
         period_in = period.copy()
         period = self._check_period(
@@ -3519,7 +3518,7 @@ class StationN(StationNBase):
         super_ret = super().fillup(period=period, **kwargs)
 
         # check the period
-        if type(period) is not TimestampPeriod:
+        if not isinstance(period, TimestampPeriod):
             period= TimestampPeriod(*period)
 
         # update difference to dwd_grid and hyras
@@ -3889,10 +3888,10 @@ class GroupStation(object):
         self.paras_available = [stat._para for stat in self.station_parts]
 
     def _check_paras(self, paras):
-        if type(paras) is str and paras != "all":
+        if isinstance(paras, str) and paras != "all":
             paras = [paras,]
 
-        if (type(paras) is str) and (paras == "all"):
+        if isinstance(paras, str) and (paras == "all"):
             return self.paras_available
         else:
             paras_new = []
@@ -3907,7 +3906,7 @@ class GroupStation(object):
     @staticmethod
     def _check_kinds(kinds):
         # type cast kinds
-        if type(kinds) is str:
+        if isinstance(kinds, str):
             kinds = [kinds]
         else:
             kinds = kinds.copy()
@@ -4043,7 +4042,7 @@ class GroupStation(object):
                 # check if min and max for temperature should get added
                 use_kinds = kinds.copy()
                 if stat._para == "t":
-                    if type(use_kinds) is str:
+                    if isinstance(use_kinds, str):
                         use_kinds=[use_kinds]
                     if "best" in use_kinds:
                         use_kinds.insert(use_kinds.index("best"), "filled")
@@ -4080,7 +4079,7 @@ class GroupStation(object):
             df_all = dfs[0]
         else:
             raise ValueError("No timeserie was found for {paras} and Station {stid}".format(
-                paras=", ".join(paras) is type(paras),
+                paras=", ".join(paras),
                 stid=self.id))
 
         return df_all
@@ -4373,7 +4372,7 @@ class GroupStation(object):
                 .replace("POINT(", "").replace(")", "")\
                 .split(" ")
         name = self.get_name() + " (ID: {stid})".format(stid=self.id)
-        do_zip = type(dir) is zipfile.ZipFile
+        do_zip = isinstance(dir, zipfile.ZipFile)
 
         for para in paras:
             # get the timeserie
@@ -4412,12 +4411,12 @@ class GroupStation(object):
 
             # special operations for et
             if para == "et" and r_r0 is not None:
-                if type(r_r0) is int or type(r_r0) is float:
+                if isinstance(r_r0, int) or isinstance(r_r0, float):
                     df = df.join(
                         pd.Series([r_r0]*len(df), name="R/R0", index=df.index))
-                elif type(r_r0) is pd.Series:
+                elif isinstance(r_r0, pd.Series):
                     df = df.join(r_r0.rename("R_R0"))
-                elif type(r_r0) is list:
+                elif isinstance(r_r0, list):
                     df = df.join(
                         pd.Series(r_r0, name="R/R0", index=df.index))
 
@@ -4481,7 +4480,7 @@ class GroupStation(object):
             If the directory is not valid. E.G. it is a file path.
         """
         # check types
-        if type(dir) is str:
+        if isinstance(dir, str):
             dir = Path(dir)
 
         # check directory
@@ -4521,18 +4520,18 @@ class GroupStation(object):
             A DataFrame with 5 columns (Jahr, Monat, Tag, Stunde, Minute).
         """
         # if dates is not a list make it a list
-        if type(dates) is datetime or type(dates) is pd.Timestamp:
+        if isinstance(dates, datetime) or isinstance(dates, pd.Timestamp):
             dates = pd.DatetimeIndex([dates])
             index = range(0, len(dates))
 
-        elif type(dates) is pd.DatetimeIndex:
+        elif isinstance(dates, pd.DatetimeIndex):
             index = dates
         else:
             index = range(0, len(dates))
 
         # check if date is datetime or Timestamp:
-        if not (type(dates[0]) is pd.Timestamp or
-                type(dates[0]) is datetime):
+        if not (isinstance(dates[0], pd.Timestamp) or
+                isinstance(dates[0], datetime)):
             raise ValueError("Error: The given date is not in a datetime or " +
                             "Timestamp format.")
 
