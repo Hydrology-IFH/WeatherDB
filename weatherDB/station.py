@@ -35,7 +35,7 @@ from .utils.dwd import get_cdc_file_list, dwd_id_to_str, get_dwd_file
 from .utils.TimestampPeriod import TimestampPeriod
 from .utils.geometry import polar_line, raster2points
 from .config import config
-from .db.models import  StationsRasterValues
+from .db.models import StationsRasterValues, MetaBase, MetaN, MetaND, MetaT, MetaET
 
 # Variables
 MIN_TSTP = datetime.strptime("19940101", "%Y%m%d").replace(tzinfo=timezone.utc)
@@ -116,6 +116,7 @@ class StationBase:
     _agg_fun = "sum" # the sql aggregating function to use
     _filled_by_n = 1 # How many neighboring stations are used for the fillup procedure
     _fillup_max_dist = None # The maximal distance in meters to use to get neighbor stations for the fillup. Only relevant if multiple stations are considered for fillup.
+    _MetaModel = MetaBase # The sqlalchemy model of the meta table
 
     def __init__(self, id, _skip_meta_check=False):
         """Create a Station object.
@@ -1547,22 +1548,20 @@ class StationBase:
         """
         # check which information to get
         if isinstance(infos, str) and (infos == "all"):
+            cols = self._MetaModel.__table__.columns
         else:
             if isinstance(infos, str):
                 infos = [infos]
-            cols = ", ".join(list(infos))
+            cols = [self._MetaModel.__table__.columns[col]
+                    for col in infos]
 
         # create query
-        sql = """
-            SELECT {cols} FROM meta_{para} WHERE station_id={stid}
-        """.format(
-            stid=self.id, para=self._para,
-            cols=cols)
+        stmnt = sa.select(*cols).where(self._MetaModel.station_id == self.id)
 
-        with db_engine.connect() as con:
-            res = con.execute(sqltxt(sql))
-        keys = res.keys()
-        values = [val.replace(tzinfo=timezone.utc) if type(val) is datetime else val for val in res.first()]
+        with db_engine.session() as con:
+            res = con.execute(stmnt)
+            keys = res.keys()
+            values = res.fetchone()
         if len(keys)==1:
             return values[0]
         else:
@@ -2871,6 +2870,7 @@ class StationN(StationNBase):
     _unit = "mm/10min"
     _valid_kinds = ["raw", "qn", "qc", "corr", "filled", "filled_by"]
     _best_kind = "corr"
+    _MetaModel = MetaN
 
     def __init__(self, id, **kwargs):
         super().__init__(id, **kwargs)
@@ -3629,6 +3629,7 @@ class StationND(StationNBase, StationCanVirtualBase):
     _unit = "mm/day"
     _valid_kinds = ["raw", "filled", "filled_by"]
     _best_kind = "filled"
+    _MetaModel = MetaND
 
     # methods from the base class that should not be active for this class
     quality_check = property(doc='(!) Disallowed inherited')
@@ -3687,6 +3688,7 @@ class StationT(StationTETBase):
                     "filled", "filled_min", "filled_max", "filled_by"]
     _filled_by_n = 5
     _fillup_max_dist = 100e3
+    _MetaModel = MetaT
 
     def __init__(self, id, **kwargs):
         super().__init__(id, **kwargs)
@@ -3798,6 +3800,7 @@ class StationET(StationTETBase):
     _ma_para_keys = ["et_year"]
     _sql_add_coef_calc = "* ma.exp_fact::float/ma_stat.exp_fact::float"
     _fillup_max_dist = 100000
+    _MetaModel = MetaET
 
     def __init__(self, id, **kwargs):
         super().__init__(id, **kwargs)
