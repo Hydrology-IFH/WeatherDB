@@ -5,7 +5,6 @@ import configparser
 from pathlib import Path
 import keyring
 from getpass import getpass
-import shutil
 import sqlalchemy as sa
 import textwrap
 import re
