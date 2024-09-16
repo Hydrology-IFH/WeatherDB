@@ -24,7 +24,8 @@ import textwrap
 from .db.connections import db_engine
 from .utils.dwd import get_dwd_meta, get_cdc_file_list
 from .utils import TimestampPeriod
-from .station import (StationBase,
+from .station.StationBases import StationBase
+from .station import (
     StationND,  StationN,
     StationT, StationET,
     GroupStation)
@@ -1574,4 +1575,4 @@ class GroupStations(object):
                 **kwargs)
 
 # clean station
-del StationN, StationND, StationT, StationET, GroupStation, StationBase
+del StationN, StationND, StationT, StationET, GroupStation, StationBases
