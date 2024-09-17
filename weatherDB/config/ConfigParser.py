@@ -301,9 +301,9 @@ class ConfigParser(configparser.ConfigParser):
         # ask for the user config file
         if user_config_file == "ask":
             try:
-                from tkinter import Tcl
+                from tkinter import Tk
                 from tkinter import filedialog
-                tkroot = Tcl()
+                tkroot = Tk()
                 tkroot.attributes('-topmost', True)
                 tkroot.iconify()
                 user_config_file = filedialog.asksaveasfilename(
@@ -317,7 +317,11 @@ class ConfigParser(configparser.ConfigParser):
                 tkroot.destroy()
             except ImportError:
                 while True:
-                    user_config_file = Path(input("Please enter the path to the user config file: "))
+                    user_input = input("Please enter the path to the user config file: ")
+                    if user_input.lower() in ["exit", "quit"] or user_input == "":
+                        print("Quiting the user config creation.")
+                        return
+                    user_config_file = Path(user_input)
                     if user_config_file.parent.exists():
                         if user_config_file.suffix != ".ini":
                             print("The file has to be an INI file.")
