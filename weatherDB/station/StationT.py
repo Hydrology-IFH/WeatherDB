@@ -7,9 +7,9 @@ from ..utils.dwd import dwd_id_to_str
 from ..db.models import MetaT
 from .StationBases import StationTETBase
 
+# set settings
+# ############
 __all__ = ["StationT"]
-
-# get log
 log = logging.getLogger(__name__)
 
 # class definition

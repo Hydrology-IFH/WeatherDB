@@ -11,9 +11,9 @@ from ..utils.TimestampPeriod import TimestampPeriod
 from .StationBases import StationBase, AGG_TO
 from . import StationN, StationT, StationET
 
+# set settings
+# ############
 __all__ = ["GroupStation"]
-
-# get log
 log = logging.getLogger(__name__)
 
 # class definition

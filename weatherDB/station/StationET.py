@@ -6,9 +6,9 @@ from ..db.connections import db_engine
 from ..db.models import MetaET
 from .StationBases import StationTETBase
 
+# set settings
+# ############
 __all__ = ["StationET"]
-
-# get log
 log = logging.getLogger(__name__)
 
 # class definition

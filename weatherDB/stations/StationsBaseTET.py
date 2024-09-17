@@ -1,0 +1,30 @@
+# libraries
+import logging
+
+from ..db.connections import db_engine
+from .StationsBase import StationsBase
+from .StationsN import StationsN
+
+# set settings
+# ############
+__all__ = ["StationsTETBase"]
+log = logging.getLogger(__name__)
+
+# class definition
+##################
+class StationsTETBase(StationsBase):
+    @db_engine.deco_update_privilege
+    def fillup(self, only_real=False, stids="all"):
+        # create virtual stations if necessary
+        if not only_real:
+            meta = self.get_meta(
+                infos=["Station_id"], only_real=False)
+            meta_n = StationsN().get_meta(
+                infos=["Station_id"], only_real=False)
+            stids_missing = set(meta_n.index.values) - set(meta.index.values)
+            if stids != "all":
+                stids_missing = set(stids).intersection(stids_missing)
+            for stid in stids_missing:
+                self._StationClass(stid) # this creates the virtual station
+
+        super().fillup(only_real=only_real,stids=stids)

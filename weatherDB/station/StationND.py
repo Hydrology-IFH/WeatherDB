@@ -7,9 +7,9 @@ from ..utils.dwd import dwd_id_to_str
 from ..db.models import MetaND
 from .StationBases import StationNBase, StationCanVirtualBase
 
+# set settings
+# ############
 __all__ = ["StationND"]
-
-# get log
 log = logging.getLogger(__name__)
 
 # class definition

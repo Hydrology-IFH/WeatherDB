@@ -24,7 +24,9 @@ from ..config import config
 from ..db.models import StationsRasterValues, MetaBase
 from .constants import AGG_TO, MIN_TSTP
 
-# get log
+# set settings
+# ############
+__all__ = ["StationBase"]
 log = logging.getLogger(__name__)
 
 # class definitions

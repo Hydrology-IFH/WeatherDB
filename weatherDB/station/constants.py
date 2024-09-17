@@ -23,3 +23,5 @@ AGG_TO = {
     "decade": {
         "split":{"n": 1, "t":1, "et": 1}}
     }
+
+__all__ = ["MIN_TSTP", "AGG_TO"]

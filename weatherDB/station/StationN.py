@@ -23,9 +23,9 @@ from .constants import MIN_TSTP
 from .StationND import StationND
 from .StationT import StationT
 
+# set settings
+# ############
 __all__ = ["StationN"]
-
-# get log
 log = logging.getLogger(__name__)
 
 # variables
