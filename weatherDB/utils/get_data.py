@@ -102,7 +102,8 @@ def download_ma_rasters(which="all", overwrite=None, update_user_config=False):
                     pb.widgets.Bar(), " ",
                     pb.widgets.Percentage(),
                     pb.widgets.ETA()],
-                line_breaks=False
+                line_breaks=False,
+                redirect_stdout=True
                 ).start()
             md5 = hashlib.md5()
             with open(file_path, "wb+") as f:

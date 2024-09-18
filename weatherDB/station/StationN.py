@@ -116,7 +116,7 @@ class StationN(StationNBase):
                          (ts_10min_d.raw >= 10*{decim} AND ts_10min_d.raw >= (ts_d.raw*2)))
             """.format(**sql_format_dict)
         else:
-            log.warn((
+            log.error((
                 "For the {para_long} station with ID {stid} there is no timeserie with daily values. " +
                 "Therefor the quality check for daily values equal to 0 is not done.\n" +
                 "Please consider updating the daily stations with:\n" +
