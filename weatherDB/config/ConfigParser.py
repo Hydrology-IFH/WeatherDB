@@ -322,6 +322,11 @@ class ConfigParser(configparser.ConfigParser):
                         print("Quiting the user config creation.")
                         return
                     user_config_file = Path(user_input)
+                    user_input = input("Please enter the path to the user config file: ")
+                    if user_input.lower() in ["exit", "quit"] or user_input == "":
+                        print("Quiting the user config creation.")
+                        return
+                    user_config_file = Path(user_input)
                     if user_config_file.parent.exists():
                         if user_config_file.suffix != ".ini":
                             print("The file has to be an INI file.")
