@@ -1249,6 +1249,11 @@ class StationBase:
             raise ValueError(
                 "There were too many multi annual columns selected. The fillup method is only implemented for yearly or half yearly regionalisations")
 
+        # raster stats cols
+        sql_format_dict["rast_val_cols"] = ", ".join(
+            [f"avg(value) FILTER (WHERE parameter='p_wihj') AS \"{col}\""
+             for col in self._ma_para_keys])
+
         # check if filled_by column is ARRAY or smallint
         if self._filled_by_n>1:
             sql_array_init = "ARRAY[{0}]".format(
@@ -1327,17 +1332,22 @@ class StationBase:
                     WHERE "filled" IS NULL;
                     FOR i IN (
                         WITH stat_row AS (
-                            SELECT * FROM meta_{para} WHERE station_id={stid})
+                                SELECT * FROM meta_{para} WHERE station_id={stid}),
+                            rast_vals as (
+                                SELECT station_id, {rast_val_cols}
+                                FROM stations_raster_values
+                                GROUP BY station_id
+                            )
                         SELECT meta.station_id,
                             meta.raw_from, meta.raw_until,
                             meta.station_id || '_{para}' AS tablename,
                             {coef_calc}{add_meta_col}
                         FROM meta_{para} meta
-                        LEFT JOIN stations_raster_values ma_other
+                        LEFT JOIN rast_vals ma_other
                             ON ma_other.station_id=meta.station_id
                         LEFT JOIN (SELECT {ma_cols}
-                                FROM stations_raster_values
-                                WHERE station_id = {stid}) ma_stat
+                                   FROM rast_vals
+                                   WHERE station_id = {stid}) ma_stat
                             ON 1=1
                         WHERE meta.station_id != {stid}
                             AND meta.station_id || '_{para}' IN (
