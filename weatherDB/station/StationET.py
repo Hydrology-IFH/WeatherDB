@@ -27,7 +27,7 @@ class StationET(StationTETBase):
     _ftp_folder_base = ["climate_environment/CDC/derived_germany/soil/daily/"]
     _ftp_zip_regex_prefix = ".*_v2_"
     _cdc_date_col = "Datum"
-    _cdc_col_names_imp = ["VPFAO"]
+    _cdc_col_names_imp = ["VPGFAO"]
 
     # for regionalistaion
     _ma_para_keys = ["et_year"]

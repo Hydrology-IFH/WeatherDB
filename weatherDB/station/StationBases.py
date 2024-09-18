@@ -1017,10 +1017,11 @@ class StationBase:
                         "', '".join(zipfiles_CDC.index.to_list())
                         + "'",
                     para=self._para)
-            zipfiles_DB = pd.read_sql(
-                sqltxt(sql_db_modtimes),
-                con=db_engine.engine
-            ).set_index("filepath")
+            with db_engine.connect() as con:
+                zipfiles_DB = pd.read_sql(
+                    sqltxt(sql_db_modtimes),
+                    con=con
+                ).set_index("filepath")
 
             # check for updated files
             zipfiles = zipfiles_CDC.join(
@@ -1036,7 +1037,7 @@ class StationBase:
         if len(zipfiles) == 0:
             return None
         else:
-            return zipfiles  # .index.to_list()
+            return zipfiles
 
     def _download_raw(self, zipfiles):
         # download raw data
@@ -1822,9 +1823,9 @@ class StationBase:
                 WHERE "{kind}" is not NULL
             """.format(stid=self.id, kind=kind, para=self._para)
             with db_engine.connect() as con:
-                respond = con.execute(sqltxt(sql))
+                respond = con.execute(sqltxt(sql)).first()
 
-            return TimestampPeriod(*respond.first())
+            return TimestampPeriod(*respond)
         else:
             return TimestampPeriod(None, None)
 

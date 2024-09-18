@@ -12,7 +12,7 @@ services:
   db:
     environment:
       POSTGRES_DB: weatherdb_test
-    volumes: !reset null
+    volumes: !reset []
 
 
 # start with `docker compose -f docker-compose.yaml -f docker-compose_test.yaml up --build`

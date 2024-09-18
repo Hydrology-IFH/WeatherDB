@@ -44,11 +44,11 @@ class TimestampPeriod(object):
         # convert to correct timestamp format
         period = list([start, end])
         for i, tstp in enumerate(period):
-            if isinstance(tstp, Timestamp):
+            if not isinstance(tstp, Timestamp):
                 period[i] = Timestamp(tstp)
 
             # check timezone
-            self.tzinfo=tzinfo
+            self.tzinfo = tzinfo
             if tzinfo is not None:
                 if period[i].tzinfo is None:
                     period[i] = period[i].tz_localize(tzinfo)

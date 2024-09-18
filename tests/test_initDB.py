@@ -26,6 +26,7 @@ class InitDBTestCases(BaseTestCases):
             cls.empty_db()
             cls.broker.create_db_schema(if_exists="DROP")
         else:
+            cls.broker.create_db_schema(if_exists="IGNORE")
             cls.log.debug("Working with previous database state.")
 
     def run(self, result=None):
@@ -110,7 +111,7 @@ class InitDBTestCases(BaseTestCases):
                         msg=f"Station {stat.id} of {stat._para_long} Station has no multi annual data.")
 
     def check_update_raw(self):
-        from weatherDB.station import StationCanVirtualBase
+        from weatherDB.station.StationBases import StationCanVirtualBase
         for stats in self.broker.stations:
             # check for existing timeseries table
             inspect = sa.inspect(self.db_engine.engine)
