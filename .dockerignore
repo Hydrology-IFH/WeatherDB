@@ -1,5 +1,6 @@
 __pycache__
 .git
+.vscode
 
 # Ignore the created distribution files
 build

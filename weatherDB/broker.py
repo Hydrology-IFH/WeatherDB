@@ -309,9 +309,9 @@ class Broker(object):
                 "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
                 ).fetchall()
             existing_tables = [table[0] for table in res]
-            problem_tables = [table for table in Base.metadata.tables
-                                    if table in existing_tables]
-
+            problem_tables = [table.name
+                              for table in Base.metadata.tables.values()
+                              if table.name in existing_tables]
         if len(problem_tables)>0:
             print("The following tables already exist on the database:\n - " +
                   "\n - ".join([table for table in problem_tables]))

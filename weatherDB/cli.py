@@ -59,7 +59,6 @@ def richter_correct():
 def create_db_schema():
     click.echo("starting to create database schema")
     broker = weatherDB.broker.Broker()
-    print(weatherDB.__file__)
     broker.create_db_schema()
 
 @cli.command(short_help="Set the db version to the current weatherDB version to prevent recalculation of the whole database. (!!!Only use this if you're sure that the database did all the necessary updates!!!)")
