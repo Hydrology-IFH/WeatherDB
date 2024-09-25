@@ -2,9 +2,9 @@ stations
 --------
 .. module:: weatherDB.stations
 
-StationsN
+StationsP
 ^^^^^^^^^
-.. autoclass:: weatherDB.stations.StationsN
+.. autoclass:: weatherDB.stations.StationsP
 
   .. autoclasstoc::
 
@@ -20,9 +20,9 @@ StationsET
 
   .. autoclasstoc::
 
-StationsND
+StationsPD
 ^^^^^^^^^^
-.. autoclass:: weatherDB.stations.StationsND
+.. autoclass:: weatherDB.stations.StationsPD
 
   .. autoclasstoc::
 
@@ -34,7 +34,7 @@ GroupStations
 
 StationsBase...
 ^^^^^^^^^^^^^^^
-Those are the base station classes on which the real station classes above depend on. 
+Those are the base station classes on which the real station classes above depend on.
 None of them is working on its own, because the class variables are not yet set correctly.
 
 .. autoclass:: weatherDB.stations.StationsBase

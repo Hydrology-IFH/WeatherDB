@@ -1,15 +1,32 @@
 import sqlalchemy as sa
 from sqlalchemy.sql import func
+from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy.orm import Mapped
-from sqlalchemy.orm import mapped_column
+from typing_extensions import Annotated
 from datetime import timedelta, timezone
 from typing import Optional
-from typing_extensions import Annotated
 from geoalchemy2 import Geometry
+
+__all__ = [
+    "MetaP",
+    "MetaPD",
+    "MetaET",
+    "MetaT",
+    "RawFiles",
+    "DropedStations",
+    "ParameterVariables",
+    "RichterValues",
+    "StationMATimeserie",
+    "StationMARaster",
+    "NeededDownloadTime",
+    "Settings"
+]
+
 
 # define custom types
 sint = Annotated[int, 2]
+str3 = Annotated[str, 3]
+str7 = Annotated[str, 7]
 str30 = Annotated[str, 30]
 
 class UTCDateTime(sa.types.TypeDecorator):
@@ -30,17 +47,21 @@ class UTCDateTime(sa.types.TypeDecorator):
             return value.replace(tzinfo=timezone.utc)
 
 # define base class for all database tables
-class Base(DeclarativeBase):
+class ModelBase(DeclarativeBase):
     registry = sa.orm.registry(
         type_annotation_map={
             sint: sa.SmallInteger(),
             UTCDateTime: UTCDateTime(),
             float: sa.Float(),
+            str3: sa.CHAR(3),
+            str7: sa.CHAR(7),
             str30: sa.CHAR(30),
         }
     )
 
-class MetaBase(Base):
+# define database models
+# ----------------------
+class MetaBase(ModelBase):
     __abstract__ = True
 
     station_id: Mapped[int] = mapped_column(
@@ -81,7 +102,7 @@ class MetaBase(Base):
         Geometry('POINT', 25832),
         comment="The stations location in the UTM32 coordinate reference system (EPSG:25832)")
 
-class MetaBaseQC(Base):
+class MetaBaseQC(ModelBase):
     __abstract__ = True
 
     last_imp_qc: Mapped[bool] = mapped_column(
@@ -96,9 +117,9 @@ class MetaBaseQC(Base):
         comment="The percentage of droped values during the quality check")
 
 # declare all database tables
-#----------------------------
-class MetaN(MetaBase, MetaBaseQC):
-    __tablename__ = 'meta_n'
+# ---------------------------
+class MetaP(MetaBase, MetaBaseQC):
+    __tablename__ = 'meta_p'
     __table_args__ = dict(
         schema='public',
         comment="The Meta informations of the precipitation stations.")
@@ -116,17 +137,10 @@ class MetaN(MetaBase, MetaBaseQC):
     richter_class: Mapped[Optional[str]] = mapped_column(
         sa.String(),
         comment="The Richter exposition class, that got derived from the horizon angle.")
-    quot_filled_hyras: Mapped[Optional[float]] = mapped_column(
-        comment="The quotient betwen the mean yearly value from the filled timeserie to the multi annual yearly mean HYRAS value (1991-2020)")
-    quot_filled_regnie: Mapped[Optional[float]] = mapped_column(
-        comment="The quotient betwen the mean yearly value from the filled timeserie to the multi annual yearly mean REGNIE value (1991-2020)")
-    quot_filled_dwd_grid: Mapped[Optional[float]] = mapped_column(
-        comment="The quotient betwen the mean yearly value from the filled timeserie to the multi annual yearly mean DWD grid value (1991-2020)")
-    quot_corr_filled: Mapped[Optional[float]] = mapped_column(
-        comment="The quotient betwen the mean yearly value from the Richter corrected timeserie to the mean yearly value from the filled timeserie")
 
-class MetaND(MetaBase):
-    __tablename__ = 'meta_n_d'
+
+class MetaPD(MetaBase):
+    __tablename__ = 'meta_p_d'
     __table_args__ = dict(
         schema='public',
         comment="The Meta informations of the daily precipitation stations.")
@@ -146,13 +160,13 @@ class MetaT(MetaBase, MetaBaseQC):
         comment="The Meta informations of the temperature stations.")
 
 
-class RawFiles(Base):
+class RawFiles(ModelBase):
     __tablename__ = 'raw_files'
     __table_args__ = dict(
         schema='public',
         comment="The files that got imported from the CDC Server.")
 
-    para: Mapped[str] = mapped_column(
+    parameter: Mapped[str3] = mapped_column(
         primary_key=True,
         comment="The parameter that got downloaded for this file. e.g. t, et, n_d, n")
     filepath: Mapped[str] = mapped_column(
@@ -162,7 +176,7 @@ class RawFiles(Base):
         comment="The modification time on the CDC Server of the coresponding file")
 
 
-class DropedStations(Base):
+class DropedStations(ModelBase):
     __tablename__ = 'droped_stations'
     __table_args__ = dict(
         schema='public',
@@ -171,8 +185,7 @@ class DropedStations(Base):
     station_id: Mapped[int] = mapped_column(
         primary_key=True,
         comment="The station id that got droped")
-    para: Mapped[str] = mapped_column(
-        sa.CHAR(3),
+    parameter: Mapped[str3] = mapped_column(
         primary_key=True,
         comment="The parameter (n,t,et,n_d) of the station that got droped")
     why: Mapped[str] = mapped_column(
@@ -183,14 +196,13 @@ class DropedStations(Base):
         comment="The timestamp when the station got droped")
 
 
-class ParaVariables(Base):
-    __tablename__ = 'para_variables'
+class ParameterVariables(ModelBase):
+    __tablename__ = 'parameter_variables'
     __table_args__ = dict(
         schema='public',
         comment="This table is there to save specific variables that are nescesary for the functioning of the scripts")
 
-    para: Mapped[str] = mapped_column(
-        sa.String(3),
+    parameter: Mapped[str3] = mapped_column(
         primary_key=True,
         comment="The parameter for which the variables are valid. e.g. n/n_d/t/et.")
     start_tstp_last_imp: Mapped[Optional[UTCDateTime]] = mapped_column(
@@ -199,7 +211,7 @@ class ParaVariables(Base):
         comment="The maximal timestamp of the last imports raw data of all the timeseries")
 
 
-class RichterValues(Base):
+class RichterValues(ModelBase):
     __tablename__ = 'richter_values'
     __table_args__ = dict(
         schema='public',
@@ -227,8 +239,26 @@ class RichterValues(Base):
         comment="The b-value of the equation for exposition class 'heavy protection'.")
 
 
-class StationsRasterValues(Base):
-    __tablename__ = 'stations_raster_values'
+class StationMATimeserie(ModelBase):
+    __tablename__ = 'station_ma_timeserie'
+    __table_args__ = dict(
+        schema='public',
+        comment="The multi annual mean values of the stations timeseries for the maximum available timespan.")
+    station_id: Mapped[int] = mapped_column(
+        primary_key=True,
+        comment="The DWD-ID of the station.")
+    parameter: Mapped[str3] = mapped_column(
+        primary_key=True,
+        comment="The parameter of the station. e.g. 'P', 'T', 'ET'")
+    kind: Mapped[str] = mapped_column(
+        primary_key=True,
+        comment="The kind of the timeserie. e.g. 'raw', 'filled', 'corr'")
+    value: Mapped[int] = mapped_column(
+        comment="The multi annual value of the yearly mean value of the station to the multi annual mean value of the raster.")
+
+
+class StationMARaster(ModelBase):
+    __tablename__ = 'station_ma_raster'
     __table_args__ = dict(
         schema='public',
         comment="The multi annual climate raster values for each station.")
@@ -239,7 +269,7 @@ class StationsRasterValues(Base):
     raster_key: Mapped[str] = mapped_column(
         primary_key=True,
         comment="The name of the raster. e.g. 'dwd' or 'hyras'")
-    parameter: Mapped[str] = mapped_column(
+    parameter: Mapped[str7] = mapped_column(
         primary_key=True,
         comment="The parameter of the raster. e.g. 'p_wihj', 'p_sohj', 'p_year', 't_year', 'et_year'")
     value: Mapped[int] = mapped_column(
@@ -248,7 +278,7 @@ class StationsRasterValues(Base):
         comment="The distance of the station to the raster value in meters.")
 
 
-class NeededDownloadTime(Base):
+class NeededDownloadTime(ModelBase):
     __tablename__ = 'needed_download_time'
     __table_args__ = dict(
         schema='public',
@@ -275,7 +305,7 @@ class NeededDownloadTime(Base):
         comment="The size of the created output file in bytes")
 
 
-class Settings(Base):
+class Settings(ModelBase):
     __tablename__ = 'settings'
     __table_args__ = dict(
         schema='public',

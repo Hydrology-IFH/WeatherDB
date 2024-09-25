@@ -43,8 +43,8 @@ class InitDBTestCases(BaseTestCases):
     def step_update_raw(self, **kwargs):
         self.broker.update_raw(only_new=False, **kwargs)
 
-    def step_update_ma(self, **kwargs):
-        self.broker.update_ma(**kwargs)
+    def step_update_ma_raster(self, **kwargs):
+        self.broker.update_ma_raster(**kwargs)
 
     def step_update_richter_class(self, **kwargs):
         self.broker.stations_n.update_richter_class(**kwargs)
@@ -60,7 +60,7 @@ class InitDBTestCases(BaseTestCases):
 
     def check_update_meta(self):
         with self.db_engine.connect() as conn:
-            for model, n_expct in zip([models.MetaN, models.MetaT, models.MetaND, models.MetaET],
+            for model, n_expct in zip([models.MetaP, models.MetaT, models.MetaPD, models.MetaET],
                                       [7, 6, 8, 3]):
                 # check number of stations
                 with self.subTest(model=model):
@@ -72,7 +72,7 @@ class InitDBTestCases(BaseTestCases):
                         msg=f"Number of stations in {model.__name__} table ({n}) is greater than the amount of test stations.")
 
                 # check for last_imp_qc
-                if model != models.MetaND:
+                if model != models.MetaPD:
                     with self.subTest(model=model):
                         stmnt = sa.select(sa.func.count('*')).select_from(model).where(model.last_imp_qc)
                         self.assertEqual(
@@ -91,17 +91,17 @@ class InitDBTestCases(BaseTestCases):
                     )
 
             # check for last_imp_corr
-            with self.subTest(msg="check last_imp_corr for MetaN"):
+            with self.subTest(msg="check last_imp_corr for MetaP"):
                 stmnt = sa.select(sa.func.count("*"))\
-                    .select_from(models.MetaN)\
-                    .where(models.MetaN.last_imp_corr)
+                    .select_from(models.MetaP)\
+                    .where(models.MetaP.last_imp_corr)
                 self.assertEqual(
                     conn.execute(stmnt).scalar(),
                     0,
                     msg="Some stations have last_imp_corr=True in meta data."
                 )
 
-    def check_update_ma(self):
+    def check_update_ma_raster(self):
         for stats in self.broker.stations:
             for stat in stats.get_stations(stids=self.test_stids, skip_missing_stids=True):
                 mas = stat.get_ma()
@@ -158,13 +158,15 @@ class InitDBTestCases(BaseTestCases):
 
     def check_update_richter_class(self):
         with self.db_engine.connect() as conn:
-            for model in [models.MetaN, models.MetaND]:
-                with self.subTest(model=model):
-                    self.assertEqual(
-                        conn.execute(sa.select(model).where(model.richter_class == 'NULL').count()),
-                        0,
-                        msg="Some stations don't have a richter_class in meta data."
-                    )
+            self.assertEqual(
+                conn.execute(
+                    sa.select(sa.sql.expression.func.count())\
+                    .select_from(models.MetaP)\
+                    .where(models.MetaP.richter_class.is_(None))
+                ).scalar(),
+                0,
+                msg="Some stations don't have a richter_class in meta data."
+            )
 
     def check_quality_check(self):
         pass
@@ -172,7 +174,7 @@ class InitDBTestCases(BaseTestCases):
     def check_fillup(self):
         pass
 
-    def check_richter_class(self):
+    def check_richter_correct(self):
         pass
 
     def test_steps(self):
@@ -183,7 +185,7 @@ class InitDBTestCases(BaseTestCases):
         ValueError
             If the argument 'steps' is not a list or a comma-separated string
         """
-        STEPS = ["update_meta", "update_raw", "update_ma", "update_richter_class", "quality_check", "fillup", "richter_correct"]
+        STEPS = ["update_meta", "update_raw", "update_ma_raster", "update_richter_class", "quality_check", "fillup", "richter_correct"]
         # get steps from cli arguments
         steps = cliargs.steps
         if steps == "all":

@@ -24,8 +24,9 @@ class BaseTestCases(unittest.TestCase):
     @staticmethod
     def empty_db():
         with wdb.db.connections.db_engine.connect() as conn:
-            models.Base.metadata.drop_all(conn)
+            models.ModelBase.metadata.drop_all(conn)
             conn.execute(sa.schema.DropSchema("timeseries", cascade=True, if_exists=True))
+            conn.execute(sa.text("DROP TABLE IF EXISTS alembic_version CASCADE;"))
             conn.commit()
 
     def check_broker_inactive(self):

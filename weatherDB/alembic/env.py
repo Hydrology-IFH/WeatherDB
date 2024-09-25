@@ -2,7 +2,7 @@ from alembic import context
 import re
 
 import weatherDB as wdb
-from weatherDB.db.models import Base
+from weatherDB.db.models import ModelBase
 from weatherDB.db.connections import db_engine
 
 # this is the Alembic Config object, which provides
@@ -12,7 +12,7 @@ config = context.config
 # add your model's MetaData object here
 # for 'autogenerate' support
 # in console do: weatherDB>alembic -c alembic\alembic.ini revision --autogenerate -m "comment" --rev-id "V1.0.0"
-target_metadata = Base.metadata
+target_metadata = ModelBase.metadata
 
 # check for alembic database copnnection in the weatherDB config
 # ##############################################################
@@ -29,12 +29,12 @@ exclude_tables = re.sub(
     '',
     config.get_main_option('exclude_tables', '')
 ).split(',')
-valid_schemas = Base.metadata._schemas
+valid_schemas = ModelBase.metadata._schemas
 valid_tables = {
     schema: [table.name
-             for table in wdb.db.models.Base.metadata.tables.values()
+             for table in ModelBase.metadata.tables.values()
              if table.schema == schema]
-    for schema in wdb.db.models.Base.metadata._schemas}
+    for schema in ModelBase.metadata._schemas}
 
 def include_name(name, type_, parent_names, *args,**kwargs):
     if type_ == "schema":

@@ -17,15 +17,15 @@ from ..utils.dwd import  dwd_id_to_str
 from ..utils.TimestampPeriod import TimestampPeriod
 from ..utils.geometry import polar_line, raster2points
 from ..config import config
-from ..db.models import MetaN
-from .StationBases import StationNBase
+from ..db.models import MetaP
+from .StationBases import StationPBase
 from .constants import MIN_TSTP
-from .StationND import StationND
+from .StationPD import StationPD
 from .StationT import StationT
 
 # set settings
 # ############
-__all__ = ["StationN"]
+__all__ = ["StationP"]
 log = logging.getLogger(__name__)
 
 # variables
@@ -50,11 +50,11 @@ RICHTER_CLASSES = {
 
 # class definition
 ##################
-class StationN(StationNBase):
+class StationP(StationPBase):
     """A class to work with and download 10 minutes precipitation data for one station."""
     # common settings
-    _MetaModel = MetaN
-    _para = "n"
+    _MetaModel = MetaP
+    _para = "p"
     _para_long = "Precipitation"
     _unit = "mm/10min"
     _valid_kinds = ["raw", "qn", "qc", "corr", "filled", "filled_by"]
@@ -120,7 +120,7 @@ class StationN(StationNBase):
                 "For the {para_long} station with ID {stid} there is no timeserie with daily values. " +
                 "Therefor the quality check for daily values equal to 0 is not done.\n" +
                 "Please consider updating the daily stations with:\n" +
-                "stats = stations.StationsND()\n" +
+                "stats = stations.StationsPD()\n" +
                 "stats.update_meta()\nstats.update_raw()"
             ).format(**sql_format_dict))
             sql_dates_failed = """
@@ -270,7 +270,7 @@ class StationN(StationNBase):
         # check if files are available
         dem_files = [Path(file) for file in config.getlist("data:rasters", "dems")]
         for dem_file in dem_files:
-            if dem_file.is_file():
+            if not dem_file.is_file():
                 raise ValueError(
                     f"The DEM file was not found in the data directory under: \n{dem_file}")
 
@@ -286,13 +286,10 @@ class StationN(StationNBase):
                 xy=[xy],
                 indexes=1,
                 masked=True))[0]
-            if stat_h1.mask[0]:
-                log.error(
+            if stat_h1.mask:
+                raise ValueError(
                     f"update_horizon(): No height was found in the first DGM for {self._para_long} Station {self.id}. " +
                     "Therefor the horizon angle could not get updated.")
-                raise ValueError()
-            else:
-                stat_h1 = stat_h1[0]
 
             # sample dgm for horizon angle
             hab = pd.Series(
@@ -339,7 +336,7 @@ class StationN(StationNBase):
                             index=[line_parts.index.max()+1])])
 
                 # check if parts are missing and fill
-                if len(line_parts) > 0 & (dgm2 is not None):
+                if (len(line_parts) > 0) & (dgm2 is not None):
                     # sample station heights from the second DGM
                     geom2 = self.get_geom(crs=dgm2.crs.to_epsg())
                     stat_h2 = list(dgm2.sample(
@@ -617,6 +614,9 @@ class StationN(StationNBase):
         # update filled time in meta table
         self.update_period_meta(kind="corr")
 
+        # update multi annual mean
+        self.update_ma_timeseris(kind="corr")
+
     @db_engine.deco_update_privilege
     def corr(self, *args, **kwargs):
         return self.richter_correct(*args, **kwargs)
@@ -659,7 +659,7 @@ class StationN(StationNBase):
     def _sql_fillup_extra_dict(self, **kwargs):
         fillup_extra_dict = super()._sql_fillup_extra_dict(**kwargs)
 
-        stat_nd = StationND(self.id)
+        stat_nd = StationPD(self.id)
         if stat_nd.isin_db() and \
                 not stat_nd.get_filled_period(kind="filled", from_meta=True).is_empty():
             # adjust 10 minutes sum to match measured daily value,
@@ -705,49 +705,10 @@ class StationN(StationNBase):
 
             fillup_extra_dict.update(dict(sql_extra_after_loop=sql_extra))
         else:
-            log.warn("Station_N({stid}).fillup: There is no daily timeserie in the database, "+
-                     "therefor the 10 minutes values are not getting adjusted to daily values")
+            log.warning("Station_N({stid}).fillup: There is no daily timeserie in the database, "+
+                        "therefor the 10 minutes values are not getting adjusted to daily values")
 
         return fillup_extra_dict
-
-    @db_engine.deco_update_privilege
-    def fillup(self, period=(None, None), **kwargs):
-        super_ret = super().fillup(period=period, **kwargs)
-
-        # check the period
-        if not isinstance(period, TimestampPeriod):
-            period= TimestampPeriod(*period)
-
-        # update difference to dwd_grid and hyras
-        if period.is_empty() or period[0].year < pd.Timestamp.now().year:
-            sql_diff_ma = """
-                UPDATE meta_n
-                SET quot_filled_dwd_grid = quots.quot_dwd*100,
-                    quot_filled_hyras = quots.quot_hyras*100
-                FROM (
-                    SELECT df_ma.ys / (srv.n_dwd_year*{decimals}) AS quot_dwd,
-                        df_ma.ys / (srv.n_hyras_year*{decimals}) AS quot_hyras
-                    FROM (
-                        SELECT avg(df_a.yearly_sum) as ys
-                        FROM (
-                            SELECT sum("filled") AS yearly_sum
-                            FROM timeseries."{stid}_{para}"
-                            GROUP BY date_trunc('year', "timestamp")
-                            HAVING count("filled") > 363 * 6 * 24) df_a
-                        ) df_ma
-                    LEFT JOIN stations_raster_values srv
-                        ON station_id={stid}) quots
-                WHERE station_id ={stid};
-            """.format(
-                stid=self.id,
-                para=self._para,
-                decimals=self._decimals)
-
-            #execute sql or return
-            if "return_sql" in kwargs and kwargs["return_sql"]:
-                return (str(super_ret) + "\n" + sql_diff_ma)
-            with db_engine.connect() as con:
-                con.execute(sqltxt(sql_diff_ma))
 
     def get_corr(self, **kwargs):
         return self.get_df(kinds=["corr"], **kwargs)

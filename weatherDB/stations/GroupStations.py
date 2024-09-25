@@ -11,8 +11,8 @@ from sqlalchemy import text as sqltxt
 
 from ..db.connections import db_engine
 from ..utils import TimestampPeriod
-from ..station import StationN, GroupStation
-from .StationsN import StationsN
+from ..station import StationP, GroupStation
+from .StationsP import StationsP
 from .StationsT import StationsT
 from .StationsET import StationsET
 from .StationsBase import StationsBase
@@ -28,11 +28,11 @@ log = logging.getLogger(__name__)
 class GroupStations(object):
     """A class to group all possible parameters of all the stations.
     """
-    _StationN = StationN
+    _StationP = StationP
     _GroupStation = GroupStation
 
     def __init__(self):
-        self.stationsN = StationsN()
+        self.stationsN = StationsP()
 
     def get_valid_stids(self):
         if not hasattr(self, "_valid_stids"):
@@ -209,7 +209,7 @@ class GroupStations(object):
 
         for stat in stats:
             meta_para = stat.get_meta(stids=stids, **kwargs)
-            meta_para["para"] = stat._para
+            meta_para["parameter"] = stat._para
             if "meta_all" not in locals():
                 meta_all = meta_para
             else:
@@ -218,9 +218,9 @@ class GroupStations(object):
                     meta_all = gpd.GeoDataFrame(meta_all, crs=meta_para.crs)
 
         if len(paras)==1:
-            return meta_all.drop("para", axis=1)
+            return meta_all.drop("parameter", axis=1)
         else:
-            return meta_all.reset_index().set_index(["station_id", "para"]).sort_index()
+            return meta_all.reset_index().set_index(["station_id", "parameter"]).sort_index()
 
     def get_para_stations(self, paras="all"):
         """Get a list with all the multi parameter stations as stations.Station\{parameter\}-objects.

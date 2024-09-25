@@ -124,8 +124,8 @@ class StationT(StationTETBase):
                             FROM unnest(nb_max) as T(v))"""})
         return fillup_extra_dict
 
-    def get_multi_annual(self):
-        mas = super().get_multi_annual()
+    def get_multi_annual_raster(self):
+        mas = super().get_multi_annual_raster()
         if mas is not None:
             return [ma / 10 for ma in mas]
         else:

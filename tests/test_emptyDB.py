@@ -26,10 +26,14 @@ class EmptyDBTestCases(BaseTestCases):
 
         # tests
         inspect = sa.inspect(self.db_engine.engine)
-        for table in models.Base.metadata.tables.keys():
-           self.assertTrue(
-               inspect.has_table(table),
-                msg=f"Table \"{table}\" not found in database.")
+        for table in models.ModelBase.metadata.tables.values():
+            self.assertTrue(
+               inspect.has_table(table.name),
+               msg=f"Table \"{table}\" not found in database.")
+        for view in models.ModelBase.metadata.views:
+            self.assertTrue(
+               inspect.has_table(view.__tablename__),
+               msg=f"View \"{view.__tablename__}\" not found in database.")
 
 # cli entry point
 if __name__ == "__main__":

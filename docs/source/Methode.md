@@ -31,7 +31,7 @@ To quality check the data it is very dependent on which parameter is treated. Th
 
 Although every quality check can get computed for different periods:
 - on all of the data by using e.g. `station.StationT(3).quality_check()`
-- only a specified period, with e.g. `station.StationN(3).quality_check(period=("2010-01-01", "2020-12-31"))`
+- only a specified period, with e.g. `station.StationP(3).quality_check(period=("2010-01-01", "2020-12-31"))`
 - the last imported period, with e.g. `station.StationET(3).last_imp_quality_check()`
 
 ### Temperature and Evapotranspiration

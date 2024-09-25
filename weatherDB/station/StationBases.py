@@ -21,7 +21,7 @@ from ..db.connections import db_engine
 from ..utils.dwd import get_cdc_file_list, get_dwd_file
 from ..utils.TimestampPeriod import TimestampPeriod
 from ..config import config
-from ..db.models import StationsRasterValues, MetaBase
+from ..db.models import StationMARaster, MetaBase
 from .constants import AGG_TO, MIN_TSTP
 
 # set settings
@@ -128,7 +128,7 @@ class StationBase:
         if type(self) is StationBase:
             raise NotImplementedError("""
             The StationBase is only a wrapper class an is not working on its own.
-            Please use StationN, StationT or StationET instead""")
+            Please use StationP, StationT or StationET instead""")
         self.id = int(id)
         self.id_str = str(id)
 
@@ -356,7 +356,7 @@ class StationBase:
     @db_engine.deco_update_privilege
     def _check_ma(self):
         if not self.isin_ma():
-            self.update_ma()
+            self.update_ma_raster()
 
     @db_engine.deco_create_privilege
     def _check_isin_db(self):
@@ -398,10 +398,10 @@ class StationBase:
                                 'day',
                                 min(start_tstp_last_imp) - '9h 30min'::INTERVAL
                             ) - '10 min'::INTERVAL,
-                            min(CASE WHEN para='n' THEN max_tstp_last_imp
+                            min(CASE WHEN parameter='n' THEN max_tstp_last_imp
                                      ELSE max_tstp_last_imp + '23h 50min'::INTERVAL
                                 END))
-                    FROM para_variables)::{tstp_dtype},
+                    FROM parameter_variables)::{tstp_dtype},
                     '{interval}'::INTERVAL)::{tstp_dtype} AS timestamp)
             INSERT INTO timeseries."{stid}_{para}"(timestamp)
                 (SELECT wts.timestamp
@@ -491,9 +491,9 @@ class StationBase:
         sql = """
             DROP TABLE IF EXISTS timeseries."{stid}_{para}";
             DELETE FROM meta_{para} WHERE station_id={stid};
-            INSERT INTO droped_stations(station_id, para, why, timestamp)
+            INSERT INTO droped_stations(station_id, parameter, why, timestamp)
             VALUES ('{stid}', '{para}', '{why}', NOW())
-            ON CONFLICT (station_id, para)
+            ON CONFLICT (station_id, parameter)
                 DO UPDATE SET
                     why = EXCLUDED.why,
                     timestamp = EXCLUDED.timestamp;
@@ -631,10 +631,10 @@ class StationBase:
             True if Station is in multi annual table.
         """
         sql_select = sa.exists()\
-            .where((StationsRasterValues.station_id == self.id) &
-                   (StationsRasterValues.raster_key == self._ma_raster_key) &
-                   StationsRasterValues.parameter.in_(self._ma_para_keys) &
-                   StationsRasterValues.value.isnot(None))
+            .where((StationMARaster.station_id == self.id) &
+                   (StationMARaster.raster_key == self._ma_raster_key) &
+                   StationMARaster.parameter.in_(self._ma_para_keys) &
+                   StationMARaster.value.isnot(None))
         with db_engine.session() as session:
             return session.query(sql_select).scalar()
 
@@ -740,8 +740,8 @@ class StationBase:
             con.execute(sqltxt(sql))
 
     @db_engine.deco_update_privilege
-    def update_ma(self, skip_if_exist=True, drop_when_error=True, **kwargs):
-        """Update the multi annual values in the stations_raster_values table.
+    def update_ma_raster(self, skip_if_exist=True, drop_when_error=True, **kwargs):
+        """Update the multi annual values in the station_ma_raster table.
 
         Get new values from the raster and put in the table.
 
@@ -771,12 +771,12 @@ class StationBase:
                 bands=ma_raster_bands,
                 dist=dist)
 
-        # write to stations_raster_values table
+        # write to station_ma_raster table
         if new_mas is not None and any(new_mas):
             # multi annual values were found
             with db_engine.session() as session:
                 stmnt = sa.dialects.postgresql\
-                    .insert(StationsRasterValues)\
+                    .insert(StationMARaster)\
                     .values([
                         dict(station_id=self.id,
                              raster_key=self._ma_raster_key,
@@ -798,6 +798,57 @@ class StationBase:
             # there was no multi annual data found from the raster
             self._drop(
                 why=f"no multi-annual data was found from 'data:rasters:{self._ma_raster_key}'")
+
+    @db_engine.deco_update_privilege
+    def update_ma_timeseris(self, kind, **kwargs):
+        """Update the mean annual value from the station timeserie.
+
+        Parameters
+        ----------
+        kind : str or list of str
+            The tiumeseries data kind to update theire multi annual value.
+            Must be a column in the timeseries DB.
+            Must be one of "raw", "qc", "filled".
+            For the precipitation also "corr" is valid.
+        kwargs : dict, optional
+            Additional keyword arguments catch all, but unused here.
+        """
+        # check kind input
+        if kind == "all":
+            kind = ["raw", "qc", "filled"]
+            if "corr" in self._valid_kinds:
+                kind.append("corr")
+
+        if isinstance(kind, list):
+            for kind in self._check_kinds(kind):
+                self.update_ma_timeseris(kind)
+            return None
+
+        self._check_kind(kind)
+
+        # create the sql
+        sql = f"""
+            WITH ts_y AS (
+                SELECT ({self._agg_fun}("{kind}")/count("{kind}")::float*count("timestamp"))::int AS val
+                FROM timeseries."{self.id}_{self._para}"
+                GROUP BY date_trunc('year', "timestamp")
+                HAVING count("{kind}")/count("timestamp")>0.9
+            )
+            INSERT INTO station_ma_timeserie (station_id, parameter, kind, value)
+                SELECT
+                    {self.id} AS station_id,
+                    '{self._para}' AS parameter,
+                    '{kind}' AS kind,
+                    avg(val)::int AS value
+                FROM ts_y
+            ON CONFLICT (station_id, parameter, kind) DO UPDATE
+                SET value = EXCLUDED.value;
+        """
+
+        # execute the sql
+        with db_engine.connect() as con:
+            con.execute(sqltxt(sql))
+            con.commit()
 
     @db_engine.deco_update_privilege
     def _update_last_imp_period_meta(self, period):
@@ -932,9 +983,9 @@ class StationBase:
             )
         with db_engine.connect() as con:
             con.execute(sqltxt(f'''
-                INSERT INTO raw_files(para, filepath, modtime)
+                INSERT INTO raw_files(parameter, filepath, modtime)
                 VALUES {update_values}
-                ON CONFLICT (para, filepath) DO UPDATE SET modtime = EXCLUDED.modtime;'''))
+                ON CONFLICT (parameter, filepath) DO UPDATE SET modtime = EXCLUDED.modtime;'''))
             con.commit()
 
         # if empty skip updating meta filepath
@@ -955,6 +1006,9 @@ class StationBase:
             return None
         else:
             self._set_is_real()
+
+        # update multi annual mean
+        self.update_ma_timeseris(kind="raw")
 
         # update meta file
         imp_period = TimestampPeriod(
@@ -1012,7 +1066,7 @@ class StationBase:
             sql_db_modtimes = \
                 """SELECT filepath, modtime
                  FROM raw_files
-                 WHERE filepath in ({filepaths}) AND para='{para}';""".format(
+                 WHERE filepath in ({filepaths}) AND parameter='{para}';""".format(
                     filepaths="'" +
                         "', '".join(zipfiles_CDC.index.to_list())
                         + "'",
@@ -1159,6 +1213,9 @@ class StationBase:
                     format=self._tstp_format_human)
                 ))
 
+        # update multi annual mean
+        self.update_ma_timeseris(kind="qc")
+
         # update timespan in meta table
         self.update_period_meta(kind="qc")
 
@@ -1169,7 +1226,6 @@ class StationBase:
 
     @db_engine.deco_update_privilege
     def fillup(self, period=(None, None), **kwargs):
-        # TODO: implement StationRasterValues ORM
         """Fill up missing data with measurements from nearby stations.
 
         Parameters
@@ -1335,7 +1391,7 @@ class StationBase:
                                 SELECT * FROM meta_{para} WHERE station_id={stid}),
                             rast_vals as (
                                 SELECT station_id, {rast_val_cols}
-                                FROM stations_raster_values
+                                FROM station_ma_raster
                                 GROUP BY station_id
                             )
                         SELECT meta.station_id,
@@ -1397,6 +1453,9 @@ class StationBase:
             sql=sql,
             description="filled for the period {min_tstp} - {max_tstp}".format(
                 **period.get_sql_format_dict(format=self._tstp_format_human)))
+
+        # update multi annual mean
+        self.update_ma_timeseris(kind="filled")
 
         # update timespan in meta table
         self.update_period_meta(kind="filled")
@@ -1785,7 +1844,7 @@ class StationBase:
             """.format(**sql_format_dict)
 
         with db_engine.connect() as con:
-            res = con.execute(sql)
+            res = con.execute(sa.text(sql))
 
         return TimestampPeriod(*res.first())
 
@@ -2000,7 +2059,7 @@ class StationBase:
             nearest_stids = [res[0] for res in result.all()]
         return nearest_stids
 
-    def get_multi_annual(self):
+    def get_multi_annual_raster(self):
         """Get the multi annual value(s) for this station.
 
         Returns
@@ -2012,16 +2071,16 @@ class StationBase:
             The returned unit is mm or °C.
         """
         sql_select = sa\
-            .select(StationsRasterValues.parameter, StationsRasterValues.value)\
-            .where((StationsRasterValues.station_id == self.id) &
-                   (StationsRasterValues.raster_key == self._ma_raster_key) &
-                   StationsRasterValues.parameter.in_(self._ma_para_keys))
+            .select(StationMARaster.parameter, StationMARaster.value)\
+            .where((StationMARaster.station_id == self.id) &
+                   (StationMARaster.raster_key == self._ma_raster_key) &
+                   StationMARaster.parameter.in_(self._ma_para_keys))
         with db_engine.session() as session:
             res = session.execute(sql_select).all()
 
         # Update ma values if no result returned
         if res is None:
-            self.update_ma()
+            self.update_ma_raster()
             with db_engine.session() as session:
                 res = session.execute(sql_select).all()
 
@@ -2033,9 +2092,9 @@ class StationBase:
                         self._ma_raster_conf.get(f"factor_{col}", 1))
                     for col in self._ma_para_keys]
 
-    def get_ma(self):
+    def get_ma_raster(self):
         """Wrapper for `get_multi_annual`."""
-        return self.get_multi_annual()
+        return self.get_multi_annual_raster()
 
     def _get_raster_value(self, raster_conf, bands="all", dist=0):
         """Get the value of a raster file for this station.
@@ -2133,9 +2192,9 @@ class StationBase:
             For N the winter and summer half yearly coefficient is returned in tuple.
             None is returned if either the own or other stations multi-annual value is not available.
         """
-        ma_values = self.get_multi_annual()
+        ma_values = self.get_multi_annual_raster()
         other_stat = self.__class__(other_stid)
-        other_ma_values = other_stat.get_multi_annual()
+        other_ma_values = other_stat.get_multi_annual_raster()
 
         if other_ma_values is None or ma_values is None:
             return None
@@ -2471,7 +2530,7 @@ class StationBase:
         main_df = self.get_df(
             kinds=["filled"], # not best, as the ma values are not richter corrected
             **kwargs)
-        ma = self.get_multi_annual()
+        ma = self.get_multi_annual_raster()
 
         # create empty adj_df
         adj_df = pd.DataFrame(
@@ -2810,7 +2869,7 @@ class StationTETBase(StationCanVirtualBase):
         return main_df, adj_df, ma, main_df_tr
 
 
-class StationNBase(StationBase):
+class StationPBase(StationBase):
     # common settings
     _decimals = 100
 

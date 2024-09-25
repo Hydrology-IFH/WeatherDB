@@ -12,11 +12,13 @@ import logging
 import itertools
 import datetime
 from sqlalchemy import text as sqltxt
+import sqlalchemy as sa
 import textwrap
 
 from ..db.connections import db_engine
 from ..utils.dwd import get_dwd_meta, get_cdc_file_list
 from ..station.StationBases import StationBase
+from ..db import models
 
 # set settings
 # ############
@@ -39,7 +41,7 @@ class StationsBase:
         if type(self) is StationsBase:
             raise NotImplementedError("""
             The StationsBase is only a wrapper class an is not working on its own.
-            Please use StationN, StationND, StationT or StationET instead""")
+            Please use StationP, StationPD, StationT or StationET instead""")
         self._ftp_folder_base = self._StationClass._ftp_folder_base
         if isinstance(self._ftp_folder_base, str):
             self._ftp_folder_base = [self._ftp_folder_base]
@@ -114,13 +116,11 @@ class StationsBase:
             meta.drop("Abgabe", axis=1, inplace=True)
 
         # get droped stations and delete from meta file
-        sql_get_droped = """
-            SELECT station_id
-            FROM droped_stations
-            WHERE para ='{para}';
-        """.format(para=self._para)
+        sql_get_droped = sa\
+            .select(models.DropedStations.station_id)\
+            .where(models.DropedStations.parameter == self._para)
         with db_engine.connect() as con:
-            droped_stids = con.execute(sqltxt(sql_get_droped)).all()
+            droped_stids = con.execute(sql_get_droped).all()
         droped_stids = [row[0] for row in droped_stids
                         if row[0] in meta.index]
         meta.drop(droped_stids, inplace=True)
@@ -668,10 +668,10 @@ class StationsBase:
         if isinstance(stids, str) and (stids == "all"):
             with db_engine.connect() as con:
                 con.execute(sqltxt("""
-                    UPDATE para_variables
+                    UPDATE parameter_variables
                     SET start_tstp_last_imp='{start_tstp}'::timestamp,
                     max_tstp_last_imp=(SELECT max(raw_until) FROM meta_{para})
-                    WHERE para='{para}';
+                    WHERE parameter='{para}';
                 """.format(
                     para=self._para,
                     start_tstp=start_tstp.strftime("%Y%m%d %H:%M"))))
@@ -771,7 +771,7 @@ class StationsBase:
             **kwargs)
 
     @db_engine.deco_update_privilege
-    def update_ma(self, stids="all", do_mp=False, **kwargs):
+    def update_ma_raster(self, stids="all", do_mp=False, **kwargs):
         """Update the multi annual values for the stations.
 
         Get a multi annual value from the corresponding raster and save to the multi annual table in the database.
@@ -799,7 +799,7 @@ class StationsBase:
         """
         self._run_method(
             stations=self.get_stations(only_real=False, stids=stids, **kwargs),
-            method="update_ma",
+            method="update_ma_raster",
             name="update ma-values for {para}".format(para=self._para.upper()),
             do_mp=do_mp,
             **kwargs)

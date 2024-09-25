@@ -9,7 +9,7 @@ import pandas as pd
 
 from ..utils.TimestampPeriod import TimestampPeriod
 from .StationBases import StationBase, AGG_TO
-from . import StationN, StationT, StationET
+from . import StationP, StationT, StationET
 
 # set settings
 # ############
@@ -28,7 +28,7 @@ class GroupStation(object):
         self.id = id
         self.station_parts = []
         self._error_if_missing = error_if_missing
-        for StatClass in [StationN, StationT, StationET]:
+        for StatClass in [StationP, StationT, StationET]:
             try:
                 self.station_parts.append(
                     StatClass(id=id, **kwargs)

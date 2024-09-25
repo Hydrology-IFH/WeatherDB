@@ -4,26 +4,26 @@ from sqlalchemy import text as sqltxt
 
 from ..db.connections import db_engine
 from ..utils.dwd import dwd_id_to_str
-from ..db.models import MetaND
-from .StationBases import StationNBase, StationCanVirtualBase
+from ..db.models import MetaPD
+from .StationBases import StationPBase, StationCanVirtualBase
 
 # set settings
 # ############
-__all__ = ["StationND"]
+__all__ = ["StationPD"]
 log = logging.getLogger(__name__)
 
 # class definition
 ##################
-class StationND(StationNBase, StationCanVirtualBase):
+class StationPD(StationPBase, StationCanVirtualBase):
     """A class to work with and download daily precipitation data for one station.
 
     Those station data are only downloaded to do some quality checks on the 10 minute data.
     Therefor there is no special quality check and richter correction done on this data.
-    If you want daily precipitation data, better use the 10 minutes station(StationN) and aggregate to daily values."""
+    If you want daily precipitation data, better use the 10 minutes station(StationP) and aggregate to daily values."""
 
     # common settings
-    _MetaModel = MetaND
-    _para = "n_d"
+    _MetaModel = MetaPD
+    _para = "p_d"
     _para_long = "daily Precipitation"
     _unit = "mm/day"
     _valid_kinds = ["raw", "filled", "filled_by"]

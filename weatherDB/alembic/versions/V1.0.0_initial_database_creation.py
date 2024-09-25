@@ -7,11 +7,9 @@ Create Date: 2024-08-23 14:44:43.130167
 """
 
 from typing import Sequence, Union
-
 from alembic import op
 import sqlalchemy as sa
 import geoalchemy2
-
 
 # revision identifiers, used by Alembic.
 revision: str = "V1.0.0"
@@ -30,7 +28,7 @@ def upgrade() -> None:
             comment="The station id that got droped",
         ),
         sa.Column(
-            "para",
+            "parameter",
             sa.CHAR(length=3),
             nullable=False,
             comment="The parameter (n,t,et,n_d) of the station that got droped",
@@ -48,7 +46,7 @@ def upgrade() -> None:
             nullable=False,
             comment="The timestamp when the station got droped",
         ),
-        sa.PrimaryKeyConstraint("station_id", "para"),
+        sa.PrimaryKeyConstraint("station_id", "parameter"),
         comment="This table is there to save the station ids that got droped, so they wont GET recreated",
     )
     op.create_table(
@@ -200,7 +198,7 @@ def upgrade() -> None:
         postgresql_using="gist",
     )
     op.create_table(
-        "meta_n",
+        "meta_p",
         sa.Column(
             "last_imp_corr",
             sa.Boolean(),
@@ -231,30 +229,6 @@ def upgrade() -> None:
             sa.String(),
             nullable=True,
             comment="The Richter exposition class, that got derived from the horizon angle.",
-        ),
-        sa.Column(
-            "quot_filled_hyras",
-            sa.FLOAT(),
-            nullable=True,
-            comment="The quotient betwen the mean yearly value from the filled timeserie to the multi annual yearly mean HYRAS value (1991-2020)",
-        ),
-        sa.Column(
-            "quot_filled_regnie",
-            sa.FLOAT(),
-            nullable=True,
-            comment="The quotient betwen the mean yearly value from the filled timeserie to the multi annual yearly mean REGNIE value (1991-2020)",
-        ),
-        sa.Column(
-            "quot_filled_dwd_grid",
-            sa.FLOAT(),
-            nullable=True,
-            comment="The quotient betwen the mean yearly value from the filled timeserie to the multi annual yearly mean DWD grid value (1991-2020)",
-        ),
-        sa.Column(
-            "quot_corr_filled",
-            sa.FLOAT(),
-            nullable=True,
-            comment="The quotient betwen the mean yearly value from the Richter corrected timeserie to the mean yearly value from the filled timeserie",
         ),
         sa.Column(
             "station_id",
@@ -388,21 +362,21 @@ def upgrade() -> None:
         comment="The Meta informations of the precipitation stations.",
     )
     op.create_index(
-        "idx_meta_n_geometry",
-        "meta_n",
+        "idx_meta_p_geometry",
+        "meta_p",
         ["geometry"],
         unique=False,
         postgresql_using="gist",
     )
     op.create_index(
-        "idx_meta_n_geometry_utm",
-        "meta_n",
+        "idx_meta_p_geometry_utm",
+        "meta_p",
         ["geometry_utm"],
         unique=False,
         postgresql_using="gist",
     )
     op.create_table(
-        "meta_n_d",
+        "meta_p_d",
         sa.Column(
             "station_id",
             sa.Integer(),
@@ -510,15 +484,15 @@ def upgrade() -> None:
         comment="The Meta informations of the daily precipitation stations.",
     )
     op.create_index(
-        "idx_meta_n_d_geometry",
-        "meta_n_d",
+        "idx_meta_p_d_geometry",
+        "meta_p_d",
         ["geometry"],
         unique=False,
         postgresql_using="gist",
     )
     op.create_index(
-        "idx_meta_n_d_geometry_utm",
-        "meta_n_d",
+        "idx_meta_p_d_geometry_utm",
+        "meta_p_d",
         ["geometry_utm"],
         unique=False,
         postgresql_using="gist",
@@ -722,9 +696,9 @@ def upgrade() -> None:
         comment="Saves the time needed to save the timeseries. This helps predicting download time",
     )
     op.create_table(
-        "para_variables",
+        "parameter_variables",
         sa.Column(
-            "para",
+            "parameter",
             sa.String(length=3),
             nullable=False,
             comment="The parameter for which the variables are valid. e.g. n/n_d/t/et.",
@@ -741,14 +715,14 @@ def upgrade() -> None:
             nullable=True,
             comment="The maximal timestamp of the last imports raw data of all the timeseries",
         ),
-        sa.PrimaryKeyConstraint("para"),
+        sa.PrimaryKeyConstraint("parameter"),
         comment="This table is there to save specific variables that are nescesary for the functioning of the scripts",
     )
     op.create_table(
         "raw_files",
         sa.Column(
-            "para",
-            sa.String(),
+            "parameter",
+            type_=sa.CHAR(length=3),
             nullable=False,
             comment="The parameter that got downloaded for this file. e.g. t, et, n_d, n",
         ),
@@ -764,7 +738,7 @@ def upgrade() -> None:
             nullable=False,
             comment="The modification time on the CDC Server of the coresponding file",
         ),
-        sa.PrimaryKeyConstraint("para", "filepath"),
+        sa.PrimaryKeyConstraint("parameter", "filepath"),
         comment="The files that got imported from the CDC Server.",
     )
     op.create_table(
@@ -829,7 +803,7 @@ def upgrade() -> None:
         comment="This table saves settings values for the script-databse connection. E.G. the latest package version that updated the database.",
     )
     op.create_table(
-        "stations_raster_values",
+        "station_ma_raster",
         sa.Column(
             "station_id",
             sa.Integer(),
@@ -844,7 +818,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "parameter",
-            sa.String(),
+            type_=sa.CHAR(length=7),
             nullable=False,
             comment="The parameter of the raster. e.g. 'p_wihj', 'p_sohj', 'p_year', 't_year', 'et_year'",
         ),
@@ -856,24 +830,58 @@ def upgrade() -> None:
         ),
         sa.Column(
             "distance",
-            sa.FLOAT(),
+            sa.Float(),
             nullable=False,
             comment="The distance of the station to the raster value in meters.",
         ),
         sa.PrimaryKeyConstraint("station_id", "raster_key", "parameter"),
+        schema="public",
         comment="The multi annual climate raster values for each station.",
     )
-    # now the Indexes
+    op.create_table(
+        "station_ma_timeserie",
+        sa.Column(
+            "station_id",
+            sa.Integer(),
+            nullable=False,
+            comment="The DWD-ID of the station.",
+        ),
+        sa.Column(
+            "parameter",
+            type_=sa.CHAR(length=3),
+            nullable=False,
+            comment="The parameter of the station. e.g. 'P', 'T', 'ET'",
+        ),
+        sa.Column(
+            "kind",
+            sa.String(),
+            nullable=False,
+            comment="The kind of the timeserie. e.g. 'raw', 'filled', 'corr'",
+        ),
+        sa.Column(
+            "value",
+            sa.Float(),
+            nullable=False,
+            comment="The multi annual value of the yearly mean value of the station to the multi annual mean value of the raster.",
+        ),
+        sa.PrimaryKeyConstraint("station_id", "parameter", "kind"),
+        schema="public",
+        comment="The multi annual mean values of the stations timeseries for the maximum available timespan.",
+    )
+    op.create_view(
+        "station_ma_quotient_view",
 
+    )
 
 
 def downgrade() -> None:
     # ### commands auto generated by Alembic - please adjust! ###
-    op.drop_table("stations_raster_values")
+    op.drop_table("station_ma_raster")
+    op.drop_table("station_ma_timeserie")
     op.drop_table("settings")
     op.drop_table("richter_values")
     op.drop_table("raw_files")
-    op.drop_table("para_variables")
+    op.drop_table("parameter_variables")
     op.drop_table("needed_download_time")
     op.drop_index(
         "idx_meta_t_geometry_utm", table_name="meta_t", postgresql_using="gist"
@@ -881,17 +889,17 @@ def downgrade() -> None:
     op.drop_index("idx_meta_t_geometry", table_name="meta_t", postgresql_using="gist")
     op.drop_table("meta_t")
     op.drop_index(
-        "idx_meta_n_d_geometry_utm", table_name="meta_n_d", postgresql_using="gist"
+        "idx_meta_p_d_geometry_utm", table_name="meta_p_d", postgresql_using="gist"
     )
     op.drop_index(
-        "idx_meta_n_d_geometry", table_name="meta_n_d", postgresql_using="gist"
+        "idx_meta_p_d_geometry", table_name="meta_p_d", postgresql_using="gist"
     )
-    op.drop_table("meta_n_d")
+    op.drop_table("meta_p_d")
     op.drop_index(
-        "idx_meta_n_geometry_utm", table_name="meta_n", postgresql_using="gist"
+        "idx_meta_p_geometry_utm", table_name="meta_p", postgresql_using="gist"
     )
-    op.drop_index("idx_meta_n_geometry", table_name="meta_n", postgresql_using="gist")
-    op.drop_table("meta_n")
+    op.drop_index("idx_meta_p_geometry", table_name="meta_p", postgresql_using="gist")
+    op.drop_table("meta_p")
     op.drop_index(
         "idx_meta_et_geometry_utm", table_name="meta_et", postgresql_using="gist"
     )

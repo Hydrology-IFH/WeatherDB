@@ -2,19 +2,19 @@
 import logging
 
 from ..db.connections import db_engine
-from ..station import StationN
+from ..station import StationP
 from .StationsBase import StationsBase
 
 # set settings
 # ############
-__all__ = ["StationsN"]
+__all__ = ["StationsP"]
 log = logging.getLogger(__name__)
 
 # class definition
 ##################
-class StationsN(StationsBase):
+class StationsP(StationsBase):
     """A class to work with and download 10 minutes precipitation data for several stations."""
-    _StationClass = StationN
+    _StationClass = StationP
     _timeout_raw_imp = 360
 
     @db_engine.deco_update_privilege
@@ -31,7 +31,7 @@ class StationsN(StationsBase):
             or a list with the Station IDs.
             The default is "all".
         kwargs : dict, optional
-            The keyword arguments to be handed to the station.StationN.update_richter_class and get_stations method.
+            The keyword arguments to be handed to the station.StationP.update_richter_class and get_stations method.
 
         Raises
         ------
