@@ -99,7 +99,9 @@ class DBEngine:
                 host=con_section["HOST"],
                 database=con_section["DATABASE"],
                 port=con_section["PORT"]),
-            connect_args={"options": "-c timezone=utc"})
+            connect_args={
+                "options": "-c timezone=utc",
+                'connect_timeout': 10})
         self._check_is_superuser()
 
         return self._engine
