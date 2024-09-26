@@ -31,6 +31,23 @@ def update_db():
     broker = weatherDB.broker.Broker()
     broker.update_db()
 
+@cli.command(short_help="Update the meta data in the database. Get the newest meta data from DWD.")
+def update_meta():
+    click.echo("updating the meta data")
+    broker = weatherDB.broker.Broker()
+    broker.update_meta()
+
+@cli.command(short_help="Update the Richter classes of the precipitation stations in the database.")
+def update_richter_class():
+    click.echo("starting updating the regionalisation")
+    weatherDB.StationsP().update_richter_class()
+
+@cli.command(short_help="Update the multi annual raster values in the database.")
+def update_ma_raster():
+    click.echo("starting updating the multi annual raster data")
+    broker = weatherDB.broker.Broker()
+    broker.update_ma_raster()
+
 @cli.command(short_help="Update the raw data of the complete database.")
 def update_raw():
     click.echo("starting updating the raw data")
