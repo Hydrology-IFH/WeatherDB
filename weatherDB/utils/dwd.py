@@ -263,7 +263,7 @@ def get_dwd_meta(ftp_folder):
                         sio,
                         skiprows=2,
                         lineterminator="\n",
-                        sep=r"\s{2,}|(?<=\d)\s{1}(?=[\w])",  # two or more white spaces or one space after word or digit and followed by word
+                        sep=r"\s{2,}|(?<=\d|\))\s{1}(?=[\w])",  # two or more white spaces or one space after digit and followed by word
                         names=colnames,
                         parse_dates=[col for col in colnames if "datum" in col.lower()],
                         index_col="Stations_id",

@@ -121,7 +121,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "stationsname",
-            sa.CHAR(length=30),
+            sa.CHAR(length=50),
             nullable=False,
             comment="The stations official name as text",
         ),
@@ -299,7 +299,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "stationsname",
-            sa.CHAR(length=30),
+            sa.CHAR(length=50),
             nullable=False,
             comment="The stations official name as text",
         ),
@@ -446,7 +446,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "stationsname",
-            sa.CHAR(length=30),
+            sa.CHAR(length=50),
             nullable=False,
             comment="The stations official name as text",
         ),
@@ -568,7 +568,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "stationsname",
-            sa.CHAR(length=30),
+            sa.CHAR(length=50),
             nullable=False,
             comment="The stations official name as text",
         ),

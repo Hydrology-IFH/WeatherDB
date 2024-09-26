@@ -28,6 +28,7 @@ sint = Annotated[int, 2]
 str3 = Annotated[str, 3]
 str7 = Annotated[str, 7]
 str30 = Annotated[str, 30]
+str50 = Annotated[str, 50]
 
 class UTCDateTime(sa.types.TypeDecorator):
     impl = sa.types.DateTime
@@ -56,6 +57,7 @@ class ModelBase(DeclarativeBase):
             str3: sa.CHAR(3),
             str7: sa.CHAR(7),
             str30: sa.CHAR(30),
+            str50: sa.CHAR(50),
         }
     )
 
@@ -91,7 +93,7 @@ class MetaBase(ModelBase):
         comment="Got the last import already filled?")
     stationshoehe: Mapped[int] = mapped_column(
         comment="The stations height above the ground in meters")
-    stationsname: Mapped[str30] = mapped_column(
+    stationsname: Mapped[str50] = mapped_column(
         comment="The stations official name as text")
     bundesland: Mapped[str30] = mapped_column(
         comment="The state the station is located in")
