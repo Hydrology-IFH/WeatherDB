@@ -8,9 +8,9 @@ import pandas as pd
 from sqlalchemy import text as sqltxt
 import rasterio as rio
 import rasterio.mask
-from shapely.geometry import MultiLineString
-import geopandas as gpd
-from contextlib import nullcontext
+import pyproj
+from shapely.ops import transform as shp_transform
+from shapely import distance, Point
 
 from ..db.connections import db_engine
 from ..utils.dwd import  dwd_id_to_str
@@ -274,112 +274,137 @@ class StationP(StationPBase):
                 raise ValueError(
                     f"The DEM file was not found in the data directory under: \n{dem_file}")
 
-        # get the horizon value
-        radius = 75000 # this value got defined because the maximum height is around 4000m for germany
+        # get the horizon configurations
+        radius = int(config.get("weatherdb", "horizon_radius"))
+        proj_crs = pyproj.CRS.from_epsg(config.get("weatherdb", "horizon_crs"))
+        if not proj_crs.is_projected:
+            raise ValueError(
+                "The CRS for the horizon calculation is not projected. " +
+                "Please define a projected CRS in the config file under weatherdb.horizon_crs.")
 
-        with rio.open(dem_files[0]) as dgm1,\
-            rio.open(dem_files[1]) if len(dem_files)>1 else nullcontext() as dgm2:
-            # sample station heights from the first DGM
-            geom1 = self.get_geom(crs=dgm1.crs.to_epsg())
-            xy = [geom1.x, geom1.y]
-            stat_h1 = list(dgm1.sample(
-                xy=[xy],
-                indexes=1,
-                masked=True))[0]
-            if stat_h1.mask:
-                raise ValueError(
-                    f"update_horizon(): No height was found in the first DGM for {self._para_long} Station {self.id}. " +
-                    "Therefor the horizon angle could not get updated.")
+        # get raster basic information
+        dem_infos = {}
+        for dem_file in dem_files:
+            with rio.open(dem_file) as dem:
+                # get station position
+                stat_h, stat_tr = rasterio.mask.mask(
+                    dem, [self.get_geom(crs=dem.crs)],
+                    crop=True, all_touched=False,
+                    nodata=np.nan)
+                stat_geom = raster2points(stat_h, stat_tr, crs=dem.crs)\
+                    .to_crs(proj_crs)\
+                    .iloc[0].geometry
+                xy = [stat_geom.x, stat_geom.y]
+                stat_h = stat_h.flatten()[0]
 
-            # sample dgm for horizon angle
-            hab = pd.Series(
-                index=pd.Index([], name="angle", dtype=int),
-                name="horizon",
-                dtype=float)
+                # get CRS transformer
+                tr_to_dem = pyproj.Transformer.from_crs(proj_crs, dem.crs, always_xy=True)
+                tr_from_dem = pyproj.Transformer.from_crs(dem.crs, proj_crs, always_xy=True)
 
-            for angle in range(90, 271, 3):
-                dgm1_mask = polar_line(xy, radius, angle)
-                dgm1_np, dgm1_tr = rasterio.mask.mask(
-                    dgm1, [dgm1_mask], crop=True)
-                dgm1_np[dgm1_np==dgm1.profile["nodata"]] = np.nan
-                dgm_gpd = raster2points(dgm1_np, dgm1_tr, crs=dgm1.crs)
-                idx_min = dgm_gpd.distance(geom1).idxmin()
-                geom_dgm1 = dgm_gpd.loc[idx_min, "geometry"]
-                dgm_gpd.drop(idx_min, inplace=True)
-                dgm_gpd["dist"] = dgm_gpd.distance(geom_dgm1)
-                dgm_gpd = dgm_gpd.sort_values("dist").reset_index(drop=True)
-                dgm_gpd["horizon"] = np.degrees(np.arctan(
-                        (dgm_gpd["data"]-stat_h1) / dgm_gpd["dist"]))
+                # get typical distance of raster cell points
+                dem_tr = dem.transform
+                p_top_left = (dem_tr.c, dem_tr.f)
+                p_top_right = (dem_tr.c+dem_tr.a*dem.profile["width"], dem_tr.f)
+                p_bottom_left= (dem_tr.c, dem_tr.f+dem_tr.e*dem.profile["height"])
+                p_bottom_right = (p_top_right[0], p_bottom_left[1])
+                dists = []
+                for p in [p_top_left, p_top_right, p_bottom_left, p_bottom_right]:
+                    p1 = Point(tr_from_dem.transform(*p))
+                    dists.append(distance(
+                        p1, Point(tr_from_dem.transform(p[0] + dem_tr.a, p[1] + dem_tr.e))
+                    ))
 
-                # check if parts are missing and fill
-                #####################################
-                line_parts = pd.DataFrame(
-                    columns=["Start_point", "radius", "line"])
+            dem_infos[dem_file] = dict(
+                stat_geom=stat_geom,
+                xy=xy,
+                stat_h=stat_h,
+                tr_to_dem=tr_to_dem,
+                tr_from_dem=tr_from_dem,
+                max_dist = max(dists)*1.2
+                )
 
-                # look for holes inside the line
-                for i, j in enumerate(dgm_gpd[dgm_gpd["dist"].diff() > dgm1_tr[0]*np.sqrt(2)].index):
-                    line_parts = pd.concat(
-                        [line_parts,
-                        pd.DataFrame(
-                            {"Start_point": dgm_gpd.loc[j-1, "geometry"],
-                            "radius": dgm_gpd.loc[j, "dist"] - dgm_gpd.loc[j-1, "dist"]},
-                            index=[i])])
+        # check if first dem has hight information
+        if np.isnan(dem_infos[dem_files[0]]["stat_h"]):
+            raise ValueError(
+                f"update_horizon(): No height was found in the first dem for {self._para_long} Station {self.id}. " +
+                "Therefor the horizon angle could not get updated.")
+
+        # get station center point
+        stat_geom = self.get_geom(crs=proj_crs)
+        xy = [stat_geom.x, stat_geom.y]
+
+        # compute the horizon angle for each western angle
+        hab = pd.Series(
+            index=pd.Index([], name="angle", dtype=int),
+            name="horizon",
+            dtype=float)
+        raise_hole_error = False
+        for angle in range(90, 271, 3):
+            missing_lines = [polar_line(xy, radius, angle)]
+            dem_lines = None
+            for dem_file, dem_info in dem_infos.items():
+                with rio.open(dem_file) as dem:
+                    missing_lines_next = []
+                    for line in missing_lines:
+                        # get raster points
+                        line_dem = shp_transform(
+                            dem_info["tr_to_dem"].transform,
+                            line)
+                        dem_np, dem_tr = rasterio.mask.mask(
+                            dem, [line_dem],
+                            crop=True, all_touched=True,
+                            nodata=np.nan)
+                        dem_line = raster2points(dem_np, dem_tr, crs=dem.crs).to_crs(proj_crs)
+
+                        # calculate the distance to the stations raster cell
+                        dem_line["dist"] = dem_line.distance(dem_info["stat_geom"])
+                        dem_line.drop(
+                            dem_line.loc[dem_line["dist"]==0].index,
+                            inplace=True)
+                        dem_line = dem_line.sort_values("dist").reset_index(drop=True)
+
+
+                        # calculate the horizon angle
+                        dem_line["horizon"] = np.degrees(np.arctan(
+                                (dem_line["data"]-dem_info["stat_h"]) / dem_line["dist"]))
+
+                        # check if parts are missing and fill
+                        #####################################
+
+                        # look for holes inside the line
+                        for i in dem_line[dem_line["dist"].diff() > dem_info["max_dist"]].index:
+                            print("hole inside", dem_line.loc(i), dem_line.loc(i-1))
+                            missing_lines_next.append(
+                                polar_line(dem_line.loc[i-1, "geometry"].coords,
+                                        dem_line.loc[i, "dist"] - dem_line.loc[i-1, "dist"],
+                                        angle))
+
+                        # merge the parts
+                        dem_lines = pd.concat(
+                            [dem_lines, dem_line], ignore_index=True)
 
                 # look for missing values at the end
-                dgm1_max_dist = dgm_gpd.iloc[-1]["dist"]
-                if dgm1_max_dist < (radius - dgm1_tr[0]/2*np.sqrt(2)):
-                    line_parts = pd.concat(
-                        [line_parts,
-                        pd.DataFrame(
-                            {"Start_point":  dgm_gpd.iloc[-1]["geometry"],
-                             "radius": radius - dgm1_max_dist},
-                            index=[line_parts.index.max()+1])])
+                dem_max_dist = dem_lines.iloc[-1]["dist"]
+                if dem_max_dist < (radius - dem_info["max_dist"]):
+                    missing_lines_next.append(
+                        polar_line(dem_lines.iloc[-1]["geometry"].coords[0],
+                                radius - dem_max_dist,
+                                angle))
 
-                # check if parts are missing and fill
-                if (len(line_parts) > 0) & (dgm2 is not None):
-                    # sample station heights from the second DGM
-                    geom2 = self.get_geom(crs=dgm2.crs.to_epsg())
-                    stat_h2 = list(dgm2.sample(
-                        xy=[(geom2.x, geom2.y)],
-                        indexes=1,
-                        masked=True))[0]
-                    if stat_h2.mask[0]:
-                        log.error(
-                            f"update_horizon(): No height was found in the second DGM for {self._para_long} Station {self.id}. " +
-                            "Therefor the height from the first DGM is taken also for the second.")
-                        stat_h2 = stat_h1
-                    else:
-                        stat_h2 = stat_h2[0]
+                # check if no parts are missing
+                if (len(missing_lines_next) == 0):
+                    break
+                elif dem_file == dem_files[-1]:
+                    raise_hole_error = True
+                else:
+                    # create lines for next iteration
+                    missing_lines = missing_lines_next
 
-                    # create the lines
-                    for i, row in line_parts.iterrows():
-                        line_parts.loc[i, "line"] = polar_line(
-                            [el[0] for el in row["Start_point"].xy],
-                            row["radius"],
-                            angle
-                        )
-                    line_parts = gpd.GeoDataFrame(
-                        line_parts, geometry="line", crs=dgm1.crs
-                        ).to_crs(dgm2.crs)
-                    dgm2_mask = MultiLineString(
-                        line_parts["line"].tolist())
-                    dgm2_np, dgm2_tr = rasterio.mask.mask(
-                        dgm2, [geom2, dgm2_mask], crop=True)
-                    dgm2_np[dgm2_np==dgm2.profile["nodata"]] = np.nan
-                    dgm2_gpd = raster2points(
-                        dgm2_np, dgm2_tr, crs=dgm2.crs
-                        )
-                    idx_min = dgm2_gpd.distance(geom2).idxmin()
-                    geom_dgm2 = dgm2_gpd.loc[idx_min, "geometry"]
-                    dgm2_gpd.drop(idx_min, inplace=True)
+            hab[angle] = dem_lines["horizon"].max()
 
-                    dgm2_gpd["dist"] = dgm2_gpd.distance(geom_dgm2)
-                    dgm2_gpd["horizon"] = np.degrees(np.arctan(
-                        (dgm2_gpd["data"]-stat_h2) / dgm2_gpd["dist"]))
-                    dgm_gpd = pd.concat(
-                        [dgm_gpd[["horizon"]], dgm2_gpd[["horizon"]]], ignore_index=True)
-
-                hab[angle] = dgm_gpd["horizon"].max()
+        if raise_hole_error:
+            log.error(
+                f"Station{self._para}({self.id}).update_horizon(): There were holes in the DEM rasters providen when calculating the horizon angle. Therefor the calculated horizon angle could be faulty.")
 
         # calculate the mean "horizontabschimung"
         # Richter: H’=0,15H(S-SW) +0,35H(SW-W) +0,35H(W-NW) +0, 15H(NW-N)

@@ -32,6 +32,10 @@ class BaseTestCases(unittest.TestCase):
     def check_broker_inactive(self):
         self.assertFalse(self.broker.is_broker_active, msg="Broker is still marked as active.")
 
+    def check_error_in_logging(self):
+        #TODO: check if error in logging
+        pass
+
 class FreshDBTestCases(BaseTestCases):
 
     @classmethod

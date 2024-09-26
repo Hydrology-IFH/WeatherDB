@@ -104,7 +104,7 @@ class InitDBTestCases(BaseTestCases):
     def check_update_ma_raster(self):
         for stats in self.broker.stations:
             for stat in stats.get_stations(stids=self.test_stids, skip_missing_stids=True):
-                mas = stat.get_ma()
+                mas = stat.get_ma_raster()
                 with self.subTest(stat=stat, mas=mas):
                     self.assertTrue(
                         all([ma is not None for ma in mas]),
@@ -225,6 +225,9 @@ class InitDBTestCases(BaseTestCases):
 
             with self.subTest(msg=f"Check broker active state after step: {step}"):
                 self.check_broker_inactive()
+
+            with self.subTest(msg=f"Check error in logging: {step}"):
+                self.check_error_in_logging()
 
             # save highest run step
             if len(self.test_result.failures) == 0:
