@@ -150,7 +150,9 @@ class ConfigParser(configparser.ConfigParser):
 
         This function parses the configuration option seperated by commas and returns a list of values."""
         if raw_value:= self.get(section, option, fallback=None):
-            return [v.strip() for v in raw_value.replace("\n", "").split(",")]
+            return [v.strip()
+                    for v in raw_value.replace("\n", "").split(",")
+                    if len(v.strip())>0]
         return []
 
     def _get_db_key_section(self, db_key=None):
