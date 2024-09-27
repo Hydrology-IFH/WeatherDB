@@ -47,7 +47,8 @@ class InitDBTestCases(BaseTestCases):
         self.broker.update_ma_raster(**kwargs)
 
     def step_update_richter_class(self, **kwargs):
-        self.broker.stations_n.update_richter_class(**kwargs)
+        self.broker.stations_n.update_richter_class(
+            skip_if_exist=False, **kwargs)
 
     def step_quality_check(self, **kwargs):
         self.broker.quality_check(**kwargs)
@@ -185,7 +186,8 @@ class InitDBTestCases(BaseTestCases):
         ValueError
             If the argument 'steps' is not a list or a comma-separated string
         """
-        STEPS = ["update_meta", "update_raw", "update_ma_raster", "update_richter_class", "quality_check", "fillup", "richter_correct"]
+        STEPS = ["update_meta", "update_raw", "update_ma_raster",
+                 "quality_check", "fillup", "update_richter_class", "richter_correct"]
         # get steps from cli arguments
         steps = cliargs.steps
         if steps == "all":
@@ -226,8 +228,8 @@ class InitDBTestCases(BaseTestCases):
             with self.subTest(msg=f"Check broker active state after step: {step}"):
                 self.check_broker_inactive()
 
-            with self.subTest(msg=f"Check error in logging: {step}"):
-                self.check_error_in_logging()
+            with self.subTest(msg=f"Check if error logs in step: {step}"):
+                self.check_no_error_log()
 
             # save highest run step
             if len(self.test_result.failures) == 0:

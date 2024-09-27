@@ -1,10 +1,19 @@
-from pathlib import Path
 import unittest
 import sqlalchemy as sa
-
+import logging
 import os
+
 import weatherDB as wdb
 from weatherDB.db import models
+
+# setup logging handler for testing
+class ListHandler(logging.Handler):
+    def __init__(self):
+        super().__init__()
+        self.log_list = []
+
+    def emit(self, record):
+        self.log_list.append(self.format(record))
 
 # set test database connection
 if wdb.config.has_section("database:test"):
@@ -29,12 +38,24 @@ class BaseTestCases(unittest.TestCase):
             conn.execute(sa.text("DROP TABLE IF EXISTS alembic_version CASCADE;"))
             conn.commit()
 
+    def setUp(self) -> None:
+        self.log_capturer = ListHandler()
+        self.log_capturer.setLevel(logging.ERROR)
+        self.log.addHandler(self.log_capturer)
+        return super().setUp()
+
+    def tearDown(self) -> None:
+        self.log.removeHandler(self.log_capturer)
+        return super().tearDown()
+
+    def check_no_error_log(self):
+        self.assertEqual(
+            len(self.log_capturer.log_list),
+            0,
+            msg="Errors occurred during test execution.")
+
     def check_broker_inactive(self):
         self.assertFalse(self.broker.is_broker_active, msg="Broker is still marked as active.")
-
-    def check_error_in_logging(self):
-        #TODO: check if error in logging
-        pass
 
 class FreshDBTestCases(BaseTestCases):
 
