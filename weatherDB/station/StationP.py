@@ -635,6 +635,7 @@ class StationP(StationPBase):
 
             with db_engine.connect() as con:
                 con.execute(sqltxt(sql_diff_filled))
+                con.commit()
 
         # update filled time in meta table
         self.update_period_meta(kind="corr")

@@ -739,6 +739,7 @@ class StationBase:
 
         with db_engine.connect() as con:
             con.execute(sqltxt(sql))
+            con.commit()
 
     @db_engine.deco_update_privilege
     def update_ma_raster(self, skip_if_exist=True, drop_when_error=True, **kwargs):
@@ -1521,6 +1522,7 @@ class StationBase:
 
         with db_engine.connect() as con:
             con.execute(sqltxt(sql))
+            con.commit()
 
     @db_engine.deco_update_privilege
     def last_imp_quality_check(self, **kwargs):
@@ -2658,9 +2660,8 @@ and not in the precipitation meta table in the DB""")
             True if Station is in the precipitation meta table.
         """
         with db_engine.connect() as con:
-            result = con.execute(sqltxt("""
-            SELECT {stid} in (SELECT station_id FROM meta_p);
-            """.format(stid=self.id)))
+            result = con.execute(sqltxt(
+                f"SELECT {self.id} in (SELECT station_id FROM meta_p);"))
         return result.first()[0]
 
     def quality_check(self, period=(None, None), **kwargs):

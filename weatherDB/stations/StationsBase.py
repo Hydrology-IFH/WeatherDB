@@ -668,6 +668,7 @@ class StationsBase:
                 """.format(
                     para=self._para,
                     start_tstp=start_tstp.strftime("%Y%m%d %H:%M"))))
+                con.commit()
 
     @db_engine.deco_update_privilege
     def last_imp_quality_check(self, stids="all", do_mp=False, **kwargs):
