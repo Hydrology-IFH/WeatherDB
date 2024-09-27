@@ -170,7 +170,7 @@ class RawFiles(ModelBase):
 
     parameter: Mapped[str3] = mapped_column(
         primary_key=True,
-        comment="The parameter that got downloaded for this file. e.g. t, et, n_d, n")
+        comment="The parameter that got downloaded for this file. e.g. t, et, p_d, n")
     filepath: Mapped[str] = mapped_column(
         primary_key=True,
         comment="The filepath on the CDC Server")
@@ -189,7 +189,7 @@ class DropedStations(ModelBase):
         comment="The station id that got droped")
     parameter: Mapped[str3] = mapped_column(
         primary_key=True,
-        comment="The parameter (n,t,et,n_d) of the station that got droped")
+        comment="The parameter (n,t,et,p_d) of the station that got droped")
     why: Mapped[str] = mapped_column(
         sa.Text(),
         comment="The reason why the station got droped")
@@ -206,7 +206,7 @@ class ParameterVariables(ModelBase):
 
     parameter: Mapped[str3] = mapped_column(
         primary_key=True,
-        comment="The parameter for which the variables are valid. e.g. n/n_d/t/et.")
+        comment="The parameter for which the variables are valid. e.g. n/p_d/t/et.")
     start_tstp_last_imp: Mapped[Optional[UTCDateTime]] = mapped_column(
         comment="At what timestamp did the last complete import start. This is then the maximum timestamp for which to expand the timeseries to.")
     max_tstp_last_imp: Mapped[Optional[UTCDateTime]] = mapped_column(

@@ -31,7 +31,7 @@ def upgrade() -> None:
             "parameter",
             sa.VARCHAR(length=3),
             nullable=False,
-            comment="The parameter (n,t,et,n_d) of the station that got droped",
+            comment="The parameter (n,t,et,p_d) of the station that got droped",
         ),
         sa.Column(
             "why",
@@ -701,7 +701,7 @@ def upgrade() -> None:
             "parameter",
             sa.String(length=3),
             nullable=False,
-            comment="The parameter for which the variables are valid. e.g. n/n_d/t/et.",
+            comment="The parameter for which the variables are valid. e.g. n/p_d/t/et.",
         ),
         sa.Column(
             "start_tstp_last_imp",
@@ -724,7 +724,7 @@ def upgrade() -> None:
             "parameter",
             sa.VARCHAR(length=3),
             nullable=False,
-            comment="The parameter that got downloaded for this file. e.g. t, et, n_d, n",
+            comment="The parameter that got downloaded for this file. e.g. t, et, p_d, n",
         ),
         sa.Column(
             "filepath",

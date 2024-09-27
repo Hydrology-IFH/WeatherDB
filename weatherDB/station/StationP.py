@@ -521,7 +521,7 @@ class StationP(StationPBase):
             t_decim=stat_t._decimals
         )
         # daily precipitation
-        sql_n_daily = """
+        sql_p_daily = """
             SELECT timestamp::date AS date,
                    sum("filled") AS "filled",
                    count(*) FILTER (WHERE "filled" > 0) AS "count_n"
@@ -531,32 +531,32 @@ class StationP(StationPBase):
         """.format(**sql_format_dict)
 
         # add is_winter
-        sql_n_daily_winter = """
+        sql_p_daily_winter = """
             SELECT date,
 			    CASE WHEN EXTRACT(MONTH FROM date) IN (1, 2, 3, 10, 11, 12)
 			            THEN true::bool
 			            ELSE false::bool
 			    END AS is_winter,
-			    "filled" AS "n_d",
+			    "filled" AS "p_d",
 			    "count_n"
-			FROM ({sql_n_daily}) tsn_d
-        """.format(sql_n_daily=sql_n_daily)
+			FROM ({sql_p_daily}) tsp_d
+        """.format(sql_p_daily=sql_p_daily)
 
         # add precipitation class
-        sql_n_daily_precip_class = """
+        sql_p_daily_precip_class = """
             SELECT
-                date, "count_n", "n_d",
+                date, "count_n", "p_d",
                 CASE WHEN (tst."filled" >= (3 * {t_decim}) AND "is_winter") THEN 'precip_winter'
                     WHEN (tst."filled" >= (3 * {t_decim}) AND NOT "is_winter") THEN 'precip_summer'
                     WHEN (tst."filled" <= (-0.7 * {t_decim})::int) THEN 'snow'
                     WHEN (tst."filled" IS NULL) THEN NULL
                     ELSE 'mix'
                 END AS precipitation_typ
-            FROM ({sql_n_daily_winter}) tsn_d_wi
+            FROM ({sql_p_daily_winter}) tsp_d_wi
             LEFT JOIN timeseries."{stid}_t" tst
-                ON tst.timestamp=tsn_d_wi.date
+                ON tst.timestamp=tsp_d_wi.date
         """.format(
-            sql_n_daily_winter=sql_n_daily_winter,
+            sql_p_daily_winter=sql_p_daily_winter,
             **sql_format_dict
         )
 
@@ -564,14 +564,14 @@ class StationP(StationPBase):
         sql_delta_n = """
             SELECT date,
                 CASE WHEN "count_n"> 0 THEN
-                        round(("b_{richter_class}" * ("n_d"::float/{n_decim})^"E" * {n_decim})/"count_n")::int
+                        round(("b_{richter_class}" * ("p_d"::float/{n_decim})^"E" * {n_decim})/"count_n")::int
                     ELSE 0
                 END AS "delta_10min"
-            FROM ({sql_n_daily_precip_class}) tsn_d2
+            FROM ({sql_p_daily_precip_class}) tsp_d2
             LEFT JOIN richter_values r
-                ON r."precipitation_typ"=tsn_d2."precipitation_typ"
+                ON r."precipitation_typ"=tsp_d2."precipitation_typ"
         """.format(
-            sql_n_daily_precip_class=sql_n_daily_precip_class,
+            sql_p_daily_precip_class=sql_p_daily_precip_class,
             **sql_format_dict
         )
 
@@ -714,7 +714,7 @@ class StationP(StationPBase):
                             FROM new_filled_{stid}_{para}
                             GROUP BY date(timestamp - '5h 50min'::INTERVAL)
                             ) ts_10
-                        LEFT JOIN timeseries."{stid}_n_d" ts_d
+                        LEFT JOIN timeseries."{stid}_p_d" ts_d
                             ON ts_10.date=ts_d.timestamp
                         WHERE ts_d."raw" IS NOT NULL
                             AND ts_10.filled > 0
