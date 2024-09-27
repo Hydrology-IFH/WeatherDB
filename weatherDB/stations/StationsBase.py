@@ -569,20 +569,13 @@ class StationsBase:
                         finished[index] = True
                         pbar.variables["last_station"] = stations[index].id
                         # get stdout and log
+                        header = f"""The {name} of the {self._para_long} Station with ID {stations[index].id} finished with:\n"""
                         try:
-                            stdout = "stdout: " + str(result.get(10))
-                        except:
-                            stdout = "stderr: " + traceback.format_exc()
-                        if stdout != "stdout: None":
-                            log.debug((
-                                "The {name} of the {para_long} Station " +
-                                "with ID {stid} finished with:\n" +
-                                "{stdout}"
-                                ).format(
-                                    name=name,
-                                    para_long=self._para_long,
-                                    stid=stations[index].id,
-                                    stdout=stdout))
+                            stdout = result.get(10)
+                            if stdout is not None:
+                                log.debug(f"{header}stdout: {result.get(10)}")
+                        except Exception:
+                            log.error(f"{header}stderr: {traceback.format_exc()}")
 
                         pbar.update(sum(finished))
                 time.sleep(2)
