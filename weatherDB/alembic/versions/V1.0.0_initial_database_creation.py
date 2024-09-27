@@ -29,7 +29,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "parameter",
-            sa.CHAR(length=3),
+            sa.VARCHAR(length=3),
             nullable=False,
             comment="The parameter (n,t,et,n_d) of the station that got droped",
         ),
@@ -121,13 +121,13 @@ def upgrade() -> None:
         ),
         sa.Column(
             "stationsname",
-            sa.CHAR(length=50),
+            sa.VARCHAR(length=50),
             nullable=False,
             comment="The stations official name as text",
         ),
         sa.Column(
             "bundesland",
-            sa.CHAR(length=30),
+            sa.VARCHAR(length=30),
             nullable=False,
             comment="The state the station is located in",
         ),
@@ -299,13 +299,13 @@ def upgrade() -> None:
         ),
         sa.Column(
             "stationsname",
-            sa.CHAR(length=50),
+            sa.VARCHAR(length=50),
             nullable=False,
             comment="The stations official name as text",
         ),
         sa.Column(
             "bundesland",
-            sa.CHAR(length=30),
+            sa.VARCHAR(length=30),
             nullable=False,
             comment="The state the station is located in",
         ),
@@ -446,13 +446,13 @@ def upgrade() -> None:
         ),
         sa.Column(
             "stationsname",
-            sa.CHAR(length=50),
+            sa.VARCHAR(length=50),
             nullable=False,
             comment="The stations official name as text",
         ),
         sa.Column(
             "bundesland",
-            sa.CHAR(length=30),
+            sa.VARCHAR(length=30),
             nullable=False,
             comment="The state the station is located in",
         ),
@@ -568,13 +568,13 @@ def upgrade() -> None:
         ),
         sa.Column(
             "stationsname",
-            sa.CHAR(length=50),
+            sa.VARCHAR(length=50),
             nullable=False,
             comment="The stations official name as text",
         ),
         sa.Column(
             "bundesland",
-            sa.CHAR(length=30),
+            sa.VARCHAR(length=30),
             nullable=False,
             comment="The state the station is located in",
         ),
@@ -722,7 +722,7 @@ def upgrade() -> None:
         "raw_files",
         sa.Column(
             "parameter",
-            type_=sa.CHAR(length=3),
+            sa.VARCHAR(length=3),
             nullable=False,
             comment="The parameter that got downloaded for this file. e.g. t, et, n_d, n",
         ),
@@ -812,13 +812,13 @@ def upgrade() -> None:
         ),
         sa.Column(
             "raster_key",
-            sa.String(),
+            sa.VARCHAR(length=7),
             nullable=False,
             comment="The name of the raster. e.g. 'dwd' or 'hyras'",
         ),
         sa.Column(
             "parameter",
-            type_=sa.CHAR(length=7),
+            sa.VARCHAR(length=7),
             nullable=False,
             comment="The parameter of the raster. e.g. 'p_wihj', 'p_sohj', 'p_year', 't_year', 'et_year'",
         ),
@@ -830,7 +830,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "distance",
-            sa.Float(),
+            sa.Integer(),
             nullable=False,
             comment="The distance of the station to the raster value in meters.",
         ),
@@ -848,7 +848,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "parameter",
-            type_=sa.CHAR(length=3),
+            sa.VARCHAR(length=3),
             nullable=False,
             comment="The parameter of the station. e.g. 'P', 'T', 'ET'",
         ),

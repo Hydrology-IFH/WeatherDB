@@ -54,10 +54,10 @@ class ModelBase(DeclarativeBase):
             sint: sa.SmallInteger(),
             UTCDateTime: UTCDateTime(),
             float: sa.Float(),
-            str3: sa.CHAR(3),
-            str7: sa.CHAR(7),
-            str30: sa.CHAR(30),
-            str50: sa.CHAR(50),
+            str3: sa.VARCHAR(3),
+            str7: sa.VARCHAR(7),
+            str30: sa.VARCHAR(30),
+            str50: sa.VARCHAR(50),
         }
     )
 
@@ -268,7 +268,7 @@ class StationMARaster(ModelBase):
     station_id: Mapped[int] = mapped_column(
         primary_key=True,
         comment="The DWD-ID of the station.")
-    raster_key: Mapped[str] = mapped_column(
+    raster_key: Mapped[str7] = mapped_column(
         primary_key=True,
         comment="The name of the raster. e.g. 'dwd' or 'hyras'")
     parameter: Mapped[str7] = mapped_column(
@@ -276,7 +276,7 @@ class StationMARaster(ModelBase):
         comment="The parameter of the raster. e.g. 'p_wihj', 'p_sohj', 'p_year', 't_year', 'et_year'")
     value: Mapped[int] = mapped_column(
         comment="The value of the raster for the station.")
-    distance: Mapped[float] = mapped_column(
+    distance: Mapped[int] = mapped_column(
         comment="The distance of the station to the raster value in meters.")
 
 
