@@ -24,22 +24,22 @@ If you want e.g. to download all the 10 minute, filled and Richter corrected pre
 
 ```
 from weatherDB import StationP
-stat_n = StationP(1443)
-df = stat_n.get_corr()
+stat_p = StationP(1443)
+df = stat_p.get_corr()
 ```
 
 If you are only interested in a small timespan, provide the period parameter with the upper and lower time limit. If e.g. you want the data for the years 2000-2010 do:
 ```
-df = stat_n.get_corr(period=("2000-01-01", "2010-12-31"))
+df = stat_p.get_corr(period=("2000-01-01", "2010-12-31"))
 ```
 
 If you are not interested in the filled and Richter-corrected data, but want e.g. the raw data, add the kind parameter to your query. Like e.g.:
 ```
-df = stat_n.get_raw()
+df = stat_p.get_raw()
 ```
 Or use the more general function with the wanted kind parameter. 
 ```
-df = stat_n.get_df(kinds=["raw"])
+df = stat_p.get_df(kinds=["raw"])
 ```
 There are 3-5 different kinds of timeseries available per station object depending on the class. 
 So there is:
@@ -51,12 +51,12 @@ So there is:
 
 If you want more than just one kind of timeseries, e.g. the filled timeseries, together with the id from which station the respective field got filled with use:
 ```
-df = stat_n.get_df(kinds=["filled", "filled_by"])
+df = stat_p.get_df(kinds=["filled", "filled_by"])
 ```
 
 If you only need daily values, you can hand in the agg_to parameter. This will also make your query faster, because not as much data has to get transmitted over the network.
 ```
-df = stat_n.get_df(agg_to="day")
+df = stat_p.get_df(agg_to="day")
 ```
 
 Similar to the precipitation, you can also work with the Temperature and potential Evapotranspiration data:

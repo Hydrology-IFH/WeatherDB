@@ -1776,7 +1776,7 @@ class StationBase:
 
         sql = """
         WITH meta AS (
-            SELECT {kind_meta_period}_from, {kind_meta_period}_until FROM meta_n WHERE station_id={stid})
+            SELECT {kind_meta_period}_from, {kind_meta_period}_until FROM meta_p WHERE station_id={stid})
         SELECT {count_weeks}
         FROM (
             SELECT tst.timestamp-LAG(tst.timestamp) OVER (ORDER BY tst.timestamp) as diff
@@ -2622,7 +2622,7 @@ class StationCanVirtualBase(StationBase):
             else:
                 self._create_timeseries_table()
                 return True
-        elif self.isin_meta_n():
+        elif self.isin_meta_p():
             self._create_meta_virtual()
             self._create_timeseries_table()
             return True
@@ -2641,7 +2641,7 @@ and not in the precipitation meta table in the DB""")
                 stationshoehe, stationsname, bundesland)
             (SELECT station_id, false, geometry, geometry_utm,
                     stationshoehe, stationsname, bundesland
-             FROM meta_n
+             FROM meta_p
              WHERE station_id = {stid})
         """.format(stid=self.id, para=self._para)
 
@@ -2649,7 +2649,7 @@ and not in the precipitation meta table in the DB""")
             con.execute(sqltxt(sql))
             con.commit()
 
-    def isin_meta_n(self):
+    def isin_meta_p(self):
         """Check if Station is in the precipitation meta table.
 
         Returns
@@ -2659,7 +2659,7 @@ and not in the precipitation meta table in the DB""")
         """
         with db_engine.connect() as con:
             result = con.execute(sqltxt("""
-            SELECT {stid} in (SELECT station_id FROM meta_n);
+            SELECT {stid} in (SELECT station_id FROM meta_p);
             """.format(stid=self.id)))
         return result.first()[0]
 

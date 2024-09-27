@@ -36,8 +36,7 @@ class GroupStations(object):
 
     def get_valid_stids(self):
         if not hasattr(self, "_valid_stids"):
-            sql ="""
-            SELECT station_id FROM meta_n"""
+            sql ="""SELECT station_id FROM meta_p"""
             with db_engine.connect() as con:
                 res = con.execute(sqltxt(sql))
             self._valid_stids = [el[0] for el in res.all()]

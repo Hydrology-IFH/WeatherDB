@@ -19,9 +19,9 @@ class StationsTETBase(StationsBase):
         if not only_real:
             meta = self.get_meta(
                 infos=["Station_id"], only_real=False)
-            meta_n = StationsP().get_meta(
+            meta_p = StationsP().get_meta(
                 infos=["Station_id"], only_real=False)
-            stids_missing = set(meta_n.index.values) - set(meta.index.values)
+            stids_missing = set(meta_p.index.values) - set(meta.index.values)
             if stids != "all":
                 stids_missing = set(stids).intersection(stids_missing)
             for stid in stids_missing:

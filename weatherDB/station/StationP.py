@@ -495,13 +495,13 @@ class StationP(StationPBase):
         min_date = pd.Timestamp(MIN_TSTP).date()
         stat_t_min = stat_t_period[0].date()
         stat_t_max = stat_t_period[1].date()
-        stat_n_min = (period[0] - delta).date()
-        stat_n_max = (period[1] - delta).date()
+        stat_p_min = (period[0] - delta).date()
+        stat_p_max = (period[1] - delta).date()
         if stat_t_period.is_empty()\
-                or (stat_t_min > stat_n_min
-                    and not (stat_n_min < min_date)
+                or (stat_t_min > stat_p_min
+                    and not (stat_p_min < min_date)
                              and (stat_t_min == min_date)) \
-                or (stat_t_max  < stat_n_max)\
+                or (stat_t_max  < stat_p_max)\
                 and not stat_t.is_last_imp_done(kind="filled"):
             stat_t.fillup(period=period)
 
@@ -622,7 +622,7 @@ class StationP(StationPBase):
         # calculate the difference to filled timeserie
         if period.is_empty() or period[0].year < pd.Timestamp.now().year:
             sql_diff_filled = """
-                UPDATE meta_n
+                UPDATE meta_p
                 SET quot_corr_filled = quot_avg
                 FROM (
                     SELECT avg(quot)*100 AS quot_avg
@@ -684,9 +684,9 @@ class StationP(StationPBase):
     def _sql_fillup_extra_dict(self, **kwargs):
         fillup_extra_dict = super()._sql_fillup_extra_dict(**kwargs)
 
-        stat_nd = StationPD(self.id)
-        if stat_nd.isin_db() and \
-                not stat_nd.get_filled_period(kind="filled", from_meta=True).is_empty():
+        stat_pd = StationPD(self.id)
+        if stat_pd.isin_db() and \
+                not stat_pd.get_filled_period(kind="filled", from_meta=True).is_empty():
             # adjust 10 minutes sum to match measured daily value,
             # but don't add more than 10mm/10min and don't create single peaks with more than 5mm/min
             sql_extra = """
@@ -730,7 +730,7 @@ class StationP(StationPBase):
 
             fillup_extra_dict.update(dict(sql_extra_after_loop=sql_extra))
         else:
-            log.warning("Station_N({stid}).fillup: There is no daily timeserie in the database, "+
+            log.warning(f"StationP({self.id}).fillup: There is no daily timeserie in the database, "+
                         "therefor the 10 minutes values are not getting adjusted to daily values")
 
         return fillup_extra_dict
