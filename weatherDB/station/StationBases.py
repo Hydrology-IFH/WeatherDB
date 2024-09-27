@@ -832,18 +832,24 @@ class StationBase:
                 SELECT ({self._agg_fun}("{kind}")/count("{kind}")::float*count("timestamp"))::int AS val
                 FROM timeseries."{self.id}_{self._para}"
                 GROUP BY date_trunc('year', "timestamp")
-                HAVING count("{kind}")/count("timestamp")>0.9
+                HAVING count("{kind}")/count("timestamp")::float>0.9
             )
             INSERT INTO station_ma_timeserie (station_id, parameter, kind, value)
-                SELECT
-                    {self.id} AS station_id,
-                    '{self._para}' AS parameter,
-                    '{kind}' AS kind,
-                    avg(val)::int AS value
-                FROM ts_y
+                SELECT *
+                FROM (  SELECT
+                            {self.id} AS station_id,
+                            '{self._para}' AS parameter,
+                            '{kind}' AS kind,
+                            avg(val)::int AS value
+                        FROM ts_y)
+                WHERE value IS NOT NULL
             ON CONFLICT (station_id, parameter, kind) DO UPDATE
                 SET value = EXCLUDED.value;
         """
+
+        # check return_sql
+        if kwargs.get("return_sql", False):
+            return sql
 
         # execute the sql
         with db_engine.connect() as con:
