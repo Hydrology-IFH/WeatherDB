@@ -16,6 +16,7 @@ import shapely.wkb
 import shapely.ops
 import pyproj
 from rasterstats import zonal_stats
+import textwrap
 
 from ..db.connections import db_engine
 from ..utils.dwd import get_cdc_file_list, get_dwd_file
@@ -2134,12 +2135,12 @@ class StationBase:
         file = Path(raster_conf["file"])
         with rio.open(file) as src:
             # get the CRS
-            epsg = src.crs.to_epsg()
-            if epsg is None:
-                epsg = raster_conf["srid"]
+            src_srid = src.crs.to_epsg()
+            if src_srid is None:
+                src_srid = raster_conf["srid"]
 
             # get the station geom
-            stat_geom = self.get_geom(crs=epsg)
+            stat_geom = self.get_geom(crs=src_srid)
 
             # get the bands indexes
             if isinstance(bands, str) and bands.lower() == "all":
@@ -2166,11 +2167,21 @@ class StationBase:
                     src.sample(stat_geom.coords, indexes=indexes)
                     )[0]
             else:
-                if not src.crs.is_projected:
-                    raise ValueError(
-                        f"Getting raster values for nearby raster cells is only allowed for projected rasters. Please use a prejected CRS for {file.resolve()}.")
+                proj_srid = pyproj.CRS.from_epsg(
+                    config.get("weatherdb", "RASTER_BUFFER_CRS"))
+                if not proj_srid.is_projected:
+                    raise ValueError(textwrap.dedent(
+                        """Buffering the stations position to get raster values for nearby raster cells is only allowed for projected rasters.
+                        Please update the RASTER_BUFFER_CRS in the weatherdb section of the config file to a projected CRS."""))
+                tr_to = pyproj.Transformer.from_proj(src_srid, proj_srid, always_xy=True)
+                tr_back = pyproj.Transformer.from_proj(proj_srid, src_srid, always_xy=True)
+                buf_geom = shapely.ops.transform(
+                    tr_back.transform,
+                    shapely.ops.transform(tr_to.transform, stat_geom).buffer(dist),
+                )
+
                 return zonal_stats(
-                    stat_geom.buffer(dist),
+                    buf_geom,
                     src,
                     stats=["mean"],
                     all_touched=True
@@ -2761,7 +2772,7 @@ class StationTETBase(StationCanVirtualBase):
         coefs = pd.Series(
             index=nbs_stids_all,
             data=[self.get_coef(other_stid=near_stid, in_db_unit=True)
-                        for near_stid in nbs_stids_all]
+                  for near_stid in nbs_stids_all]
             ).fillna("NULL")\
             .apply(lambda x: x[0] if isinstance(x, list) else x)\
             .astype(str)
@@ -2783,28 +2794,27 @@ class StationTETBase(StationCanVirtualBase):
         sql_near_median_parts = []
         for (start, end), row in nbs.iterrows():
             period_part = TimestampPeriod(f"{start}-01-01", f"{end}-12-31")
+            near_stids = row["near_stids"]
 
             # create sql for mean of the near stations and the raw value itself
             sql_near_median_parts.append("""
                 SELECT timestamp,
                     (SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY T.c)
-                     FROM (VALUES (ts1.raw{coef_sign[1]}{coefs[0]}),
-                                  (ts2.raw{coef_sign[1]}{coefs[1]}),
-                                  (ts3.raw{coef_sign[1]}{coefs[2]}),
-                                  (ts4.raw{coef_sign[1]}{coefs[3]}),
-                                  (ts5.raw{coef_sign[1]}{coefs[4]})) T (c)
+                        FROM (VALUES {reg_vals}) T (c)
                     ) as nbs_median
                 FROM timeseries."{near_stids[0]}_{para}" ts1
-                FULL OUTER JOIN timeseries."{near_stids[1]}_{para}" ts2 USING (timestamp)
-                FULL OUTER JOIN timeseries."{near_stids[2]}_{para}" ts3 USING (timestamp)
-                FULL OUTER JOIN timeseries."{near_stids[3]}_{para}" ts4 USING (timestamp)
-                FULL OUTER JOIN timeseries."{near_stids[4]}_{para}" ts5 USING (timestamp)
+                {near_joins}
                 WHERE timestamp BETWEEN {min_tstp}::{tstp_dtype} AND {max_tstp}::{tstp_dtype}
                 """.format(
                     para=self._para,
-                    near_stids=row["near_stids"],
-                    coefs=coefs[row["near_stids"]].to_list(),
-                    coef_sign=self._coef_sign,
+                    near_stids=near_stids,
+                    reg_vals=", ".join(
+                        [f"(ts{i+1}.raw{self._coef_sign[1]}{coef})"
+                            for i, coef in enumerate(coefs[near_stids].values)]),
+                    near_joins = "\n".join(
+                        [f"FULL OUTER JOIN timeseries.\"{near_stid}_{self._para}\" ts{i+1} USING (timestamp)"
+                            for i, near_stid in enumerate(near_stids)
+                            if i>0]),
                     tstp_dtype=self._tstp_dtype,
                     **period_part.get_sql_format_dict()))
 
