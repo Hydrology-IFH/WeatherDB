@@ -68,41 +68,56 @@ class MetaBase(ModelBase):
 
     station_id: Mapped[int] = mapped_column(
         primary_key=True,
-        comment="official DWD-ID of the station")
+        comment="official DWD-ID of the station",
+        sort_order=-105)
     is_real: Mapped[bool] = mapped_column(
         default=True,
         server_default=sa.sql.expression.true(),
-        comment=" 'Is this station a real station with own measurements or only a virtual station, to have complete timeseries for every precipitation station.")
+        comment=" 'Is this station a real station with own measurements or only a virtual station, to have complete timeseries for every precipitation station.",
+        sort_order=-104)
+    stationsname: Mapped[str50] = mapped_column(
+        comment="The stations official name as text",
+        sort_order=-103)
+    bundesland: Mapped[str30] = mapped_column(
+        comment="The state the station is located in",
+        sort_order=-102)
     raw_from: Mapped[Optional[UTCDateTime]] = mapped_column(
-        comment="The timestamp from when on own \"raw\" data is available")
+        comment="The timestamp from when on own \"raw\" data is available",
+        sort_order=-95)
     raw_until: Mapped[Optional[UTCDateTime]] = mapped_column(
-        comment="The timestamp until when own \"raw\" data is available")
+        comment="The timestamp until when own \"raw\" data is available",
+        sort_order=-94)
     hist_until: Mapped[Optional[UTCDateTime]] = mapped_column(
-        comment="The timestamp until when own \"raw\" data is available")
-    filled_from: Mapped[Optional[UTCDateTime]] = mapped_column(
-        comment="The timestamp from when on filled data is available")
-    filled_until: Mapped[Optional[UTCDateTime]] = mapped_column(
-        comment="The timestamp until when filled data is available")
+        comment="The timestamp until when own \"raw\" data is available",
+        sort_order=-93)
     last_imp_from: Mapped[Optional[UTCDateTime]] = mapped_column(
-        comment="The minimal timestamp of the last import, that might not yet have been treated")
+        comment="The minimal timestamp of the last import, that might not yet have been treated",
+        sort_order=-81)
     last_imp_until: Mapped[Optional[UTCDateTime]] = mapped_column(
-        comment="The maximal timestamp of the last import, that might not yet have been treated")
+        comment="The maximal timestamp of the last import, that might not yet have been treated",
+        sort_order=-80)
     last_imp_filled: Mapped[bool] = mapped_column(
         default=False,
         server_default=sa.sql.expression.false(),
-        comment="Got the last import already filled?")
+        comment="Got the last import already filled?",
+        sort_order=-75)
+    filled_from: Mapped[Optional[UTCDateTime]] = mapped_column(
+        comment="The timestamp from when on filled data is available",
+        sort_order=-74)
+    filled_until: Mapped[Optional[UTCDateTime]] = mapped_column(
+        comment="The timestamp until when filled data is available",
+        sort_order=-73)
     stationshoehe: Mapped[int] = mapped_column(
-        comment="The stations height above the ground in meters")
-    stationsname: Mapped[str50] = mapped_column(
-        comment="The stations official name as text")
-    bundesland: Mapped[str30] = mapped_column(
-        comment="The state the station is located in")
+        comment="The stations height above the ground in meters",
+        sort_order=10)
     geometry: Mapped[str] = mapped_column(
         Geometry('POINT', 4326),
-        comment="The stations location in the WGS84 coordinate reference system (EPSG:4326)")
+        comment="The stations location in the WGS84 coordinate reference system (EPSG:4326)",
+        sort_order=11)
     geometry_utm: Mapped[str] = mapped_column(
         Geometry('POINT', 25832),
-        comment="The stations location in the UTM32 coordinate reference system (EPSG:25832)")
+        comment="The stations location in the UTM32 coordinate reference system (EPSG:25832)",
+        sort_order=12)
 
 class MetaBaseQC(ModelBase):
     __abstract__ = True
@@ -110,13 +125,17 @@ class MetaBaseQC(ModelBase):
     last_imp_qc: Mapped[bool] = mapped_column(
         default=False,
         server_default=sa.sql.expression.false(),
-        comment="Got the last import already quality checked?")
+        comment="Got the last import already quality checked?",
+        sort_order=-65)
     qc_from: Mapped[Optional[UTCDateTime]] = mapped_column(
-        comment="The timestamp from when on quality checked(\"qc\") data is available")
+        comment="The timestamp from when on quality checked(\"qc\") data is available",
+        sort_order=-64)
     qc_until: Mapped[Optional[UTCDateTime]] = mapped_column(
-        comment="The timestamp until when quality checked(\"qc\") data is available")
+        comment="The timestamp until when quality checked(\"qc\") data is available",
+        sort_order=-63)
     qc_droped: Mapped[Optional[float]] = mapped_column(
-        comment="The percentage of droped values during the quality check")
+        comment="The percentage of droped values during the quality check",
+        sort_order=-62)
 
 # declare all database tables
 # ---------------------------
@@ -129,16 +148,21 @@ class MetaP(MetaBase, MetaBaseQC):
     last_imp_corr: Mapped[bool] = mapped_column(
         default=False,
         server_default=sa.sql.expression.false(),
-        comment="Got the last import already Richter corrected?")
+        comment="Got the last import already Richter corrected?",
+        sort_order=-55)
     corr_from: Mapped[Optional[UTCDateTime]] = mapped_column(
-        comment="The timestamp from when on corrected data is available")
+        comment="The timestamp from when on corrected data is available",
+        sort_order=-54)
     corr_until: Mapped[Optional[UTCDateTime]] = mapped_column(
-        comment="The timestamp until when corrected data is available")
+        comment="The timestamp until when corrected data is available",
+        sort_order=-53)
     horizon: Mapped[Optional[float]] = mapped_column(
-        comment="The horizon angle in degrees, how it got defined by Richter(1995).")
+        comment="The horizon angle in degrees, how it got defined by Richter(1995).",
+        sort_order=-52)
     richter_class: Mapped[Optional[str]] = mapped_column(
         sa.String(),
-        comment="The Richter exposition class, that got derived from the horizon angle.")
+        comment="The Richter exposition class, that got derived from the horizon angle.",
+        sort_order=-51)
 
 
 class MetaPD(MetaBase):
@@ -170,12 +194,15 @@ class RawFiles(ModelBase):
 
     parameter: Mapped[str3] = mapped_column(
         primary_key=True,
-        comment="The parameter that got downloaded for this file. e.g. t, et, p_d, n")
+        comment="The parameter that got downloaded for this file. e.g. t, et, p_d, n",
+        sort_order=-10)
     filepath: Mapped[str] = mapped_column(
         primary_key=True,
-        comment="The filepath on the CDC Server")
+        comment="The filepath on the CDC Server",
+        sort_order=-8)
     modtime: Mapped[UTCDateTime] = mapped_column(
-        comment="The modification time on the CDC Server of the coresponding file")
+        comment="The modification time on the CDC Server of the coresponding file",
+        sort_order=-5)
 
 
 class DropedStations(ModelBase):
@@ -186,16 +213,20 @@ class DropedStations(ModelBase):
 
     station_id: Mapped[int] = mapped_column(
         primary_key=True,
-        comment="The station id that got droped")
+        comment="The station id that got droped",
+        sort_order=-10)
     parameter: Mapped[str3] = mapped_column(
         primary_key=True,
-        comment="The parameter (n,t,et,p_d) of the station that got droped")
+        comment="The parameter (n,t,et,p_d) of the station that got droped",
+        sort_order=-9)
     why: Mapped[str] = mapped_column(
         sa.Text(),
-        comment="The reason why the station got droped")
+        comment="The reason why the station got droped",
+        sort_order=-8)
     timestamp: Mapped[UTCDateTime] = mapped_column(
         server_default=func.now(),
-        comment="The timestamp when the station got droped")
+        comment="The timestamp when the station got droped",
+        sort_order=-7)
 
 
 class ParameterVariables(ModelBase):
@@ -206,11 +237,14 @@ class ParameterVariables(ModelBase):
 
     parameter: Mapped[str3] = mapped_column(
         primary_key=True,
-        comment="The parameter for which the variables are valid. e.g. n/p_d/t/et.")
+        comment="The parameter for which the variables are valid. e.g. n/p_d/t/et.",
+        sort_order=-10)
     start_tstp_last_imp: Mapped[Optional[UTCDateTime]] = mapped_column(
-        comment="At what timestamp did the last complete import start. This is then the maximum timestamp for which to expand the timeseries to.")
+        comment="At what timestamp did the last complete import start. This is then the maximum timestamp for which to expand the timeseries to.",
+        sort_order=-9)
     max_tstp_last_imp: Mapped[Optional[UTCDateTime]] = mapped_column(
-        comment="The maximal timestamp of the last imports raw data of all the timeseries")
+        comment="The maximal timestamp of the last imports raw data of all the timeseries",
+        sort_order=-8)
 
 
 class RichterValues(ModelBase):
@@ -222,23 +256,30 @@ class RichterValues(ModelBase):
     precipitation_typ: Mapped[str] = mapped_column(
         sa.Text(),
         primary_key=True,
-        comment="The type of precipitation. e.g. 'Schnee', 'Regen', ...")
+        comment="The type of precipitation. e.g. 'Schnee', 'Regen', ...",
+        sort_order=-10)
     temperaturbereich: Mapped[str] = mapped_column(
         sa.Text(),
-        comment="The temperature range.")
+        comment="The temperature range.",
+        sort_order=-9)
     e: Mapped[float] = mapped_column(
-        comment="The e-value of the equation.")
+        comment="The e-value of the equation.",
+        sort_order=-8)
     b_no_protection: Mapped[float] = mapped_column(
         name="b_no-protection",
-        comment="The b-value of the equation for exposition class 'no protection'.")
+        comment="The b-value of the equation for exposition class 'no protection'.",
+        sort_order=-5)
     b_little_protection: Mapped[float] = mapped_column(
         name="b_little-protection",
-        comment="The b-value of the equation for exposition class 'little protection'.")
+        comment="The b-value of the equation for exposition class 'little protection'.",
+        sort_order=-4)
     b_protected: Mapped[float] = mapped_column(
-        comment="The b-value of the equation for exposition class 'protected'.")
+        comment="The b-value of the equation for exposition class 'protected'.",
+        sort_order=-3)
     b_heavy_protection: Mapped[float] = mapped_column(
         name="b_heavy-protection",
-        comment="The b-value of the equation for exposition class 'heavy protection'.")
+        comment="The b-value of the equation for exposition class 'heavy protection'.",
+        sort_order=-2)
 
 
 class StationMATimeserie(ModelBase):
@@ -248,15 +289,19 @@ class StationMATimeserie(ModelBase):
         comment="The multi annual mean values of the stations timeseries for the maximum available timespan.")
     station_id: Mapped[int] = mapped_column(
         primary_key=True,
-        comment="The DWD-ID of the station.")
+        comment="The DWD-ID of the station.",
+        sort_order=-10)
     parameter: Mapped[str3] = mapped_column(
         primary_key=True,
-        comment="The parameter of the station. e.g. 'P', 'T', 'ET'")
+        comment="The parameter of the station. e.g. 'P', 'T', 'ET'",
+        sort_order=-9)
     kind: Mapped[str] = mapped_column(
         primary_key=True,
-        comment="The kind of the timeserie. e.g. 'raw', 'filled', 'corr'")
+        comment="The kind of the timeserie. e.g. 'raw', 'filled', 'corr'",
+        sort_order=-8)
     value: Mapped[int] = mapped_column(
-        comment="The multi annual value of the yearly mean value of the station to the multi annual mean value of the raster.")
+        comment="The multi annual value of the yearly mean value of the station to the multi annual mean value of the raster.",
+        sort_order=1)
 
 
 class StationMARaster(ModelBase):
@@ -267,17 +312,22 @@ class StationMARaster(ModelBase):
 
     station_id: Mapped[int] = mapped_column(
         primary_key=True,
-        comment="The DWD-ID of the station.")
+        comment="The DWD-ID of the station.",
+        sort_order=-10)
     raster_key: Mapped[str7] = mapped_column(
         primary_key=True,
-        comment="The name of the raster. e.g. 'dwd' or 'hyras'")
+        comment="The name of the raster. e.g. 'dwd' or 'hyras'",
+        sort_order=-9)
     parameter: Mapped[str7] = mapped_column(
         primary_key=True,
-        comment="The parameter of the raster. e.g. 'p_wihj', 'p_sohj', 'p_year', 't_year', 'et_year'")
+        comment="The parameter of the raster. e.g. 'p_wihj', 'p_sohj', 'p_year', 't_year', 'et_year'",
+        sort_order=-8)
     value: Mapped[int] = mapped_column(
-        comment="The value of the raster for the station.")
+        comment="The value of the raster for the station.",
+        sort_order=1)
     distance: Mapped[int] = mapped_column(
-        comment="The distance of the station to the raster value in meters.")
+        comment="The distance of the station to the raster value in meters.",
+        sort_order=2)
 
 
 class NeededDownloadTime(ModelBase):
@@ -288,23 +338,31 @@ class NeededDownloadTime(ModelBase):
     timestamp: Mapped[UTCDateTime] = mapped_column(
         server_default=func.now(),
         primary_key=True,
-        comment="The timestamp when the download hapend.")
+        comment="The timestamp when the download hapend.",
+        sort_order=-5)
     quantity: Mapped[int] = mapped_column(
-        comment="The number of stations that got downloaded")
+        comment="The number of stations that got downloaded",
+        sort_order=1)
     aggregate: Mapped[str] = mapped_column(
-        comment="The chosen aggregation. e.g. hourly, 10min, daily, ...")
+        comment="The chosen aggregation. e.g. hourly, 10min, daily, ...",
+        sort_order=2)
     timespan: Mapped[timedelta] = mapped_column(
         sa.Interval(),
-        comment="The timespan of the downloaded timeseries. e.g. 2 years")
+        comment="The timespan of the downloaded timeseries. e.g. 2 years",
+        sort_order=3)
     zip: Mapped[bool] = mapped_column(
-        comment="Was the download zipped?")
+        comment="Was the download zipped?",
+        sort_order=4)
     pc: Mapped[str] = mapped_column(
-        comment="The name of the pc that downloaded the timeseries.")
+        comment="The name of the pc that downloaded the timeseries.",
+        sort_order=5)
     duration: Mapped[timedelta] = mapped_column(
         sa.Interval(),
-        comment="The needed time to download and create the timeserie")
+        comment="The needed time to download and create the timeserie",
+        sort_order=6)
     output_size: Mapped[int] = mapped_column(
-        comment="The size of the created output file in bytes")
+        comment="The size of the created output file in bytes",
+        sort_order=7)
 
 
 class Settings(ModelBase):
@@ -315,7 +373,9 @@ class Settings(ModelBase):
     key: Mapped[str] = mapped_column(
         sa.String(20),
         primary_key=True,
-        comment="The key of the setting")
+        comment="The key of the setting",
+        sort_order=0)
     value: Mapped[str] = mapped_column(
         sa.String(20),
-        comment="The value of the setting")
+        comment="The value of the setting",
+        sort_order=1)
