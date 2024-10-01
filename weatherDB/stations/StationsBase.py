@@ -889,7 +889,8 @@ class StationsBase:
             kinds=[kwargs.pop("kind")]
         else:
             kinds=kwargs.pop("kinds")
-        stats = self.get_stations(only_real=False, stids=stids, **kwargs)
+        kwargs.update(dict(only_real=kwargs.get("only_real", False)))
+        stats = self.get_stations(stids=stids, **kwargs)
         df_all = None
         for stat in pb.progressbar(stats, line_breaks=False):
             df = stat.get_df(kinds=kinds, **kwargs)
@@ -899,8 +900,7 @@ class StationsBase:
                 continue
             if len(df.columns) == 1:
                 df.rename(
-                    dict(zip(df.columns,
-                             [str(stat.id) for col in df.columns])),
+                    dict(zip(df.columns, [stat.id])),
                     axis=1, inplace=True)
             else:
                 df.columns = pd.MultiIndex.from_product(
