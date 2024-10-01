@@ -742,18 +742,12 @@ def upgrade() -> None:
         comment="The files that got imported from the CDC Server.",
     )
     op.create_table(
-        "richter_values",
+        "richter_parameters",
         sa.Column(
             "precipitation_typ",
             sa.Text(),
             nullable=False,
             comment="The type of precipitation. e.g. 'Schnee', 'Regen', ...",
-        ),
-        sa.Column(
-            "temperaturbereich",
-            sa.Text(),
-            nullable=False,
-            comment="The temperature range.",
         ),
         sa.Column(
             "e", sa.FLOAT(), nullable=False, comment="The e-value of the equation."
@@ -879,7 +873,7 @@ def downgrade() -> None:
     op.drop_table("station_ma_raster")
     op.drop_table("station_ma_timeserie")
     op.drop_table("settings")
-    op.drop_table("richter_values")
+    op.drop_table("richter_parameters")
     op.drop_table("raw_files")
     op.drop_table("parameter_variables")
     op.drop_table("needed_download_time")

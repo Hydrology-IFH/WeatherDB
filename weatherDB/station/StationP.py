@@ -568,7 +568,7 @@ class StationP(StationPBase):
                     ELSE 0
                 END AS "delta_10min"
             FROM ({sql_p_daily_precip_class}) tsp_d2
-            LEFT JOIN richter_values r
+            LEFT JOIN richter_parameters r
                 ON r."precipitation_typ"=tsp_d2."precipitation_typ"
         """.format(
             sql_p_daily_precip_class=sql_p_daily_precip_class,

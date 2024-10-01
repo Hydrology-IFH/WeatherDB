@@ -399,7 +399,7 @@ class StationBase:
                                 'day',
                                 min(start_tstp_last_imp) - '9h 30min'::INTERVAL
                             ) - '10 min'::INTERVAL,
-                            min(CASE WHEN parameter='n' THEN max_tstp_last_imp
+                            min(CASE WHEN parameter='p' THEN max_tstp_last_imp
                                      ELSE max_tstp_last_imp + '23h 50min'::INTERVAL
                                 END))
                     FROM parameter_variables)::{tstp_dtype},
@@ -1939,7 +1939,7 @@ class StationBase:
                     stid=self.id, para=self._para)
             with db_engine.connect() as con:
                 res = con.execute(sqltxt(sql_max_tstp))
-            max_period = TimestampPeriod(*res.first())
+                max_period = TimestampPeriod(*res.first())
         else:
             kinds = self._check_kinds(kinds)
             if len(kinds)>0:

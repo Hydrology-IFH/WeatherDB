@@ -61,6 +61,11 @@ class ModelBase(DeclarativeBase):
         }
     )
 
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        if hasattr(cls, "load_fixtures"):
+            sa.event.listen(cls.metadata, 'after_create', cls.load_fixtures)
+
 # define database models
 # ----------------------
 class MetaBase(ModelBase):
@@ -247,21 +252,17 @@ class ParameterVariables(ModelBase):
         sort_order=-8)
 
 
-class RichterValues(ModelBase):
-    __tablename__ = 'richter_values'
+class RichterParameters(ModelBase):
+    __tablename__ = 'richter_parameters'
     __table_args__ = dict(
         schema='public',
-        comment="The Richter values for the equation.")
+        comment="The Richter parameter values for the equation.")
 
     precipitation_typ: Mapped[str] = mapped_column(
         sa.Text(),
         primary_key=True,
         comment="The type of precipitation. e.g. 'Schnee', 'Regen', ...",
         sort_order=-10)
-    temperaturbereich: Mapped[str] = mapped_column(
-        sa.Text(),
-        comment="The temperature range.",
-        sort_order=-9)
     e: Mapped[float] = mapped_column(
         comment="The e-value of the equation.",
         sort_order=-8)
@@ -281,6 +282,20 @@ class RichterValues(ModelBase):
         comment="The b-value of the equation for exposition class 'heavy protection'.",
         sort_order=-2)
 
+    @classmethod
+    def load_fixtures(cls, target, connection, *args, **kwargs):
+        from pathlib import Path
+        from json import load
+
+        fix_dir = Path(__file__).parent.joinpath("fixtures")
+        with open(fix_dir/"RichterParameters.json") as f:
+            data = load(f)
+
+        if connection.execute(sa.sql.select(sa.func.count("*")).select_from(cls.__table__)).scalar() == 0:
+            connection.execute(cls.__table__.insert(), data)
+            connection.commit()
+
+# sa.event.listen(RichterParameters.__table__, 'after_create', RichterParameters.load_fixtures)
 
 class StationMATimeserie(ModelBase):
     __tablename__ = 'station_ma_timeserie'
