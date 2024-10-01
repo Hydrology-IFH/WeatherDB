@@ -14,8 +14,11 @@ from baseTest import BaseTestCases
 parser = argparse.ArgumentParser(description="InitDB Test CLI arguments")
 parser.add_argument("--steps", default="all",
                     help="The steps to run. Default is 'all'.")
+parser.add_argument("--just-check", action="store_true",
+                    help="Should only the check be run, without the weatehrDB step method.")
 cliargs, remaining_args = parser.parse_known_args()
 sys.argv = [sys.argv[0]] + remaining_args
+print(cliargs)
 
 # define TestCases class
 class InitDBTestCases(BaseTestCases):
@@ -47,7 +50,7 @@ class InitDBTestCases(BaseTestCases):
         self.broker.update_ma_raster(**kwargs)
 
     def step_update_richter_class(self, **kwargs):
-        self.broker.stations_n.update_richter_class(
+        self.broker.stations_p.update_richter_class(
             skip_if_exist=False, **kwargs)
 
     def step_quality_check(self, **kwargs):
@@ -112,7 +115,6 @@ class InitDBTestCases(BaseTestCases):
                         msg=f"Station {stat.id} of {stat._para_long} Station has no multi annual data.")
 
     def check_update_raw(self):
-        from weatherDB.station.StationBases import StationCanVirtualBase
         for stats in self.broker.stations:
             # check for existing timeseries table
             inspect = sa.inspect(self.db_engine.engine)
@@ -124,38 +126,62 @@ class InitDBTestCases(BaseTestCases):
                                             schema="timeseries"),
                         msg=f"Timeseries table \"{stid}_{stats._para}\" not found in database.")
 
-            # get raw data
-            df_raw = stats.get_df(
-                kinds="raw",
-                stids=self.test_stids,
-                skip_missing_stids=True)
+            with self.subTest(para=stats._para):
+                # get raw data
+                df_raw = stats.get_df(
+                    kinds="raw",
+                    stids=self.test_stids,
+                    only_real=False,
+                    nas_allowed=True,
+                    skip_missing_stids=True,
+                    agg_to="day")
+                df_meta = stats.get_meta(
+                    infos="all",
+                    stids=self.test_stids,
+                    only_real=False)
 
-            # check number of stations in df_raw
-            with self.subTest(msg="Check number of stations in df_raw"):
-                if isinstance(stats._StationClass, StationCanVirtualBase):
-                    max_stids = len(self.test_stids)
-                else:
-                    max_stids = len(stats.get_stations(
-                        stids=self.test_stids,
-                        skip_missing_stids=True)
-                    )
+                # check number of stations in df_raw
                 self.assertEqual(
                     len(df_raw.columns),
-                    max_stids,
-                    msg=f"Number of {stats._para_long} stations in raw data does not match number of test stations.")
+                    len(df_meta),
+                    msg=f"Number of {stats._para_long} stations in raw data does not match number of stations in the meta table.")
 
-            # check for NA values
-            with self.subTest(msg="Check if not only NA values"):
-                self.assertFalse(
-                    df_raw.isna().all().all(),
-                    msg=f"The raw data is NA for every {stats._para_long} station.")
+                # check for NA values
+                virtual_stids = df_meta[~df_meta["is_real"]].index.values
+                self.assertLessEqual(
+                    df_raw.isna().all().sum(),
+                    len(virtual_stids),
+                    msg="The raw data is completly NA for some real stations.")
 
-            # check for time range
-            with self.subTest(msg="Check time range"):
+                # check for time range
                 self.assertGreaterEqual(
                     df_raw.index.min(),
                     pd.Timestamp("1994-01-01 00:00:00+0000"),
-                    msg=f"The raw data for {stats._para_long} stations starts before 1994-01-01.")
+                    msg="The raw data starts before 1994-01-01.")
+                self.assertLessEqual(
+                    df_raw.index.max(),
+                    pd.Timestamp.now("UTC"),
+                    msg="The raw data ends after today.")
+
+                # check meta file
+                self.assertEqual(
+                    df_meta[df_meta["is_real"]]\
+                        [["raw_from", "raw_until", "hist_until", "last_imp_from", "last_imp_from"]]\
+                        .isna().all().sum(),
+                    0,
+                    msg="Some real stations didn't get a raw_from, raw_until, hist_until value in the meta data.")
+
+                for stid in df_meta[df_meta["is_real"]].index:
+                    with self.subTest(stid=stid):
+                        df_no_na = df_raw.loc[~df_raw[stid].isna(), stid]
+                        self.assertGreaterEqual(
+                            df_no_na.index.min(),
+                            df_meta.loc[stid, "raw_from"],
+                            msg="The raw data starts before the raw_from date in the meta data.")
+                        self.assertLessEqual(
+                            df_no_na.index.max(),
+                            df_meta.loc[stid, "raw_until"],
+                            msg="The raw data ends after the raw_until date in the meta data.")
 
     def check_update_richter_class(self):
         with self.db_engine.connect() as conn:
@@ -170,12 +196,28 @@ class InitDBTestCases(BaseTestCases):
             )
 
     def check_quality_check(self):
+        for stats in [self.broker.stations_p, self.broker.stations_t, self.broker.stations_et]:
+            for stat in stats.get_stations(stids=self.test_stids, skip_missing_stids=True):
+                fperiod_raw = stat.get_filled_period(kind="raw")
+                fperiod_qc = stat.get_filled_period(kind="qc")
+                with self.subTest(stat=stat.id, para=stat._para):
+                    self.assertGreaterEqual(
+                        fperiod_raw,
+                        fperiod_qc,
+                        msg="Quality checked timeserie is larger than raw data.")
+                    if not fperiod_raw.is_empty():
+                        self.assertFalse(
+                            fperiod_qc.is_empty(),
+                            msg="Quality checked timeserie is empty.")
+        #TODO: implement quality check tests
         pass
 
     def check_fillup(self):
+        #TODO: implement fillup tests
         pass
 
     def check_richter_correct(self):
+        #TODO: implement richter correct tests
         pass
 
     def test_steps(self):
@@ -213,22 +255,22 @@ class InitDBTestCases(BaseTestCases):
 
         # run steps
         for step in steps:
+            # run step
             try:
-                getattr(self, f"step_{step}")(
-                    stids=self.test_stids,
-                    skip_missing_stids=True
-                )
+                if not cliargs.just_check:
+                    getattr(self, f"step_{step}")(
+                        stids=self.test_stids,
+                        skip_missing_stids=True
+                    )
             except Exception as e:
                 self.log.exception(e)
                 self.fail("{} failed ({}: {})".format(step, type(e), e))
 
-            with self.subTest(msg=f"Check step: {step}"):
+            # check step
+            self.log.debug(f"Starting Checks for step '{step}'...")
+            with self.subTest(step=step):
                 getattr(self, f"check_{step}")()
-
-            with self.subTest(msg=f"Check broker active state after step: {step}"):
                 self.check_broker_inactive()
-
-            with self.subTest(msg=f"Check if error logs in step: {step}"):
                 self.check_no_error_log()
 
             # save highest run step

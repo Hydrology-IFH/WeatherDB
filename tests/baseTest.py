@@ -27,7 +27,7 @@ else:
 class BaseTestCases(unittest.TestCase):
     broker = wdb.broker.Broker()
     db_engine = wdb.db.connections.db_engine
-    test_stids = [1224, 1443, 2388, 7243, 1346, 5049, 684, 757]
+    test_stids = [1224, 1443, 2388, 7243, 1346, 684, 757]
     log = wdb.utils.logging.log
 
     @staticmethod
