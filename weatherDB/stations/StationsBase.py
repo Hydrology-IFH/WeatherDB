@@ -563,21 +563,20 @@ class StationsBase:
                     break
 
                 for result in [result for i, result in enumerate(results)
-                                    if not finished[i]]:
-                    if result.ready():
-                        index = results.index(result)
-                        finished[index] = True
-                        pbar.variables["last_station"] = stations[index].id
-                        # get stdout and log
-                        header = f"""The {name} of the {self._para_long} Station with ID {stations[index].id} finished with:\n"""
-                        try:
-                            stdout = result.get(10)
-                            if stdout is not None:
-                                log.debug(f"{header}stdout: {result.get(10)}")
-                        except Exception:
-                            log.error(f"{header}stderr: {traceback.format_exc()}")
+                                    if not finished[i] and result.ready()]:
+                    index = results.index(result)
+                    finished[index] = True
+                    pbar.variables["last_station"] = stations[index].id
+                    # get stdout and log
+                    header = f"""The {name} of the {self._para_long} Station with ID {stations[index].id} finished with """
+                    try:
+                        stdout = result.get(10)
+                        if stdout is not None:
+                            log.debug(f"{header}stdout:\n{result.get(10)}")
+                    except Exception:
+                        log.error(f"{header}stderr:\n{traceback.format_exc()}")
 
-                        pbar.update(sum(finished))
+                    pbar.update(sum(finished))
                 time.sleep(2)
 
             pbar.update(sum(finished))
