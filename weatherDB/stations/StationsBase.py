@@ -643,7 +643,6 @@ class StationsBase:
 
         # get FTP file list
         ftp_file_list = get_cdc_file_list(
-            # ftp_conn=get_cdc_con(), #CDC,
             ftp_folders=self._ftp_folders)
 
         # run the tasks in multiprocessing mode
@@ -658,13 +657,21 @@ class StationsBase:
             do_mp=do_mp, **kwargs)
 
         # save start time as variable to db
-        if isinstance(stids, str) and (stids == "all"):
+        do_update_period = isinstance(stids, str) and (stids == "all")
+        if not do_update_period and isinstance(stids, list):
+            all_stids = self.get_meta(["station_id"], stids="all", only_real=True).index
+            do_update_period = all([stid in stids for stid in all_stids])
+
+        if do_update_period:
             with db_engine.connect() as con:
                 con.execute(sqltxt("""
-                    UPDATE parameter_variables
-                    SET start_tstp_last_imp='{start_tstp}'::timestamp,
-                    max_tstp_last_imp=(SELECT max(raw_until) FROM meta_{para})
-                    WHERE parameter='{para}';
+                    INSERT INTO parameter_variables (parameter, start_tstp_last_imp, max_tstp_last_imp)
+                    VALUES ('{para}',
+                            '{start_tstp}'::timestamp,
+                            (SELECT max(raw_until) FROM meta_{para}))
+                    ON CONFLICT (parameter) DO UPDATE SET
+                        start_tstp_last_imp=EXCLUDED.start_tstp_last_imp,
+                        max_tstp_last_imp=EXCLUDED.max_tstp_last_imp;
                 """.format(
                     para=self._para,
                     start_tstp=start_tstp.strftime("%Y%m%d %H:%M"))))
