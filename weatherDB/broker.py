@@ -29,15 +29,15 @@ class Broker(object):
         if not db_engine.update_privilege & db_engine.select_privilege:
             raise PermissionError("You don't have enough privileges to use the Broker. The database user must have SELECT and UPDATE privileges.")
 
-        self.stations_nd = StationsPD()
+        self.stations_pd = StationsPD()
         self.stations_t = StationsT()
         self.stations_et = StationsET()
-        self.stations_n = StationsP()
+        self.stations_p = StationsP()
         self.stations = [
-            self.stations_nd,
+            self.stations_pd,
             self.stations_t,
             self.stations_et,
-            self.stations_n]
+            self.stations_p]
 
     def _check_paras(self, paras, valid_paras=["p_d", "p", "t", "et"]):
         valid_paras = ["p_d", "p", "t", "et"]
@@ -153,7 +153,7 @@ class Broker(object):
 
         with self.activate():
             if with_fillup_nd and "p" in paras:
-                self.stations_nd.fillup(**kwargs)
+                self.stations_pd.fillup(**kwargs)
 
             for stations in self.stations:
                 if stations._para in paras:
@@ -175,7 +175,7 @@ class Broker(object):
             The default is True.
         **kwargs : dict
             The keyword arguments to pass to last_imp_quality_check method of the stations.
-            If with_fillup_nd is True, the keyword arguments are also passed to the last_imp_fillup method of the stations_nd.
+            If with_fillup_nd is True, the keyword arguments are also passed to the last_imp_fillup method of the stations_pd.
         """
         self._check_paras(
                 paras=paras,
@@ -184,7 +184,7 @@ class Broker(object):
 
         with self.activate():
             if with_fillup_nd and "p" in paras:
-                self.stations_nd.last_imp_fillup(**kwargs)
+                self.stations_pd.last_imp_fillup(**kwargs)
 
             for stations in self.stations:
                 if stations._para in paras:
@@ -234,11 +234,11 @@ class Broker(object):
         Parameters
         ----------
         **kwargs : dict
-            The keyword arguments to pass to richter_correct method of the stations_n
+            The keyword arguments to pass to richter_correct method of the stations_p
         """
         log.info("="*79 + "\nBroker: last_imp_corr starts")
         with self.activate():
-            self.stations_n.richter_correct(**kwargs)
+            self.stations_p.richter_correct(**kwargs)
 
     def last_imp_corr(self, **kwargs):
         """Richter correct the last imported precipitation data.
@@ -250,7 +250,7 @@ class Broker(object):
         """
         log.info("="*79 + "\nBroker: last_imp_corr starts")
         with self.activate():
-            self.stations_n.last_imp_corr(**kwargs)
+            self.stations_p.last_imp_corr(**kwargs)
 
     def update_db(self, paras=["p_d", "p", "t", "et"], **kwargs):
         """The regular Update of the database.
@@ -387,7 +387,7 @@ class Broker(object):
             self.update_ma_raster(
                 paras=["p_d", "p", "t", "et"],
                 **kwargs)
-            self.stations_n.update_richter_class(**kwargs)
+            self.stations_p.update_richter_class(**kwargs)
             self.quality_check(paras=["p", "t", "et"], **kwargs)
             self.fillup(paras=["p", "t", "et"], **kwargs)
             self.richter_correct(**kwargs)
