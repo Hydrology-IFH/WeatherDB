@@ -337,6 +337,11 @@ class StationsBase:
                 con,
                 index_col="station_id")
 
+        # make datetime columns timezone aware
+        meta = meta.apply(
+            lambda col: col.dt.tz_localize(datetime.timezone.utc) \
+                if hasattr(col, "dt") and not col.dt.tz else col)
+
         # change to GeoDataFrame if geometry column was selected
         for geom_col, srid in zip(["geometry", "geometry_utm"],
                                   ["4326",     "25832"]):
