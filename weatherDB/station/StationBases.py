@@ -17,6 +17,7 @@ import shapely.ops
 import pyproj
 from rasterstats import zonal_stats
 import textwrap
+from functools import cached_property
 
 from ..db.connections import db_engine
 from ..utils.dwd import get_cdc_file_list, get_dwd_file
@@ -378,6 +379,10 @@ class StationBase:
         return [key
                 for key in self._ma_raster_conf.keys()
                 if key.startswith("band_")]
+
+    @cached_property
+    def _table(self):
+        raise NotImplementedError("The table property is not implemented in the base class.")
 
     @db_engine.deco_create_privilege
     def _create_timeseries_table(self):

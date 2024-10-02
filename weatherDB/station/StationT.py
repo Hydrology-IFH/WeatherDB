@@ -1,6 +1,8 @@
 # libraries
 import logging
+import sqlalchemy as sa
 from sqlalchemy import text as sqltxt
+from functools import cached_property
 
 from ..db.connections import db_engine
 from ..utils.dwd import dwd_id_to_str
@@ -48,6 +50,20 @@ class StationT(StationTETBase):
     def __init__(self, id, **kwargs):
         super().__init__(id, **kwargs)
         self.id_str = dwd_id_to_str(id)
+
+    @cached_property
+    def _table(self):
+        return sa.table(
+            f"timeseries.{self.id}_{self._para}",
+            sa.column("timestamp", sa.Date),
+            sa.column("raw", sa.Integer),
+            sa.column("raw_min", sa.Integer),
+            sa.column("raw_max", sa.Integer),
+            sa.column("qc", sa.Integer),
+            sa.column("filled", sa.Integer),
+            sa.column("filled_min", sa.Integer),
+            sa.column("filled_max", sa.Integer),
+            sa.column("filled_by", sa.SmallInteger))
 
     def _create_timeseries_table(self):
         """Create the timeseries table in the DB if it is not yet existing."""
