@@ -84,7 +84,7 @@ class StationMAQuotientView(ViewBase):
         comment="The DWD-ID of the station.")
     parameter: Mapped[str] = mapped_column(
         primary_key=True,
-        comment="The parameter of the station. e.g. 'P', 'T', 'ET'")
+        comment="The parameter of the station. e.g. 'p', 'p_d', 'et'")
     kind: Mapped[str] = mapped_column(
         primary_key=True,
         comment="The kind of the timeserie. e.g. 'raw', 'filled', 'corr'")
@@ -111,4 +111,48 @@ class StationMAQuotientView(ViewBase):
             )
         ).where(
             StationMATimeserie.parameter.in_(["p", "p_d", "et"])
+        )
+
+class StationKindQuotientView(ViewBase):
+    __tablename__ = 'station_kind_quotient_view'
+    __table_args__ = dict(
+        schema='public',
+        comment="The quotient between different kinds of multi annual mean timeseries values.",
+        extend_existing = True)
+
+    station_id: Mapped[int] = mapped_column(
+        primary_key=True,
+        comment="The DWD-ID of the station.")
+    parameter: Mapped[str] = mapped_column(
+        primary_key=True,
+        comment="The parameter of the station. e.g. 'p', 'p_d', 'et'")
+    kind_numerator: Mapped[str] = mapped_column(
+        primary_key=True,
+        comment="The kind of the timeserie for the numerator. e.g. 'raw', 'filled', 'corr'")
+    kind_denominator: Mapped[str] = mapped_column(
+        primary_key=True,
+        comment="The kind of the timeserie for the denominator. e.g. 'raw', 'filled', 'corr'")
+    value: Mapped[float] = mapped_column(
+        comment="The quotient between the numerator and the nominator kind of the complete timeserie.")
+
+    __view_selectable__ = sa\
+            .select(
+                (smt1:=sa.orm.aliased(StationMATimeserie, name="smt1")).station_id,
+                smt1.parameter,
+                smt1.kind.label("kind_numerator"),
+                (smt2:=sa.orm.aliased(StationMATimeserie, name="smt2")).kind.label("kind_denominator"),
+                (smt1.value/smt2.value).label("value")
+            ).select_from(
+                sa.join(
+                    smt1,
+                    smt2,
+                    sa.and_(
+                        smt1.station_id == smt2.station_id,
+                        smt1.parameter == smt2.parameter
+                    )
+                )
+            ).where(
+                sa.and_(smt1.parameter.in_(["p", "p_d", "et"]),
+                        smt1.kind != smt2.kind,
+            )
         )

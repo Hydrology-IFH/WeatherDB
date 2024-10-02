@@ -844,7 +844,7 @@ def upgrade() -> None:
             "parameter",
             sa.VARCHAR(length=3),
             nullable=False,
-            comment="The parameter of the station. e.g. 'P', 'T', 'ET'",
+            comment="The parameter of the station. e.g. 'p', 't', 'et'",
         ),
         sa.Column(
             "kind",
@@ -861,10 +861,6 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("station_id", "parameter", "kind"),
         schema="public",
         comment="The multi annual mean values of the stations timeseries for the maximum available timespan.",
-    )
-    op.create_view(
-        "station_ma_quotient_view",
-
     )
 
 
@@ -900,4 +896,3 @@ def downgrade() -> None:
     op.drop_index("idx_meta_et_geometry", table_name="meta_et", postgresql_using="gist")
     op.drop_table("meta_et")
     op.drop_table("droped_stations")
-    # ### end Alembic commands ###
