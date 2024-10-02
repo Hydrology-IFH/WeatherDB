@@ -564,7 +564,7 @@ class StationP(StationPBase):
         sql_delta_n = """
             SELECT date,
                 CASE WHEN "count_n"> 0 THEN
-                        round(("b_{richter_class}" * ("p_d"::float/{n_decim})^"E" * {n_decim})/"count_n")::int
+                        round(("b_{richter_class}" * ("p_d"::float/{n_decim})^"e" * {n_decim})/"count_n")::int
                     ELSE 0
                 END AS "delta_10min"
             FROM ({sql_p_daily_precip_class}) tsp_d2
@@ -618,24 +618,6 @@ class StationP(StationPBase):
             if (period_in.is_empty() or
                 period_in.contains(self.get_last_imp_period())):
                 self._mark_last_imp_done(kind="corr")
-
-        # calculate the difference to filled timeserie
-        if period.is_empty() or period[0].year < pd.Timestamp.now().year:
-            sql_diff_filled = """
-                UPDATE meta_p
-                SET quot_corr_filled = quot_avg
-                FROM (
-                    SELECT avg(quot)*100 AS quot_avg
-                    FROM (
-                        SELECT sum("corr")::float/sum("filled")::float AS quot
-                        FROM timeseries."{stid}_{para}"
-                        GROUP BY date_trunc('year', "timestamp")
-                        HAVING count("filled") > 364 * 6 *24) df_y) df_avg
-                WHERE station_id={stid};""".format(**sql_format_dict)
-
-            with db_engine.connect() as con:
-                con.execute(sqltxt(sql_diff_filled))
-                con.commit()
 
         # update filled time in meta table
         self.update_period_meta(kind="corr")
