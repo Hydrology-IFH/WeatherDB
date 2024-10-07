@@ -295,7 +295,7 @@ class Broker(object):
             If "D" or "drop" the tables get dropped and recreated.
             If "I" or "ignore" the existing tables get ignored and the creation of the schema continues for the other.
             If "E" er "exit" the creation of the schema gets exited.
-            The default
+            The default is None.
         """
         # add POSTGIS extension
         with db_engine.connect() as con:
@@ -314,7 +314,7 @@ class Broker(object):
             problem_tables = [table.name
                               for table in ModelBase.metadata.tables.values()
                               if table.name in existing_tables]
-        if len(problem_tables)>0:
+        if len(problem_tables)>0 and if_exists.upper()!="I":
             log.info("The following tables already exist on the database:\n - " +
                   "\n - ".join([table for table in problem_tables]))
 
@@ -334,13 +334,13 @@ class Broker(object):
                         print("Please enter a valid answer.")
 
             # execute the choice
-            if if_exists == "D":
+            if if_exists.upper() == "D":
                 log.info("Dropping the tables.")
                 with db_engine.connect() as con:
                     for table in problem_tables:
                         con.execute(sqltxt(f"DROP TABLE {table} CASCADE;"))
                     con.commit()
-            elif if_exists == "E":
+            elif if_exists.upper() == "E":
                 log.info("Exiting the creation of the schema.")
                 return
 
