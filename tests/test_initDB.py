@@ -6,6 +6,7 @@ from pathlib import Path
 import pandas as pd
 
 from weatherDB.db import models
+import weatherDB as wdb
 
 sys.path.insert(0, Path(__file__).parent.resolve().as_posix())
 from baseTest import BaseTestCases
@@ -18,7 +19,6 @@ parser.add_argument("--just-check", action="store_true",
                     help="Should only the check be run, without the weatehrDB step method.")
 cliargs, remaining_args = parser.parse_known_args()
 sys.argv = [sys.argv[0]] + remaining_args
-print(cliargs)
 
 # define TestCases class
 class InitDBTestCases(BaseTestCases):
@@ -61,6 +61,104 @@ class InitDBTestCases(BaseTestCases):
 
     def step_richter_correct(self, **kwargs):
         self.broker.richter_correct(**kwargs)
+
+    def _check_no_nas(self, base_kind, kind, stats, add_base_stat_class=None, add_base_kind=None):
+        """Check if there are NAs in the timeseries, but exclude rows where the base_kind is NULL.
+
+        As there are not enough stations in the test_stids to completly fill the timeseries, the check is done only on the stations where the base kind is not NULL.
+
+        Parameters
+        ----------
+        base_kind : str
+            The base kind to check for NAs to exclude the timestamps from the check
+        kind : str
+            The current kind to check for NAs
+        stats : list of wdb.StationBase-types
+            The stations to check for NAs in the kind timeseries.
+        add_base_stats : list of wdb.StationBase-type, optional
+            An additional station to check for NULL in the base kind timeseries to exclude the timestamps from the check.
+            This is especially relevant for richter Corrected data, where the temperature data is needed to create the precipitation data.
+        add_base_kind : str, optional
+            The base_kind of the additional stat to check for NAs to exclude the timestamps from the check.
+        """
+        add_base_stats = [add_base_stat_class(stat.id) if add_base_stat_class is not None else None
+                          for stat in stats]
+
+        # get all timestamps where no station has qc data, to exclude them from the check
+        stmnt_valid_tstps = None
+        for stat, add_base_stat in zip(stats, add_base_stats):
+            sq = sa.select(stat._table.columns.timestamp)\
+                .select_from(stat._table)
+            if add_base_stat is not None and add_base_kind is not None:
+                sq = sq\
+                    .outerjoin(add_base_stat._table,
+                            add_base_stat._table.columns.timestamp == stat._table.columns.timestamp.cast(
+                                add_base_stat._table.columns.timestamp.type),
+                            full=True)\
+                    .where(sa.and_(
+                        stat._table.columns[add_base_kind] != None,  # noqa: E711
+                        add_base_stat._table.columns[add_base_kind] != None))  # noqa: E711
+            else:
+                sq = sq.where(stat._table.columns[base_kind] != None) # noqa: E711
+
+            if stmnt_valid_tstps is None:
+                stmnt_valid_tstps = sq
+            else:
+                sq = sq.subquery()
+                stmnt_valid_tstps = stmnt_valid_tstps.outerjoin(
+                    sq,
+                            sq.columns.timestamp == stats[0]._table.columns.timestamp,
+                            full=True)
+
+        # check for NAs in filled data where at least one qc value is available
+        stmnt_valid_tstps_cte = stmnt_valid_tstps.cte("stmnt_valid_tstps")
+        stmnts = []
+        for stat in stats:
+            stmnts.append(
+                sa.select(sa.text(f"{stat.id} as station_id"),
+                        sa.func.count(stat._table.columns.timestamp).label("count_nas"))\
+                .select_from(stat._table)\
+                .join(stmnt_valid_tstps_cte,
+                    stmnt_valid_tstps_cte.columns.timestamp == stat._table.columns.timestamp)\
+                .where(
+                    stat._table.columns[kind] == None)  # noqa: E711
+                    )
+        stmnt_all = sa.union(*stmnts)
+
+        # run query
+        with self.db_engine.connect() as conn:
+            res = conn.execute(stmnt_all).fetchall()
+
+        # check for NAs in query result
+        for row in res:
+            with self.subTest(stid=row[0]):
+                self.assertEqual(
+                    row[1],
+                    0,
+                    msg=f"{kind} timeserie has NAs.")
+
+    def _check_vals_where_nas(self, base_kind, kind, stat):
+        """Check if there are values in kind where the base_kind doesn't have values.
+
+        Parameters
+        ----------
+        base_kind : str
+            The base kind to check for where NAs should be.
+        kind : str
+            The current kind to check for wrong values.
+        stat : wdb.StationBase-type
+            The station to check for NAs in the kind timeseries.
+        """
+        # check for values where filled has no values
+        stmnt = sa.select(sa.func.count(stat._table.columns.timestamp))\
+            .select_from(stat._table)\
+            .where(sa.and_(stat._table.columns[base_kind] == None,  # noqa: E711
+                            stat._table.columns[kind] != None))  # noqa: E711
+        with self.db_engine.connect() as conn:
+            self.assertEqual(
+                conn.execute(stmnt).scalar(),
+                0,
+                msg="{kind} timeserie has values where {base_kind} does not.")
 
     def check_update_meta(self):
         with self.db_engine.connect() as conn:
@@ -209,16 +307,66 @@ class InitDBTestCases(BaseTestCases):
                         self.assertFalse(
                             fperiod_qc.is_empty(),
                             msg="Quality checked timeserie is empty.")
-        #TODO: implement quality check tests
-        pass
+
+                    # check for values where filled has no values
+                    self._check_vals_where_nas("raw", "qc", stat)
 
     def check_fillup(self):
-        #TODO: implement fillup tests
-        pass
+        for statsPara in self.broker.stations:
+            stats = statsPara.get_stations(stids=self.test_stids, skip_missing_stids=True)
+
+            # get meta and reference max_period
+            base_kind = "raw" if statsPara._para == "p_d" else "qc"
+            meta = statsPara.get_meta(infos=[f"{base_kind}_from", f"{base_kind}_until"])
+            max_period = wdb.utils.TimestampPeriod(
+                meta[f"{base_kind}_from"].min(),
+                meta[f"{base_kind}_until"].max())
+
+            # loop over stations to check the periods
+            for stat in stats:
+                fperiod_filled = stat.get_filled_period(kind="filled")
+                with self.subTest(stat=stat.id, para=stat._para):
+                    self.assertGreaterEqual(
+                        fperiod_filled,
+                        max_period,
+                        msg="Filled timeserie is smaller than maximum available data range.")
+
+                    if not fperiod_filled.is_empty():
+                        self.assertFalse(
+                            fperiod_filled.is_empty(),
+                            msg="Filled timeserie is empty.")
+
+            # check for NAs
+            self._check_no_nas(base_kind, "filled", stats)
 
     def check_richter_correct(self):
-        #TODO: implement richter correct tests
-        pass
+        statsPara = self.broker.stations_p
+        stats = statsPara.get_stations(stids=self.test_stids, skip_missing_stids=True)
+
+        # get meta and reference max_period
+        meta = statsPara.get_meta(infos=["filled_from", "filled_until"])
+        max_period = wdb.utils.TimestampPeriod(
+            meta["filled_from"].min(),
+            meta["filled_until"].max())
+
+        for stat in stats:
+            fperiod_corr = stat.get_filled_period(kind="corr")
+            with self.subTest(stat=stat.id, para=stat._para):
+                self.assertGreaterEqual(
+                    fperiod_corr,
+                    max_period,
+                    msg="Corrected timeserie is smaller than maximum available data range.")
+
+                if not fperiod_corr.is_empty():
+                    self.assertFalse(
+                        fperiod_corr.is_empty(),
+                        msg="Corrected timeserie is empty.")
+
+                # check for values where filled has no values
+                self._check_vals_where_nas("filled", "corr", stat)
+
+        # check for NAs
+        self._check_no_nas("filled", "corr", stats, wdb.StationT, "filled")
 
     def test_steps(self):
         """Test the single steps from initiating the database.
