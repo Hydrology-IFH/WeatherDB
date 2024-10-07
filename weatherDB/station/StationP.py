@@ -720,6 +720,7 @@ class StationP(StationPBase):
                         ON ts.timestamp = tsb.timestamp - INTERVAL '10 min'
                     LEFT JOIN timeseries."{stid}_{para}" tsa
                         ON ts.timestamp = tsa.timestamp + INTERVAL '10 min'
+                    WHERE ts.filled IS NOT NULL
                 ) tsnew
                 WHERE tsnew.timestamp = ts.timestamp;
             """.format(stid=self.id, para=self._para, decim=self._decimals)
