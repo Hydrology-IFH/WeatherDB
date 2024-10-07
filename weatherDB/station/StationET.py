@@ -44,12 +44,13 @@ class StationET(StationTETBase):
     @cached_property
     def _table(self):
         return sa.table(
-            f"timeseries.{self.id}_{self._para}",
+            f"{self.id}_{self._para}",
             sa.column("timestamp", sa.Date),
             sa.column("raw", sa.Integer),
             sa.column("qc", sa.Integer),
             sa.column("filled", sa.Integer),
-            sa.column("filled_by", sa.SmallInteger))
+            sa.column("filled_by", sa.SmallInteger),
+            schema="timeseries")
 
     def _create_timeseries_table(self):
         """Create the timeseries table in the DB if it is not yet existing."""
