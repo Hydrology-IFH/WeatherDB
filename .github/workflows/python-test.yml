@@ -1,0 +1,76 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Python package
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+
+    - name: Install Package
+      run: |
+        python -m pip install .
+
+    - name: Cache data directory
+      uses: actions/cache@v3
+      with:
+        path: /home/data
+        key: weatherDB-data
+
+    - name: Test with unittest
+      env:
+        WEATHERDB_DB_HOST: localhost
+        WEATHERDB_DB_PORT: 5432
+        WEATHERDB_DB_DATABASE: test_db
+        WEATHERDB_DB_USER: postgres
+        WEATHERDB_DB_PASSWORD: postgres
+        WEATHERDB_USER_CONFIG_FILE: /home/config_user.yaml
+        WEATHERDB_DATA_BASE_DIR: /home/data
+        WEATHERDB_HANDLE_NON_EXISTING_CONFIG: create
+        DOCKER_ENV: test
+      run: |
+        python test_emptyDB.py ||
+        python test_downloadRasters.py ||
+        python test_initDB.py ||
+        python test_filledDB.py ||
+      with:
+        working-directory: tests
+
