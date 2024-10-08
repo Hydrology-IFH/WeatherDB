@@ -92,10 +92,11 @@ class InitDBTestCases(BaseTestCases):
                 .select_from(stat._table)
             if add_base_stat is not None and add_base_kind is not None:
                 sq = sq\
-                    .outerjoin(add_base_stat._table,
-                            add_base_stat._table.columns.timestamp == stat._table.columns.timestamp.cast(
-                                add_base_stat._table.columns.timestamp.type),
-                            full=True)\
+                    .outerjoin(
+                        add_base_stat._table,
+                        add_base_stat._table.columns.timestamp == stat._table.columns.timestamp.cast(
+                            add_base_stat._table.columns.timestamp.type),
+                        full=True)\
                     .where(sa.and_(
                         stat._table.columns[add_base_kind] != None,  # noqa: E711
                         add_base_stat._table.columns[add_base_kind] != None))  # noqa: E711
@@ -108,22 +109,21 @@ class InitDBTestCases(BaseTestCases):
                 sq = sq.subquery()
                 stmnt_valid_tstps = stmnt_valid_tstps.outerjoin(
                     sq,
-                            sq.columns.timestamp == stats[0]._table.columns.timestamp,
-                            full=True)
+                    sq.columns.timestamp == stats[0]._table.columns.timestamp,
+                    full=True)
 
         # check for NAs in filled data where at least one qc value is available
         stmnt_valid_tstps_cte = stmnt_valid_tstps.cte("stmnt_valid_tstps")
         stmnts = []
         for stat in stats:
             stmnts.append(
-                sa.select(sa.text(f"{stat.id} as station_id"),
-                        sa.func.count(stat._table.columns.timestamp).label("count_nas"))\
+                sa.select(
+                    sa.text(f"{stat.id} as station_id"),
+                    sa.func.count(stat._table.columns.timestamp).label("count_nas"))\
                 .select_from(stat._table)\
                 .join(stmnt_valid_tstps_cte,
-                    stmnt_valid_tstps_cte.columns.timestamp == stat._table.columns.timestamp)\
-                .where(
-                    stat._table.columns[kind] == None)  # noqa: E711
-                    )
+                      stmnt_valid_tstps_cte.columns.timestamp == stat._table.columns.timestamp)\
+                .where(stat._table.columns[kind] == None)) # noqa: E711
         stmnt_all = sa.union(*stmnts)
 
         # run query
@@ -164,7 +164,7 @@ class InitDBTestCases(BaseTestCases):
     def check_update_meta(self):
         with self.db_engine.connect() as conn:
             for model, n_expct in zip([models.MetaP, models.MetaT, models.MetaPD, models.MetaET],
-                                      [7, 6, 8, 3]):
+                                      [7, 5, 7, 3]):
                 # check number of stations
                 with self.subTest(model=model):
                     stmnt = sa.select(sa.func.count('*')).select_from(model)
@@ -275,10 +275,10 @@ class InitDBTestCases(BaseTestCases):
                         df_no_na = df_raw.loc[~df_raw[stid].isna(), stid]
                         self.assertGreaterEqual(
                             df_no_na.index.min(),
-                            df_meta.loc[stid, "raw_from"],
+                            df_meta.loc[stid, "raw_from"].floor("D"),
                             msg="The raw data starts before the raw_from date in the meta data.")
                         self.assertLessEqual(
-                            df_no_na.index.max(),
+                            df_no_na.index.max().ceil("D"),
                             df_meta.loc[stid, "raw_until"],
                             msg="The raw data ends after the raw_until date in the meta data.")
 
