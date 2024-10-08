@@ -26,10 +26,11 @@ class InitDBTestCases(BaseTestCases):
     @classmethod
     def setUpClass(cls):
         if cliargs.steps == "all":
+            cls.log.debug("Recreating database...")
             cls.empty_db()
-            cls.broker.create_db_schema(if_exists="DROP")
+            cls.broker.create_db_schema(if_exists="DROP", silent=True)
         else:
-            cls.broker.create_db_schema(if_exists="IGNORE")
+            cls.broker.create_db_schema(if_exists="IGNORE", silent=True)
             cls.log.debug("Working with previous database state.")
 
     def run(self, result=None):

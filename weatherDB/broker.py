@@ -284,7 +284,7 @@ class Broker(object):
                 self.last_imp_corr(**kwargs)
 
     @db_engine.deco_is_superuser
-    def create_db_schema(self, if_exists=None):
+    def create_db_schema(self, if_exists=None, silent=False):
         """Create the database schema.
 
         Parameters
@@ -296,7 +296,15 @@ class Broker(object):
             If "I" or "ignore" the existing tables get ignored and the creation of the schema continues for the other.
             If "E" er "exit" the creation of the schema gets exited.
             The default is None.
+        silent : bool, optional
+            If True the user gets not asked if the tables already exist.
+            If True, if_exists must not be None.
+            The default is False.
         """
+        # check silent
+        if silent and if_exists is None:
+            raise ValueError("silent can only be True if if_exists is not None.")
+
         # add POSTGIS extension
         with db_engine.connect() as con:
             con.execute(sqltxt("CREATE EXTENSION IF NOT EXISTS postgis;"))
@@ -314,7 +322,7 @@ class Broker(object):
             problem_tables = [table.name
                               for table in ModelBase.metadata.tables.values()
                               if table.name in existing_tables]
-        if len(problem_tables)>0 and if_exists.upper()!="I":
+        if len(problem_tables)>0 and silent:
             log.info("The following tables already exist on the database:\n - " +
                   "\n - ".join([table for table in problem_tables]))
 
@@ -378,6 +386,7 @@ class Broker(object):
         """
         log.info("="*79 + "\nBroker initiate_db starts")
         with self.activate():
+            #TODO: add a check for alembic version and if the database is up-to-date
             self.update_meta(
                 paras=["p_d", "p", "t", "et"], **kwargs)
             self.update_raw(
