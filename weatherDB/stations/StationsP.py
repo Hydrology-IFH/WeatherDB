@@ -30,7 +30,7 @@ class StationsP(StationsBase):
             Can either be "all", for all possible stations
             or a list with the Station IDs.
             The default is "all".
-        kwargs : dict, optional
+        **kwargs : dict, optional
             The keyword arguments to be handed to the station.StationP.update_richter_class and get_stations method.
 
         Raises
@@ -56,7 +56,7 @@ class StationsP(StationsBase):
             Can either be "all", for all possible stations
             or a list with the Station IDs.
             The default is "all".
-        kwargs : dict, optional
+        **kwargs : dict, optional
             The additional keyword arguments for the _run_method and get_stations method
 
         Raises
@@ -87,7 +87,7 @@ class StationsP(StationsBase):
             Multiprocessing needs more memory and a bit more initiating time. Therefor it is only usefull for methods with a lot of computation effort in the python code.
             If the most computation of a method is done in the postgresql database, then threading is enough to speed the process up.
             The default is False.
-        kwargs : dict, optional
+        **kwargs : dict, optional
             The additional keyword arguments for the _run_method and get_stations method
 
         Raises

@@ -230,7 +230,7 @@ class StationsBase:
             Can either be "all", for all possible stations
             or a list with the Station IDs.
             The default is "all".
-        kwargs : dict, optional
+        **kwargs : dict, optional
             The additional keyword arguments are passed to the get_stations method.
 
         Raises
@@ -377,7 +377,7 @@ class StationsBase:
             Should the method skip the missing stations from input stids?
             If False, then a ValueError is raised if a station is not found.
             The default is False.
-        kwargs : dict, optional
+        **kwargs : dict, optional
             The additional keyword arguments aren't used in this method.
 
         Returns
@@ -423,27 +423,27 @@ class StationsBase:
             Can either be "all", for all possible stations
             or a list with the Station IDs.
             The default is "all".
-        kwargs : dict, optional
+        **kwargs : dict, optional
             This is a list of parameters, that is supported by the StationBase.count_holes method.
-            E.G.:
-            weeks : list, optional
+            E.G.::
+            weeks :: list, optional
                 A list of hole length to count.
                 Every hole longer than the duration of weeks specified is counted.
                 The default is [2, 4, 8, 12, 16, 20, 24]
-            kind : str
+            kind :: str
                 The kind of the timeserie to analyze.
                 Should be one of ['raw', 'qc', 'filled'].
                 For N also "corr" is possible.
                 Normally only "raw" and "qc" make sense, because the other timeseries should not have holes.
-            period : TimestampPeriod or (tuple or list of datetime.datetime or None), optional
+            period :: TimestampPeriod or (tuple or list of datetime.datetime or None), optional
                 The minimum and maximum Timestamp for which to analyze the timeseries.
                 If None is given, the maximum and minimal possible Timestamp is taken.
                 The default is (None, None).
-            between_meta_period : bool, optional
+            between_meta_period :: bool, optional
                 Only check between the respective period that is defined in the meta table.
                 If "qc" is chosen as kind, then the "raw" meta period is taken.
                 The default is True.
-            crop_period : bool, optional
+            crop_period :: bool, optional
                 should the period get cropped to the maximum filled period.
                 This will result in holes being ignored when they are at the end or at the beginning of the timeserie.
                 If period = (None, None) is given, then this parameter is set to True.
@@ -635,7 +635,7 @@ class StationsBase:
             Remove the NAs from the downloaded data before updating it to the database.
             This has computational advantages.
             The default is True.
-        kwargs : dict, optional
+        **kwargs : dict, optional
             The additional keyword arguments for the _run_method and get_stations method
 
         Raises
@@ -698,7 +698,7 @@ class StationsBase:
             Can either be "all", for all possible stations
             or a list with the Station IDs.
             The default is "all".
-        kwargs : dict, optional
+        **kwargs : dict, optional
             The additional keyword arguments for the _run_method and get_stations method
         """
         self._run_method(
@@ -724,7 +724,7 @@ class StationsBase:
             Can either be "all", for all possible stations
             or a list with the Station IDs.
             The default is "all".
-        kwargs : dict, optional
+        **kwargs : dict, optional
             The additional keyword arguments for the _run_method and get_stations method
         """
         stations = self.get_stations(only_real=False, stids=stids, **kwargs)
@@ -764,7 +764,7 @@ class StationsBase:
             Multiprocessing needs more memory and a bit more initiating time. Therefor it is only usefull for methods with a lot of computation effort in the python code.
             If the most computation of a method is done in the postgresql database, then threading is enough to speed the process up.
             The default is False.
-        kwargs : dict, optional
+        **kwargs : dict, optional
             The additional keyword arguments for the _run_method and get_stations method
         """
         self._run_method(
@@ -794,7 +794,7 @@ class StationsBase:
             Multiprocessing needs more memory and a bit more initiating time. Therefor it is only usefull for methods with a lot of computation effort in the python code.
             If the most computation of a method is done in the postgresql database, then threading is enough to speed the process up.
             The default is False.
-        kwargs : dict, optional
+        **kwargs : dict, optional
             The additional keyword arguments for the _run_method and get_stations method
 
         Raises
@@ -830,7 +830,7 @@ class StationsBase:
             Multiprocessing needs more memory and a bit more initiating time. Therefor it is only usefull for methods with a lot of computation effort in the python code.
             If the most computation of a method is done in the postgresql database, then threading is enough to speed the process up.
             The default is False.
-        kwargs : dict, optional
+        **kwargs : dict, optional
             The additional keyword arguments for the _run_method and get_stations method
 
         Raises
@@ -877,7 +877,7 @@ class StationsBase:
             Can either be "all", for all possible stations
             or a list with the Station IDs.
             The default is "all".
-        kwargs: optional keyword arguments
+        **kwargs: optional keyword arguments
             Those keyword arguments are passed to the get_df function of the station class.
             Possible parameters are period, agg_to, kinds.
             Furthermore the kwargs are passed to the get_stations method.

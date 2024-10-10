@@ -268,7 +268,7 @@ class StationP(StationPBase):
         skip_if_exist : bool, optional
             Skip updating the value if there is already a value in the meta table.
             The default is True.
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Additional keyword arguments catch all, but unused here.
 
         Returns
@@ -446,7 +446,7 @@ class StationP(StationPBase):
         skip_if_exist : bool, optional
             Skip updating the value if there is already a value in the meta table.
             The default is True
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Additional keyword arguments catch all, but unused here.
 
         Returns
@@ -481,7 +481,7 @@ class StationP(StationPBase):
             The minimum and maximum Timestamp for which to get the timeseries.
             If None is given, the maximum or minimal possible Timestamp is taken.
             The default is (None, None).
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Additional keyword arguments catch all, but unused here.
 
         Raises
@@ -653,7 +653,7 @@ class StationP(StationPBase):
             Give the overall period of the last import.
             This is only for intern use of the stationsN method to not compute over and over again the period.
             The default is None.
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Additional keyword arguments passed to the richter_correct method.
         """
         if not self.is_last_imp_done(kind="corr"):

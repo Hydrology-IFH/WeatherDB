@@ -301,7 +301,7 @@ class GroupStation(object):
             Can be "n", "t", "et" or "all".
             If "all", then every available station parameter is returned.
             The default is "all"
-        kwargs : dict, optional
+        **kwargs : dict, optional
             The optional keyword arguments are handed to the single Station get_meta methods. Can be e.g. "info".
 
         Returns

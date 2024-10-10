@@ -7,12 +7,12 @@ from .StationsP import StationsP
 
 # set settings
 # ############
-__all__ = ["StationsTETBase"]
+__all__ = ["StationsBaseTET"]
 log = logging.getLogger(__name__)
 
 # class definition
 ##################
-class StationsTETBase(StationsBase):
+class StationsBaseTET(StationsBase):
     @db_engine.deco_update_privilege
     def fillup(self, only_real=False, stids="all", **kwargs):
         # create virtual stations if necessary

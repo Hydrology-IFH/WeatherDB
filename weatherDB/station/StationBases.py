@@ -724,7 +724,7 @@ class StationBase:
             If "best" is given, then depending on the parameter of the station the best kind is selected.
             For Precipitation this is "corr" and for the other this is "filled".
             For the precipitation also "corr" are valid.
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Additional keyword arguments catch all, but unused here.
         """
         kind = self._check_kind_tstp_meta(kind)
@@ -760,7 +760,7 @@ class StationBase:
         drop_when_error : bool, optional
             Drop the station from the database if there is an error.
             The default is True.
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Additional keyword arguments catch all, but unused here.
         """
         if skip_if_exist and self.isin_ma():
@@ -817,7 +817,7 @@ class StationBase:
             Must be a column in the timeseries DB.
             Must be one of "raw", "qc", "filled".
             For the precipitation also "corr" is valid.
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Additional keyword arguments catch all, but unused here.
         """
         # check kind input
@@ -932,7 +932,7 @@ class StationBase:
             Remove the NAs from the downloaded data before updating it to the database.
             This has computational advantages.
             The default is True.
-        kwargs : dict
+        **kwargs : dict
             Additional keyword arguments catch all, but unused here.
 
         Returns
@@ -1189,7 +1189,7 @@ class StationBase:
             The minimum and maximum Timestamp for which to get the timeseries.
             If None is given, the maximum or minimal possible Timestamp is taken.
             The default is (None, None).
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Additional keyword arguments catch all, but unused here.
         """
         period = self._check_period(period=period, kinds=["raw"], nas_allowed=True)
@@ -1247,7 +1247,7 @@ class StationBase:
             The minimum and maximum Timestamp for which to gap fill the timeseries.
             If None is given, the maximum or minimal possible Timestamp is taken.
             The default is (None, None).
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Additional arguments for the fillup function.
             e.g. p_elev to consider the elevation to select nearest stations. (only for T and ET)
         """
@@ -1535,7 +1535,7 @@ class StationBase:
 
         Parameters
         ----------
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Additional keyword arguments passed to the quality_check function.
         """
         if not self.is_last_imp_done(kind="qc"):
@@ -1556,7 +1556,7 @@ class StationBase:
             If None is given, the last import period is taken.
             This is only for internal use, to speed up the process if run in a batch.
             The default is None.
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Additional keyword arguments passed to the fillup function.
         """
         if not self.is_last_imp_done(kind="filled"):
@@ -2426,7 +2426,7 @@ class StationBase:
 
         Parameters
         ----------
-        kwargs : dict, optional
+        **kwargs : dict, optional
             The keyword arguments get passed to the get_df function.
             Possible parameters are "period", "agg_to" or "nas_allowed"
 
@@ -2442,7 +2442,7 @@ class StationBase:
 
         Parameters
         ----------
-        kwargs : dict, optional
+        **kwargs : dict, optional
             The keyword arguments get passed to the get_df function.
             Possible parameters are "period", "agg_to" or "nas_allowed"
 
@@ -2540,7 +2540,7 @@ class StationBase:
 
         Parameters
         ----------
-        kwargs : dict, optional
+        **kwargs : dict, optional
             The keyword arguments are passed to the get_df function.
             Possible parameters are "period", "agg_to" or "nas_allowed".
 
