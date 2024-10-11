@@ -125,7 +125,8 @@ class StationBase:
         Raises
         ------
         NotImplementedError
-            _description_
+            If the class is initiated with a station ID that is not in the database.
+            To prevent this error, set _skip_meta_check=True.
         """
         if type(self) is StationBase:
             raise NotImplementedError("""
@@ -724,7 +725,7 @@ class StationBase:
             If "best" is given, then depending on the parameter of the station the best kind is selected.
             For Precipitation this is "corr" and for the other this is "filled".
             For the precipitation also "corr" are valid.
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Additional keyword arguments catch all, but unused here.
         """
         kind = self._check_kind_tstp_meta(kind)
@@ -760,7 +761,7 @@ class StationBase:
         drop_when_error : bool, optional
             Drop the station from the database if there is an error.
             The default is True.
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Additional keyword arguments catch all, but unused here.
         """
         if skip_if_exist and self.isin_ma():
@@ -817,7 +818,7 @@ class StationBase:
             Must be a column in the timeseries DB.
             Must be one of "raw", "qc", "filled".
             For the precipitation also "corr" is valid.
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Additional keyword arguments catch all, but unused here.
         """
         # check kind input
@@ -932,7 +933,7 @@ class StationBase:
             Remove the NAs from the downloaded data before updating it to the database.
             This has computational advantages.
             The default is True.
-        kwargs : dict
+        **kwargs : dict
             Additional keyword arguments catch all, but unused here.
 
         Returns
@@ -1169,7 +1170,7 @@ class StationBase:
 
         Parameters
         ----------
-        period : util.TimestampPeriod or (tuple or list of datetime.datetime or None), optional
+        period : TimestampPeriod or (tuple or list of datetime.datetime or None), optional
             The minimum and maximum Timestamp for which to do the quality check.
 
         Returns
@@ -1185,11 +1186,11 @@ class StationBase:
 
         Parameters
         ----------
-        period : util.TimestampPeriod or (tuple or list of datetime.datetime or None), optional
+        period : TimestampPeriod or (tuple or list of datetime.datetime or None), optional
             The minimum and maximum Timestamp for which to get the timeseries.
             If None is given, the maximum or minimal possible Timestamp is taken.
             The default is (None, None).
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Additional keyword arguments catch all, but unused here.
         """
         period = self._check_period(period=period, kinds=["raw"], nas_allowed=True)
@@ -1243,11 +1244,11 @@ class StationBase:
 
         Parameters
         ----------
-        period : util.TimestampPeriod or (tuple or list of datetime.datetime or None), optional
+        period : TimestampPeriod or (tuple or list of datetime.datetime or None), optional
             The minimum and maximum Timestamp for which to gap fill the timeseries.
             If None is given, the maximum or minimal possible Timestamp is taken.
             The default is (None, None).
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Additional arguments for the fillup function.
             e.g. p_elev to consider the elevation to select nearest stations. (only for T and ET)
         """
@@ -1535,7 +1536,7 @@ class StationBase:
 
         Parameters
         ----------
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Additional keyword arguments passed to the quality_check function.
         """
         if not self.is_last_imp_done(kind="qc"):
@@ -1551,12 +1552,12 @@ class StationBase:
 
         Parameters
         ----------
-        _last_imp_period : weatherDB.utils.TimestampPeriod or (tuple or list of datetime.datetime or None), optional
+        _last_imp_period : TimestampPeriod or (tuple or list of datetime.datetime or None), optional
             The minimum and maximum Timestamp for which to do the gap filling.
             If None is given, the last import period is taken.
             This is only for internal use, to speed up the process if run in a batch.
             The default is None.
-        kwargs : dict, optional
+        **kwargs : dict, optional
             Additional keyword arguments passed to the fillup function.
         """
         if not self.is_last_imp_done(kind="filled"):
@@ -1831,8 +1832,8 @@ class StationBase:
 
         Returns
         -------
-        TimespanPeriod:
-            The TimespanPeriod of the station or of all the stations if all=True.
+        TimestampPeriod:
+            The TimestampPeriod of the station or of all the stations if all=True.
 
         Raises
         ------
@@ -1890,7 +1891,7 @@ class StationBase:
 
         Returns
         -------
-        util.TimestampPeriod
+        TimestampPeriod
             A TimestampPeriod of the filled timeserie.
             (NaT, NaT) if the timeserie is all empty or not defined.
         """
@@ -1933,7 +1934,7 @@ class StationBase:
 
         Returns
         -------
-        utils.TimestampPeriod
+        TimestampPeriod
             The maximum Timestamp Period
         """
         if nas_allowed:
@@ -2005,13 +2006,14 @@ class StationBase:
             The default is True.
         p_elev : tuple of float or None, optional
             The parameters (P_1, P_2) to weight the height differences between stations.
-            The elevation difference is considered with the formula from LARSIM (equation 3-18 & 3-19 from the LARSIM manual):
-            $L_{gewichtet} = L_{horizontal} * (1 + (\frac{|\delta H|}{P_1})^{P_2})$
+            The elevation difference is considered with the formula from LARSIM (equation 3-18 & 3-19 from the LARSIM manual [1]_ ):
+
+            .. math::
+
+                L_{weighted} = L_{horizontal} * (1 + (\\frac{|\delta H|}{P_1})^{P_2})
             If None, then the height difference is not considered and only the nearest stations are returned.
-            literature:
-                - LARSIM Dokumentation, Stand 06.04.2023, online unter https://www.larsim.info/dokumentation/LARSIM-Dokumentation.pdf
             The default is None.
-        period : utils.TimestampPeriod or None, optional
+        period : TimestampPeriod or None, optional
             The period for which the nearest neighboors are returned.
             The neighboor station needs to have raw data for at least one half of the period.
             If None, then the availability of the data is not checked.
@@ -2022,6 +2024,10 @@ class StationBase:
         list of int
             A list of station Ids in order of distance.
             The closest station is the first in the list.
+
+        References
+        ----------
+        .. [1] LARSIM Dokumentation, last check on 06.04.2023, online available under https://www.larsim.info/dokumentation/LARSIM-Dokumentation.pdf
         """
         self._check_isin_meta()
 
@@ -2426,7 +2432,7 @@ class StationBase:
 
         Parameters
         ----------
-        kwargs : dict, optional
+        **kwargs : dict, optional
             The keyword arguments get passed to the get_df function.
             Possible parameters are "period", "agg_to" or "nas_allowed"
 
@@ -2442,7 +2448,7 @@ class StationBase:
 
         Parameters
         ----------
-        kwargs : dict, optional
+        **kwargs : dict, optional
             The keyword arguments get passed to the get_df function.
             Possible parameters are "period", "agg_to" or "nas_allowed"
 
@@ -2540,7 +2546,7 @@ class StationBase:
 
         Parameters
         ----------
-        kwargs : dict, optional
+        **kwargs : dict, optional
             The keyword arguments are passed to the get_df function.
             Possible parameters are "period", "agg_to" or "nas_allowed".
 

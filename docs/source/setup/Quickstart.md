@@ -1,9 +1,9 @@
 # Quick-start
 
-After installing and setting up the secretSettings_weatherDB.py file you are ready to use the package.
+After installing and setting up the user configuration file with your database credentials you are ready to use the package.
 This page should show you the basic usage of the package.
 
-The package is divided in 2 main submodules: 
+The package is divided in 2 main submodules:
 - **weatherDB.station:**<br>
   This module has a class for every type of station. E.g. StationP (or StationP).
   One object represents one Station with one parameter.
@@ -15,10 +15,10 @@ The package is divided in 2 main submodules:
 
 The basics of those modules are explained here, but every class and method has way more parameters to get exactly what you want. PLease use the API-reference for more information.
 
-## download 
+## download
 ### single station
 
-If you want to download data for a single station, you have to create an object of the respective class, by gibing the station id you are interested in. This station object can then get used to download the data from the database. 
+If you want to download data for a single station, you have to create an object of the respective class, by gibing the station id you are interested in. This station object can then get used to download the data from the database.
 
 If you want e.g. to download all the 10 minute, filled and Richter corrected precipitation data for the DWD station in Freiburg(station ID = 1443), then you can go like:
 
@@ -37,11 +37,11 @@ If you are not interested in the filled and Richter-corrected data, but want e.g
 ```
 df = stat_p.get_raw()
 ```
-Or use the more general function with the wanted kind parameter. 
+Or use the more general function with the wanted kind parameter.
 ```
 df = stat_p.get_df(kinds=["raw"])
 ```
-There are 3-5 different kinds of timeseries available per station object depending on the class. 
+There are 3-5 different kinds of timeseries available per station object depending on the class.
 So there is:
 - "raw" : the raw measurements as on the DWD server
 - "qc"  : The quality checked data
@@ -66,10 +66,10 @@ stat_t = StationT(1443)
 stat_et = StationET(1443)
 period = ("2000-01-01", "2010-12-31")
 df_t = stat_t.get_df(
-    period=period, 
+    period=period,
     kinds=["raw", "filled"])
 df_et = stat_t.get_df(
-    period=period, 
+    period=period,
     kinds=["raw", "filled"])
 ```
 
@@ -140,7 +140,7 @@ stat = StationP(1443)
 meta_dict = stat.get_meta()
 ```
 
-or for multiple stations, you can use the Stations class and get a GeoDataFrame as output with all the stations information. 
+or for multiple stations, you can use the Stations class and get a GeoDataFrame as output with all the stations information.
 
 ```
 from weatherDB import StationsP

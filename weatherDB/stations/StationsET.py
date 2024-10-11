@@ -2,7 +2,7 @@
 import logging
 
 from ..station import StationET
-from .StationsBaseTET import StationsTETBase
+from .StationsBaseTET import StationsBaseTET
 
 # set settings
 # ############
@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 
 # class definition
 ##################
-class StationsET(StationsTETBase):
+class StationsET(StationsBaseTET):
     """A class to work with and download potential Evapotranspiration (VPGB) data for several stations."""
     _StationClass = StationET
     _timeout_raw_imp = 120

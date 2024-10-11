@@ -39,18 +39,18 @@ StationBase...
 Those are the base station classes on which the real station classes above depend on.
 None of them is working on its own, because the class variables are not yet set correctly.
 
-.. autoclass:: weatherDB.station.StationBase
+.. autoclass:: weatherDB.station.StationBases.StationBase
 
   .. autoclasstoc::
 
-.. autoclass:: weatherDB.station.StationPBase
+.. autoclass:: weatherDB.station.StationBases.StationPBase
 
   .. autoclasstoc::
 
-.. autoclass:: weatherDB.station.StationCanVirtualBase
+.. autoclass:: weatherDB.station.StationBases.StationCanVirtualBase
 
   .. autoclasstoc::
 
-.. autoclass:: weatherDB.station.StationTETBase
+.. autoclass:: weatherDB.station.StationBases.StationTETBase
 
   .. autoclasstoc::

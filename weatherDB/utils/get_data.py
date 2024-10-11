@@ -12,8 +12,11 @@ from ..config import config
 def download_ma_rasters(which="all", overwrite=None, update_user_config=False):
     """Get the multi annual rasters on which bases the regionalisation is done.
 
-    The refined multi annual datasets, that are downloaded are published on Zenodo:
-    Schmit, M.; Weiler, M. (2023). German weather services (DWD) multi annual meteorological rasters for the climate period 1991-2020 refined to 25m grid (1.0.0) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.10066045
+    The refined multi annual datasets, that are downloaded are published on Zenodo [1]_
+
+    References
+    ----------
+    .. [1] Schmit, M.; Weiler, M. (2023). German weather services (DWD) multi annual meteorological rasters for the climate period 1991-2020 refined to 25m grid (1.0.0) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.10066045
 
     Parameters
     ----------

@@ -12,10 +12,17 @@ import os
 
 # create the config parser class
 class ConfigParser(configparser.ConfigParser):
+    """This is the class/object of the configurations for the weatherDB module.
+    """
     _DEFAULT_CONFIG_FILE = Path(__file__).parent.resolve()/'config_default.ini'
     _MAIN_CONFIG_FILE = Path(__file__).parent.resolve()/'config_main.ini'
 
     def __init__(self, *args, **kwargs):
+        """
+        Warning
+        -------
+        You shouldn't initialize this class directly, but use the :py:data:``weatherDB.config`` object from the weatherDB module, which is an instance of this class.
+        """
         super().__init__(
             interpolation=configparser.ExtendedInterpolation(),
             *args,
