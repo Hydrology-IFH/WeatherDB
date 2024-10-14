@@ -125,7 +125,8 @@ class StationBase:
         Raises
         ------
         NotImplementedError
-            _description_
+            If the class is initiated with a station ID that is not in the database.
+            To prevent this error, set _skip_meta_check=True.
         """
         if type(self) is StationBase:
             raise NotImplementedError("""
@@ -1169,7 +1170,7 @@ class StationBase:
 
         Parameters
         ----------
-        period : util.TimestampPeriod or (tuple or list of datetime.datetime or None), optional
+        period : TimestampPeriod or (tuple or list of datetime.datetime or None), optional
             The minimum and maximum Timestamp for which to do the quality check.
 
         Returns
@@ -1185,7 +1186,7 @@ class StationBase:
 
         Parameters
         ----------
-        period : util.TimestampPeriod or (tuple or list of datetime.datetime or None), optional
+        period : TimestampPeriod or (tuple or list of datetime.datetime or None), optional
             The minimum and maximum Timestamp for which to get the timeseries.
             If None is given, the maximum or minimal possible Timestamp is taken.
             The default is (None, None).
@@ -1243,7 +1244,7 @@ class StationBase:
 
         Parameters
         ----------
-        period : util.TimestampPeriod or (tuple or list of datetime.datetime or None), optional
+        period : TimestampPeriod or (tuple or list of datetime.datetime or None), optional
             The minimum and maximum Timestamp for which to gap fill the timeseries.
             If None is given, the maximum or minimal possible Timestamp is taken.
             The default is (None, None).
@@ -1551,7 +1552,7 @@ class StationBase:
 
         Parameters
         ----------
-        _last_imp_period : weatherDB.utils.TimestampPeriod or (tuple or list of datetime.datetime or None), optional
+        _last_imp_period : TimestampPeriod or (tuple or list of datetime.datetime or None), optional
             The minimum and maximum Timestamp for which to do the gap filling.
             If None is given, the last import period is taken.
             This is only for internal use, to speed up the process if run in a batch.
@@ -1831,8 +1832,8 @@ class StationBase:
 
         Returns
         -------
-        TimespanPeriod:
-            The TimespanPeriod of the station or of all the stations if all=True.
+        TimestampPeriod:
+            The TimestampPeriod of the station or of all the stations if all=True.
 
         Raises
         ------
@@ -1890,7 +1891,7 @@ class StationBase:
 
         Returns
         -------
-        util.TimestampPeriod
+        TimestampPeriod
             A TimestampPeriod of the filled timeserie.
             (NaT, NaT) if the timeserie is all empty or not defined.
         """
@@ -1933,7 +1934,7 @@ class StationBase:
 
         Returns
         -------
-        utils.TimestampPeriod
+        TimestampPeriod
             The maximum Timestamp Period
         """
         if nas_allowed:
@@ -2005,13 +2006,14 @@ class StationBase:
             The default is True.
         p_elev : tuple of float or None, optional
             The parameters (P_1, P_2) to weight the height differences between stations.
-            The elevation difference is considered with the formula from LARSIM (equation 3-18 & 3-19 from the LARSIM manual):
-            $L_{gewichtet} = L_{horizontal} * (1 + (\frac{|\delta H|}{P_1})^{P_2})$
+            The elevation difference is considered with the formula from LARSIM (equation 3-18 & 3-19 from the LARSIM manual [1]_ ):
+
+            .. math::
+
+                L_{weighted} = L_{horizontal} * (1 + (\\frac{|\delta H|}{P_1})^{P_2})
             If None, then the height difference is not considered and only the nearest stations are returned.
-            literature:
-                - LARSIM Dokumentation, Stand 06.04.2023, online unter https://www.larsim.info/dokumentation/LARSIM-Dokumentation.pdf
             The default is None.
-        period : utils.TimestampPeriod or None, optional
+        period : TimestampPeriod or None, optional
             The period for which the nearest neighboors are returned.
             The neighboor station needs to have raw data for at least one half of the period.
             If None, then the availability of the data is not checked.
@@ -2022,6 +2024,10 @@ class StationBase:
         list of int
             A list of station Ids in order of distance.
             The closest station is the first in the list.
+
+        References
+        ----------
+        .. [1] LARSIM Dokumentation, last check on 06.04.2023, online available under https://www.larsim.info/dokumentation/LARSIM-Dokumentation.pdf
         """
         self._check_isin_meta()
 

@@ -34,13 +34,13 @@ GroupStations
 
 StationsBase...
 ^^^^^^^^^^^^^^^
-Those are the base station classes on which the real station classes above depend on.
+Those are the base stations classes on which the real stations classes above depend on.
 None of them is working on its own, because the class variables are not yet set correctly.
 
-.. autoclass:: weatherDB.stations.StationsBase
+.. autoclass:: weatherDB.stations.StationsBase.StationsBase
 
   .. autoclasstoc::
 
-.. autoclass:: weatherDB.stations.StationsTETBase
+.. autoclass:: weatherDB.stations.StationsBaseTET.StationsBaseTET
 
    .. autoclasstoc::

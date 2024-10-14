@@ -1,22 +1,12 @@
 # Configuration file for the Sphinx documentation builder.
-#
-# This file only contains a selection of the most common options. For a full
-# list see the documentation:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html
+
+import sys
+from pathlib import Path
+from sphinx.writers.html import HTMLTranslator
+
+# os.environ["RTD_documentation_import"] = "YES"
 
 # -- Path setup --------------------------------------------------------------
-
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-
-import sys, os
-from pathlib import Path
-# import sphinx_rtd_theme
-import shutil
-
-os.environ["RTD_documentation_import"] = "YES"
 
 src_path = Path(__file__).parent
 base_path = src_path.parents[1]
@@ -41,15 +31,21 @@ release = weatherDB.__version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.napoleon', 
+    'sphinx.ext.napoleon',
     'sphinx_rtd_theme',
     'sphinx.ext.autodoc',
-    # 'sphinx.ext.imgconverter',
     'nbsphinx',
     'myst_parser',
     'sphinx.ext.viewcode',
     'autoclasstoc',
     'sphinx.ext.autosummary',
+    'sphinx_click',
+    "sphinx.ext.autosectionlabel",
+    'sphinx_copybutton',
+    'sphinx_design',
+    'sphinx.ext.intersphinx',
+    "sphinx_new_tab_link",
+    "sphinx.ext.mathjax"
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -68,59 +64,17 @@ source_parsers = {
 
 myst_enable_extensions = [
     "dollarmath",
+    "colon_fence",
+    "attrs_inline"
 ]
-
-# -- Options for HTML output -------------------------------------------------
-
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#
-html_theme = "sphinx_rtd_theme"#'alabaster'
-
-html_theme_options = {
-    'display_version': True,
-    'prev_next_buttons_location': 'bottom',
-    # Toc options
-    'collapse_navigation': True,
-    'sticky_navigation': True,
-    'navigation_depth': 9
-}
-
-html_css_files = [
-    'custom.css',
-]
-
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
-
-# -- Options for PDF Output --------------------------------------------------
-latex_engine = "pdflatex"
-#latex_documents = (startdocname = "index")
-latex_theme = "manual"
-
-# copy the readme file to _static
-readme_src = src_path.joinpath("README.md")
-if readme_src.is_file(): readme_src.unlink()
-shutil.copyfile(
-    base_path.joinpath("README.md"),
-    readme_src
-)
-# copy the CHANGES file to _static
-changes_src = src_path.joinpath("CHANGES.md")
-if changes_src.is_file(): changes_src.unlink()
-shutil.copyfile(
-    base_path.joinpath("CHANGES.md"),
-    changes_src
-)
 
 # Autodoc options
 autodoc_default_options = {
-    'member-order': 'alphabetical',
+    'member-order': 'bysource',
     'undoc-members': True,
     'show-inheritance': True,
     'inherited-members':True,
+    'collapse_navigation': False,
 }
 autodoc_default_flags=["show-inheritance"]
 autoclass_content= "both"
@@ -130,4 +84,55 @@ autoclasstoc_sections = [
         'public-methods',
 ]
 
-# run in command: sphinx-build -b html .\source .\html
+# Autosummary options
+autosummary_generate = True
+autosummary_generate_overwrite = True
+
+# intersphinx
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3', None),
+    'sqlalchemy': ('https://docs.sqlalchemy.org/en/20/', None),
+    'pandas': ('https://pandas.pydata.org/docs/', None),}
+
+# -- Options for HTML output -------------------------------------------------
+
+# The theme to use for HTML and HTML Help pages.  See the documentation for
+# a list of builtin themes.
+html_theme = "sphinx_rtd_theme"
+
+html_theme_options = {
+    'version_selector': True,
+    'prev_next_buttons_location': 'bottom',
+    'style_external_links': True,
+    # TOC options
+    'collapse_navigation': True,
+    'sticky_navigation': True,
+    'navigation_depth': -1,
+}
+
+html_css_files = [
+    'custom.css',
+]
+html_logo = "_static/logo.png"
+html_favicon = "_static/favicon.ico"
+
+html_context = {
+    # display gitlab
+    "display_gitlab": True, # Integrate Gitlab
+    "gitlab_user": "hydrology", # Username
+    "gitlab_repo": "weatherDB", # Repo name
+    "gitlab_version": "master", # Version
+    "conf_py_path": "/docs/source/", # Path in the checkout to the docs root
+}
+
+# Add any paths that contain custom static files (such as style sheets) here,
+# relative to this directory. They are copied after the builtin static files,
+# so a file named "default.css" will overwrite the builtin "default.css".
+html_static_path = ['_static']
+
+
+# -- Options for PDF Output --------------------------------------------------
+latex_engine = "pdflatex"
+latex_theme = "manual"
+
+# run with command: sphinx-build -b html .\source .\html
