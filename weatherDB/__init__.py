@@ -1,7 +1,7 @@
 __author__ = "Max Schmit"
 __email__ = "max.schmit@hydrology.uni-freiburg.de"
 __copyright__ = "Copyright 2024, Max Schmit"
-__version__ = "0.0.45"
+__version__ = "1.0.0"
 
 from .utils.logging import remove_old_logs, setup_logging_handlers
 from . import station, stations, broker

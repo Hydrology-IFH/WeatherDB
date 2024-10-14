@@ -2,9 +2,6 @@
 
 import sys
 from pathlib import Path
-from sphinx.writers.html import HTMLTranslator
-
-# os.environ["RTD_documentation_import"] = "YES"
 
 # -- Path setup --------------------------------------------------------------
 

@@ -75,17 +75,6 @@ class DBEngine:
         return self._engine
 
     def create_engine(self):
-        # check if in Sphinx creation mode
-        # if "RTD_documentation_import" in os.environ:
-        #     from mock_alchemy.mocking import UnifiedAlchemyMagicMock
-        #     self._engine = UnifiedAlchemyMagicMock()
-        #     self.is_superuser = True
-        #     self._select_privilege = True
-        #     self._create_privilege = True
-        #     self._update_privilege = True
-        #     self._insert_privilege = True
-        #     self._delete_privilege = True
-        # else:
         # create the engine
         con_key = config.get("database", "connection")
         con_sect_key = f"database:{con_key}"

@@ -57,7 +57,7 @@ DATABASE = weatherdb
 USER = weatherdb
 ```
 
-To set your password you will just have to use the module for the first time and will then get prompted to enter the password. This password is then securly stored in your keyring.
+To set your password you will just have to use the module for the first time and will then get prompted to enter the password. This password is then securely stored in your keyring.
 
 :::{warning}
 Don't add a setting for your password in the ini file as this would be a security risk.
