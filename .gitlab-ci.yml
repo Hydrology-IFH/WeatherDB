@@ -10,10 +10,10 @@ test:
       alias: postgres
       command: ["postgres", "-c", "fsync=off"]
   before_script:
-    - python3 -m pip install --upgrade pip --root-user-action
-    - python3 -m pip install unittest-xml-reporting --root-user-action
+    - python3 -m pip install --upgrade pip --root-user-action=ignore
+    - python3 -m pip install unittest-xml-reporting --root-user-action=ignore
   script:
-    - python3 -m pip install . --root-user-action
+    - python3 -m pip install . --root-user-action=ignore
     - mkdir -p /home/data
     - mkdir -p test-reports
     - python3 -m xmlrunner discover -s tests -p testSuite.py -o test-reports
@@ -58,7 +58,7 @@ build:
   stage: build
   image: python:3.9
   script:
-    - python -m pip install --upgrade pip
+    - python -m pip install --upgrade pip --root-user-action=ignore
     - python -m pip install setuptools wheel
     - python setup.py sdist bdist_wheel
   artifacts:
