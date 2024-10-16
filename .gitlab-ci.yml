@@ -10,10 +10,10 @@ test:
       alias: postgres
       command: ["postgres", "-c", "fsync=off"]
   before_script:
-    - python3 -m pip install --upgrade pip
-    - python3 -m pip install unittest-xml-reporting
+    - python3 -m pip install --upgrade pip --root-user-action
+    - python3 -m pip install unittest-xml-reporting --root-user-action
   script:
-    - python3 -m pip install .
+    - python3 -m pip install . --root-user-action
     - mkdir -p /home/data
     - mkdir -p test-reports
     - python3 -m xmlrunner discover -s tests -p testSuite.py -o test-reports
@@ -38,6 +38,7 @@ test:
     POSTGRES_USER: postgres
     POSTGRES_PASSWORD: postgres
     POSTGRES_DB: test_db
+    POSTGRES_HOST_AUTH_METHOD: trust
     WEATHERDB_DB_HOST: localhost
     WEATHERDB_DB_PORT: 5432
     WEATHERDB_DB_DATABASE: $POSTGRES_DB
