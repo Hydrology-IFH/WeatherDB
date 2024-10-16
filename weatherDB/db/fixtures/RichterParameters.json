@@ -1,0 +1,34 @@
+[
+    {
+        "precipitation_typ": "precip_summer",
+        "e": 0.38,
+        "b_no-protection": 0.345,
+        "b_little-protection": 0.31,
+        "b_protected": 0.28,
+        "b_heavy-protection": 0.245
+    },
+    {
+        "precipitation_typ": "precip_winter",
+        "e": 0.46,
+        "b_no-protection": 0.34,
+        "b_little-protection": 0.28,
+        "b_protected": 0.24,
+        "b_heavy-protection": 0.19
+    },
+    {
+        "precipitation_typ": "mix",
+        "e": 0.55,
+        "b_no-protection": 0.535,
+        "b_little-protection": 0.39,
+        "b_protected": 0.305,
+        "b_heavy-protection": 0.185
+    },
+    {
+        "precipitation_typ": "snow",
+        "e": 0.82,
+        "b_no-protection": 0.72,
+        "b_little-protection": 0.51,
+        "b_protected": 0.33,
+        "b_heavy-protection": 0.21
+    }
+]

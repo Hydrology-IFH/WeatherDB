@@ -1,21 +1,19 @@
-import os
-
 __author__ = "Max Schmit"
 __email__ = "max.schmit@hydrology.uni-freiburg.de"
-__copyright__ = "Copyright 2023, Max Schmit"
-__version__ = "0.0.45"
+__copyright__ = "Copyright 2024, Max Schmit"
+__version__ = "1.0.0"
 
-if not ("WEATHERDB_MODULE_INSTALLING" in os.environ \
-        and os.environ["WEATHERDB_MODULE_INSTALLING"]=="True"):
-    from .wdb_logging import remove_old_logs, setup_file_logging
+from .utils.logging import remove_old_logs, setup_logging_handlers
+from . import station, stations, broker
+from .station import StationP, StationPD, StationT, StationET, GroupStation
+from .stations import StationsP, StationsPD, StationsT, StationsET, GroupStations
+from .config import config
+from .broker import Broker
 
-    remove_old_logs()
+remove_old_logs()
+setup_logging_handlers()
 
-    # import classes
-    from . import station, stations
-    from .station import StationN, StationND, StationT, StationET, GroupStation
-    from .stations import StationsN, StationsND, StationsT, StationsET, GroupStations
-    try:
-        from . import broker
-    except PermissionError:
-        pass
+__all__ = ["StationP", "StationPD", "StationT", "StationET", "GroupStation",
+            "StationsP", "StationsPD", "StationsT", "StationsET", "GroupStations",
+            "Broker",
+            "station", "stations", "broker", "config"]

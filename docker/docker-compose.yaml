@@ -1,0 +1,58 @@
+services:
+  weatherdb:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    depends_on:
+      - db
+    environment:
+      WEATHERDB_DB_HOST: db
+      WEATHERDB_DB_PORT: 5432
+      WEATHERDB_DB_DATABASE: weatherdb
+      WEATHERDB_DB_USER: postgres
+      WEATHERDB_DB_PASSWORD: /run/secrets/db_password
+      WEATHERDB_USER_CONFIG_FILE: /home/config_user.yaml
+      WEATHERDB_DATA_BASE_DIR: /home/data
+      WEATHERDB_HANDLE_NON_EXISTING_CONFIG: create
+      DOCKER_ENV: main
+    volumes:
+      - weatherdb_home:/home
+    command: ["sleep", "infinity"] # to keep awake
+    secrets:
+      - db_password
+    develop:
+      watch:
+        - action: rebuild
+          path: ../weatherDB
+          target: /src/weatherDB
+        - action: rebuild
+          path: ../MANIFEST.in
+          target: /src/MANIFEST.in
+        - action: rebuild
+          path: ../pyproject.toml
+          target: /src/pyproject.toml
+        - action: sync
+          path: ../tests
+          target: /src/tests
+
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: weatherdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    ports:
+      - 5454:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    secrets:
+      - db_password
+volumes:
+  postgres_data:
+  weatherdb_home:
+secrets:
+  db_password:
+    file: ./db_password.docker-secret
+
+# start from parent folder with `docker compose -f docker\\docker-compose.yaml up --build`
+# To connect to ther weatherdb service use `docker-compose exec weatherdb bash`

@@ -1,3 +1,0 @@
-- create test environment
-    - check out testing.postgresql package
-    - create mock database data

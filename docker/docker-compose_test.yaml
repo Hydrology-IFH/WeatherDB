@@ -1,0 +1,24 @@
+services:
+  weatherdb:
+    environment:
+      WEATHERDB_DB_DATABASE: weatherdb_test
+      WEATHERDB_USER_CONFIG_FILE: /home/config_user.yaml
+      WEATHERDB_LOGGING_HANDLER: console
+      WEATHERDB_LOGGING_LEVEL: DEBUG
+      WEATHERDB_HORIZON_RADIUS: 40000
+      DOCKER_ENV: test
+      WEATHERDB_HANDLE_NON_EXISTING_CONFIG: create
+    # command: ["python", "-m", "unittest", "discover", "tests"] # to run tests
+
+  db:
+    environment:
+      POSTGRES_DB: weatherdb_test
+    volumes: !reset []
+
+
+# start with `docker compose -f docker-compose.yaml -f docker-compose_test.yaml up --build`
+# To connect to ther weatherdb service use `docker-compose exec weatherdb bash`
+# You can also comment out the command line and start the tests manualy via:
+# `docker compose exec weatherdb python -m unittest discover tests`
+# Or single tests with :
+# `docker compose exec weatherdb python tests/test_setup.py EmptyDBTestCases.test_download_raw`
