@@ -9,7 +9,7 @@ sys.path.insert(0, Path(__file__).parent.resolve().as_posix())
 from baseTest import BaseTestCases
 
 # define TestCases class
-class FilledTestCases(BaseTestCases):
+class FilledDBTestCases(BaseTestCases):
     @classmethod
     def setUpClass(cls):
         with cls.db_engine.connect() as conn:
