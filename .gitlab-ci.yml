@@ -4,14 +4,12 @@ stages:
   - deploy
 
 test:
-  image: ubuntu:latest
+  image: "python:$PYTHON_VERSION"
   services:
     - name: postgres:13
       alias: postgres
       command: ["postgres", "-c", "fsync=off"]
   before_script:
-    - apt-get update
-    - apt-get install -y python3=$PYTHON_VERSION python3-pip
     - python3 -m pip install --upgrade pip
     - python3 -m pip install unittest-xml-reporting
   script:
