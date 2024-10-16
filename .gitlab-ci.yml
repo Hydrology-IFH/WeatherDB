@@ -34,14 +34,21 @@ test:
     - apt-get update
     - apt-get install -y python3=$PYTHON_VERSION python3-pip
     - python3 -m pip install --upgrade pip
+    - python3 -m pip install unittest-xml-reporting
   script:
     - python3 -m pip install .
     - mkdir -p /home/data
-    - python3 tests/test_emptyDB.py || python3 tests/test_downloadRasters.py || python3 tests/test_initDB.py || python3 tests/test_filledDB.py
+    - mkdir -p test-reports
+    - python3 -m xmlrunner discover -s tests -p testSuite.py -o test-reports
   cache:
     key: weatherDB-data
     paths:
       - /home/data
+  artifacts:
+    when: always
+    reports:
+        junit: report.xml
+    expire_in: 2 weeks
   parallel:
     matrix:
       - PYTHON_VERSION: "3.8"
