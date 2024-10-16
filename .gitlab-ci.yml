@@ -26,7 +26,7 @@ test:
   artifacts:
     when: always
     reports:
-        junit: /test-reports/*.xml
+        junit: test-reports/*.xml
     expire_in: 2 weeks
   parallel:
     matrix:
