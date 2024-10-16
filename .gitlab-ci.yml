@@ -6,7 +6,7 @@ stages:
 test:
   image: "python:$PYTHON_VERSION"
   services:
-    - name: postgres:13
+    - name: postgres:14
       alias: postgres
       command: ["postgres", "-c", "fsync=off"]
   before_script:
