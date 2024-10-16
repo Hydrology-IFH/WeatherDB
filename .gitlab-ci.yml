@@ -1,0 +1,93 @@
+stages:
+  - test
+  - build
+  - deploy
+
+test:
+  image: "python:$PYTHON_VERSION"
+  services:
+    - name: postgres:14
+      alias: postgres
+      command: ["postgres", "-c", "fsync=off"]
+  before_script:
+    - python3 -m pip install --upgrade pip --root-user-action=ignore
+    - python3 -m pip install unittest-xml-reporting --root-user-action=ignore
+  script:
+    - python3 -m pip install . --root-user-action=ignore
+    - mkdir -p /home/data
+    - mkdir -p test-reports
+    - python3 -m xmlrunner discover -s tests -p testSuite.py -o test-reports
+  cache:
+    key: weatherDB-data
+    paths:
+      - /home/data
+  artifacts:
+    when: always
+    reports:
+        junit: test-reports/*.xml
+    expire_in: 2 weeks
+  parallel:
+    matrix:
+      - PYTHON_VERSION: "3.8"
+      - PYTHON_VERSION: "3.9"
+      - PYTHON_VERSION: "3.10"
+      - PYTHON_VERSION: "3.11"
+      - PYTHON_VERSION: "3.12"
+  variables:
+    PYTHON_VERSION: $PYTHON_VERSION
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
+    POSTGRES_DB: test_db
+    POSTGRES_HOST_AUTH_METHOD: trust
+    WEATHERDB_DB_HOST: postgres
+    WEATHERDB_DB_PORT: 5432
+    WEATHERDB_DB_DATABASE: $POSTGRES_DB
+    WEATHERDB_DB_USER: $POSTGRES_USER
+    WEATHERDB_DB_PASSWORD: $POSTGRES_PASSWORD
+    WEATHERDB_USER_CONFIG_FILE: /home/config_user.yaml
+    WEATHERDB_DATA_BASE_DIR: /home/data
+    WEATHERDB_HANDLE_NON_EXISTING_CONFIG: create
+    WEATHERDB_LOGGING_HANDLER: console
+    WEATHERDB_LOGGING_LEVEL: DEBUG
+    WEATHERDB_HORIZON_RADIUS: 40000
+    DOCKER_ENV: test
+  tags:
+    - docker
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+build:
+  stage: build
+  image: python:3.9
+  script:
+    - python -m pip install --upgrade pip --root-user-action=ignore
+    - python -m pip install setuptools wheel
+    - python setup.py sdist bdist_wheel
+  artifacts:
+    paths:
+      - dist/
+  parallel:
+    matrix:
+      - PYTHON_VERSION: "3.8"
+      - PYTHON_VERSION: "3.9"
+      - PYTHON_VERSION: "3.10"
+      - PYTHON_VERSION: "3.11"
+      - PYTHON_VERSION: "3.12"
+  variables:
+    PYTHON_VERSION: $PYTHON_VERSION
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_TAG == /^V\d*.\d*\d*/
+
+deploy:
+  stage: deploy
+  image: python:3.9
+  script:
+    - python -m pip install --upgrade pip
+    - python -m pip install twine
+    - twine upload dist/*
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_TAG == /^V\d*.\d*\d*/
+  variables:
+    TWINE_USERNAME: $TWINE_USERNAME
+    TWINE_PASSWORD: $TWINE_PASSWORD
