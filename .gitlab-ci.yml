@@ -1,0 +1,80 @@
+stages:
+  - test
+  - build
+  - deploy
+
+build:
+  stage: build
+  image: python:3.9
+  script:
+    - python -m pip install --upgrade pip
+    - python -m pip install setuptools wheel
+    - python setup.py sdist bdist_wheel
+  artifacts:
+    paths:
+      - dist/
+  parallel:
+    matrix:
+      - PYTHON_VERSION: "3.8"
+      - PYTHON_VERSION: "3.9"
+      - PYTHON_VERSION: "3.10"
+      - PYTHON_VERSION: "3.11"
+      - PYTHON_VERSION: "3.12"
+  variables:
+    PYTHON_VERSION: $PYTHON_VERSION
+
+
+test:
+  image: ubuntu:latest
+  services:
+    - name: postgres:13
+      alias: postgres
+      command: ["postgres", "-c", "fsync=off"]
+  before_script:
+    - apt-get update
+    - apt-get install -y python3=$PYTHON_VERSION python3-pip
+    - python3 -m pip install --upgrade pip
+  script:
+    - python3 -m pip install .
+    - mkdir -p /home/data
+    - python3 tests/test_emptyDB.py || python3 tests/test_downloadRasters.py || python3 tests/test_initDB.py || python3 tests/test_filledDB.py
+  cache:
+    key: weatherDB-data
+    paths:
+      - /home/data
+  parallel:
+    matrix:
+      - PYTHON_VERSION: "3.8"
+      - PYTHON_VERSION: "3.9"
+      - PYTHON_VERSION: "3.10"
+      - PYTHON_VERSION: "3.11"
+      - PYTHON_VERSION: "3.12"
+  variables:
+    PYTHON_VERSION: $PYTHON_VERSION
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
+    POSTGRES_DB: test_db
+    WEATHERDB_DB_HOST: localhost
+    WEATHERDB_DB_PORT: 5432
+    WEATHERDB_DB_DATABASE: $POSTGRES_DB
+    WEATHERDB_DB_USER: $POSTGRES_USER
+    WEATHERDB_DB_PASSWORD: $POSTGRES_PASSWORD
+    WEATHERDB_USER_CONFIG_FILE: /home/config_user.yaml
+    WEATHERDB_DATA_BASE_DIR: /home/data
+    WEATHERDB_HANDLE_NON_EXISTING_CONFIG: create
+    DOCKER_ENV: test
+  tags:
+    - docker
+
+deploy:
+  stage: deploy
+  image: python:3.9
+  script:
+    - python -m pip install --upgrade pip
+    - python -m pip install twine
+    - twine upload dist/*
+  only:
+    - tags
+  variables:
+    TWINE_USERNAME: $TWINE_USERNAME
+    TWINE_PASSWORD: $TWINE_PASSWORD
