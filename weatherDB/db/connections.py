@@ -55,6 +55,7 @@ class DBEngine:
         self._update_privilege = None
         self._insert_privilege = None
         self._delete_privilege = None
+        self._priviledge_to_recheck = set()
 
     def connect(self, *args, **kwargs):
         return self.get_engine().connect(*args, **kwargs)
@@ -168,11 +169,21 @@ class DBEngine:
                     return con.execute(sqltxt(
                         f"SELECT pg_catalog.has_schema_privilege('public', '{privilege}');"
                     )).first()[0]
-                return con.execute(sqltxt(
+                res = con.execute(sqltxt(
                     f"""SELECT bool_and(pg_catalog.has_table_privilege(table_name, '{privilege}'))
                        FROM information_schema.TABLES
                        WHERE table_schema=CURRENT_SCHEMA AND table_type='BASE TABLE';"""
                 )).first()[0]
+                if res is None:
+                    if privilege in self._priviledge_to_recheck:
+                        self.log.debug(f"Privilege {privilege} not found, probably because database isn't initiated. Setting as True.")
+                    else:
+                        self._priviledge_to_recheck.add(privilege)
+                    return True
+                else:
+                    if privilege in self._priviledge_to_recheck:
+                        self._priviledge_to_recheck.remove(privilege)
+                    return res
 
     def _check_select_privilege(self):
         """Check on the database if the user has the SELECT privilege."""
@@ -202,21 +213,21 @@ class DBEngine:
     @property
     def select_privilege(self):
         """Does the user have the PostGreSQL SELECT privilege on the database?"""
-        if self._select_privilege is None:
+        if self._select_privilege is None or "SELECT" in self._priviledge_to_recheck:
             self._check_select_privilege()
         return self._select_privilege
 
     @property
     def update_privilege(self):
         """Does the user have the PostGreSQL UPDATE privilege on the database?"""
-        if self._update_privilege is None:
+        if self._update_privilege is None or "UPDATE" in self._priviledge_to_recheck:
             self._check_update_privilege()
         return self._update_privilege
 
     @property
     def insert_privilege(self):
         """Does the user have the PostGreSQL INSERT privilege on the database?"""
-        if self._insert_privilege is None:
+        if self._insert_privilege is None or "INSERT" in self._priviledge_to_recheck:
             self._check_insert_privilege()
         return self._insert_privilege
 
@@ -228,14 +239,14 @@ class DBEngine:
     @property
     def create_privilege(self):
         """Does the user have the PostGreSQL CREATE privilege on the database?"""
-        if self._create_privilege is None:
+        if self._create_privilege is None or "CREATE" in self._priviledge_to_recheck:
             self._check_create_privilege()
         return self._create_privilege
 
     @property
     def delete_privilege(self):
         """Does the user have the PostGreSQL DELETE privilege on the database?"""
-        if self._delete_privilege is None:
+        if self._delete_privilege is None or "DELETE" in self._priviledge_to_recheck:
             self._check_delete_privilege()
         return self._delete_privilege
 
