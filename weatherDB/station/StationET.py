@@ -27,7 +27,7 @@ class StationET(StationTETBase):
 
     # cdc dwd parameters
     _ftp_folder_base = ["climate_environment/CDC/derived_germany/soil/daily/"]
-    _ftp_zip_regex_prefix = ".*_v2_"
+    _ftp_zip_regex_prefix = r".*_v2_"
     _cdc_date_col = "Datum"
     _cdc_col_names_imp = ["VPGFAO"]
 

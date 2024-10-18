@@ -235,7 +235,7 @@ def get_dwd_meta(ftp_folder):
 
         # get and check the meta_file name
         ftp_files = ftp.nlst(ftp_folder)
-        pattern = ".*(?<!_mn4)((_stations_list)|(_Beschreibung_Stationen))+.txt$"
+        pattern = r".*(?<!_mn4)((_stations_list)|(_Beschreibung_Stationen))+.txt$"
         meta_file = list(filter(re.compile(pattern).match, ftp_files))
 
     if len(meta_file) == 0:
@@ -309,7 +309,7 @@ def get_dwd_meta(ftp_folder):
     if ("observation" in ftp_folder) \
             and ("bis_datum" and "von_datum" in meta) \
             and ("recent" not in ftp_folder):
-        zip_files = list(filter(re.compile(".+\d+_\d+_\d+_hist.zip").match,
+        zip_files = list(filter(re.compile(r".+\d+_\d+_\d+_hist.zip").match,
                                 ftp_files))
         zip_files.sort()
         zip_files.append(zip_files[0])  # else the last entry won't get tested

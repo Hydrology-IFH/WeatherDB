@@ -75,7 +75,7 @@ def download_ma_rasters(which="all", overwrite=None, update_user_config=False):
                         "Do you want to overwrite it? [y/n] "))
 
                 if skip:
-                    print(f"Skipping {file_key} as overwritting is not allowed.")
+                    print(f"Skipping {file_key} as overwriting is not allowed.")
                     continue
 
             # check if the directory exists
@@ -132,7 +132,7 @@ def download_ma_rasters(which="all", overwrite=None, update_user_config=False):
 def download_dem(overwrite=None, extent=(5.3, 46.1, 15.6, 55.4), update_user_config=False):
     """Download the newest DEM data from the Copernicus Sentinel dataset.
 
-    Only the GLO-30 DEM, wich has a 30m resolution, is downloaded as it is freely available.
+    Only the GLO-30 DEM, which has a 30m resolution, is downloaded as it is freely available.
     If you register as a scientific researcher also the EEA-10, with 10 m resolution, is available.
     You will have to download the data yourself and define it in the configuration file.
 

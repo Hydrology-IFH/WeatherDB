@@ -13,8 +13,8 @@ test:
     - python3 -m pip install --upgrade pip --root-user-action=ignore
     - python3 -m pip install unittest-xml-reporting --root-user-action=ignore
   script:
-    - python3 -m pip install . --root-user-action=ignore
-    - mkdir -p /home/data
+    - python3 -m pip install .[optionals] --root-user-action=ignore
+    - mkdir -p $WEATHERDB_DATA_BASE_DIR
     - mkdir -p test-reports
     - python3 -m xmlrunner discover -s tests -p testSuite.py -o test-reports
   cache:
@@ -32,7 +32,6 @@ test:
       - PYTHON_VERSION: "3.9"
       - PYTHON_VERSION: "3.10"
       - PYTHON_VERSION: "3.11"
-      - PYTHON_VERSION: "3.12"
   variables:
     PYTHON_VERSION: $PYTHON_VERSION
     POSTGRES_USER: postgres
@@ -59,7 +58,7 @@ test:
 
 build:
   stage: build
-  image: python:3.9
+  image: python:$PYTHON_VERSION
   script:
     - python -m pip install --upgrade pip --root-user-action=ignore
     - python -m pip install setuptools wheel
@@ -69,7 +68,6 @@ build:
       - dist/
   parallel:
     matrix:
-      - PYTHON_VERSION: "3.8"
       - PYTHON_VERSION: "3.9"
       - PYTHON_VERSION: "3.10"
       - PYTHON_VERSION: "3.11"

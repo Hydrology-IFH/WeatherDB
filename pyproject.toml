@@ -7,9 +7,10 @@ authors = [
 ]
 classifiers = [
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Topic :: Scientific/Engineering :: Hydrology",
     "Topic :: Scientific/Engineering :: Atmospheric Science",
     "Intended Audience :: Science/Research",
@@ -33,6 +34,7 @@ dependencies = [
     "click"
 ]
 license = { file = "LICENSE" }
+requires-python = ">= 3.8, < 3.12"
 
 [project.scripts]
 weatherDB = "weatherDB.cli:cli"

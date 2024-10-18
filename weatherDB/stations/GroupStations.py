@@ -222,7 +222,7 @@ class GroupStations(object):
             return meta_all.reset_index().set_index(["station_id", "parameter"]).sort_index()
 
     def get_para_stations(self, paras="all"):
-        """Get a list with all the multi parameter stations as stations.Station\{parameter\}-objects.
+        """Get a list with all the multi parameter stations as stations.Station*Parameter*-objects.
 
         Parameters
         ----------

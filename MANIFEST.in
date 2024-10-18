@@ -4,4 +4,5 @@ include weatherDB/config/config_default.ini
 include weatherDB/alembic/alembic.ini
 include weatherDB/alembic/script.py.mako
 include weatherDB/db/fixtures/*
+exclude tests/
 global-exclude logs/*

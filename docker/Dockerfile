@@ -1,5 +1,5 @@
 # Use the official Python base image
-FROM --platform=linux/amd64 python:3.9-rc-slim-buster as pythonbaseimage
+FROM --platform=linux/amd64 python:3.10-rc-slim-buster as pythonbaseimage
 
 # update pip
 RUN python -m pip install --upgrade pip

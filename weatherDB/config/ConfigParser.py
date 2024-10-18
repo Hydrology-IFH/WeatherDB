@@ -209,9 +209,9 @@ class ConfigParser(configparser.ConfigParser):
 
         # check if user is given
         if user is None and (user:=db_sect.get("USER")) is None:
-            user = input(f"Please enter the username for the database '{db_sect.get('host')}\{db_sect.get('database')}': ")
+            user = input(f"Please enter the username for the database '{db_sect.get('host')}\\{db_sect.get('database')}': ")
         if password is None:
-            password = getpass(f"Please enter the password for the user {user} on the database '{db_sect.get('host')}\{db_sect.get('database')}': ")
+            password = getpass(f"Please enter the password for the user {user} on the database '{db_sect.get('host')}\\{db_sect.get('database')}': ")
 
         # test connection
         try:
@@ -575,8 +575,6 @@ class ConfigParser(configparser.ConfigParser):
             if Path(password).exists():
                 with open(password, "r") as f:
                     password = f.read().strip()
-            else:
-                password = os.environ.get("WEATHERDB_DB_PASSWORD")
 
             self.set_db_credentials(
                 "environment_variables",

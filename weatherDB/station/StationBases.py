@@ -1424,7 +1424,7 @@ class StationBase:
                                 SELECT tablename
                                 FROM pg_catalog.pg_tables
                                 WHERE schemaname ='timeseries'
-                                    AND tablename LIKE '%\_{para}')
+                                    AND tablename LIKE '%\\_{para}')
                                 AND ({cond_mas_not_null})
                                 AND (meta.raw_from IS NOT NULL AND meta.raw_until IS NOT NULL)
                         ORDER BY ST_DISTANCE(
@@ -2010,7 +2010,7 @@ class StationBase:
 
             .. math::
 
-                L_{weighted} = L_{horizontal} * (1 + (\\frac{|\delta H|}{P_1})^{P_2})
+                L_{weighted} = L_{horizontal} * (1 + (\\frac{|\\delta H|}{P_1})^{P_2})
             If None, then the height difference is not considered and only the nearest stations are returned.
             The default is None.
         period : TimestampPeriod or None, optional

@@ -27,7 +27,7 @@ def remove_old_logs(max_days=14):
     log_date_min = datetime.datetime.now() - datetime.timedelta(days=max_days)
     for log_file in [
             file for file in log_dir.glob("*.log.*")
-                if re.match(".*\.log\.\d{4}-\d{2}-\d{2}$", file.name)]:
+                if re.match(r".*\.log\.\d{4}-\d{2}-\d{2}$", file.name)]:
         try:
             file_date = datetime.datetime.strptime(log_file.name.split(".")[-1], "%Y-%m-%d")
             if file_date < log_date_min:
@@ -62,6 +62,7 @@ def setup_logging_handlers():
         # check if coloredlogs is available
         if cl_available and handler_type == "console":
             coloredlogs.install(level=level, fmt=format, logger=log)
+            log.debug("Using coloredlogs")
             continue
 
         # get log file name
