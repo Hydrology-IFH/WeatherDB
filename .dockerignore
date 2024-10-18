@@ -1,4 +1,6 @@
 __pycache__
+.git
+.vscode
 
 # Ignore the created distribution files
 build
@@ -17,17 +19,12 @@ latex
 _build
 
 # Ignore the user specifiv created files
-data/
+weatherDB/data/
 *.log
-logs
+weatherDB/logs
 
 # ignore the main (system) configuration file as it is user specific
 weatherDB/config/config_main.ini
 
-# ignore docker files
-*.docker-secret
-*.docker-env
-
 # other system files
 sync.ffs_db
-.vscode/

@@ -1,4 +1,8 @@
-/* Dont show toctree in navbar of changelog */
-.wy-menu ul .toctree-l1:last-child ul {
-    display: none;
- } 
+.wy-side-nav-search .wy-dropdown > a img.logo, .wy-side-nav-search > a img.logo {
+    width: 75px;
+    height: auto;
+}
+
+a.reference>code {
+    font-size: 100%;
+}
