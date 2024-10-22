@@ -1,5 +1,32 @@
 # Change-log
 
+## Version 1.0.1
+
+- add create_user_config commadn to CLI
+
+## Version 1.0.0
+
+completly reworked WeatherDB to become Version 1.0.0 to now have:
+
+- clean user configuration, no more secrets_weatehrDB.py file
+- password storage in keyring
+- implement sqlalchemy models to create and maintain database structure
+  - add methods to create database schema
+  - add alembic for migration management
+  - add stations multiannual mean values as table and a view combining all possible combinations as quotients
+- add testing infrastructure
+- add functions to download raster files like DEM and multi annual regionalisation rasters
+- add docker image
+- reworked documentation
+- use new version of pET from DWD, version_2:"VPGFAO"
+- fix multiple errors
+- add GitHub workflows
+- add Gitlab-ci pipeline
+- make module work with sqlalchemy 2.0
+- colorfull logs
+- configure logging through weatherDB.config
+- ...
+
 ## Version 0.0.45
 
 - remove REGNIE from data-sources, ass the DWD is not providing it anymore -> wasn't really used anymore
