@@ -3,8 +3,8 @@
 
 Author: [Max Schmit](https://github.com/maxschmi)
 
-[![Documentation Status](https://readthedocs.org/projects/weatherdb/badge/?version=latest)](https://weatherdb.readthedocs.io/en/latest/?badge=latest)
-[![Pipeline status](https://gitlab.uni-freiburg.de/hydrology/weatherDB/badges/master/pipeline.svg?ignore_skipped=true)](https://gitlab.uni-freiburg.de/hydrology/weatherDB/badges/master?ignore_skipped=true) 
+[![Documentation Status](https://readthedocs.org/projects/weatherdb/badge/?version=latest)](https://weatherdb.readthedocs.io/latest)
+[![Pipeline status](https://gitlab.uni-freiburg.de/hydrology/weatherDB/badges/master/pipeline.svg?ignore_skipped=true)](https://gitlab.uni-freiburg.de/hydrology/weatherDB/-/pipelines) 
 
 The weather-DB module offers an API to interact with the automatically filled weather Database.
 
@@ -28,13 +28,15 @@ This submodule has only one class Broker. This one is used to do actions on all 
 To install the package use PIP to install the Github repository:
 
 ```cmd
-pip install git+https://gitlab.uni-freiburg.de/hydrology/weatherDB.git
+pip install weatherDB
 ```
+
+There are also optional depe
 
 Or to upgrade use:
 
 ```cmd
-pip install git+https://gitlab.uni-freiburg.de/hydrology/weatherDB.git --upgrade
+pip install weatherDB --upgrade
 ```
 
 ## Configuration
