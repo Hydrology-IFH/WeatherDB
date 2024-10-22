@@ -271,7 +271,7 @@ class Broker(object):
         log.info("="*79 + "\nBroker update_db starts")
         self._check_paras(paras)
         with self.activate():
-            if pv.parse(__version__) > self.get_db_version():
+            if self.get_db_version() is None or pv.parse(__version__) > self.get_db_version():
                 log.info("--> There is a new version of the python script. Therefor the database is recalculated completly")
                 self.initiate_db()
             else:
