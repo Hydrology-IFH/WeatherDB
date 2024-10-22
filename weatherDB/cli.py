@@ -80,7 +80,7 @@ def create_db_schema():
 
 @cli.command(short_help="Create User configuration file.")
 @click.option('--file', '-f',
-              type=str, default="ask", show_default=True,
+              type=click.Path(), default="ask", show_default=True,
               help="The file to save the user configuration to.")
 def create_user_config(file):
     weatherDB.config.create_user_config(user_config_file=file)
