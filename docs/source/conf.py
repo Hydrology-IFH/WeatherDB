@@ -78,7 +78,7 @@ autoclass_content= "both"
 autodoc_inherit_docstrings= True
 
 autoclasstoc_sections = [
-        'public-methods',
+    'public-methods',
 ]
 
 # Autosummary options
@@ -131,5 +131,6 @@ html_static_path = ['_static']
 # -- Options for PDF Output --------------------------------------------------
 latex_engine = "pdflatex"
 latex_theme = "manual"
+
 
 # run with command: sphinx-build -b html .\source .\html
