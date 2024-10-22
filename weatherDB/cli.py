@@ -78,6 +78,13 @@ def create_db_schema():
     broker = weatherDB.broker.Broker()
     broker.create_db_schema()
 
+@cli.command(short_help="Create User configuration file.")
+@click.option('--file', '-f',
+              type=str, default="ask", show_default=True,
+              help="The file to save the user configuration to.")
+def create_user_config(file):
+    weatherDB.config.create_user_config(user_config_file=file)
+
 @cli.command(short_help="Set the db version to the current weatherDB version to prevent recalculation of the whole database. (!!!Only use this if you're sure that the database did all the necessary updates!!!)")
 def set_db_version():
     click.echo("starting setting db version")
