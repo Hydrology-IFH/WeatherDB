@@ -1,7 +1,8 @@
 [project]
 name = "weatherDB"
-dynamic = ["version", "readme"]
+dynamic = ["version"]
 description = "This is a package to work with and to create the Weather Database which handles, checks, fills and corrects DWD Weather Station data."
+readme = "README.md"
 authors = [
     { name = "Max Schmit", email = "max.schmit@hydrology.uni-freiburg.de" }
 ]
@@ -39,6 +40,11 @@ requires-python = ">= 3.8, < 3.12"
 [project.scripts]
 weatherDB = "weatherDB.cli:cli"
 
+[project.urls]
+Homepage = "https://gitlab.uni-freiburg.de/hydrology/weatherDB/"
+Issues = "https://gitlab.uni-freiburg.de/hydrology/weatherDB/-/issues"
+Documentation = "https://weatherdb.readthedocs.io/latest/"
+
 [project.optional-dependencies]
 optionals = [
     "coloredlogs",
@@ -47,13 +53,13 @@ optionals = [
 
 [build-system]
 requires = [
+    "build",
     "setuptools>=42",
     "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.dynamic]
 version = {attr = "weatherDB.__version__"}
-readme = {file = "README.md"}
 
 [tool.setuptools.packages]
 find = {}  # Scan the project directory with the default parameters
