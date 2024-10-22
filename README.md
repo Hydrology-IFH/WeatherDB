@@ -31,7 +31,11 @@ To install the package use PIP to install the Github repository:
 pip install weatherDB
 ```
 
-There are also optional depe
+If you also want to install the optional dependencies use:
+
+```batch
+pip install weatherDB[optionals]
+```
 
 Or to upgrade use:
 
