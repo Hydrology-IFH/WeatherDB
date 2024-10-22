@@ -5,13 +5,13 @@
 To install the package use PIP to install the Github repository:
 
 ```batch
-pip install git+https://gitlab.uni-freiburg.de/hydrology/weatherDB.git
+pip install weatherDB
 ```
 
 Or to upgrade use:
 
 ```batch
-pip install git+https://gitlab.uni-freiburg.de/hydrology/weatherDB.git --upgrade
+pip install weatherDB --upgrade
 ```
 
 After installing the package you need to [configure the module](<project:Configuration.md>).
