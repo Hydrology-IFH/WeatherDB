@@ -3,6 +3,10 @@ stages:
   - build
   - deploy
 
+workflow:
+  auto_cancel:
+    on_new_commit: interruptible
+
 test:
   image: "python:$PYTHON_VERSION"
   services:
@@ -32,6 +36,7 @@ test:
       - PYTHON_VERSION: "3.9"
       - PYTHON_VERSION: "3.10"
       - PYTHON_VERSION: "3.11"
+  interruptible: true
   variables:
     PYTHON_VERSION: $PYTHON_VERSION
     POSTGRES_USER: postgres
