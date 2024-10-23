@@ -8,6 +8,7 @@ from packaging import version as pv
 from pathlib import Path
 import textwrap
 from contextlib import contextmanager
+import atexit
 
 from .db.connections import db_engine
 from .config import config
@@ -38,6 +39,8 @@ class Broker(object):
             self.stations_t,
             self.stations_et,
             self.stations_p]
+
+        self._is_active = False
 
     def _check_paras(self, paras, valid_paras=["p_d", "p", "t", "et"]):
         valid_paras = ["p_d", "p", "t", "et"]
@@ -476,7 +479,7 @@ class Broker(object):
         self.set_setting("version", str(version))
 
     @property
-    def is_broker_active(self):
+    def is_any_active(self):
         """Get the state of the broker.
 
         Returns
@@ -484,10 +487,21 @@ class Broker(object):
         bool
             Whether the broker is active.
         """
-        return self.get_setting("is_broker_active") == "True"
+        return self.get_setting("broker_active") == "True"
 
-    @is_broker_active.setter
-    def is_broker_active(self, is_active:bool):
+    @property
+    def is_active(self):
+        """Get the state of the broker.
+
+        Returns
+        -------
+        bool
+            Whether the broker is active.
+        """
+        return self._is_active
+
+    @is_active.setter
+    def is_active(self, is_active:bool):
         """Set the state of the broker.
 
         Parameters
@@ -495,15 +509,21 @@ class Broker(object):
         is_active : bool
             Whether the broker is active.
         """
-        self.set_setting("is_broker_active", str(is_active))
+        self._is_active = is_active
+        self.set_setting("broker_active", str(is_active))
+
+    def _deactivate(self):
+        self.is_active = False
 
     @contextmanager
     def activate(self):
         """Activate the broker in a context manager."""
         try:
-            if self.is_broker_active:
+            if self.is_any_active and not self.is_active:
                 raise RuntimeError("Another Broker is active and therefor this broker is not allowed to run.")
-            self.is_broker_active = True
+            self.is_active = True
+            atexit.register(self._deactivate)
             yield self
         finally:
-            self.is_broker_active = False
+            self._deactivate()
+            atexit.unregister(self._deactivate)

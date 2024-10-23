@@ -55,7 +55,7 @@ class BaseTestCases(unittest.TestCase):
             msg="Errors occurred during test execution.")
 
     def check_broker_inactive(self):
-        self.assertFalse(self.broker.is_broker_active, msg="Broker is still marked as active.")
+        self.assertFalse(self.broker.is_any_active, msg="Broker is still marked as active.")
 
 class FreshDBTestCases(BaseTestCases):
 
