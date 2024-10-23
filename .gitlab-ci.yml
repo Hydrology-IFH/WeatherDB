@@ -68,7 +68,7 @@ build:
   image: python:3.11
   script:
     - python -m pip install --upgrade pip --root-user-action=ignore
-    - python -m pip install setuptools wheel build --root-user-action=ignore
+    - python -m pip install setuptools wheel build setuptools-scm --root-user-action=ignore
     - python -m build --no-isolation --outdir dist
   artifacts:
     paths:

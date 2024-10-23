@@ -1,5 +1,10 @@
 # Change-log
 
+## Version 1.0.2
+
+- make Broker not block itself if multiple `with self.is_any_active` are concatenated
+- derive version from git tags
+
 ## Version 1.0.1
 
 - add create_user_config commadn to CLI

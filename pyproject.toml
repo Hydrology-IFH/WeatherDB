@@ -55,11 +55,13 @@ optionals = [
 requires = [
     "build",
     "setuptools>=42",
-    "wheel"]
+    "wheel",
+    "setuptools_scm"]
 build-backend = "setuptools.build_meta"
-
-[tool.setuptools.dynamic]
-version = {attr = "weatherDB.__version__"}
 
 [tool.setuptools.packages]
 find = {}  # Scan the project directory with the default parameters
+
+[tool.setuptools_scm]
+version_file = "weatherDB/_version.py"
+version_file_template = "__version__ = \"{version}\""

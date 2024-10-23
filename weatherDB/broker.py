@@ -13,7 +13,7 @@ import atexit
 from .db.connections import db_engine
 from .config import config
 from .stations import StationsP, StationsPD, StationsT, StationsET
-from . import __version__ as __version__
+from . import __version__
 
 __all__ = ["Broker"]
 
