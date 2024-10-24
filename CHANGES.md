@@ -4,6 +4,8 @@
 
 - make Broker not block itself if multiple `with self.is_any_active` are concatenated
 - derive version from git tags
+- cli: set_db_version asks for confirmation
+- create_db_schema gets option to define the database owner of the tables and schemas
 
 ## Version 1.0.1
 

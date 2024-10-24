@@ -50,6 +50,139 @@ class Broker(object):
                     "The given parameter {para} is not valid.".format(
                         para=para))
 
+    @db_engine.deco_is_superuser
+    def create_db_schema(self, if_exists=None, silent=False, owner=None):
+        """Create the database schema.
+
+        Parameters
+        ----------
+        if_exists : str, optional
+            What to do if the tables already exist.
+            If None the user gets asked.
+            If "D" or "drop" the tables get dropped and recreated.
+            If "I" or "ignore" the existing tables get ignored and the creation of the schema continues for the other.
+            If "E" er "exit" the creation of the schema gets exited.
+            The default is None.
+        silent : bool, optional
+            If True the user gets not asked if the tables already exist.
+            If True, if_exists must not be None.
+            The default is False.
+        owner : str, optional
+            The user that should get the ownership of the tables and schemas.
+            If None the current database user will be the owner.
+            The default is None.
+        """
+        # check silent
+        if silent and if_exists is None:
+            raise ValueError("silent can only be True if if_exists is not None.")
+
+        # add POSTGIS extension
+        with db_engine.connect() as con:
+            con.execute(sqltxt("CREATE EXTENSION IF NOT EXISTS postgis;"))
+            con.commit()
+
+        # check for existing tables
+        from .db.models import ModelBase
+        with db_engine.connect() as con:
+            res = con.execute(sqltxt("""
+                SELECT table_name
+                FROM information_schema.tables
+                WHERE table_schema = 'public' AND table_type = 'BASE TABLE';""")
+                ).fetchall()
+            existing_tables = [table[0] for table in res]
+            problem_tables = [table.name
+                              for table in ModelBase.metadata.tables.values()
+                              if table.name in existing_tables]
+        if len(problem_tables)>0 and silent:
+            log.info("The following tables already exist on the database:\n - " +
+                  "\n - ".join([table for table in problem_tables]))
+
+            # ask the user what to do if if_exists is None
+            if if_exists is None:
+                print(textwrap.dedent(
+                    """What do you want to do?
+                    - [D] : Drop all the tables and recreate them again.
+                    - [I] : Ignore those tables and continue with the creation of the schema.
+                    - [E] : Exit the creation of the schema."""))
+                while True:
+                    answer = input("Your choice: ").upper()
+                    if answer in ["D", "E", "I"]:
+                        if_exists = answer
+                        break
+                    else:
+                        print("Please enter a valid answer.")
+
+            # execute the choice
+            if if_exists.upper() == "D":
+                log.info("Dropping the tables.")
+                with db_engine.connect() as con:
+                    for table in problem_tables:
+                        con.execute(sqltxt(f"DROP TABLE {table} CASCADE;"))
+                    con.commit()
+            elif if_exists.upper() == "E":
+                log.info("Exiting the creation of the schema.")
+                return
+
+        # create the tables
+        log.info("Creating the tables and views.")
+        with db_engine.connect() as con:
+            ModelBase.metadata.create_all(con, checkfirst=True)
+            con.commit()
+
+        # create the schema for the timeseries
+        with db_engine.connect() as con:
+            con.execute(sqltxt("CREATE SCHEMA IF NOT EXISTS timeseries;"))
+            con.commit()
+
+        # set the owner of the tables
+        if owner is not None:
+            log.info(f"Setting the owner of the tables to {owner}.")
+            with db_engine.connect() as con:
+                for table in ModelBase.metadata.tables.values():
+                    con.execute(sqltxt(f"ALTER TABLE {table.name} OWNER TO {owner};"))
+                con.execute(sqltxt(f"ALTER SCHEMA timeseries OWNER TO {owner};"))
+                con.commit()
+
+        # tell alembic that the actual database schema is up-to-date
+        from alembic.config import Config
+        from alembic import command
+        alembic_cfg = Config(
+            Path(config.get("main", "module_path"))/"alembic"/"alembic.ini",
+            attributes={"engine": db_engine.get_engine()})
+        command.stamp(alembic_cfg, "head")
+
+    @db_engine.deco_all_privileges
+    def initiate_db(self, **kwargs):
+        """Initiate the Database.
+
+        Downloads all the data from the CDC server for the first time.
+        Updates the multi-annual data and the richter-class for all the stations.
+        Quality checks and fills up the timeseries.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            The keyword arguments to pass to the called methods of the stations
+        """
+        log.info("="*79 + "\nBroker initiate_db starts")
+        with self.activate():
+            #TODO: add a check for alembic version and if the database is up-to-date
+            self.update_meta(
+                paras=["p_d", "p", "t", "et"], **kwargs)
+            self.update_raw(
+                paras=["p_d", "p", "t", "et"],
+                only_new=False,
+                **kwargs)
+            self.update_ma_raster(
+                paras=["p_d", "p", "t", "et"],
+                **kwargs)
+            self.stations_p.update_richter_class(**kwargs)
+            self.quality_check(paras=["p", "t", "et"], **kwargs)
+            self.fillup(paras=["p", "t", "et"], **kwargs)
+            self.richter_correct(**kwargs)
+
+            self.set_db_version()
+
     def update_raw(self, only_new=True, paras=["p_d", "p", "t", "et"], **kwargs):
         """Update the raw data from the DWD-CDC server to the database.
 
@@ -285,126 +418,6 @@ class Broker(object):
                 self.last_imp_quality_check(paras=paras, **kwargs)
                 self.last_imp_fillup(paras=paras, **kwargs)
                 self.last_imp_corr(**kwargs)
-
-    @db_engine.deco_is_superuser
-    def create_db_schema(self, if_exists=None, silent=False):
-        """Create the database schema.
-
-        Parameters
-        ----------
-        if_exists : str, optional
-            What to do if the tables already exist.
-            If None the user gets asked.
-            If "D" or "drop" the tables get dropped and recreated.
-            If "I" or "ignore" the existing tables get ignored and the creation of the schema continues for the other.
-            If "E" er "exit" the creation of the schema gets exited.
-            The default is None.
-        silent : bool, optional
-            If True the user gets not asked if the tables already exist.
-            If True, if_exists must not be None.
-            The default is False.
-        """
-        # check silent
-        if silent and if_exists is None:
-            raise ValueError("silent can only be True if if_exists is not None.")
-
-        # add POSTGIS extension
-        with db_engine.connect() as con:
-            con.execute(sqltxt("CREATE EXTENSION IF NOT EXISTS postgis;"))
-            con.commit()
-
-        # check for existing tables
-        from .db.models import ModelBase
-        with db_engine.connect() as con:
-            res = con.execute(sqltxt("""
-                SELECT table_name
-                FROM information_schema.tables
-                WHERE table_schema = 'public' AND table_type = 'BASE TABLE';""")
-                ).fetchall()
-            existing_tables = [table[0] for table in res]
-            problem_tables = [table.name
-                              for table in ModelBase.metadata.tables.values()
-                              if table.name in existing_tables]
-        if len(problem_tables)>0 and silent:
-            log.info("The following tables already exist on the database:\n - " +
-                  "\n - ".join([table for table in problem_tables]))
-
-            # ask the user what to do if if_exists is None
-            if if_exists is None:
-                print(textwrap.dedent(
-                    """What do you want to do?
-                    - [D] : Drop all the tables and recreate them again.
-                    - [I] : Ignore those tables and continue with the creation of the schema.
-                    - [E] : Exit the creation of the schema."""))
-                while True:
-                    answer = input("Your choice: ").upper()
-                    if answer in ["D", "E", "I"]:
-                        if_exists = answer
-                        break
-                    else:
-                        print("Please enter a valid answer.")
-
-            # execute the choice
-            if if_exists.upper() == "D":
-                log.info("Dropping the tables.")
-                with db_engine.connect() as con:
-                    for table in problem_tables:
-                        con.execute(sqltxt(f"DROP TABLE {table} CASCADE;"))
-                    con.commit()
-            elif if_exists.upper() == "E":
-                log.info("Exiting the creation of the schema.")
-                return
-
-        # create the tables
-        log.info("Creating the tables and views.")
-        with db_engine.connect() as con:
-            ModelBase.metadata.create_all(con, checkfirst=True)
-            con.commit()
-
-        # create the schema for the timeseries
-        with db_engine.connect() as con:
-            con.execute(sqltxt("CREATE SCHEMA IF NOT EXISTS timeseries;"))
-            con.commit()
-
-        # tell alembic that the actual database schema is up-to-date
-        from alembic.config import Config
-        from alembic import command
-        alembic_cfg = Config(
-            Path(config.get("main", "module_path"))/"alembic"/"alembic.ini",
-            attributes={"engine": db_engine.get_engine()})
-        command.stamp(alembic_cfg, "head")
-
-    @db_engine.deco_all_privileges
-    def initiate_db(self, **kwargs):
-        """Initiate the Database.
-
-        Downloads all the data from the CDC server for the first time.
-        Updates the multi-annual data and the richter-class for all the stations.
-        Quality checks and fills up the timeseries.
-
-        Parameters
-        ----------
-        **kwargs : dict
-            The keyword arguments to pass to the called methods of the stations
-        """
-        log.info("="*79 + "\nBroker initiate_db starts")
-        with self.activate():
-            #TODO: add a check for alembic version and if the database is up-to-date
-            self.update_meta(
-                paras=["p_d", "p", "t", "et"], **kwargs)
-            self.update_raw(
-                paras=["p_d", "p", "t", "et"],
-                only_new=False,
-                **kwargs)
-            self.update_ma_raster(
-                paras=["p_d", "p", "t", "et"],
-                **kwargs)
-            self.stations_p.update_richter_class(**kwargs)
-            self.quality_check(paras=["p", "t", "et"], **kwargs)
-            self.fillup(paras=["p", "t", "et"], **kwargs)
-            self.richter_correct(**kwargs)
-
-            self.set_db_version()
 
     def vacuum(self, do_analyze=True):
         sql = "VACUUM {analyze};".format(
