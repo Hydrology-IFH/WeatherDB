@@ -637,7 +637,7 @@ class StationP(StationPBase):
         self.update_period_meta(kind="corr")
 
         # update multi annual mean
-        self.update_ma_timeseris(kind="corr")
+        self.update_ma_timeseries(kind="corr")
 
     @db_engine.deco_update_privilege
     def corr(self, *args, **kwargs):
