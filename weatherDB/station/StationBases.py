@@ -808,7 +808,7 @@ class StationBase:
                 why=f"no multi-annual data was found from 'data:rasters:{self._ma_raster_key}'")
 
     @db_engine.deco_update_privilege
-    def update_ma_timeseris(self, kind, **kwargs):
+    def update_ma_timeseries(self, kind, **kwargs):
         """Update the mean annual value from the station timeserie.
 
         Parameters
@@ -829,7 +829,7 @@ class StationBase:
 
         if isinstance(kind, list):
             for kind in self._check_kinds(kind):
-                self.update_ma_timeseris(kind)
+                self.update_ma_timeseries(kind)
             return None
 
         self._check_kind(kind)
@@ -843,14 +843,13 @@ class StationBase:
                 HAVING count("{kind}")/count("timestamp")::float>0.9
             )
             INSERT INTO station_ma_timeserie (station_id, parameter, kind, value)
-                SELECT *
-                FROM (  SELECT
-                            {self.id} AS station_id,
-                            '{self._para}' AS parameter,
-                            '{kind}' AS kind,
-                            avg(val)::int AS value
-                        FROM ts_y)
-                WHERE value IS NOT NULL
+                SELECT
+                    {self.id} AS station_id,
+                    '{self._para}' AS parameter,
+                    '{kind}' AS kind,
+                    avg(val)::int AS value
+                FROM ts_y
+                WHERE avg(val)::int IS NOT NULL
             ON CONFLICT (station_id, parameter, kind) DO UPDATE
                 SET value = EXCLUDED.value;
         """
@@ -1022,7 +1021,7 @@ class StationBase:
             self._set_is_real()
 
         # update multi annual mean
-        self.update_ma_timeseris(kind="raw")
+        self.update_ma_timeseries(kind="raw")
 
         # update meta file
         imp_period = TimestampPeriod(
@@ -1228,7 +1227,7 @@ class StationBase:
                 ))
 
         # update multi annual mean
-        self.update_ma_timeseris(kind="qc")
+        self.update_ma_timeseries(kind="qc")
 
         # update timespan in meta table
         self.update_period_meta(kind="qc")
@@ -1469,7 +1468,7 @@ class StationBase:
                 **period.get_sql_format_dict(format=self._tstp_format_human)))
 
         # update multi annual mean
-        self.update_ma_timeseris(kind="filled")
+        self.update_ma_timeseries(kind="filled")
 
         # update timespan in meta table
         self.update_period_meta(kind="filled")
