@@ -843,13 +843,14 @@ class StationBase:
                 HAVING count("{kind}")/count("timestamp")::float>0.9
             )
             INSERT INTO station_ma_timeserie (station_id, parameter, kind, value)
-                SELECT
-                    {self.id} AS station_id,
-                    '{self._para}' AS parameter,
-                    '{kind}' AS kind,
-                    avg(val)::int AS value
-                FROM ts_y
-                WHERE avg(val)::int IS NOT NULL
+                SELECT *
+                FROM (  SELECT
+                            {self.id} AS station_id,
+                            '{self._para}' AS parameter,
+                            '{kind}' AS kind,
+                            avg(val)::int AS value
+                        FROM ts_y) sq
+                WHERE sq.value IS NOT NULL
             ON CONFLICT (station_id, parameter, kind) DO UPDATE
                 SET value = EXCLUDED.value;
         """
@@ -947,9 +948,9 @@ class StationBase:
         # check for empty list of zipfiles
         if zipfiles is None or len(zipfiles)==0:
             log.debug(
-                """raw_update of {para_long} Station {stid}:
-                No zipfile was found and therefor no new data was imported."""
-                .format(para_long=self._para_long, stid=self.id))
+                f"raw_update of {self._para_long} Station {self.id}:" +
+                f"No {'new ' if only_new else ''}zipfile was found and therefor no new data was imported."""
+                )
             self._update_last_imp_period_meta(period=(None, None))
             return None
 
