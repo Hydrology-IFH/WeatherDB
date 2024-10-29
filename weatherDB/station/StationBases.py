@@ -1584,30 +1584,10 @@ class StationBase:
         pd.Series
             a pandas Series with the information names as index and the explanation as values.
         """
-        # check which information to get
-        if isinstance(infos, str) and (infos == "all"):
-            col_clause = ""
-        else:
-            if isinstance(infos, str):
-                infos = [infos]
-            col_clause =" AND column_name IN ('{cols}')".format(
-                cols="', '".join(list(infos)))
-        sql = f"""
-            SELECT cols.column_name AS info,
-                (SELECT pg_catalog.col_description(c.oid, cols.ordinal_position::int)
-                FROM pg_catalog.pg_class c
-                WHERE c.oid  = (SELECT cols.table_name::regclass::oid)
-                AND c.relname = cols.table_name
-                ) as explanation
-            FROM information_schema.columns cols
-            WHERE cols.table_name = 'meta_{cls._para}'{col_clause};
-        """
-
-        # get the result
-        return pd.read_sql(
-            sqltxt(sql),
-            con=db_engine.engine,
-            index_col="info")["explanation"]
+        return pd.Series(
+            {c.key: c.comment
+             for c in sa.inspect(cls._MetaModel).c
+             if infos == "all" or c.key in infos})
 
     def get_meta(self, infos="all"):
         """Get Information from the meta table.
