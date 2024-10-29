@@ -53,8 +53,11 @@ def create_db_schema(owner):
 @click.option('--file', '-f',
               type=click.Path(), default="ask", show_default=True,
               help="The file to save the user configuration to.")
-def create_user_config(file):
-    weatherDB.config.create_user_config(user_config_file=file)
+@click.option('--on-exists', '-e',
+              type=str, default="ask", show_default=True,
+              help="What to do if the file already exists. Options are 'ask', 'overwrite', 'define' or 'error'.")
+def create_user_config(file, on_exists):
+    weatherDB.config.create_user_config(user_config_file=file, on_exists=on_exists)
 
 
 @cli.command(short_help="Download the needed multi-annual raster data from zenodo to the data folder.")
