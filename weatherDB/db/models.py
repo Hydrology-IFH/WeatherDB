@@ -391,6 +391,6 @@ class Settings(ModelBase):
         comment="The key of the setting",
         sort_order=0)
     value: Mapped[str] = mapped_column(
-        sa.String(20),
+        sa.String(60),
         comment="The value of the setting",
         sort_order=1)
