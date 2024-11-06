@@ -22,7 +22,10 @@ import weatherDB
 @click.option('--connection', '-c',
               type=str, default=None, show_default=False,
               help="The connection to use. Default is the value from the configuration file.")
-def cli(do_logging, connection=None):
+@click.option('--verbose', '-v', # defined here but used in safe_cli
+              is_flag=True, default=False, show_default=True,
+              help="Should the verbose mode be activated? -> This will print complete tracebacks on errors.")
+def cli(do_logging, connection, verbose):
     if do_logging:
         click.echo("logging to console is set on")
         handlers = weatherDB.config.getlist("logging", "handler")
@@ -33,6 +36,17 @@ def cli(do_logging, connection=None):
     if connection is not None:
         print(f"setting the connection to {connection}")
         weatherDB.config.set("database", "connection", connection)
+
+
+def safe_entry():
+    try:
+        cli()
+    except Exception as e:
+        if ("-v" in sys.argv) or ("--verbose" in sys.argv):
+            raise e
+        notes = "\n" + '\n'.join(e.__notes__) if hasattr(e, '__notes__') else ''
+        click.echo(f"\033[31;1;4mAn error occurred: {e}{notes}\033[0m", err=True)
+        sys.exit(1)
 
 # cli statements to initialize the module
 # ---------------------------------------
@@ -47,6 +61,16 @@ def create_db_schema(owner):
     click.echo("starting to create database schema")
     broker = weatherDB.broker.Broker()
     broker.create_db_schema(owner=owner)
+
+
+@cli.command(short_help="Use Alembic directly to update or downgrade the database schema. Have a look at the official alembic documentation for more information.")
+@click.option('--revision', '-r',
+              type=str, default="head", show_default=True,
+              help="The revision ID (weatherDB Version e.g. 'V1.0.2') to upgrade/downgrade to.")
+def upgrade_db_schema(revision):
+    click.echo("starting to upgrade database schema")
+    broker = weatherDB.broker.Broker()
+    broker.upgrade_db_schema(revision=revision)
 
 
 @cli.command(short_help="Create User configuration file.")
@@ -186,5 +210,5 @@ def set_db_version():
 # cli
 # ---------------------------------------
 if __name__=="__main__":
-    cli()
+    safe_entry()
 

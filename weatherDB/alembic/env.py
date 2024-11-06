@@ -64,9 +64,12 @@ def process_revision_directives(context, revision, directives):
     # extract Migration
     migration_script = directives[0]
 
-    # get version from setuptools_scm
-    scm_version = vparse(get_version(root="..", relative_to=wdb.__file__))
-    migration_script.rev_id = f"V{scm_version.base_version}"
+    # get version from setuptools_scm or weatherDB if not in git
+    try:
+        version = vparse(get_version(root="..", relative_to=wdb.__file__))
+    except LookupError:
+        version = vparse(wdb.__version__)
+    migration_script.rev_id = f"V{version.base_version}"
 
 
 # migration functions

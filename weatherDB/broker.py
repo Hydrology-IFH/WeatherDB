@@ -9,6 +9,7 @@ from pathlib import Path
 import textwrap
 from contextlib import contextmanager
 import atexit
+import sys
 
 from .db.connections import db_engine
 from .config import config
@@ -42,6 +43,8 @@ class Broker(object):
 
         self._is_active = False
 
+        self._db_schema_valid = None
+
     def _check_paras(self, paras, valid_paras=["p_d", "p", "t", "et"]):
         valid_paras = ["p_d", "p", "t", "et"]
         for para in paras:
@@ -49,6 +52,11 @@ class Broker(object):
                 raise ValueError(
                     "The given parameter {para} is not valid.".format(
                         para=para))
+
+    @property
+    def _alembic_config(self):
+        from .alembic.config import config as alembic_config
+        return alembic_config
 
     @db_engine.deco_is_superuser
     def create_db_schema(self, if_exists=None, silent=False, owner=None):
@@ -144,12 +152,52 @@ class Broker(object):
                 con.commit()
 
         # tell alembic that the actual database schema is up-to-date
-        from alembic.config import Config
         from alembic import command
-        alembic_cfg = Config(
-            Path(config.get("main", "module_path"))/"alembic"/"alembic.ini",
-            attributes={"engine": db_engine.get_engine()})
-        command.stamp(alembic_cfg, "head")
+        command.stamp(self._alembic_config, "head")
+
+    def upgrade_db_schema(self, revision="head"):
+        """Upgrade the database schema to a specific revision.
+
+        Parameters
+        ----------
+        revision : str, optional
+            The revision to upgrade to.
+            If "head" the database gets upgraded to the latest revision.
+            The default is "head".
+        """
+        from alembic import command
+        command.upgrade(self._alembic_config, revision)
+
+    def _check_db_schema(self):
+        """Check the database schema for differences to the models.
+
+        Returns
+        -------
+        bool
+            Whether the database schema is up-to-date.
+
+        Raises
+        ------
+        Exception
+            If the database schema is not up-to-date.
+        """
+        if self._db_schema_valid:
+            return self._db_schema_valid
+        else:
+            from alembic import command
+            try:
+                command.check(self._alembic_config)
+                self._db_schema_valid = True
+            except Exception as e:
+                self._db_schema_valid = False
+                if "Target database is not up to date" in str(e):
+                    note = "You may need to run `weatherDB upgrade-db-schema` in CLI or use `weatherDB.Broker().upgrade_db_schema()` as python script to upgrade the database schema first."
+                    if sys.version_info >= (3, 11):
+                        e.add_note(note)
+                    else:
+                        raise Exception(str(e) + "\n" + note) from e
+
+                raise e
 
     @db_engine.deco_all_privileges
     def initiate_db(self, **kwargs):
@@ -165,8 +213,9 @@ class Broker(object):
             The keyword arguments to pass to the called methods of the stations
         """
         log.info("="*79 + "\nBroker initiate_db starts")
+        self._check_db_schema()
+
         with self.activate():
-            #TODO: add a check for alembic version and if the database is up-to-date
             self.update_meta(
                 paras=["p_d", "p", "t", "et"], **kwargs)
             self.update_raw(
@@ -201,6 +250,7 @@ class Broker(object):
         """
         self._check_paras(paras)
         log.info("="*79 + "\nBroker update_raw starts")
+        self._check_db_schema()
 
         with self.activate():
             for stations in self.stations:
@@ -221,6 +271,7 @@ class Broker(object):
         """
         self._check_paras(paras)
         log.info("="*79 + "\nBroker update_meta starts")
+        self._check_db_schema()
 
         with self.activate():
             for stations in self.stations:
@@ -241,6 +292,7 @@ class Broker(object):
         """
         self._check_paras(paras)
         log.info("="*79 + "\nBroker update_ma_raster starts")
+        self._check_db_schema()
 
         with self.activate():
             for stations in self.stations:
@@ -262,6 +314,8 @@ class Broker(object):
         self._check_paras(paras=paras,
                           valid_paras=["p_d", "p", "t", "et"])
         log.info("="*79 + "\nBroker update_period_meta starts")
+        self._check_db_schema()
+
         with self.activate():
             for stations in self.stations:
                 if stations._para in paras:
@@ -286,6 +340,7 @@ class Broker(object):
             paras=paras,
             valid_paras=["p", "t", "et"])
         log.info("="*79 + "\nBroker quality_check starts")
+        self._check_db_schema()
 
         with self.activate():
             if with_fillup_nd and "p" in paras:
@@ -317,6 +372,7 @@ class Broker(object):
                 paras=paras,
                 valid_paras=["p", "t", "et"])
         log.info("="*79 + "\nBroker last_imp_quality_check starts")
+        self._check_db_schema()
 
         with self.activate():
             if with_fillup_nd and "p" in paras:
@@ -339,6 +395,8 @@ class Broker(object):
             The keyword arguments to pass to fillup method of the stations
         """
         log.info("="*79 + "\nBroker fillup starts")
+        self._check_db_schema()
+
         with self.activate():
             self._check_paras(paras)
             for stations in self.stations:
@@ -358,6 +416,8 @@ class Broker(object):
             The keyword arguments to pass to last_imp_fillup method of the stations
         """
         log.info("="*79 + "\nBroker last_imp_fillup starts")
+        self._check_db_schema()
+
         with self.activate():
             self._check_paras(paras)
             for stations in self.stations:
@@ -373,6 +433,8 @@ class Broker(object):
             The keyword arguments to pass to richter_correct method of the stations_p
         """
         log.info("="*79 + "\nBroker: last_imp_corr starts")
+        self._check_db_schema()
+
         with self.activate():
             self.stations_p.richter_correct(**kwargs)
 
@@ -385,6 +447,8 @@ class Broker(object):
             The keyword arguments to pass to last_imp_corr method of the stations
         """
         log.info("="*79 + "\nBroker: last_imp_corr starts")
+        self._check_db_schema()
+
         with self.activate():
             self.stations_p.last_imp_corr(**kwargs)
 
@@ -406,6 +470,8 @@ class Broker(object):
         """
         log.info("="*79 + "\nBroker update_db starts")
         self._check_paras(paras)
+        self._check_db_schema()
+
         with self.activate():
             if self.get_db_version() is None or pv.parse(__version__) > self.get_db_version():
                 log.info("--> There is a new version of the python script. Therefor the database is recalculated completly")
