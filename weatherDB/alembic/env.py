@@ -1,5 +1,7 @@
 from alembic import context
 import re
+from setuptools_scm import get_version
+from packaging.version import parse as vparse
 
 import weatherDB as wdb
 from weatherDB.db.models import ModelBase
@@ -17,9 +19,14 @@ target_metadata = ModelBase.metadata
 # check for alembic database copnnection in the weatherDB config
 # ##############################################################
 engine = config.attributes.get("engine", None)
-if wdb.config.has_section('database:alembic') and engine is None:
-    print("Setting the database connection to the users configuration of 'database:alembic'.")
-    wdb.config.set('database', 'connection', "alembic")
+if engine is None and \
+        wdb.config.has_option('alembic', 'connection') and \
+        wdb.config.has_section(f'database:{wdb.config.get("alembic", "connection")}'):
+    print("Setting the database connection to the users configuration of 'alembic.connection'.")
+    wdb.config.set(
+        'database',
+        'connection',
+        wdb.config.get("alembic", "connection"))
     engine = db_engine.engine
 
 # get other values from config
@@ -51,6 +58,17 @@ def include_name(name, type_, parent_names, *args,**kwargs):
         return table in valid_tables.get(schema, []) and table not in exclude_tables
 
 
+# get revision id
+# ###############
+def process_revision_directives(context, revision, directives):
+    # extract Migration
+    migration_script = directives[0]
+
+    # get version from setuptools_scm
+    scm_version = vparse(get_version(root="..", relative_to=wdb.__file__))
+    migration_script.rev_id = f"V{scm_version.base_version}"
+
+
 # migration functions
 # ###################
 def run_migrations_online() -> None:
@@ -65,7 +83,8 @@ def run_migrations_online() -> None:
             connection=connection,
             target_metadata=target_metadata,
             include_schemas=True,
-            include_name=include_name
+            include_name=include_name,
+            process_revision_directives=process_revision_directives,
         )
 
         with context.begin_transaction():
