@@ -232,6 +232,8 @@ class Broker(object):
 
             self.set_db_version()
 
+            self.vacuum()
+
     def update_raw(self, only_new=True, paras=["p_d", "p", "t", "et"], **kwargs):
         """Update the raw data from the DWD-CDC server to the database.
 
