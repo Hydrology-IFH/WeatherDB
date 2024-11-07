@@ -24,6 +24,7 @@ from ..utils.dwd import get_cdc_file_list, get_dwd_file
 from ..utils.TimestampPeriod import TimestampPeriod
 from ..config import config
 from ..db.models import StationMARaster, MetaBase
+from ..db.views import StationMAQuotientView, StationKindQuotientView
 from .constants import AGG_TO, MIN_TSTP
 
 # set settings
@@ -56,7 +57,7 @@ class StationBase:
     # the kinds that should not get multiplied with the amount of decimals, e.g. "qn"
     _kinds_not_decimal = ["qn", "filled_by", "filled_share"]
     # The valid kinds to use. Must be a column in the timeseries tables.
-    _valid_kinds = ["raw", "qc",  "filled", "filled_by"]
+    _valid_kinds = {"raw", "qc",  "filled", "filled_by"}
     # the kind that is best for simulations
     _best_kind = "filled"
 
@@ -164,7 +165,7 @@ class StationBase:
                     stid=self.id, para_long=self._para_long
                 ))
 
-    def _check_kind(self, kind):
+    def _check_kind(self, kind, valids=None):
         """Check if the given kind is valid.
 
         Parameters
@@ -176,6 +177,10 @@ class StationBase:
             If "best" is given, then depending on the parameter of the station the best kind is selected.
             For Precipitation this is "corr" and for the other this is "filled".
             For the precipitation also "qn" and "corr" are valid.
+        valids : set of str, optional
+            Additional kinds that are valid.
+            This is used to add additional kinds that are valid.
+            The default is an empty set.
 
         Raises
         ------
@@ -184,19 +189,24 @@ class StationBase:
         ValueError
             If the given kind is not a string.
         """
+        # check valids
+        if valids is None:
+            valids = self._valid_kinds
+
+        # check kind
         if not isinstance(kind, str):
             raise ValueError("The given kind is not a string.")
 
         if kind == "best":
             kind = self._best_kind
 
-        if kind not in self._valid_kinds:
+        if kind not in valids:
             raise NotImplementedError("""
                 The given kind "{kind}" is not a valid kind.
                 Must be one of "{valid_kinds}"
                 """.format(
                 kind=kind,
-                valid_kinds='", "'.join(self._valid_kinds)))
+                valid_kinds='", "'.join(valids)))
 
         return kind
 
@@ -209,7 +219,7 @@ class StationBase:
         if not hasattr(self, "_valid_kinds_tstp_meta"):
             self._valid_kinds_tstp_meta = ["last_imp"]
             for vk in self._valid_kinds:
-                if vk in ["raw", "qc", "filled", "corr"]:
+                if vk in {"raw", "qc", "filled", "corr"}:
                     self._valid_kinds_tstp_meta.append(vk)
 
         if kind not in self._valid_kinds_tstp_meta:
@@ -222,8 +232,23 @@ class StationBase:
 
         return kind
 
-    def _check_kinds(self, kinds):
+    def _check_kinds(self, kinds, valids=None):
         """Check if the given kinds are valid.
+
+        Parameters
+        ----------
+        kinds :  list of str or str
+            A list of the data kinds to check if they are valid kinds for this class implementation.
+            Must be a column in the timeseries DB.
+            Must be one of "raw", "qc", "filled", "adj".
+            For the precipitation also "qn" and "corr" are valid.
+            If "best" is given, then depending on the parameter of the station the best kind is selected.
+            For Precipitation this is "corr" and for the other this is "filled".
+        valids : set of str or None, optional
+            The kinds that are valid.
+            This is used to check the kins against.
+            If None then the default valids are used. (self._valid_kinds)
+            The default is None.
 
         Raises
         ------
@@ -237,6 +262,10 @@ class StationBase:
         kinds: list of str
             returns a list of strings of valid kinds
         """
+        # check valids
+        if valids is None:
+            valids = self._valid_kinds
+
         # check kinds
         if isinstance(kinds, str):
             kinds = [kinds]
@@ -244,8 +273,8 @@ class StationBase:
             kinds = kinds.copy() # because else the original variable is changed
 
         for i, kind_i in enumerate(kinds):
-            if kind_i not in self._valid_kinds:
-                kinds[i] = self._check_kind(kind_i)
+            if kind_i not in valids:
+                kinds[i] = self._check_kind(kind_i, valids)
         return kinds
 
     def _check_period(self, period, kinds, nas_allowed=False):
@@ -876,8 +905,8 @@ class StationBase:
         # get last_imp valid kinds that are in the meta file
         last_imp_valid_kinds = self._valid_kinds.copy()
         last_imp_valid_kinds.remove("raw")
-        for name in ["qn", "filled_by",
-                     "raw_min", "raw_max", "filled_min", "filled_max"]:
+        for name in {"qn", "filled_by",
+                     "raw_min", "raw_max", "filled_min", "filled_max"}:
             if name in last_imp_valid_kinds:
                 last_imp_valid_kinds.remove(name)
 
@@ -1685,6 +1714,106 @@ class StationBase:
 
     def get_name(self):
         return self.get_meta(infos="stationsname")
+
+    def get_quotient(self, kinds_num, kinds_denom, return_as="df"):
+        """Get the quotient of multi-annual means of two different kinds or the timeserie and the multi annual raster value.
+
+        $quotient = \overline{ts}_{kind_num} / \overline{ts}_{denom}$
+
+        Parameters
+        ----------
+        kinds_num : list of str or str
+            The timeseries kinds of the numerators.
+            Should be one of ['raw', 'qc', 'filled'].
+            For precipitation also "corr" is possible.
+        kinds_denom : list of str or str
+            The timeseries kinds of the denominator or the multi annual raster key.
+            If the denominator is a multi annual raster key, then the result is the quotient of the timeserie and the raster value.
+            Possible values are:
+                - for timeserie kinds: 'raw', 'qc', 'filled' or for precipitation also "corr".
+                - for raster keys: 'hyras', 'dwd' or 'regnie', depending on your defined raster files.
+        return_as : str, optional
+            The format of the return value.
+            If "df" then a pandas DataFrame is returned.
+            If "json" then a list with dictionaries is returned.
+
+        Returns
+        -------
+        pandas.DataFrame or list of dict
+            The quotient of the two timeseries as DataFrame or list of dictionaries (JSON) depending on the return_as parameter.
+            The default is pd.DataFrame.
+
+        Raises
+        ------
+        ValueError
+            If the input parameters were not correct.
+        """
+        # check kinds
+        rast_keys = {"hyras", "regnie", "dwd"}
+        kinds_num = self._check_kinds(kinds_num)
+        kinds_denom = self._check_kinds(
+            kinds_denom,
+            valids=self._valid_kinds | rast_keys)
+
+        # split ts and raster kinds
+        kinds_denom_ts = set(kinds_denom) - rast_keys
+        kinds_denom_rast = set(kinds_denom) & rast_keys
+
+        # get the quotient from the database views
+        with db_engine.session() as con:
+            data = []
+            # get timeseries quotient
+            if len(kinds_denom_ts) > 0:
+                stmnt = sa\
+                    .select(
+                        StationKindQuotientView.station_id,
+                        StationKindQuotientView.kind_numerator,
+                        StationKindQuotientView.kind_denominator,
+                        StationKindQuotientView.value)\
+                    .select_from(StationKindQuotientView.__table__)\
+                    .where(
+                        (StationKindQuotientView.station_id == self.id) & \
+                        (StationKindQuotientView.parameter == self._para) & \
+                        (StationKindQuotientView.kind_numerator in kinds_num) & \
+                        (StationKindQuotientView.kind_denominator in kinds_denom_ts))
+
+                data.append(con.execute(stmnt).fetchall())
+
+            # get raster quotient
+            if len(kinds_denom_rast) > 0:
+                stmnt = sa.\
+                    select(
+                        StationMAQuotientView.station_id,
+                        StationMAQuotientView.kind.label("kind_numerator"),
+                        StationMAQuotientView.raster_key.label("kind_denominator"),
+                        StationMAQuotientView.value)\
+                    .select_from(
+                        StationMAQuotientView.__table__)\
+                    .where(
+                        (StationMAQuotientView.station_id == self.id) & \
+                        (StationMAQuotientView.parameter == self._para) & \
+                        (StationMAQuotientView.kind in kinds_num) & \
+                        (StationMAQuotientView.raster_key in kinds_denom_rast))
+
+                data.append(con.execute(stmnt).fetchall())
+
+        # create return value
+        if not any(data):
+            data = []
+        if return_as == "json":
+            return [
+                dict(
+                    kind_num=row.kind_numerator,
+                    kind_denom=row.kind_denominator,
+                    value=row.value)
+                for row in data]
+        elif return_as == "df":
+            return pd.DataFrame(
+                data,
+                columns=["station_id", "kind_num", "kind_denom", "value"]
+            ).set_index(["station_id", "kind_num", "kind_denom"])
+        else:
+            raise ValueError("The return_as parameter was not correct. Use one of ['df', 'json'].")
 
     def count_holes(self,
             weeks=[2, 4, 8, 12, 16, 20, 24], kind="qc", period=(None, None),

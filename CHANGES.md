@@ -14,6 +14,7 @@
 - create user config has now an option to define what to do on existing configuration files
 - alembic database connection is now possible through alembic section in the user configuration file.
 - add broker method and cli option to upgrade the database schema
+- add function to query the quotients between the timeseries kinds or between the timeseries mean and the multi annual raster value
 
 ## Version 1.0.1
 

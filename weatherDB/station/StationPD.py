@@ -28,7 +28,7 @@ class StationPD(StationPBase, StationCanVirtualBase):
     _para = "p_d"
     _para_long = "daily Precipitation"
     _unit = "mm/day"
-    _valid_kinds = ["raw", "filled", "filled_by"]
+    _valid_kinds = {"raw", "filled", "filled_by"}
     _best_kind = "filled"
 
     # cdc dwd parameters

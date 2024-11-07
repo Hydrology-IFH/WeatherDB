@@ -2,12 +2,12 @@ import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.expression import Executable, ClauseElement
-from sqlalchemy.orm import DeclarativeBase
 
 from .models import StationMATimeserie, StationMARaster, ModelBase
 
 __all__ = [
-    "StationMAQuotientView"
+    "StationMAQuotientView",
+    "StationKindQuotientView"
 ]
 
 # View Bases
@@ -58,8 +58,10 @@ class ViewBase(ModelBase):
         connection.commit()
 
     def __init_subclass__(cls, **kwargs):
-        cls.__abstract__ = True
         super().__init_subclass__(**kwargs)
+        cls.metadata._remove_table(
+            cls.__tablename__,
+            cls.__table_args__.get("schema", "public"))
         sa.event.listen(cls.metadata, 'after_create', cls.create_view)
         sa.event.listen(cls.metadata, 'before_drop', cls.drop_view)
 
