@@ -31,6 +31,15 @@ def upgrade() -> None:
                   sa.VARCHAR(length=4),
                   nullable=False,
                   comment="The term of the raster. e.g. 'year', 'wihy', 'suhy'"))
+
+    op.execute(sa.text(
+        """
+        UPDATE TABLE public."station_ma_raster"
+            SET
+                term= split_part("parameter", '_', 2),
+                parameter= split_part("parameter", '_', 1)
+        WHERE parameter LIKE '%_%';
+        """))
     op.alter_column('station_ma_raster', 'parameter',
         existing_type=sa.VARCHAR(length=7),
         type_=sa.VARCHAR(length=3),
@@ -52,4 +61,10 @@ def downgrade() -> None:
                comment="The parameter of the raster. e.g. 'p_wihj', 'p_sohj', 'p_year', 't_year', 'et_year'",
                existing_comment="The parameter of the raster. e.g. 'p', 't', 'et'",
                existing_nullable=False)
+    op.execute(sa.text(
+        """
+        UPDATE TABLE public."station_ma_raster"
+            SET parameter= "parameter"||'_'||"term"
+        WHERE parameter NOT LIKE '%_%';
+        """))
     op.drop_column('station_ma_raster', 'term')
