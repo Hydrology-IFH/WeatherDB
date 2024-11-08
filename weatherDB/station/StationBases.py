@@ -1912,7 +1912,8 @@ class StationBase:
         # get response from server
         if "return_sql" in kwargs:
             return sql
-        res = pd.read_sql(sqltxt(sql), db_engine.engine)
+        with db_engine.connect() as con:
+            res = pd.read_sql(sqltxt(sql), con)
 
         # set index
         res["station_id"] = self.id
@@ -2507,10 +2508,11 @@ class StationBase:
         if "return_sql" in kwargs and kwargs["return_sql"]:
             return sql
 
-        df = pd.read_sql(
-            sqltxt(sql),
-            con=db_engine.engine,
-            index_col="timestamp")
+        with db_engine.connect() as con:
+            df = pd.read_sql(
+                sqltxt(sql),
+                con=con,
+                index_col="timestamp")
 
         # convert filled_by to Int16, pandas Integer with NA support
         if "filled_by" in kinds and df["filled_by"].dtype != object:
@@ -2608,10 +2610,11 @@ class StationBase:
             )
         )
 
-        df = pd.read_sql(
-            sqltxt(sql),
-            con=db_engine.engine,
-            index_col="timestamp")
+        with db_engine.connect() as con:
+            df = pd.read_sql(
+                sqltxt(sql),
+                con=con,
+                index_col="timestamp")
 
         # change index to pandas DatetimeIndex if necessary
         if not isinstance(df.index, pd.DatetimeIndex):
