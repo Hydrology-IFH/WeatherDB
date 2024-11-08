@@ -166,7 +166,13 @@ class Broker(object):
             The default is "head".
         """
         from alembic import command
+
+        from .db.models import ModelBase
+
         command.upgrade(self._alembic_config, revision)
+
+        for view in ModelBase.metadata.views:
+            view.create_view(db_engine)
 
     def _check_db_schema(self):
         """Check the database schema for differences to the models.
