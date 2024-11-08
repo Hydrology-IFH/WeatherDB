@@ -25,8 +25,8 @@ class StationT(StationTETBase):
     _para_long = "Temperature"
     _unit = "°C"
     _decimals = 10
-    _valid_kinds = ["raw", "raw_min", "raw_max", "qc",
-                    "filled", "filled_min", "filled_max", "filled_by"]
+    _valid_kinds = {"raw", "raw_min", "raw_max", "qc",
+                    "filled", "filled_min", "filled_max", "filled_by"}
 
     # cdc dwd parameters
     _ftp_folder_base = [

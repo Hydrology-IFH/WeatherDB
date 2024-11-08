@@ -414,6 +414,58 @@ class StationsBase:
 
         return stations
 
+    def get_quotient(self, kinds_num, kinds_denom, return_as="df", stids="all", **kwargs):
+        """Get the quotient of multi-annual means of two different kinds or the timeserie and the multi annual raster value.
+
+        $quotient = \overline{ts}_{kind_num} / \overline{ts}_{denom}$
+
+        Parameters
+        ----------
+        stats : list of Integer
+            The stations IDs for which to compute the quotient.
+        kinds_num : list of str or str
+            The timeseries kinds of the numerators.
+            Should be one of ['raw', 'qc', 'filled'].
+            For precipitation also "corr" is possible.
+        kinds_denom : list of str or str
+            The timeseries kinds of the denominator or the multi annual raster key.
+            If the denominator is a multi annual raster key, then the result is the quotient of the timeserie and the raster value.
+            Possible values are:
+                - for timeserie kinds: 'raw', 'qc', 'filled' or for precipitation also "corr".
+                - for raster keys: 'hyras', 'dwd' or 'regnie', depending on your defined raster files.
+        return_as : str, optional
+            The format of the return value.
+            If "df" then a pandas DataFrame is returned.
+            If "json" then a list with dictionaries is returned.
+        **kwargs : dict, optional
+            The additional keyword arguments are passed to the get_stations method.
+
+        Returns
+        -------
+        pandas.DataFrame or list of dict
+            The quotient of the two timeseries as DataFrame or list of dictionaries (JSON) depending on the return_as parameter.
+            The default is pd.DataFrame.
+
+        Raises
+        ------
+        ValueError
+            If the input parameters were not correct.
+        """
+        quots = [
+            stat.get_quotient(kinds_num=kinds_num,
+                              kinds_denom=kinds_denom,
+                              return_as=return_as)
+            for stat in self.get_stations(stids=stids, **kwargs)
+        ]
+        if return_as == "df":
+            quots_clean = [quot for quot in quots if len(quot) != 0]
+            if len(quots_clean) == 0:
+                return quots[0]
+            return pd.concat(quots_clean, axis=0)
+        else:
+            return [row for quot in quots if len(quot) != 0
+                        for row in quot]
+
     def count_holes(self, stids="all", **kwargs):
         """Count holes in timeseries depending on there length.
 

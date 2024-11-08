@@ -59,7 +59,7 @@ class StationP(StationPBase):
     _para = "p"
     _para_long = "Precipitation"
     _unit = "mm/10min"
-    _valid_kinds = ["raw", "qn", "qc", "corr", "filled", "filled_by"]
+    _valid_kinds = {"raw", "qn", "qc", "corr", "filled", "filled_by"}
     _best_kind = "corr"
 
     # cdc dwd parameters
