@@ -19,6 +19,7 @@ from ..db.connections import db_engine
 from ..utils.dwd import get_dwd_meta, get_cdc_file_list
 from ..station.StationBases import StationBase
 from ..db import models
+from ..db.queries.get_quotient import _get_quotient
 
 # set settings
 # ############
@@ -414,15 +415,13 @@ class StationsBase:
 
         return stations
 
-    def get_quotient(self, kinds_num, kinds_denom, return_as="df", stids="all", **kwargs):
+    def get_quotient(self, kinds_num, kinds_denom, stids="all", return_as="df",  **kwargs):
         """Get the quotient of multi-annual means of two different kinds or the timeserie and the multi annual raster value.
 
         $quotient = \overline{ts}_{kind_num} / \overline{ts}_{denom}$
 
         Parameters
         ----------
-        stats : list of Integer
-            The stations IDs for which to compute the quotient.
         kinds_num : list of str or str
             The timeseries kinds of the numerators.
             Should be one of ['raw', 'qc', 'filled'].
@@ -433,6 +432,8 @@ class StationsBase:
             Possible values are:
                 - for timeserie kinds: 'raw', 'qc', 'filled' or for precipitation also "corr".
                 - for raster keys: 'hyras', 'dwd' or 'regnie', depending on your defined raster files.
+        stids : list of Integer
+            The stations IDs for which to compute the quotient.
         return_as : str, optional
             The format of the return value.
             If "df" then a pandas DataFrame is returned.
@@ -451,20 +452,26 @@ class StationsBase:
         ValueError
             If the input parameters were not correct.
         """
-        quots = [
-            stat.get_quotient(kinds_num=kinds_num,
-                              kinds_denom=kinds_denom,
-                              return_as=return_as)
-            for stat in self.get_stations(stids=stids, **kwargs)
-        ]
-        if return_as == "df":
-            quots_clean = [quot for quot in quots if len(quot) != 0]
-            if len(quots_clean) == 0:
-                return quots[0]
-            return pd.concat(quots_clean, axis=0)
-        else:
-            return [row for quot in quots if len(quot) != 0
-                        for row in quot]
+        # check stids
+        if stids == "all":
+            stids = None
+
+        # check kinds
+        rast_keys = {"hyras", "regnie", "dwd"}
+        kinds_num = self._StationClass._check_kinds(kinds_num)
+        kinds_denom = self._StationClass._check_kinds(
+            kinds_denom,
+            valids=self._StationClass._valid_kinds | rast_keys)
+
+        # get quotient
+        with db_engine.connect() as con:
+            return _get_quotient(
+                con=con,
+                stids=stids,
+                paras=self._para,
+                kinds_num=kinds_num,
+                kinds_denom=kinds_denom,
+                return_as=return_as)
 
     def count_holes(self, stids="all", **kwargs):
         """Count holes in timeseries depending on there length.

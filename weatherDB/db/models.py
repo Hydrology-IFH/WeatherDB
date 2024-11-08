@@ -26,6 +26,7 @@ __all__ = [
 # define custom types
 sint = Annotated[int, 2]
 str3 = Annotated[str, 3]
+str4 = Annotated[str, 4]
 str7 = Annotated[str, 7]
 str30 = Annotated[str, 30]
 str50 = Annotated[str, 50]
@@ -55,6 +56,7 @@ class ModelBase(DeclarativeBase):
             UTCDateTime: UTCDateTime(),
             float: sa.Float(),
             str3: sa.VARCHAR(3),
+            str4: sa.VARCHAR(4),
             str7: sa.VARCHAR(7),
             str30: sa.VARCHAR(30),
             str50: sa.VARCHAR(50),
@@ -333,10 +335,14 @@ class StationMARaster(ModelBase):
         primary_key=True,
         comment="The name of the raster. e.g. 'dwd' or 'hyras'",
         sort_order=-9)
-    parameter: Mapped[str7] = mapped_column(
+    parameter: Mapped[str3] = mapped_column(
         primary_key=True,
-        comment="The parameter of the raster. e.g. 'p_wihj', 'p_sohj', 'p_year', 't_year', 'et_year'",
+        comment="The parameter of the raster. e.g. 'p', 't', 'et'",
         sort_order=-8)
+    term: Mapped[str4] = mapped_column(
+        primary_key=True,
+        comment="The term of the raster. e.g. 'year', 'wihy', 'suhy'",
+        sort_order=-7)
     value: Mapped[int] = mapped_column(
         comment="The value of the raster for the station.",
         sort_order=1)

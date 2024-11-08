@@ -57,6 +57,7 @@ class StationP(StationPBase):
     # common settings
     _MetaModel = MetaP
     _para = "p"
+    _para_base = _para
     _para_long = "Precipitation"
     _unit = "mm/10min"
     _valid_kinds = {"raw", "qn", "qc", "corr", "filled", "filled_by"}

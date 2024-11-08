@@ -74,8 +74,8 @@ class ViewBase(ModelBase):
 
 # declare all database views
 # --------------------------
-class StationMAQuotientView(ViewBase):
-    __tablename__ = 'station_ma_quotient_view'
+class StationMATimeserieQuotientView(ViewBase):
+    __tablename__ = 'station_ma_timeseries_quotient_view'
     __table_args__ = dict(
         schema='public',
         comment="The multi annual mean values of the stations timeseries for the maximum available timespan.",
@@ -86,7 +86,7 @@ class StationMAQuotientView(ViewBase):
         comment="The DWD-ID of the station.")
     parameter: Mapped[str] = mapped_column(
         primary_key=True,
-        comment="The parameter of the station. e.g. 'p', 'p_d', 'et'")
+        comment="The parameter of the station. e.g. 'p', 'et'")
     kind: Mapped[str] = mapped_column(
         primary_key=True,
         comment="The kind of the timeserie. e.g. 'raw', 'filled', 'corr'")
@@ -102,6 +102,7 @@ class StationMAQuotientView(ViewBase):
             StationMATimeserie.parameter,
             StationMATimeserie.kind,
             StationMARaster.raster_key,
+            StationMARaster.term,
             (StationMATimeserie.value / StationMARaster.value).label("value")
         ).select_from(
             StationMATimeserie.__table__.outerjoin(
@@ -112,7 +113,7 @@ class StationMAQuotientView(ViewBase):
                 )
             )
         ).where(
-            StationMATimeserie.parameter.in_(["p", "p_d", "et"])
+            StationMATimeserie.parameter.in_(["p", "et"])
         )
 
 class StationKindQuotientView(ViewBase):

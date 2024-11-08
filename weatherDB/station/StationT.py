@@ -22,6 +22,7 @@ class StationT(StationTETBase):
     # common settings
     _MetaModel = MetaT
     _para = "t"
+    _para_base = _para
     _para_long = "Temperature"
     _unit = "°C"
     _decimals = 10
@@ -39,7 +40,7 @@ class StationT(StationTETBase):
     _agg_fun = "avg"
 
     # for regionalistaion
-    _ma_para_keys = ["t_year"]
+    _ma_terms = ["year"]
     _coef_sign = ["-", "+"]
 
     # # for the fillup
@@ -158,3 +159,6 @@ class StationT(StationTETBase):
         adj_df["adj"] = (main_df + (ma[0] - main_df_y)).round(1)
 
         return adj_df
+
+    def get_quotient(self, **kwargs):
+        raise NotImplementedError("The quotient is not yet implemented for temperature.")

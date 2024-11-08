@@ -26,6 +26,7 @@ class StationPD(StationPBase, StationCanVirtualBase):
     # common settings
     _MetaModel = MetaPD
     _para = "p_d"
+    _para_base = "p"
     _para_long = "daily Precipitation"
     _unit = "mm/day"
     _valid_kinds = {"raw", "filled", "filled_by"}
