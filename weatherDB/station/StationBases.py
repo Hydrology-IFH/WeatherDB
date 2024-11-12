@@ -832,7 +832,7 @@ class StationBase:
                                             new_mas)])
                 stmnt = stmnt\
                     .on_conflict_do_update(
-                        index_elements=["station_id", "raster_key", "parameter"],
+                        index_elements=["station_id", "raster_key", "parameter", "term"],
                         set_=dict(value=stmnt.excluded.value,
                                   distance=stmnt.excluded.distance)
                     )
@@ -2978,7 +2978,7 @@ class StationPBase(StationBase):
     _cdc_date_col = "MESS_DATUM"
 
     # for regionalistaion
-    _ma_terms = ["p_wihy", "p_suhy"]
+    _ma_terms = ["wihy", "suhy"]
     _ma_raster_key = "hyras"
 
     def get_adj(self, **kwargs):

@@ -166,13 +166,40 @@ class Broker(object):
             The default is "head".
         """
         from alembic import command
+        from alembic.runtime.environment import EnvironmentContext
+        from alembic.script import ScriptDirectory
 
         from .db.models import ModelBase
 
-        command.upgrade(self._alembic_config, revision)
+        # get alembic context
+        context = EnvironmentContext(
+            self._alembic_config,
+            ScriptDirectory(self._alembic_config.get_main_option("script_location")))
+        with db_engine.connect() as con:
+            context.configure(connection=con)
+            migration_context = context.get_context()
+            pre_version = pv.parse(migration_context.get_current_revision())
+            head_version = pv.parse(context.get_head_revision())
 
-        for view in ModelBase.metadata.views:
-            view.create_view(db_engine)
+            # check revision
+            if revision == "head":
+                version = head_version
+            else:
+                version = pv.parse(revision)
+
+            # apply the migrations
+            if version > pre_version:
+                command.upgrade(self._alembic_config, revision)
+            elif version < pre_version:
+                command.downgrade(self._alembic_config, revision)
+
+            # check if revision is the same as head
+            if "head" in revision or version == head_version:
+                # create the views
+                for view in ModelBase.metadata.views:
+                    view.create_view(None, con)
+            else:
+                log.info("The views are not created because the revision is not head. This can resolve in errors during module execution.")
 
     def _check_db_schema(self):
         """Check the database schema for differences to the models.
