@@ -344,7 +344,7 @@ class StationMARaster(ModelBase):
         comment="The term of the raster. e.g. 'year', 'wihy', 'suhy'",
         sort_order=-7)
     value: Mapped[int] = mapped_column(
-        comment="The value of the raster for the station.",
+        comment="The value of the raster for the station in the database unit.",
         sort_order=1)
     distance: Mapped[int] = mapped_column(
         comment="The distance of the station to the raster value in meters.",

@@ -102,7 +102,7 @@ class StationT(StationTETBase):
                 f"OR raw < {-50 * self._decimals} OR raw > {50 * self._decimals}"
         else:
             # with inversion
-            sql_null_case = f"ABS(diff) > (5 * {self._decimals})"
+            sql_null_case = f"ABS(diff) > {5 * self._decimals}"
 
         # create sql for new qc
         sql_new_qc = f"""

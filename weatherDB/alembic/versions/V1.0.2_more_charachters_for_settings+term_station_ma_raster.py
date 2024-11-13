@@ -34,6 +34,11 @@ def upgrade() -> None:
                   nullable=False,
                   server_default='year',
                   comment="The term of the raster. e.g. 'year', 'wihy', 'suhy'"))
+    op.alter_column('station_ma_raster', 'value',
+               existing_type=sa.INTEGER(),
+               comment='The value of the raster for the station in the database unit.',
+               existing_comment='The value of the raster for the station.',
+               existing_nullable=False)
     op.execute(sa.text(
         """
         UPDATE public."station_ma_raster"
@@ -67,6 +72,11 @@ def downgrade() -> None:
                type_=sa.VARCHAR(length=7),
                comment="The parameter of the raster. e.g. 'p_wihj', 'p_sohj', 'p_year', 't_year', 'et_year'",
                existing_comment="The parameter of the raster. e.g. 'p', 't', 'et'",
+               existing_nullable=False)
+    op.alter_column('station_ma_raster', 'value',
+               existing_type=sa.INTEGER(),
+               comment='The value of the raster for the station.',
+               existing_comment='The value of the raster for the station in the database unit.',
                existing_nullable=False)
     op.execute(sa.text(
         """

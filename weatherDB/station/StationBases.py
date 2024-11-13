@@ -404,16 +404,27 @@ class StationBase:
 
     @property
     def _ma_raster_bands(self):
-        """Get all the raster bands of the stations multi annual raster file."""
+        """Get the raster bands of the stations multi annual raster file."""
         return [self._ma_raster_conf[key]
                 for key in self._ma_raster_band_conf_keys]
 
     @property
     def _ma_raster_band_conf_keys(self):
         """Get the raster band keys for the station. E.g. P_WIHY"""
-        return [key
-                for key in self._ma_raster_conf.keys()
-                if key.startswith("band_")]
+        return [f"band_{self._para_base}_{term}"
+                for term in self._ma_terms]
+
+    @property
+    def _ma_raster_factors(self):
+        """Get the factor to convert the raster values to the real unit e.g. °C or mm."""
+        return [float(self._ma_raster_conf.get(key, 1))
+                for key in self._ma_raster_factor_conf_keys]
+
+    @property
+    def _ma_raster_factor_conf_keys(self):
+        """Get the raster band keys for the station. E.g. P_WIHY"""
+        return [f"factor_{self._para_base}_{term}"
+                for term in self._ma_terms]
 
     @cached_property
     def _table(self):
@@ -807,6 +818,7 @@ class StationBase:
         dist = -50
         new_mas = None
         ma_raster_bands = self._ma_raster_bands
+
         while (new_mas is None or (new_mas is not None and not any(new_mas))) \
                and dist <= 1000:
             dist += 50
@@ -817,7 +829,11 @@ class StationBase:
 
         # write to station_ma_raster table
         if new_mas is not None and any(new_mas):
-            # multi annual values were found
+            # convert from raster unit to db unit
+            new_mas = [int(np.round(val * fact / self._decimals))
+                       for val, fact in zip(new_mas, self._ma_raster_factors)]
+
+            # upload in database
             with db_engine.session() as session:
                 stmnt = sa.dialects.postgresql\
                     .insert(StationMARaster)\
@@ -826,10 +842,11 @@ class StationBase:
                              raster_key=self._ma_raster_key,
                              parameter=self._para_base,
                              term=term,
-                             value=float(val),
+                             value=val,
                              distance=dist)
-                        for term, val in zip(self._ma_terms,
-                                            new_mas)])
+                        for term, val in zip(
+                            self._ma_terms,
+                            new_mas)])
                 stmnt = stmnt\
                     .on_conflict_do_update(
                         index_elements=["station_id", "raster_key", "parameter", "term"],
@@ -1293,9 +1310,11 @@ class StationBase:
         self._check_ma()
 
         sql_format_dict = dict(
-            stid=self.id, para=self._para,
-            ma_cols=", ".join(self._ma_terms),
+            stid=self.id, para=self._para, para_base=self._para_base,
+            para_escaped=self._para.replace("_", "\\_"),
+            ma_terms=", ".join(self._ma_terms),
             coef_sign=self._coef_sign,
+            ma_raster_key=self._ma_raster_key,
             base_col="qc" if "qc" in self._valid_kinds else "raw",
             cond_mas_not_null=" OR ".join([
                 "ma_other.{ma_col} IS NOT NULL".format(ma_col=ma_col)
@@ -1324,9 +1343,9 @@ class StationBase:
         if len(self._ma_terms) == 1:
             sql_format_dict.update(dict(
                 is_winter_col="",
-                coef_calc="ma_stat.{ma_col}{coef_sign[0]}ma_other.{ma_col}::float AS coef"
+                coef_calc="ma_stat.{ma_term}{coef_sign[0]}ma_other.{ma_term}::float AS coef"
                 .format(
-                    ma_col=self._ma_terms[0],
+                    ma_term=self._ma_terms[0],
                     coef_sign=self._coef_sign),
                 coef_format="i.coef",
                 filled_calc="round(nb.{base_col} {coef_sign[1]} %3$s, 0)::int"
@@ -1340,10 +1359,10 @@ class StationBase:
                         ELSE false::bool
                     END AS is_winter""",
                 coef_calc=(
-                    "ma_stat.{ma_col[0]}{coef_sign[0]}ma_other.{ma_col[0]}::float AS coef_wi, \n" + " "*24 +
-                    "ma_stat.{ma_col[1]}{coef_sign[0]}ma_other.{ma_col[1]}::float AS coef_so"
+                    "ma_stat.{ma_terms[0]}{coef_sign[0]}ma_other.{ma_terms[0]}::float AS coef_wi, \n" + " "*24 +
+                    "ma_stat.{ma_terms[1]}{coef_sign[0]}ma_other.{ma_terms[1]}::float AS coef_so"
                 ).format(
-                    ma_col=self._ma_terms,
+                    ma_terms=self._ma_terms,
                     coef_sign=self._coef_sign),
                 coef_format="i.coef_wi, \n" + " " * 24 + "i.coef_so",
                 filled_calc="""
@@ -1358,8 +1377,8 @@ class StationBase:
 
         # raster stats cols
         sql_format_dict["rast_val_cols"] = ", ".join(
-            [f"avg(value) FILTER (WHERE parameter='p_wihy') AS \"{col}\""
-             for col in self._ma_terms])
+            [f"avg(value) FILTER (WHERE \"term\"='{term}') AS \"{term}\""
+             for term in self._ma_terms])
 
         # check if filled_by column is ARRAY or smallint
         if self._filled_by_n>1:
@@ -1443,6 +1462,7 @@ class StationBase:
                             rast_vals as (
                                 SELECT station_id, {rast_val_cols}
                                 FROM station_ma_raster
+                                WHERE parameter = '{para_base}' and raster_key='{ma_raster_key}'
                                 GROUP BY station_id
                             )
                         SELECT meta.station_id,
@@ -1452,16 +1472,17 @@ class StationBase:
                         FROM meta_{para} meta
                         LEFT JOIN rast_vals ma_other
                             ON ma_other.station_id=meta.station_id
-                        LEFT JOIN (SELECT {ma_cols}
+                        LEFT JOIN (SELECT {ma_terms}
                                    FROM rast_vals
-                                   WHERE station_id = {stid}) ma_stat
+                                   WHERE station_id = {stid}
+                                   ) ma_stat
                             ON 1=1
                         WHERE meta.station_id != {stid}
                             AND meta.station_id || '_{para}' IN (
                                 SELECT tablename
                                 FROM pg_catalog.pg_tables
                                 WHERE schemaname ='timeseries'
-                                    AND tablename LIKE '%\\_{para}')
+                                    AND tablename LIKE '%\\_{para_escaped}')
                                 AND ({cond_mas_not_null})
                                 AND (meta.raw_from IS NOT NULL AND meta.raw_until IS NOT NULL)
                         ORDER BY ST_DISTANCE(
@@ -2179,9 +2200,8 @@ class StationBase:
             return None
         else:
             res_dict = dict(res)
-            return [res_dict[col]*float(
-                        self._ma_raster_conf.get(f"factor_{col}", 1))
-                    for col in self._ma_terms]
+            return [float(np.round(res_dict[term] / self._decimals, self._decimals//10))
+                    for term in self._ma_terms]
 
     def get_ma_raster(self):
         """Wrapper for `get_multi_annual`."""

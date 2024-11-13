@@ -591,12 +591,13 @@ class StationsBase:
             If 1 or less, then the process is computed as a simple loop, so there is no multiprocessing or threading done.
             The default is the cpu count -1.
         """
-        log.info("-"*79 +
-            f"\n{self._para_long} Stations async loop over method '{method}' started."
+        log.info(
+            f"{self._para_long} Stations async loop over method '{method}' started." +
+            "\n" +"-"*80
             )
 
         if processes<=1:
-            log.info(f"Ass the number of processes is 1 or lower, the method '{method}' is started as a simple loop.")
+            log.info(f"As the number of processes is 1 or lower, the method '{method}' is started as a simple loop.")
             self._run_simple_loop(
                 stations=stations, method=method, name=name, kwds=kwds)
         else:

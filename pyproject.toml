@@ -33,7 +33,8 @@ dependencies = [
     "keyrings.alt ; sys_platform == 'linux'",
     "rasterstats",
     "click",
-    "setuptools_scm"
+    "setuptools>=61.0",
+    "setuptools_scm",
 ]
 license = { file = "LICENSE" }
 requires-python = ">= 3.8, < 3.12"
@@ -55,7 +56,7 @@ optionals = [
 [build-system]
 requires = [
     "build",
-    "setuptools>=42",
+    "setuptools>=61.0",
     "wheel",
     "setuptools_scm"]
 build-backend = "setuptools.build_meta"

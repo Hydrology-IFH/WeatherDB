@@ -17,10 +17,11 @@ docs/source/Methode.html
 latex
 _build
 
-# Ignore the user specifiv created files
+# Ignore the user specific created files
 data/
 *.log
 logs
+tests/db_dumps
 
 # ignore the main (system) configuration file as it is user specific
 weatherDB/config/config_main.ini
