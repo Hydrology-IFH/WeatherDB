@@ -36,6 +36,7 @@ class InitDBTestCases(BaseTestCases):
     def run(self, result=None):
         if result is None:
             result = self.defaultTestResult()
+            result.failfast = True
         self._resultForDoCleanups = result
         self.test_result = result  # Store the result object
         super().run(result)
