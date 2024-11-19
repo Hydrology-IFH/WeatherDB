@@ -12,7 +12,6 @@ import atexit
 import sys
 
 from .db.connections import db_engine
-from .config import config
 from .stations import StationsP, StationsPD, StationsT, StationsET
 from . import __version__
 
@@ -166,13 +165,40 @@ class Broker(object):
             The default is "head".
         """
         from alembic import command
+        from alembic.runtime.environment import EnvironmentContext
+        from alembic.script import ScriptDirectory
 
         from .db.models import ModelBase
 
-        command.upgrade(self._alembic_config, revision)
+        # get alembic context
+        context = EnvironmentContext(
+            self._alembic_config,
+            ScriptDirectory(self._alembic_config.get_main_option("script_location")))
+        with db_engine.connect() as con:
+            context.configure(connection=con)
+            migration_context = context.get_context()
+            pre_version = pv.parse(migration_context.get_current_revision())
+            head_version = pv.parse(context.get_head_revision())
 
-        for view in ModelBase.metadata.views:
-            view.create_view(db_engine)
+            # check revision
+            if revision == "head":
+                version = head_version
+            else:
+                version = pv.parse(revision)
+
+            # apply the migrations
+            if version > pre_version:
+                command.upgrade(self._alembic_config, revision)
+            elif version < pre_version:
+                command.downgrade(self._alembic_config, revision)
+
+            # check if revision is the same as head
+            if "head" in revision or version == head_version:
+                # create the views
+                for view in ModelBase.metadata.views:
+                    view.create_view(None, con)
+            else:
+                log.info("The views are not created because the revision is not head. This can resolve in errors during module execution.")
 
     def _check_db_schema(self):
         """Check the database schema for differences to the models.
@@ -218,7 +244,7 @@ class Broker(object):
         **kwargs : dict
             The keyword arguments to pass to the called methods of the stations
         """
-        log.info("="*79 + "\nBroker initiate_db starts")
+        log.info("Broker initiate_db starts")
         self._check_db_schema()
 
         with self.activate():
@@ -257,7 +283,7 @@ class Broker(object):
             The keyword arguments to pass to the update_raw method of the stations
         """
         self._check_paras(paras)
-        log.info("="*79 + "\nBroker update_raw starts")
+        log.info("Broker update_raw starts")
         self._check_db_schema()
 
         with self.activate():
@@ -278,7 +304,7 @@ class Broker(object):
             The keyword arguments to pass to update_meta method of the stations
         """
         self._check_paras(paras)
-        log.info("="*79 + "\nBroker update_meta starts")
+        log.info("Broker update_meta starts")
         self._check_db_schema()
 
         with self.activate():
@@ -299,7 +325,7 @@ class Broker(object):
             The keyword arguments to pass to update_ma_raster method of the stations
         """
         self._check_paras(paras)
-        log.info("="*79 + "\nBroker update_ma_raster starts")
+        log.info("Broker update_ma_raster starts")
         self._check_db_schema()
 
         with self.activate():
@@ -321,7 +347,7 @@ class Broker(object):
         """
         self._check_paras(paras=paras,
                           valid_paras=["p_d", "p", "t", "et"])
-        log.info("="*79 + "\nBroker update_period_meta starts")
+        log.info("Broker update_period_meta starts")
         self._check_db_schema()
 
         with self.activate():
@@ -347,7 +373,7 @@ class Broker(object):
         self._check_paras(
             paras=paras,
             valid_paras=["p", "t", "et"])
-        log.info("="*79 + "\nBroker quality_check starts")
+        log.info("Broker quality_check starts")
         self._check_db_schema()
 
         with self.activate():
@@ -379,7 +405,7 @@ class Broker(object):
         self._check_paras(
                 paras=paras,
                 valid_paras=["p", "t", "et"])
-        log.info("="*79 + "\nBroker last_imp_quality_check starts")
+        log.info("Broker last_imp_quality_check starts")
         self._check_db_schema()
 
         with self.activate():
@@ -402,7 +428,7 @@ class Broker(object):
         **kwargs : dict
             The keyword arguments to pass to fillup method of the stations
         """
-        log.info("="*79 + "\nBroker fillup starts")
+        log.info("Broker fillup starts")
         self._check_db_schema()
 
         with self.activate():
@@ -423,7 +449,7 @@ class Broker(object):
         **kwargs : dict
             The keyword arguments to pass to last_imp_fillup method of the stations
         """
-        log.info("="*79 + "\nBroker last_imp_fillup starts")
+        log.info("Broker last_imp_fillup starts")
         self._check_db_schema()
 
         with self.activate():
@@ -440,7 +466,7 @@ class Broker(object):
         **kwargs : dict
             The keyword arguments to pass to richter_correct method of the stations_p
         """
-        log.info("="*79 + "\nBroker: last_imp_corr starts")
+        log.info("Broker: last_imp_corr starts")
         self._check_db_schema()
 
         with self.activate():
@@ -454,7 +480,7 @@ class Broker(object):
         **kwargs : dict
             The keyword arguments to pass to last_imp_corr method of the stations
         """
-        log.info("="*79 + "\nBroker: last_imp_corr starts")
+        log.info("Broker: last_imp_corr starts")
         self._check_db_schema()
 
         with self.activate():
@@ -476,7 +502,7 @@ class Broker(object):
         **kwargs : dict
             The keyword arguments to pass to the called methods of the stations
         """
-        log.info("="*79 + "\nBroker update_db starts")
+        log.info("Broker update_db starts")
         self._check_paras(paras)
         self._check_db_schema()
 
