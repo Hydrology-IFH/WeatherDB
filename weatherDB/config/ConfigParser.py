@@ -290,7 +290,7 @@ class ConfigParser(configparser.ConfigParser):
             return os.environ.get("WEATHERDB_USER_CONFIG_FILE", None)
         return None
 
-    def create_user_config(self, user_config_file=None):
+    def create_user_config(self, user_config_file=None, on_exists="ask"):
         """Create a new user config file.
 
         Parameters
@@ -300,6 +300,15 @@ class ConfigParser(configparser.ConfigParser):
             If not given, the function will use the config.user_config_file if available or ask for it.
             If set to "ask", the function will allways open a filedialog to select the file.
             The default is None.
+        on_exists : str, optional
+            What to do if the user config file already exists.
+            The options are:
+            - "ask"/"A" : Ask the user what to do.
+            - "overwrite"/"O" : Overwrite the existing file.
+            - "define"/"D" : Only define the file as new user config file location.
+            - "error"/"E" : Raise an error and stop the creation.
+            The default is "ask".
+
         """
         if user_config_file is None:
             if self.has_user_config:
@@ -340,25 +349,48 @@ class ConfigParser(configparser.ConfigParser):
                         if user_config_file.suffix != ".ini":
                             print("The file has to be an INI file.")
                             continue
-                        if user_config_file.exists():
-                            print("The file already exists. Please choose another path.")
-                            continue
                         break
                     else:
                         print("Invalid path. Please try again.")
 
+        # check if file exists
+        write = True
+        if Path(user_config_file).exists():
+            msg = f"User config file already exists at {user_config_file}."
+            if on_exists[0].upper() == "E":
+                raise FileExistsError(msg)
+
+            # get input from user
+            print(msg)
+            if on_exists[0].upper() == "A":
+                on_exists = input(
+                    "What do you want to do with the existing file?"+
+                    "[overwrite/define/exit] (first letter is enough): ").upper()[0]
+
+            # treat the user input
+            if on_exists == "O":
+                write = True
+            elif on_exists== "D":
+                write = False
+            elif on_exists == "E":
+                return
+            else:
+                raise ValueError("Invalid value for on_exists. Please try again.")
+
         # copy the default config file to the user config file
-        with open(user_config_file, "w") as user_f, \
-             open(self._DEFAULT_CONFIG_FILE, "r") as def_f:
-            for line in def_f.readlines():
-                if not re.match(r"^\[|;", line):
-                    line = "; " + line
-                user_f.write(line)
+        if write:
+            with open(user_config_file, "w") as user_f, \
+                open(self._DEFAULT_CONFIG_FILE, "r") as def_f:
+                for line in def_f.readlines():
+                    if not re.match(r"^\[|;", line):
+                        line = "; " + line
+                    user_f.write(line)
+            print(f"User config file created at {user_config_file}")
+            print("Please edit the file to your needs and reload user config with load_user_config() or by reloading the module.")
 
+        # set the user config file in the main config
         self._set("main", "user_config_file", str(user_config_file))
-
-        print(f"User config file created at {user_config_file}")
-        print("Please edit the file to your needs and reload user config with load_user_config() or by reloading the module.")
+        print("The user config file location got set in main config.")
 
     def load_user_config(self,
                          raise_undefined_error=True,

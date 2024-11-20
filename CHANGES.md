@@ -1,5 +1,21 @@
 # Change-log
 
+## Version 1.0.2
+
+- make Broker not block itself if multiple `with self.is_any_active` are concatenated
+- fix check_df_raw:
+  - conversion before 2000 was wrong UTC+1 -> UTC was UTC-1 -> UTC
+  - when the DWD timeserie has duplicate entries, there was an error, even though the causing columns are not used here
+- derive version from git tags
+- cli: set_db_version asks for confirmation
+- create_db_schema gets option to define the database owner of the tables and schemas
+- change amount of charachters for settings values to work with longer versions
+- get meta explanations from orm models not from database comments
+- create user config has now an option to define what to do on existing configuration files
+- alembic database connection is now possible through alembic section in the user configuration file.
+- add broker method and cli option to upgrade the database schema
+- add function to query the quotients between the timeseries kinds or between the timeseries mean and the multi annual raster value
+
 ## Version 1.0.1
 
 - add create_user_config commadn to CLI

@@ -57,9 +57,10 @@ class StationP(StationPBase):
     # common settings
     _MetaModel = MetaP
     _para = "p"
+    _para_base = _para
     _para_long = "Precipitation"
     _unit = "mm/10min"
-    _valid_kinds = ["raw", "qn", "qc", "corr", "filled", "filled_by"]
+    _valid_kinds = {"raw", "qn", "qc", "corr", "filled", "filled_by"}
     _best_kind = "corr"
 
     # cdc dwd parameters
@@ -194,16 +195,29 @@ class StationP(StationPBase):
 
         Some precipitation stations on the DWD CDC server have also rows outside of the normal 10 Minute frequency, e.g. 2008-09-16 01:47 for Station 662.
         Because those rows only have NAs for the measurement they are deleted."""
-        # correct Timezone before 2000 -> MEZ after 2000 -> UTC
-        if df.index.min() >= pd.Timestamp(1999,12,31,23,0):
+        # correct Timezone before 2000 -> CEWT after 2000 -> UTC
+        if df.index.tzinfo is not None:
+            df.index = df.index.tz_localize(None) # some are already falsy localized
+        if df.index.min()>= pd.Timestamp(1999,12,31,23,0):
             df.index = df.index.tz_localize("UTC")
-        elif df.index.max() < pd.Timestamp(2000,1,1,0,0):
-            df.index = df.index.tz_localize("Etc/GMT+1").tz_convert("UTC")
+        elif df.index.max() < pd.Timestamp(2000,1,1,1,0):
+            df.index = df.index.tz_localize("Etc/GMT-1").tz_convert("UTC")
         else:
-            raise ValueError("The timezone could not get defined for the given import." + str(df))
+            raise ValueError("The timezone could not get defined for the given import." + str(df.head()))
 
         # delete measurements outside of the 10 minutes frequency
         df = df[df.index.minute%10==0].copy()
+
+        # check if duplicates and try to remove
+        if df.index.has_duplicates:
+            df = df.reset_index()\
+                .groupby(self._cdc_col_names_imp + [self._cdc_date_col])\
+                .first()\
+                .reset_index().set_index(self._cdc_date_col)
+            if df.index.has_duplicates:
+                raise ValueError("There are duplicates in the DWD data that couldn't get removed.")
+
+        # set frequency to 10 minutes
         df = df.asfreq("10min")
 
         # delete measurements below 0
@@ -637,7 +651,7 @@ class StationP(StationPBase):
         self.update_period_meta(kind="corr")
 
         # update multi annual mean
-        self.update_ma_timeseris(kind="corr")
+        self.update_ma_timeseries(kind="corr")
 
     @db_engine.deco_update_privilege
     def corr(self, *args, **kwargs):

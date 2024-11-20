@@ -19,6 +19,7 @@ from ..db.connections import db_engine
 from ..utils.dwd import get_dwd_meta, get_cdc_file_list
 from ..station.StationBases import StationBase
 from ..db import models
+from ..db.queries.get_quotient import _get_quotient
 
 # set settings
 # ############
@@ -414,6 +415,64 @@ class StationsBase:
 
         return stations
 
+    def get_quotient(self, kinds_num, kinds_denom, stids="all", return_as="df",  **kwargs):
+        """Get the quotient of multi-annual means of two different kinds or the timeserie and the multi annual raster value.
+
+        $quotient = \overline{ts}_{kind_num} / \overline{ts}_{denom}$
+
+        Parameters
+        ----------
+        kinds_num : list of str or str
+            The timeseries kinds of the numerators.
+            Should be one of ['raw', 'qc', 'filled'].
+            For precipitation also "corr" is possible.
+        kinds_denom : list of str or str
+            The timeseries kinds of the denominator or the multi annual raster key.
+            If the denominator is a multi annual raster key, then the result is the quotient of the timeserie and the raster value.
+            Possible values are:
+                - for timeserie kinds: 'raw', 'qc', 'filled' or for precipitation also "corr".
+                - for raster keys: 'hyras', 'dwd' or 'regnie', depending on your defined raster files.
+        stids : list of Integer
+            The stations IDs for which to compute the quotient.
+        return_as : str, optional
+            The format of the return value.
+            If "df" then a pandas DataFrame is returned.
+            If "json" then a list with dictionaries is returned.
+        **kwargs : dict, optional
+            The additional keyword arguments are passed to the get_stations method.
+
+        Returns
+        -------
+        pandas.DataFrame or list of dict
+            The quotient of the two timeseries as DataFrame or list of dictionaries (JSON) depending on the return_as parameter.
+            The default is pd.DataFrame.
+
+        Raises
+        ------
+        ValueError
+            If the input parameters were not correct.
+        """
+        # check stids
+        if stids == "all":
+            stids = None
+
+        # check kinds
+        rast_keys = {"hyras", "regnie", "dwd"}
+        kinds_num = self._StationClass._check_kinds(kinds_num)
+        kinds_denom = self._StationClass._check_kinds(
+            kinds_denom,
+            valids=self._StationClass._valid_kinds | rast_keys)
+
+        # get quotient
+        with db_engine.connect() as con:
+            return _get_quotient(
+                con=con,
+                stids=stids,
+                paras=self._para,
+                kinds_num=kinds_num,
+                kinds_denom=kinds_denom,
+                return_as=return_as)
+
     def count_holes(self, stids="all", **kwargs):
         """Count holes in timeseries depending on there length.
 
@@ -532,12 +591,13 @@ class StationsBase:
             If 1 or less, then the process is computed as a simple loop, so there is no multiprocessing or threading done.
             The default is the cpu count -1.
         """
-        log.info("-"*79 +
-            f"\n{self._para_long} Stations async loop over method '{method}' started."
+        log.info(
+            f"{self._para_long} Stations async loop over method '{method}' started." +
+            "\n" +"-"*80
             )
 
         if processes<=1:
-            log.info(f"Ass the number of processes is 1 or lower, the method '{method}' is started as a simple loop.")
+            log.info(f"As the number of processes is 1 or lower, the method '{method}' is started as a simple loop.")
             self._run_simple_loop(
                 stations=stations, method=method, name=name, kwds=kwds)
         else:

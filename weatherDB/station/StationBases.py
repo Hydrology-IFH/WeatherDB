@@ -25,6 +25,7 @@ from ..utils.TimestampPeriod import TimestampPeriod
 from ..config import config
 from ..db.models import StationMARaster, MetaBase
 from .constants import AGG_TO, MIN_TSTP
+from ..db.queries.get_quotient import _get_quotient
 
 # set settings
 # ############
@@ -45,8 +46,10 @@ class StationBase:
     # ---------------
     # The sqlalchemy model of the meta table
     _MetaModel = MetaBase
-    # The parameter string "n", "t", or "et"
+    # The parameter string "p", "t", "et" or "p_d"
     _para = None
+    # The base parameter, without the "_d" suffix
+    _para_base = None
     # The parameter as a long descriptive string
     _para_long = None
     # The Unit as str
@@ -56,7 +59,7 @@ class StationBase:
     # the kinds that should not get multiplied with the amount of decimals, e.g. "qn"
     _kinds_not_decimal = ["qn", "filled_by", "filled_share"]
     # The valid kinds to use. Must be a column in the timeseries tables.
-    _valid_kinds = ["raw", "qc",  "filled", "filled_by"]
+    _valid_kinds = {"raw", "qc",  "filled", "filled_by"}
     # the kind that is best for simulations
     _best_kind = "filled"
 
@@ -94,8 +97,8 @@ class StationBase:
     # for regionalistaion
     # -------------------
     # the key names of the band names in the config file, without prefix "BAND_".
-    # Specifies the parameter in the db to use to calculate the coefficients, 2 values: wi/so or one value:yearly
-    _ma_para_keys = []
+    # Specifies the term in the db to use to calculate the coefficients, 2 values: wi/so or one value:yearly
+    _ma_terms = []
     # The sign to use to calculate the coefficient (first element) and to use the coefficient (second coefficient).
     _coef_sign = ["/", "*"]
     # The multi annual raster to use to calculate the multi annual values
@@ -164,7 +167,8 @@ class StationBase:
                     stid=self.id, para_long=self._para_long
                 ))
 
-    def _check_kind(self, kind):
+    @classmethod
+    def _check_kind(cls, kind, valids=None):
         """Check if the given kind is valid.
 
         Parameters
@@ -176,6 +180,10 @@ class StationBase:
             If "best" is given, then depending on the parameter of the station the best kind is selected.
             For Precipitation this is "corr" and for the other this is "filled".
             For the precipitation also "qn" and "corr" are valid.
+        valids : set of str, optional
+            Additional kinds that are valid.
+            This is used to add additional kinds that are valid.
+            The default is an empty set.
 
         Raises
         ------
@@ -184,46 +192,68 @@ class StationBase:
         ValueError
             If the given kind is not a string.
         """
+        # check valids
+        if valids is None:
+            valids = cls._valid_kinds
+
+        # check kind
         if not isinstance(kind, str):
             raise ValueError("The given kind is not a string.")
 
         if kind == "best":
-            kind = self._best_kind
+            kind = cls._best_kind
 
-        if kind not in self._valid_kinds:
+        if kind not in valids:
             raise NotImplementedError("""
                 The given kind "{kind}" is not a valid kind.
                 Must be one of "{valid_kinds}"
                 """.format(
                 kind=kind,
-                valid_kinds='", "'.join(self._valid_kinds)))
+                valid_kinds='", "'.join(valids)))
 
         return kind
 
-    def _check_kind_tstp_meta(self, kind):
+    @classmethod
+    def _check_kind_tstp_meta(cls, kind):
         """Check if the kind has a timestamp from and until in the meta table."""
         if kind != "last_imp":
-            kind = self._check_kind(kind)
+            kind = cls._check_kind(kind)
 
         # compute the valid kinds if not already done
-        if not hasattr(self, "_valid_kinds_tstp_meta"):
-            self._valid_kinds_tstp_meta = ["last_imp"]
-            for vk in self._valid_kinds:
-                if vk in ["raw", "qc", "filled", "corr"]:
-                    self._valid_kinds_tstp_meta.append(vk)
+        if not hasattr(cls, "_valid_kinds_tstp_meta"):
+            cls._valid_kinds_tstp_meta = ["last_imp"]
+            for vk in cls._valid_kinds:
+                if vk in {"raw", "qc", "filled", "corr"}:
+                    cls._valid_kinds_tstp_meta.append(vk)
 
-        if kind not in self._valid_kinds_tstp_meta:
+        if kind not in cls._valid_kinds_tstp_meta:
             raise NotImplementedError("""
                 The given kind "{kind}" is not a valid kind.
                 Must be one of "{valid_kinds}"
                 """.format(
                 kind=kind,
-                valid_kinds='", "'.join(self._valid_kinds_tstp_meta)))
+                valid_kinds='", "'.join(cls._valid_kinds_tstp_meta)))
 
         return kind
 
-    def _check_kinds(self, kinds):
+    @classmethod
+    def _check_kinds(cls, kinds, valids=None):
         """Check if the given kinds are valid.
+
+        Parameters
+        ----------
+        kinds :  list of str or str
+            A list of the data kinds to check if they are valid kinds for this class implementation.
+            Must be a column in the timeseries DB.
+            Must be one of "raw", "qc", "filled", "adj".
+            For the precipitation also "qn" and "corr" are valid.
+            If "best" is given, then depending on the parameter of the station the best kind is selected.
+            For Precipitation this is "corr" and for the other this is "filled".
+        valids : set of str or None, optional
+            The kinds that are valid.
+            This is used to check the kins against.
+            If None then the default valids are used. (cls._valid_kinds)
+            The default is None.
 
         Raises
         ------
@@ -237,6 +267,10 @@ class StationBase:
         kinds: list of str
             returns a list of strings of valid kinds
         """
+        # check valids
+        if valids is None:
+            valids = cls._valid_kinds
+
         # check kinds
         if isinstance(kinds, str):
             kinds = [kinds]
@@ -244,8 +278,8 @@ class StationBase:
             kinds = kinds.copy() # because else the original variable is changed
 
         for i, kind_i in enumerate(kinds):
-            if kind_i not in self._valid_kinds:
-                kinds[i] = self._check_kind(kind_i)
+            if kind_i not in valids:
+                kinds[i] = cls._check_kind(kind_i, valids)
         return kinds
 
     def _check_period(self, period, kinds, nas_allowed=False):
@@ -370,16 +404,27 @@ class StationBase:
 
     @property
     def _ma_raster_bands(self):
-        """Get all the raster bands of the stations multi annual raster file."""
+        """Get the raster bands of the stations multi annual raster file."""
         return [self._ma_raster_conf[key]
                 for key in self._ma_raster_band_conf_keys]
 
     @property
     def _ma_raster_band_conf_keys(self):
-        """Get the raster band keys for the station. E.g. P_WIHJ"""
-        return [key
-                for key in self._ma_raster_conf.keys()
-                if key.startswith("band_")]
+        """Get the raster band keys for the station. E.g. P_WIHY"""
+        return [f"band_{self._para_base}_{term}"
+                for term in self._ma_terms]
+
+    @property
+    def _ma_raster_factors(self):
+        """Get the factor to convert the raster values to the real unit e.g. °C or mm."""
+        return [float(self._ma_raster_conf.get(key, 1))
+                for key in self._ma_raster_factor_conf_keys]
+
+    @property
+    def _ma_raster_factor_conf_keys(self):
+        """Get the raster band keys for the station. E.g. P_WIHY"""
+        return [f"factor_{self._para_base}_{term}"
+                for term in self._ma_terms]
 
     @cached_property
     def _table(self):
@@ -638,10 +683,12 @@ class StationBase:
             True if Station is in multi annual table.
         """
         sql_select = sa.exists()\
-            .where((StationMARaster.station_id == self.id) &
-                   (StationMARaster.raster_key == self._ma_raster_key) &
-                   StationMARaster.parameter.in_(self._ma_para_keys) &
-                   StationMARaster.value.isnot(None))
+            .where(sa.and_(
+                StationMARaster.station_id == self.id,
+                StationMARaster.raster_key == self._ma_raster_key,
+                StationMARaster.parameter == self._para_base,
+                StationMARaster.term.in_(self._ma_terms),
+                StationMARaster.value.isnot(None)))
         with db_engine.session() as session:
             return session.query(sql_select).scalar()
 
@@ -771,6 +818,7 @@ class StationBase:
         dist = -50
         new_mas = None
         ma_raster_bands = self._ma_raster_bands
+
         while (new_mas is None or (new_mas is not None and not any(new_mas))) \
                and dist <= 1000:
             dist += 50
@@ -781,21 +829,27 @@ class StationBase:
 
         # write to station_ma_raster table
         if new_mas is not None and any(new_mas):
-            # multi annual values were found
+            # convert from raster unit to db unit
+            new_mas = [int(np.round(val * fact / self._decimals))
+                       for val, fact in zip(new_mas, self._ma_raster_factors)]
+
+            # upload in database
             with db_engine.session() as session:
                 stmnt = sa.dialects.postgresql\
                     .insert(StationMARaster)\
                     .values([
                         dict(station_id=self.id,
                              raster_key=self._ma_raster_key,
-                             parameter=key,
-                             value=float(val),
+                             parameter=self._para_base,
+                             term=term,
+                             value=val,
                              distance=dist)
-                        for key, val in zip(self._ma_para_keys,
-                                            new_mas)])
+                        for term, val in zip(
+                            self._ma_terms,
+                            new_mas)])
                 stmnt = stmnt\
                     .on_conflict_do_update(
-                        index_elements=["station_id", "raster_key", "parameter"],
+                        index_elements=["station_id", "raster_key", "parameter", "term"],
                         set_=dict(value=stmnt.excluded.value,
                                   distance=stmnt.excluded.distance)
                     )
@@ -808,7 +862,7 @@ class StationBase:
                 why=f"no multi-annual data was found from 'data:rasters:{self._ma_raster_key}'")
 
     @db_engine.deco_update_privilege
-    def update_ma_timeseris(self, kind, **kwargs):
+    def update_ma_timeseries(self, kind, **kwargs):
         """Update the mean annual value from the station timeserie.
 
         Parameters
@@ -829,7 +883,7 @@ class StationBase:
 
         if isinstance(kind, list):
             for kind in self._check_kinds(kind):
-                self.update_ma_timeseris(kind)
+                self.update_ma_timeseries(kind)
             return None
 
         self._check_kind(kind)
@@ -849,8 +903,8 @@ class StationBase:
                             '{self._para}' AS parameter,
                             '{kind}' AS kind,
                             avg(val)::int AS value
-                        FROM ts_y)
-                WHERE value IS NOT NULL
+                        FROM ts_y) sq
+                WHERE sq.value IS NOT NULL
             ON CONFLICT (station_id, parameter, kind) DO UPDATE
                 SET value = EXCLUDED.value;
         """
@@ -876,8 +930,8 @@ class StationBase:
         # get last_imp valid kinds that are in the meta file
         last_imp_valid_kinds = self._valid_kinds.copy()
         last_imp_valid_kinds.remove("raw")
-        for name in ["qn", "filled_by",
-                     "raw_min", "raw_max", "filled_min", "filled_max"]:
+        for name in {"qn", "filled_by",
+                     "raw_min", "raw_max", "filled_min", "filled_max"}:
             if name in last_imp_valid_kinds:
                 last_imp_valid_kinds.remove(name)
 
@@ -948,9 +1002,9 @@ class StationBase:
         # check for empty list of zipfiles
         if zipfiles is None or len(zipfiles)==0:
             log.debug(
-                """raw_update of {para_long} Station {stid}:
-                No zipfile was found and therefor no new data was imported."""
-                .format(para_long=self._para_long, stid=self.id))
+                f"raw_update of {self._para_long} Station {self.id}:" +
+                f"No {'new ' if only_new else ''}zipfile was found and therefor no new data was imported."""
+                )
             self._update_last_imp_period_meta(period=(None, None))
             return None
 
@@ -1022,7 +1076,7 @@ class StationBase:
             self._set_is_real()
 
         # update multi annual mean
-        self.update_ma_timeseris(kind="raw")
+        self.update_ma_timeseries(kind="raw")
 
         # update meta file
         imp_period = TimestampPeriod(
@@ -1228,7 +1282,7 @@ class StationBase:
                 ))
 
         # update multi annual mean
-        self.update_ma_timeseris(kind="qc")
+        self.update_ma_timeseries(kind="qc")
 
         # update timespan in meta table
         self.update_period_meta(kind="qc")
@@ -1256,13 +1310,15 @@ class StationBase:
         self._check_ma()
 
         sql_format_dict = dict(
-            stid=self.id, para=self._para,
-            ma_cols=", ".join(self._ma_para_keys),
+            stid=self.id, para=self._para, para_base=self._para_base,
+            para_escaped=self._para.replace("_", "\\_"),
+            ma_terms=", ".join(self._ma_terms),
             coef_sign=self._coef_sign,
+            ma_raster_key=self._ma_raster_key,
             base_col="qc" if "qc" in self._valid_kinds else "raw",
             cond_mas_not_null=" OR ".join([
                 "ma_other.{ma_col} IS NOT NULL".format(ma_col=ma_col)
-                    for ma_col in self._ma_para_keys]),
+                    for ma_col in self._ma_terms]),
             filled_by_col="NULL::smallint AS filled_by",
             exit_cond="SUM((filled IS NULL)::int) = 0",
             extra_unfilled_period_where="",
@@ -1284,18 +1340,18 @@ class StationBase:
                 cond_period=""))
 
         # check if winter/summer or only yearly regionalisation
-        if len(self._ma_para_keys) == 1:
+        if len(self._ma_terms) == 1:
             sql_format_dict.update(dict(
                 is_winter_col="",
-                coef_calc="ma_stat.{ma_col}{coef_sign[0]}ma_other.{ma_col}::float AS coef"
+                coef_calc="ma_stat.{ma_term}{coef_sign[0]}ma_other.{ma_term}::float AS coef"
                 .format(
-                    ma_col=self._ma_para_keys[0],
+                    ma_term=self._ma_terms[0],
                     coef_sign=self._coef_sign),
                 coef_format="i.coef",
                 filled_calc="round(nb.{base_col} {coef_sign[1]} %3$s, 0)::int"
                 .format(**sql_format_dict)
             ))
-        elif len(self._ma_para_keys) == 2:
+        elif len(self._ma_terms) == 2:
             sql_format_dict.update(dict(
                 is_winter_col=""",
                     CASE WHEN EXTRACT(MONTH FROM timestamp) IN (1, 2, 3, 10, 11, 12)
@@ -1303,10 +1359,10 @@ class StationBase:
                         ELSE false::bool
                     END AS is_winter""",
                 coef_calc=(
-                    "ma_stat.{ma_col[0]}{coef_sign[0]}ma_other.{ma_col[0]}::float AS coef_wi, \n" + " "*24 +
-                    "ma_stat.{ma_col[1]}{coef_sign[0]}ma_other.{ma_col[1]}::float AS coef_so"
+                    "ma_stat.{ma_terms[0]}{coef_sign[0]}ma_other.{ma_terms[0]}::float AS coef_wi, \n" + " "*24 +
+                    "ma_stat.{ma_terms[1]}{coef_sign[0]}ma_other.{ma_terms[1]}::float AS coef_so"
                 ).format(
-                    ma_col=self._ma_para_keys,
+                    ma_terms=self._ma_terms,
                     coef_sign=self._coef_sign),
                 coef_format="i.coef_wi, \n" + " " * 24 + "i.coef_so",
                 filled_calc="""
@@ -1321,8 +1377,8 @@ class StationBase:
 
         # raster stats cols
         sql_format_dict["rast_val_cols"] = ", ".join(
-            [f"avg(value) FILTER (WHERE parameter='p_wihj') AS \"{col}\""
-             for col in self._ma_para_keys])
+            [f"avg(value) FILTER (WHERE \"term\"='{term}') AS \"{term}\""
+             for term in self._ma_terms])
 
         # check if filled_by column is ARRAY or smallint
         if self._filled_by_n>1:
@@ -1406,6 +1462,7 @@ class StationBase:
                             rast_vals as (
                                 SELECT station_id, {rast_val_cols}
                                 FROM station_ma_raster
+                                WHERE parameter = '{para_base}' and raster_key='{ma_raster_key}'
                                 GROUP BY station_id
                             )
                         SELECT meta.station_id,
@@ -1415,16 +1472,17 @@ class StationBase:
                         FROM meta_{para} meta
                         LEFT JOIN rast_vals ma_other
                             ON ma_other.station_id=meta.station_id
-                        LEFT JOIN (SELECT {ma_cols}
+                        LEFT JOIN (SELECT {ma_terms}
                                    FROM rast_vals
-                                   WHERE station_id = {stid}) ma_stat
+                                   WHERE station_id = {stid}
+                                   ) ma_stat
                             ON 1=1
                         WHERE meta.station_id != {stid}
                             AND meta.station_id || '_{para}' IN (
                                 SELECT tablename
                                 FROM pg_catalog.pg_tables
                                 WHERE schemaname ='timeseries'
-                                    AND tablename LIKE '%\\_{para}')
+                                    AND tablename LIKE '%\\_{para_escaped}')
                                 AND ({cond_mas_not_null})
                                 AND (meta.raw_from IS NOT NULL AND meta.raw_until IS NOT NULL)
                         ORDER BY ST_DISTANCE(
@@ -1469,7 +1527,7 @@ class StationBase:
                 **period.get_sql_format_dict(format=self._tstp_format_human)))
 
         # update multi annual mean
-        self.update_ma_timeseris(kind="filled")
+        self.update_ma_timeseries(kind="filled")
 
         # update timespan in meta table
         self.update_period_meta(kind="filled")
@@ -1584,30 +1642,10 @@ class StationBase:
         pd.Series
             a pandas Series with the information names as index and the explanation as values.
         """
-        # check which information to get
-        if isinstance(infos, str) and (infos == "all"):
-            col_clause = ""
-        else:
-            if isinstance(infos, str):
-                infos = [infos]
-            col_clause =" AND column_name IN ('{cols}')".format(
-                cols="', '".join(list(infos)))
-        sql = f"""
-            SELECT cols.column_name AS info,
-                (SELECT pg_catalog.col_description(c.oid, cols.ordinal_position::int)
-                FROM pg_catalog.pg_class c
-                WHERE c.oid  = (SELECT cols.table_name::regclass::oid)
-                AND c.relname = cols.table_name
-                ) as explanation
-            FROM information_schema.columns cols
-            WHERE cols.table_name = 'meta_{cls._para}'{col_clause};
-        """
-
-        # get the result
-        return pd.read_sql(
-            sqltxt(sql),
-            con=db_engine.engine,
-            index_col="info")["explanation"]
+        return pd.Series(
+            {c.key: c.comment
+             for c in sa.inspect(cls._MetaModel).c
+             if infos == "all" or c.key in infos})
 
     def get_meta(self, infos="all"):
         """Get Information from the meta table.
@@ -1706,6 +1744,56 @@ class StationBase:
     def get_name(self):
         return self.get_meta(infos="stationsname")
 
+    def get_quotient(self, kinds_num, kinds_denom, return_as="df"):
+        """Get the quotient of multi-annual means of two different kinds or the timeserie and the multi annual raster value.
+
+        $quotient = \overline{ts}_{kind_num} / \overline{ts}_{denom}$
+
+        Parameters
+        ----------
+        kinds_num : list of str or str
+            The timeseries kinds of the numerators.
+            Should be one of ['raw', 'qc', 'filled'].
+            For precipitation also "corr" is possible.
+        kinds_denom : list of str or str
+            The timeseries kinds of the denominator or the multi annual raster key.
+            If the denominator is a multi annual raster key, then the result is the quotient of the timeserie and the raster value.
+            Possible values are:
+                - for timeserie kinds: 'raw', 'qc', 'filled' or for precipitation also "corr".
+                - for raster keys: 'hyras', 'dwd' or 'regnie', depending on your defined raster files.
+        return_as : str, optional
+            The format of the return value.
+            If "df" then a pandas DataFrame is returned.
+            If "json" then a list with dictionaries is returned.
+
+        Returns
+        -------
+        pandas.DataFrame or list of dict
+            The quotient of the two timeseries as DataFrame or list of dictionaries (JSON) depending on the return_as parameter.
+            The default is pd.DataFrame.
+
+        Raises
+        ------
+        ValueError
+            If the input parameters were not correct.
+        """
+        # check kinds
+        rast_keys = {"hyras", "regnie", "dwd"}
+        kinds_num = self._check_kinds(kinds_num)
+        kinds_denom = self._check_kinds(
+            kinds_denom,
+            valids=self._valid_kinds | rast_keys)
+
+        # get the quotient from the database views
+        with db_engine.session() as con:
+            return _get_quotient(
+                con=con,
+                stids=self.id,
+                paras=self._para,
+                kinds_num=kinds_num,
+                kinds_denom=kinds_denom,
+                return_as=return_as)
+
     def count_holes(self,
             weeks=[2, 4, 8, 12, 16, 20, 24], kind="qc", period=(None, None),
             between_meta_period=True, crop_period=False, **kwargs):
@@ -1803,7 +1891,8 @@ class StationBase:
         # get response from server
         if "return_sql" in kwargs:
             return sql
-        res = pd.read_sql(sqltxt(sql), db_engine.engine)
+        with db_engine.connect() as con:
+            res = pd.read_sql(sqltxt(sql), con)
 
         # set index
         res["station_id"] = self.id
@@ -2080,7 +2169,7 @@ class StationBase:
         return nearest_stids
 
     def get_multi_annual_raster(self):
-        """Get the multi annual value(s) for this station.
+        """Get the multi annual raster value(s) for this station.
 
         Returns
         -------
@@ -2091,10 +2180,13 @@ class StationBase:
             The returned unit is mm or °C.
         """
         sql_select = sa\
-            .select(StationMARaster.parameter, StationMARaster.value)\
-            .where((StationMARaster.station_id == self.id) &
-                   (StationMARaster.raster_key == self._ma_raster_key) &
-                   StationMARaster.parameter.in_(self._ma_para_keys))
+            .select(StationMARaster.term,
+                    StationMARaster.value)\
+            .where(sa.and_(
+                StationMARaster.station_id == self.id,
+                StationMARaster.raster_key == self._ma_raster_key,
+                StationMARaster.parameter == self._para_base,
+                StationMARaster.term.in_(self._ma_terms)))
         with db_engine.session() as session:
             res = session.execute(sql_select).all()
 
@@ -2108,9 +2200,8 @@ class StationBase:
             return None
         else:
             res_dict = dict(res)
-            return [res_dict[col]*float(
-                        self._ma_raster_conf.get(f"factor_{col}", 1))
-                    for col in self._ma_para_keys]
+            return [float(np.round(res_dict[term] / self._decimals, self._decimals//10))
+                    for term in self._ma_terms]
 
     def get_ma_raster(self):
         """Wrapper for `get_multi_annual`."""
@@ -2398,10 +2489,11 @@ class StationBase:
         if "return_sql" in kwargs and kwargs["return_sql"]:
             return sql
 
-        df = pd.read_sql(
-            sqltxt(sql),
-            con=db_engine.engine,
-            index_col="timestamp")
+        with db_engine.connect() as con:
+            df = pd.read_sql(
+                sqltxt(sql),
+                con=con,
+                index_col="timestamp")
 
         # convert filled_by to Int16, pandas Integer with NA support
         if "filled_by" in kinds and df["filled_by"].dtype != object:
@@ -2499,10 +2591,11 @@ class StationBase:
             )
         )
 
-        df = pd.read_sql(
-            sqltxt(sql),
-            con=db_engine.engine,
-            index_col="timestamp")
+        with db_engine.connect() as con:
+            df = pd.read_sql(
+                sqltxt(sql),
+                con=con,
+                index_col="timestamp")
 
         # change index to pandas DatetimeIndex if necessary
         if not isinstance(df.index, pd.DatetimeIndex):
@@ -2905,7 +2998,7 @@ class StationPBase(StationBase):
     _cdc_date_col = "MESS_DATUM"
 
     # for regionalistaion
-    _ma_para_keys = ["p_wihj", "p_sohj"]
+    _ma_terms = ["wihy", "suhy"]
     _ma_raster_key = "hyras"
 
     def get_adj(self, **kwargs):
@@ -2925,11 +3018,11 @@ class StationPBase(StationBase):
         main_df, adj_df, ma = super().get_adj(**kwargs)
 
         # calculate the half yearly mean
-        # sohj
-        sohj_months = [4, 5, 6, 7, 8, 9]
-        mask_sohj = main_df.index.month.isin(sohj_months)
+        # suhy
+        suhy_months = [4, 5, 6, 7, 8, 9]
+        mask_suhy = main_df.index.month.isin(suhy_months)
 
-        main_df_sohj = main_df[mask_sohj]
+        main_df_suhy = main_df[mask_suhy]
 
         # get the minimum count of elements in the half year
         min_count = (365//2 - 10) # days
@@ -2944,16 +3037,16 @@ class StationPBase(StationBase):
             elif kwargs["agg_to"] == "year" or kwargs["agg_to"] == "decade":
                 raise ValueError("The get_adj method does not work on decade values.")
 
-        main_df_sohj_y = main_df_sohj.groupby(main_df_sohj.index.year)\
+        main_df_suhy_y = main_df_suhy.groupby(main_df_suhy.index.year)\
             .sum(min_count=min_count).mean()
 
-        adj_df[mask_sohj] = (main_df_sohj * (ma[1] / main_df_sohj_y)).round(2)
+        adj_df[mask_suhy] = (main_df_suhy * (ma[1] / main_df_suhy_y)).round(2)
 
-        # wihj
-        mask_wihj = ~mask_sohj
-        main_df_wihj = main_df[mask_wihj]
-        main_df_wihj_y = main_df_wihj.groupby(main_df_wihj.index.year)\
+        # wihy
+        mask_wihy = ~mask_suhy
+        main_df_wihy = main_df[mask_wihy]
+        main_df_wihy_y = main_df_wihy.groupby(main_df_wihy.index.year)\
             .sum(min_count=min_count).mean()
-        adj_df[mask_wihj] = (main_df_wihj * (ma[0] / main_df_wihj_y)).round(2)
+        adj_df[mask_wihy] = (main_df_wihy * (ma[0] / main_df_wihy_y)).round(2)
 
         return adj_df

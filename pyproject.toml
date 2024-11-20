@@ -32,13 +32,15 @@ dependencies = [
     "keyring",
     "keyrings.alt ; sys_platform == 'linux'",
     "rasterstats",
-    "click"
+    "click",
+    "setuptools>=61.0",
+    "setuptools_scm",
 ]
 license = { file = "LICENSE" }
 requires-python = ">= 3.8, < 3.12"
 
 [project.scripts]
-weatherDB = "weatherDB.cli:cli"
+weatherDB = "weatherDB.cli:safe_entry"
 
 [project.urls]
 Homepage = "https://gitlab.uni-freiburg.de/hydrology/weatherDB/"
@@ -54,12 +56,14 @@ optionals = [
 [build-system]
 requires = [
     "build",
-    "setuptools>=42",
-    "wheel"]
+    "setuptools>=61.0",
+    "wheel",
+    "setuptools_scm"]
 build-backend = "setuptools.build_meta"
-
-[tool.setuptools.dynamic]
-version = {attr = "weatherDB.__version__"}
 
 [tool.setuptools.packages]
 find = {}  # Scan the project directory with the default parameters
+
+[tool.setuptools_scm]
+version_file = "weatherDB/_version.py"
+version_file_template = "__version__ = \"{version}\""

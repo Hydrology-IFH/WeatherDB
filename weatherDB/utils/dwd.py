@@ -341,5 +341,10 @@ def get_dwd_meta(ftp_folder):
                 last_from_date = from_date
                 last_sid = sid
 
+    # trim whitespace in string columns
+    for dtype, col in zip(meta.dtypes, meta.columns):
+        if pd.api.types.is_string_dtype(dtype):
+            meta[col] = meta[col].str.strip()
+
     # return
     return meta

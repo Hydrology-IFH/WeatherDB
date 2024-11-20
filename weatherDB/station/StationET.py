@@ -21,6 +21,7 @@ class StationET(StationTETBase):
     # common settings
     _MetaModel = MetaET
     _para = "et"
+    _para_base = _para
     _para_long = "potential Evapotranspiration"
     _unit = "mm/Tag"
     _decimals = 10
@@ -32,7 +33,7 @@ class StationET(StationTETBase):
     _cdc_col_names_imp = ["VPGFAO"]
 
     # for regionalistaion
-    _ma_para_keys = ["et_year"]
+    _ma_terms = ["year"]
 
     # for the fillup
     _fillup_max_dist = 100000

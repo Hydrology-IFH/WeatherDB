@@ -1,5 +1,4 @@
 __pycache__
-.git
 .vscode
 
 # Ignore the created distribution files
@@ -22,6 +21,7 @@ _build
 weatherDB/data/
 *.log
 weatherDB/logs
+tests/db_dumps
 
 # ignore the main (system) configuration file as it is user specific
 weatherDB/config/config_main.ini

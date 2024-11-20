@@ -1,8 +1,10 @@
 from unittest import TestLoader, TestSuite, TextTestRunner
-from tests.test_downloadRasters import DownloadRastersTestCases
-from tests.test_emptyDB import EmptyDBTestCases
-from tests.test_initDB import InitDBTestCases
-from tests.test_filledDB import FilledDBTestCases
+import sys, os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from test_downloadRasters import DownloadRastersTestCases
+from test_emptyDB import EmptyDBTestCases
+from test_initDB import InitDBTestCases
+from test_filledDB import FilledDBTestCases
 
 testCases = (
     DownloadRastersTestCases,
