@@ -1,5 +1,10 @@
 # Change-log
 
+## Version 1.0.3
+
+- add tests cases for database schema upgrade and downgrade
+- remove all views before database schema upgrade is done
+
 ## Version 1.0.2
 
 - make Broker not block itself if multiple `with self.is_any_active` are concatenated
