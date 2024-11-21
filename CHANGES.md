@@ -4,6 +4,7 @@
 
 - add tests cases for database schema upgrade and downgrade
 - remove all views before database schema upgrade is done
+- fix small error on downloading meta from dwd 
 
 ## Version 1.0.2
 
@@ -23,7 +24,7 @@
 
 ## Version 1.0.1
 
-- add create_user_config commadn to CLI
+- add create_user_config command to CLI
 
 ## Version 1.0.0
 
