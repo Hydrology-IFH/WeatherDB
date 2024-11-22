@@ -186,6 +186,10 @@ class Broker(object):
             else:
                 version = pv.parse(revision)
 
+            # remove all views
+            for view in ModelBase.metadata.views:
+                view.drop_view(None, con)
+
             # apply the migrations
             if version > pre_version:
                 command.upgrade(self._alembic_config, revision)

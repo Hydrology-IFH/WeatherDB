@@ -1,5 +1,11 @@
 # Change-log
 
+## Version 1.0.3
+
+- add tests cases for database schema upgrade and downgrade
+- remove all views before database schema upgrade is done
+- fix small error on downloading meta from dwd 
+
 ## Version 1.0.2
 
 - make Broker not block itself if multiple `with self.is_any_active` are concatenated
@@ -18,7 +24,7 @@
 
 ## Version 1.0.1
 
-- add create_user_config commadn to CLI
+- add create_user_config command to CLI
 
 ## Version 1.0.0
 
