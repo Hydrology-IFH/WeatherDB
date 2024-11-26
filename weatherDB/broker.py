@@ -523,10 +523,10 @@ class Broker(object):
                 self.last_imp_fillup(paras=paras, **kwargs)
                 self.last_imp_corr(**kwargs)
 
-    def vacuum(self, do_analyze=True):
+    def vacuum(self, do_analyze=True, **kwargs):
         sql = "VACUUM {analyze};".format(
             analyze="ANALYZE" if do_analyze else "")
-        with db_engine.connect() as con:
+        with db_engine.connect().execution_options(isolation_level="AUTOCOMMIT") as con:
             con.execute(sqltxt(sql))
 
     def get_setting(self, key):

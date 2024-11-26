@@ -104,6 +104,9 @@ class InitDBTestCases(BaseTestCases):
     def step_richter_correct(self, **kwargs):
         self.broker.richter_correct(**kwargs)
 
+    def step_vacuum(self, **kwargs):
+        self.broker.vacuum(**kwargs)
+
     def _check_no_nas(self, base_kind, kind, stats, add_base_stat_class=None, add_base_kind=None):
         """Check if there are NAs in the timeseries, but exclude rows where the base_kind is NULL.
 
@@ -423,6 +426,22 @@ class InitDBTestCases(BaseTestCases):
         # check for NAs
         self._check_no_nas("filled", "corr", stats, wdb.StationT, "filled")
 
+    def check_vacuum(self):
+        with self.db_engine.connect() as conn:
+            for schema in ["public", "timeseries"]:
+                with self.subTest(schema=schema):
+                    stmnt = sa.select(sa.func.count("*"))\
+                        .select_from(sa.text(
+                            f"""pg_stat_user_tables
+                                WHERE schemaname = '{schema}'
+                                    AND (last_vacuum IS NULL
+                                         OR last_vacuum < (now() - interval '20 minutes'))"""))
+                    n_vacuumed = conn.execute(stmnt).scalar()
+                    self.assertEqual(
+                        n_vacuumed,
+                        0,
+                        msg=f"No tables found in schema {schema}.")
+
     def test_steps(self):
         """Test the single steps from initiating the database.
 
@@ -432,7 +451,8 @@ class InitDBTestCases(BaseTestCases):
             If the argument 'steps' is not a list or a comma-separated string
         """
         STEPS = ["update_meta", "update_raw", "update_ma_raster",
-                 "quality_check", "fillup", "update_richter_class", "richter_correct"]
+                 "quality_check", "fillup", "update_richter_class", "richter_correct",
+                 "vacuum"]
         # get steps from cli arguments
         steps = cliargs.steps
         if steps == "all":
