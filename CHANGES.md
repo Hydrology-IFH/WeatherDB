@@ -1,5 +1,9 @@
 # Change-log
 
+## Version 1.0.4
+
+- fix Brokers vacuum method and add test step for this method
+
 ## Version 1.0.3
 
 - add tests cases for database schema upgrade and downgrade
