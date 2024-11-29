@@ -1323,6 +1323,7 @@ class StationBase:
             exit_cond="SUM((filled IS NULL)::int) = 0",
             extra_unfilled_period_where="",
             add_meta_col="",
+            max_fillup_dist=config.get("weatherdb:max_fillup_distance", "p", fallback=200000),
             **self._sql_fillup_extra_dict(**kwargs)
         )
 
@@ -1464,12 +1465,17 @@ class StationBase:
                                 FROM station_ma_raster
                                 WHERE parameter = '{para_base}' and raster_key='{ma_raster_key}'
                                 GROUP BY station_id
-                            )
+                            ),
+                            meta_dist as (
+                                SELECT *, ST_DISTANCE(
+                                    geometry_utm,
+                                    (SELECT geometry_utm FROM stat_row)) AS dist_m
+                                FROM meta_{para})
                         SELECT meta.station_id,
                             meta.raw_from, meta.raw_until,
                             meta.station_id || '_{para}' AS tablename,
                             {coef_calc}{add_meta_col}
-                        FROM meta_{para} meta
+                        FROM meta_dist meta
                         LEFT JOIN rast_vals ma_other
                             ON ma_other.station_id=meta.station_id
                         LEFT JOIN (SELECT {ma_terms}
@@ -1485,9 +1491,8 @@ class StationBase:
                                     AND tablename LIKE '%\\_{para_escaped}')
                                 AND ({cond_mas_not_null})
                                 AND (meta.raw_from IS NOT NULL AND meta.raw_until IS NOT NULL)
-                        ORDER BY ST_DISTANCE(
-                            geometry_utm,
-                            (SELECT geometry_utm FROM stat_row)) {mul_elev_order} ASC)
+                                AND meta.dist_m <= {max_fillup_dist}
+                        ORDER BY meta.dist_m {mul_elev_order} ASC)
                     LOOP
                         CONTINUE WHEN i.raw_from > unfilled_period.max
                                       OR i.raw_until < unfilled_period.min
