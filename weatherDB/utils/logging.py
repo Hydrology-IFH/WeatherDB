@@ -56,7 +56,7 @@ def setup_logging_handlers():
         raw=True,
         fallback="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     level = config.get("logging", "level", fallback=logging.DEBUG)
-    for handler_type in config.getlist("logging", "handlers"):
+    for handler_type in config.get_list("logging", "handlers"):
         handler_name = f"weatherDB_config:{handler_type}"
 
         # check if coloredlogs is available

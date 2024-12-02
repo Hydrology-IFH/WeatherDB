@@ -21,7 +21,6 @@ from ..utils.geometry import polar_line, raster2points
 from ..config import config
 from ..db.models import MetaP
 from .StationBases import StationPBase
-from .constants import MIN_TSTP
 from .StationPD import StationPD
 from .StationT import StationT
 
@@ -296,7 +295,7 @@ class StationP(StationPBase):
                 return horizon
 
         # check if files are available
-        dem_files = [Path(file) for file in config.getlist("data:rasters", "dems")]
+        dem_files = [Path(file) for file in config.get_list("data:rasters", "dems")]
         for dem_file in dem_files:
             if not dem_file.is_file():
                 raise ValueError(
@@ -520,7 +519,7 @@ class StationP(StationPBase):
         stat_t = StationT(self.id)
         stat_t_period = stat_t.get_filled_period(kind="filled")
         delta = timedelta(hours=5, minutes=50)
-        min_date = pd.Timestamp(MIN_TSTP).date()
+        min_date = config.get_date("weatherdb", "min_date")
         stat_t_min = stat_t_period[0].date()
         stat_t_max = stat_t_period[1].date()
         stat_p_min = (period[0] - delta).date()

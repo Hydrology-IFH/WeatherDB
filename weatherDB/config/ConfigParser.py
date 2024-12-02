@@ -9,6 +9,7 @@ import sqlalchemy as sa
 import textwrap
 import re
 import os
+from datetime import datetime, timezone
 
 # create the config parser class
 class ConfigParser(configparser.ConfigParser):
@@ -152,7 +153,7 @@ class ConfigParser(configparser.ConfigParser):
 
         self._set(section, option, value)
 
-    def getlist(self, section, option):
+    def get_list(self, section, option):
         """Get a list of values from a configuration option.
 
         This function parses the configuration option seperated by commas and returns a list of values."""
@@ -161,6 +162,32 @@ class ConfigParser(configparser.ConfigParser):
                     for v in raw_value.replace("\n", "").split(",")
                     if len(v.strip())>0]
         return []
+
+    def getlist(self, section, option):
+        """Get a list of values from a configuration option.
+
+        This function parses the configuration option seperated by commas and returns a list of values.
+
+        Warning
+        -------
+        This function will become deprecated in the future. Please use get_list instead."""
+        import warnings
+        warnings.warn("getlist will become deprecated, please use get_list instead.", FutureWarning)
+        return self.get_list(section, option)
+
+    def get_datetime(self, section, option, fallback=None):
+        """Get a date from a configuration option.
+
+        This function parses the configuration option and returns a datetime object."""
+        if raw_value:= self.get(section, option, fallback=fallback):
+            return datetime.strptime(raw_value, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        return None
+
+    def get_date(self, section, option, fallback=None):
+        """Get a date from a configuration option.
+
+        This function parses the configuration option and returns a date object."""
+        return self.get_datetime(section, option, fallback=fallback).date()
 
     def _get_db_key_section(self, db_key=None):
         """Get the database section for the weatherDB database.

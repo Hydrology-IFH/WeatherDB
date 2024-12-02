@@ -1,5 +1,12 @@
 # Change-log
 
+## Version 1.0.5
+
+- add min_date as configuration value
+- check before each update_raw, if the min_date of the configuration is the same as in the database. If not expand or reduce teh timeserie
+- add get_date and get_datetime as methods to config
+- rename config's getlist methode to get_list to be addecuate to the rest
+
 ## Version 1.0.4
 
 - fix Brokers vacuum method and add test step for this method

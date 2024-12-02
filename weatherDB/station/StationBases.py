@@ -23,8 +23,8 @@ from ..db.connections import db_engine
 from ..utils.dwd import get_cdc_file_list, get_dwd_file
 from ..utils.TimestampPeriod import TimestampPeriod
 from ..config import config
-from ..db.models import StationMARaster, MetaBase
-from .constants import AGG_TO, MIN_TSTP
+from ..db.models import StationMARaster, MetaBase, RawFiles
+from .constants import AGG_TO
 from ..db.queries.get_quotient import _get_quotient
 
 # set settings
@@ -402,6 +402,34 @@ class StationBase:
         if not self.isin_db():
             self._create_timeseries_table()
 
+    @db_engine.deco_update_privilege
+    def _check_min_date(self, **kwargs):
+        """Check if the station has already a timeserie and if not create one.
+        """
+        min_dt_config = config.get_datetime("weatherdb", "min_date")
+        with db_engine.connect() as con:
+            min_dt_ts = con.execute(
+                    sa.select(sa.func.min(self._table.c.timestamp))
+                ).scalar().replace(tzinfo=min_dt_config.tzinfo)
+            if min_dt_ts < min_dt_config:
+                log.debug(f"The Station{self._para}({self.id})'s minimum timestamp of {min_dt_ts} is below the configurations min_date of {min_dt_config.date()}. The timeserie will be reduced to the configuration value.")
+                con.execute(
+                    sa.delete(self._table)
+                    .where(self._table.c.timestamp < min_dt_config)
+                )
+                con.commit()
+            elif min_dt_ts > min_dt_config:
+                log.debug(f"The Station{self._para}({self.id})'s minimum timestamp of {min_dt_ts} is above the configurations min_date of {min_dt_config.date()}. The timeserie will be expanded to the configuration value and the raw_files for this station are getting deleted, to reload all possible dwd data.")
+                zipfiles = self.get_zipfiles(
+                    only_new=False,
+                    ftp_file_list=kwargs.get("ftp_file_list", None))
+                con.execute(sa.delete(RawFiles.__table__)\
+                    .where(sa.and_(
+                        RawFiles.filepath.in_(zipfiles.index.to_list()),
+                        RawFiles.parameter == self._para)))
+                con.commit()
+                self._expand_timeserie_to_period()
+
     @property
     def _ma_raster_bands(self):
         """Get the raster bands of the stations multi annual raster file."""
@@ -440,10 +468,11 @@ class StationBase:
         """Expand the timeserie to the complete possible time range"""
         # The interval of 9h and 30 seconds is due to the fact, that the fact that t and et data for the previous day is only updated around 9 on the following day
         # the 10 minutes interval is to get the previous day and not the same day
+        # TODO: change to utm and add time
         sql = """
             WITH whole_ts AS (
                 SELECT generate_series(
-                    '{min_tstp}'::{tstp_dtype},
+                    '{min_date} 00:00'::{tstp_dtype},
                     (SELECT
                         LEAST(
                             date_trunc(
@@ -466,7 +495,8 @@ class StationBase:
             para=self._para,
             tstp_dtype=self._tstp_dtype,
             interval=self._interval,
-            min_tstp=MIN_TSTP.strftime("%Y-%m-%d %H:%M"))
+            min_date=config.get("weatherdb", "min_date"))
+
         with db_engine.connect() as con:
             con.execute(sqltxt(sql))
             con.commit()
@@ -995,6 +1025,8 @@ class StationBase:
         pandas.DataFrame
             The raw Dataframe of the Stations data.
         """
+        self._check_min_date(ftp_file_list=ftp_file_list)
+
         zipfiles = self.get_zipfiles(
             only_new=only_new,
             ftp_file_list=ftp_file_list)
@@ -1012,7 +1044,8 @@ class StationBase:
         df_all, max_hist_tstp_new = self._download_raw(zipfiles=zipfiles.index)
 
         # cut out valid time period
-        df_all = df_all.loc[df_all.index >= MIN_TSTP]
+        min_date = config.get_datetime("weatherdb", "min_date")
+        df_all = df_all.loc[df_all.index >= min_date]
         max_hist_tstp_old = self.get_meta(infos=["hist_until"])
         if max_hist_tstp_new is None:
             if max_hist_tstp_old is not None:
