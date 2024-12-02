@@ -6,6 +6,9 @@
 - check before each update_raw, if the min_date of the configuration is the same as in the database. If not expand or reduce teh timeserie
 - add get_date and get_datetime as methods to config
 - rename config's getlist methode to get_list to be addecuate to the rest
+- set min_date to 1999-01-01
+  I did some analysis and if you start earlier, you will only have one to two possible reference station in the radius of 100km from which to fill up data.
+- set max_fillup_distance for p to 110 km, so at least 4 reference stations are available in the range of 1999-today
 
 ## Version 1.0.4
 
