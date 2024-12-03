@@ -3,7 +3,7 @@ import itertools
 import logging
 import re
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from pathlib import Path
 import warnings
 import numpy as np
@@ -408,9 +408,15 @@ class StationBase:
         """
         min_dt_config = config.get_datetime("weatherdb", "min_date")
         with db_engine.connect() as con:
+            # get minimal timeseries timestamp
             min_dt_ts = con.execute(
                     sa.select(sa.func.min(self._table.c.timestamp))
-                ).scalar().replace(tzinfo=min_dt_config.tzinfo)
+                ).scalar()
+            if isinstance(min_dt_ts, date):
+                min_dt_ts = datetime.combine(min_dt_ts, datetime.min.time())
+            min_dt_ts = min_dt_ts.replace(tzinfo=min_dt_config.tzinfo)
+
+            # compare to config min_date and correct timeseries
             if min_dt_ts < min_dt_config:
                 log.debug(f"The Station{self._para}({self.id})'s minimum timestamp of {min_dt_ts} is below the configurations min_date of {min_dt_config.date()}. The timeserie will be reduced to the configuration value.")
                 con.execute(
