@@ -1,5 +1,9 @@
 # Change-log
 
+## Version 1.0.6
+
+- fix problem with horizon calculation with holes 
+
 ## Version 1.0.5
 
 - add min_date as configuration value

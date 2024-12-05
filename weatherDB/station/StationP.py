@@ -400,9 +400,8 @@ class StationP(StationPBase):
 
                         # look for holes inside the line
                         for i in dem_line[dem_line["dist"].diff() > dem_info["max_dist"]].index:
-                            print("hole inside", dem_line.loc(i), dem_line.loc(i-1))
                             missing_lines_next.append(
-                                polar_line(dem_line.loc[i-1, "geometry"].coords,
+                                polar_line(dem_line.loc[i-1, "geometry"].coords[0],
                                         dem_line.loc[i, "dist"] - dem_line.loc[i-1, "dist"],
                                         angle))
 
