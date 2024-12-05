@@ -429,8 +429,8 @@ class StationP(StationPBase):
             hab[angle] = dem_lines["horizon"].max()
 
         if raise_hole_error:
-            log.error(
-                f"Station{self._para}({self.id}).update_horizon(): There were holes in the DEM rasters providen when calculating the horizon angle. Therefor the calculated horizon angle could be faulty.")
+            log.warning(
+                f"Station{self._para}({self.id}).update_horizon(): There were holes in the DEM rasters providen when calculating the horizon angle. Therefor the calculated horizon angle could be faulty, but doesn't have to be, if the station is close to the sea for example.")
 
         # calculate the mean "horizontabschimung"
         # Richter: H’=0,15H(S-SW) +0,35H(SW-W) +0,35H(W-NW) +0, 15H(NW-N)
