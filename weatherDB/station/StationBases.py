@@ -412,6 +412,8 @@ class StationBase:
             min_dt_ts = con.execute(
                     sa.select(sa.func.min(self._table.c.timestamp))
                 ).scalar()
+            if min_dt_ts is None:
+                return None
             if isinstance(min_dt_ts, date):
                 min_dt_ts = datetime.combine(min_dt_ts, datetime.min.time())
             min_dt_ts = min_dt_ts.replace(tzinfo=min_dt_config.tzinfo)

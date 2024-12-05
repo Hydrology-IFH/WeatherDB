@@ -3,6 +3,7 @@
 ## Version 1.0.6
 
 - fix problem with horizon calculation with holes 
+- fix _check_min_date for non existing stations
 
 ## Version 1.0.5
 
