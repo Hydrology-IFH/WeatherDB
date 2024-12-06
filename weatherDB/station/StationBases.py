@@ -409,9 +409,15 @@ class StationBase:
         min_dt_config = config.get_datetime("weatherdb", "min_date")
         with db_engine.connect() as con:
             # get minimal timeseries timestamp
-            min_dt_ts = con.execute(
-                    sa.select(sa.func.min(self._table.c.timestamp))
-                ).scalar()
+            try:
+                min_dt_ts = con.execute(
+                        sa.select(sa.func.min(self._table.c.timestamp))
+                    ).scalar()
+            except sa.exc.ProgrammingError as e:
+                if "relation" in str(e) and "does not exist" in str(e):
+                    min_dt_ts = None
+                else:
+                    raise e
             if min_dt_ts is None:
                 return None
             if isinstance(min_dt_ts, date):
