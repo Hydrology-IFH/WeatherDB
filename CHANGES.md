@@ -4,6 +4,7 @@
 
 - fix problem with horizon calculation with holes 
 - fix _check_min_date for non existing stations
+- fix major error in getting multi annual raster values
 
 ## Version 1.0.5
 

@@ -482,7 +482,6 @@ class StationBase:
         """Expand the timeserie to the complete possible time range"""
         # The interval of 9h and 30 seconds is due to the fact, that the fact that t and et data for the previous day is only updated around 9 on the following day
         # the 10 minutes interval is to get the previous day and not the same day
-        # TODO: change to utm and add time
         sql = """
             WITH whole_ts AS (
                 SELECT generate_series(
@@ -863,7 +862,7 @@ class StationBase:
         new_mas = None
         ma_raster_bands = self._ma_raster_bands
 
-        while (new_mas is None or (new_mas is not None and not any(new_mas))) \
+        while (new_mas is None or (new_mas is not None and not np.any(~np.isnan(new_mas)))) \
                and dist <= 1000:
             dist += 50
             new_mas = self._get_raster_value(
@@ -872,9 +871,9 @@ class StationBase:
                 dist=dist)
 
         # write to station_ma_raster table
-        if new_mas is not None and any(new_mas):
+        if new_mas is not None and np.any(~np.isnan(new_mas)):
             # convert from raster unit to db unit
-            new_mas = [int(np.round(val * fact / self._decimals))
+            new_mas = [int(np.round(val * fact * self._decimals))
                        for val, fact in zip(new_mas, self._ma_raster_factors)]
 
             # upload in database
@@ -2280,7 +2279,7 @@ class StationBase:
 
         Returns
         -------
-        list of int or float
+        numpy.array of int or float or np.nan
             The rasters value at the stations position
 
         Raises
@@ -2320,8 +2319,8 @@ class StationBase:
             # get the value
             if dist==0:
                 return list(
-                    src.sample(stat_geom.coords, indexes=indexes)
-                    )[0]
+                        src.sample(stat_geom.coords, indexes=indexes, masked=True)
+                    )[0].astype(np.float32).filled(np.nan)
             else:
                 proj_srid = pyproj.CRS.from_epsg(
                     config.get("weatherdb", "RASTER_BUFFER_CRS"))
@@ -2336,12 +2335,14 @@ class StationBase:
                     shapely.ops.transform(tr_to.transform, stat_geom).buffer(dist),
                 )
 
-                return zonal_stats(
-                    buf_geom,
-                    src,
-                    stats=["mean"],
-                    all_touched=True
-                    )[0]["mean"]
+                return np.array([zonal_stats(
+                            buf_geom,
+                            file,
+                            band_num=band_num,
+                            stats=["mean"],
+                            all_touched=True
+                        )[0]["mean"]
+                    for band_num in indexes], dtype=np.float32)
 
     def get_coef(self, other_stid, in_db_unit=False):
         """Get the regionalisation coefficients due to the height.
