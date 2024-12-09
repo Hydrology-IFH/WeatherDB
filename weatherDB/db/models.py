@@ -13,7 +13,7 @@ __all__ = [
     "MetaET",
     "MetaT",
     "RawFiles",
-    "DropedStations",
+    "DroppedStations",
     "ParameterVariables",
     "RichterValues",
     "StationMATimeserie",
@@ -140,8 +140,8 @@ class MetaBaseQC(ModelBase):
     qc_until: Mapped[Optional[UTCDateTime]] = mapped_column(
         comment="The timestamp until when quality checked(\"qc\") data is available",
         sort_order=-63)
-    qc_droped: Mapped[Optional[float]] = mapped_column(
-        comment="The percentage of droped values during the quality check",
+    qc_dropped: Mapped[Optional[float]] = mapped_column(
+        comment="The percentage of dropped values during the quality check",
         sort_order=-62)
 
 # declare all database tables
@@ -201,7 +201,7 @@ class RawFiles(ModelBase):
 
     parameter: Mapped[str3] = mapped_column(
         primary_key=True,
-        comment="The parameter that got downloaded for this file. e.g. t, et, p_d, n",
+        comment="The parameter that got downloaded for this file. e.g. t, et, p_d, p",
         sort_order=-10)
     filepath: Mapped[str] = mapped_column(
         primary_key=True,
@@ -212,27 +212,27 @@ class RawFiles(ModelBase):
         sort_order=-5)
 
 
-class DropedStations(ModelBase):
-    __tablename__ = 'droped_stations'
+class DroppedStations(ModelBase):
+    __tablename__ = 'dropped_stations'
     __table_args__ = dict(
         schema='public',
-        comment="This table is there to save the station ids that got droped, so they wont GET recreated")
+        comment="This table is there to save the station ids that got dropped, so they wont GET recreated")
 
     station_id: Mapped[int] = mapped_column(
         primary_key=True,
-        comment="The station id that got droped",
+        comment="The station id that got dropped",
         sort_order=-10)
     parameter: Mapped[str3] = mapped_column(
         primary_key=True,
-        comment="The parameter (n,t,et,p_d) of the station that got droped",
+        comment="The parameter (p,t,et,p_d) of the station that got dropped",
         sort_order=-9)
     why: Mapped[str] = mapped_column(
         sa.Text(),
-        comment="The reason why the station got droped",
+        comment="The reason why the station got dropped",
         sort_order=-8)
     timestamp: Mapped[UTCDateTime] = mapped_column(
         server_default=func.now(),
-        comment="The timestamp when the station got droped",
+        comment="The timestamp when the station got dropped",
         sort_order=-7)
 
 
@@ -244,7 +244,7 @@ class ParameterVariables(ModelBase):
 
     parameter: Mapped[str3] = mapped_column(
         primary_key=True,
-        comment="The parameter for which the variables are valid. e.g. n/p_d/t/et.",
+        comment="The parameter for which the variables are valid. e.g. p/p_d/t/et.",
         sort_order=-10)
     start_tstp_last_imp: Mapped[Optional[UTCDateTime]] = mapped_column(
         comment="At what timestamp did the last complete import start. This is then the maximum timestamp for which to expand the timeseries to.",

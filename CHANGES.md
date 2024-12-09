@@ -1,13 +1,12 @@
 # Change-log
 
-## Version 1.0.6
+## Version 1.0.5
 
 - fix problem with horizon calculation with holes 
 - fix _check_min_date for non existing stations
 - fix major error in getting multi annual raster values
-
-## Version 1.0.5
-
+- add reason for dropping in log message
+- rename droped to dropped in models
 - add min_date as configuration value
 - check before each update_raw, if the min_date of the configuration is the same as in the database. If not expand or reduce teh timeserie
 - add get_date and get_datetime as methods to config

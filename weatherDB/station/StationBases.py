@@ -586,7 +586,7 @@ class StationBase:
         sql = """
             DROP TABLE IF EXISTS timeseries."{stid}_{para}";
             DELETE FROM meta_{para} WHERE station_id={stid};
-            INSERT INTO droped_stations(station_id, parameter, why, timestamp)
+            INSERT INTO dropped_stations(station_id, parameter, why, timestamp)
             VALUES ('{stid}', '{para}', '{why}', NOW())
             ON CONFLICT (station_id, parameter)
                 DO UPDATE SET
@@ -600,8 +600,7 @@ class StationBase:
             con.execute(sqltxt(sql))
             con.commit()
         log.debug(
-            "The {para_long} Station with ID {stid} got droped from the database."
-            .format(stid=self.id, para_long=self._para_long))
+            f"The {self._para_long} Station with ID {self.id} got dropped from the database, because \"{why}\".")
 
     @db_engine.deco_update_privilege
     def _update_meta(self, cols, values):
@@ -1307,12 +1306,12 @@ class StationBase:
             sql_new_qc=self._get_sql_new_qc(period=period),
             stid=self.id, para=self._para)
 
-        # calculate the percentage of droped values
+        # calculate the percentage of dropped values
         sql_qc += f"""
             UPDATE meta_{self._para}
-            SET "qc_droped" = ts."qc_droped"
+            SET "qc_dropped" = ts."qc_dropped"
             FROM (
-                SELECT ROUND(((count("raw")-count("qc"))::numeric/count("raw")), 4)*100 as qc_droped
+                SELECT ROUND(((count("raw")-count("qc"))::numeric/count("raw")), 4)*100 as qc_dropped
                 FROM timeseries."{self.id}_{self._para}"
             ) ts
             WHERE station_id = {self.id};"""

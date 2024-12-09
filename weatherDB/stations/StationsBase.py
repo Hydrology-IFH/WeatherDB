@@ -116,15 +116,15 @@ class StationsBase:
         if "Abgabe" in meta.columns:
             meta.drop("Abgabe", axis=1, inplace=True)
 
-        # get droped stations and delete from meta file
-        sql_get_droped = sa\
-            .select(models.DropedStations.station_id)\
-            .where(models.DropedStations.parameter == self._para)
+        # get dropped stations and delete from meta file
+        sql_get_dropped = sa\
+            .select(models.DroppedStations.station_id)\
+            .where(models.DroppedStations.parameter == self._para)
         with db_engine.connect() as con:
-            droped_stids = con.execute(sql_get_droped).all()
-        droped_stids = [row[0] for row in droped_stids
+            dropped_stids = con.execute(sql_get_dropped).all()
+        dropped_stids = [row[0] for row in dropped_stids
                         if row[0] in meta.index]
-        meta.drop(droped_stids, inplace=True)
+        meta.drop(dropped_stids, inplace=True)
 
         # check if only some stids should be updated
         if stids != "all":
