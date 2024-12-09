@@ -14,6 +14,7 @@
 - set min_date to 1999-01-01
   I did some analysis and if you start earlier, you will only have one to two possible reference station in the radius of 100km from which to fill up data.
 - set max_fillup_distance for p to 110 km, so at least 4 reference stations are available in the range of 1999-today
+- add compression to rotaed log files
  
 ## Version 1.0.4
 
