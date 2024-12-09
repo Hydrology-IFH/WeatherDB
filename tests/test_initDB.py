@@ -5,10 +5,8 @@ import sqlalchemy as sa
 import argparse
 from pathlib import Path
 import pandas as pd
-import datetime
-import decimal
-import json
 from distutils.util import strtobool
+from datetime import timezone
 
 from weatherDB.db import models
 import weatherDB as wdb
@@ -373,25 +371,37 @@ class InitDBTestCases(BaseTestCases):
             # get meta and reference max_period
             base_kind = "raw" if statsPara._para == "p_d" else "qc"
             meta = statsPara.get_meta(infos=[f"{base_kind}_from", f"{base_kind}_until"])
+            with self.db_engine.connect() as con:
+                max_dt = con.execute(sa.text(f"""
+                    SELECT LEAST(
+                        date_trunc('day',
+                                   min(start_tstp_last_imp) - '9h 30min'::INTERVAL
+                                   ) - '10 min'::INTERVAL,
+                        min(CASE WHEN parameter='p' THEN max_tstp_last_imp
+                                 ELSE max_tstp_last_imp + '23h 50min'::INTERVAL
+                            END))::{statsPara._StationClass._tstp_dtype}
+                    FROM parameter_variables;""")
+                    ).scalar()
+                max_dt = pd.Timestamp(max_dt, tz=timezone.utc)
             max_period = wdb.utils.TimestampPeriod(
                 meta[f"{base_kind}_from"].min(),
-                meta[f"{base_kind}_until"].max())
+                max(max_dt, meta[f"{base_kind}_until"].max())).set_tz(timezone.utc)
 
             # loop over stations to check the periods
             for stat in stats:
-                fperiod_filled = stat.get_filled_period(kind="filled")
+                ts_period = stat.get_max_period(kinds="filled", nas_allowed=True).set_tz(timezone.utc)
+                ts_period_filled = stat.get_filled_period(kind="filled").set_tz(timezone.utc)
                 with self.subTest(stat=stat.id, para=stat._para):
                     self._check_not_empty("filled", stat)
 
                     self.assertGreaterEqual(
-                        fperiod_filled,
+                        ts_period,
                         max_period,
                         msg="Filled timeserie is smaller than maximum available data range.")
 
-                    if not fperiod_filled.is_empty():
-                        self.assertFalse(
-                            fperiod_filled.is_empty(),
-                            msg="Filled timeserie is empty.")
+                    self.assertFalse(
+                        ts_period_filled.is_empty(),
+                        msg="Filled timeserie is empty.")
 
             # check for NAs
             self._check_no_nas(base_kind, "filled", stats)
