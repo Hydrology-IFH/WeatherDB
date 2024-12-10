@@ -28,7 +28,7 @@ import weatherDB
 def cli(do_logging, connection, verbose):
     if do_logging:
         click.echo("logging to console is set on")
-        handlers = weatherDB.config.getlist("logging", "handler")
+        handlers = weatherDB.config.get_list("logging", "handler")
         if "console" not in handlers:
             handlers.append("console")
             weatherDB.config.set("logging", "handler", handlers)

@@ -21,7 +21,6 @@ from ..utils.geometry import polar_line, raster2points
 from ..config import config
 from ..db.models import MetaP
 from .StationBases import StationPBase
-from .constants import MIN_TSTP
 from .StationPD import StationPD
 from .StationT import StationT
 
@@ -296,7 +295,7 @@ class StationP(StationPBase):
                 return horizon
 
         # check if files are available
-        dem_files = [Path(file) for file in config.getlist("data:rasters", "dems")]
+        dem_files = [Path(file) for file in config.get_list("data:rasters", "dems")]
         for dem_file in dem_files:
             if not dem_file.is_file():
                 raise ValueError(
@@ -401,9 +400,8 @@ class StationP(StationPBase):
 
                         # look for holes inside the line
                         for i in dem_line[dem_line["dist"].diff() > dem_info["max_dist"]].index:
-                            print("hole inside", dem_line.loc(i), dem_line.loc(i-1))
                             missing_lines_next.append(
-                                polar_line(dem_line.loc[i-1, "geometry"].coords,
+                                polar_line(dem_line.loc[i-1, "geometry"].coords[0],
                                         dem_line.loc[i, "dist"] - dem_line.loc[i-1, "dist"],
                                         angle))
 
@@ -431,8 +429,8 @@ class StationP(StationPBase):
             hab[angle] = dem_lines["horizon"].max()
 
         if raise_hole_error:
-            log.error(
-                f"Station{self._para}({self.id}).update_horizon(): There were holes in the DEM rasters providen when calculating the horizon angle. Therefor the calculated horizon angle could be faulty.")
+            log.warning(
+                f"Station{self._para}({self.id}).update_horizon(): There were holes in the DEM rasters providen when calculating the horizon angle. Therefor the calculated horizon angle could be faulty, but doesn't have to be, if the station is close to the sea for example.")
 
         # calculate the mean "horizontabschimung"
         # Richter: H’=0,15H(S-SW) +0,35H(SW-W) +0,35H(W-NW) +0, 15H(NW-N)
@@ -520,7 +518,7 @@ class StationP(StationPBase):
         stat_t = StationT(self.id)
         stat_t_period = stat_t.get_filled_period(kind="filled")
         delta = timedelta(hours=5, minutes=50)
-        min_date = pd.Timestamp(MIN_TSTP).date()
+        min_date = config.get_date("weatherdb", "min_date")
         stat_t_min = stat_t_period[0].date()
         stat_t_max = stat_t_period[1].date()
         stat_p_min = (period[0] - delta).date()

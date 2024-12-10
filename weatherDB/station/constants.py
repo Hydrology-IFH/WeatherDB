@@ -1,11 +1,5 @@
-# libraries
-from datetime import datetime, timezone
-
 # Variables
 # ---------
-# The minimal timestamp that is allowed for the data
-MIN_TSTP = datetime.strptime("19940101", "%Y%m%d").replace(tzinfo=timezone.utc)
-
 # possible aggregation periods from small to big
 AGG_TO = {
     None: {
@@ -24,4 +18,4 @@ AGG_TO = {
         "split":{"n": 1, "t":1, "et": 1}}
     }
 
-__all__ = ["MIN_TSTP", "AGG_TO"]
+__all__ = ["AGG_TO"]

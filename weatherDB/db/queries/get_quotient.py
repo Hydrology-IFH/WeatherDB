@@ -1,6 +1,6 @@
 import pandas as pd
 import sqlalchemy as sa
-from ..views import StationKindQuotientView, StationMATimeserieQuotientView
+from ..views import StationKindQuotientView, StationMATimeserieRasterQuotientView
 
 
 def _get_quotient(con, stids, paras, kinds_num, kinds_denom, return_as):
@@ -57,10 +57,10 @@ def _get_quotient(con, stids, paras, kinds_num, kinds_denom, return_as):
         stids = stids[0]
     if isinstance(stids, int):
         tests_ts.append(StationKindQuotientView.station_id == stids)
-        tests_rast.append(StationMATimeserieQuotientView.station_id == stids)
+        tests_rast.append(StationMATimeserieRasterQuotientView.station_id == stids)
     elif isinstance(stids, list) or isinstance(stids, set):
         tests_ts.append(StationKindQuotientView.station_id.in_(stids))
-        tests_rast.append(StationMATimeserieQuotientView.station_id.in_(stids))
+        tests_rast.append(StationMATimeserieRasterQuotientView.station_id.in_(stids))
     elif stids is not None:
         raise ValueError("The stids parameter should be a list of integers or an integer or None.")
 
@@ -69,12 +69,12 @@ def _get_quotient(con, stids, paras, kinds_num, kinds_denom, return_as):
         paras = paras[0]
     if isinstance(paras, str):
         tests_ts.append(StationKindQuotientView.parameter == paras)
-        tests_rast.append(StationMATimeserieQuotientView.parameter.like(f"{paras}%"))
+        tests_rast.append(StationMATimeserieRasterQuotientView.parameter.like(f"{paras}%"))
     elif isinstance(paras, list) or isinstance(paras, set):
         tests_ts.append(StationKindQuotientView.parameter.in_(paras))
         ors = []
         for para in paras:
-            ors.append(StationMATimeserieQuotientView.parameter.like(f"{para}%"))
+            ors.append(StationMATimeserieRasterQuotientView.parameter.like(f"{para}%"))
         tests_rast.append(sa.or_(*ors))
     else:
         raise ValueError("The paras parameter should be a list of strings or a string.")
@@ -84,10 +84,10 @@ def _get_quotient(con, stids, paras, kinds_num, kinds_denom, return_as):
         kinds_num = kinds_num[0]
     if isinstance(kinds_num, str):
         tests_ts.append(StationKindQuotientView.kind_numerator == kinds_num)
-        tests_rast.append(StationMATimeserieQuotientView.kind == kinds_num)
+        tests_rast.append(StationMATimeserieRasterQuotientView.kind == kinds_num)
     elif isinstance(kinds_num, list) or isinstance(kinds_num, set):
         tests_ts.append(StationKindQuotientView.kind_numerator.in_(kinds_num))
-        tests_rast.append(StationMATimeserieQuotientView.kind.in_(kinds_num))
+        tests_rast.append(StationMATimeserieRasterQuotientView.kind.in_(kinds_num))
     else:
         raise ValueError("The kinds_num parameter should be a list of strings or a string.")
 
@@ -96,10 +96,10 @@ def _get_quotient(con, stids, paras, kinds_num, kinds_denom, return_as):
         kinds_denom = kinds_denom[0]
     if isinstance(kinds_denom, str):
         tests_ts.append(StationKindQuotientView.kind_denominator == kinds_denom)
-        tests_rast.append(StationMATimeserieQuotientView.raster_key == kinds_denom)
+        tests_rast.append(StationMATimeserieRasterQuotientView.raster_key == kinds_denom)
     elif isinstance(kinds_denom, list) or isinstance(kinds_denom, set):
         tests_ts.append(StationKindQuotientView.kind_denominator.in_(kinds_denom))
-        tests_rast.append(StationMATimeserieQuotientView.raster_key.in_(kinds_denom))
+        tests_rast.append(StationMATimeserieRasterQuotientView.raster_key.in_(kinds_denom))
     else:
         raise ValueError("The kinds_denom parameter should be a list of strings or a string.")
 
@@ -123,13 +123,13 @@ def _get_quotient(con, stids, paras, kinds_num, kinds_denom, return_as):
     if len(kinds_denom_rast) > 0:
         stmnt = sa.\
             select(
-                StationMATimeserieQuotientView.station_id,
-                StationMATimeserieQuotientView.parameter,
-                StationMATimeserieQuotientView.kind.label("kind_numerator"),
-                StationMATimeserieQuotientView.raster_key.label("kind_denominator"),
-                StationMATimeserieQuotientView.value)\
+                StationMATimeserieRasterQuotientView.station_id,
+                StationMATimeserieRasterQuotientView.parameter,
+                StationMATimeserieRasterQuotientView.kind.label("kind_numerator"),
+                StationMATimeserieRasterQuotientView.raster_key.label("kind_denominator"),
+                StationMATimeserieRasterQuotientView.value)\
             .select_from(
-                StationMATimeserieQuotientView.__table__)\
+                StationMATimeserieRasterQuotientView.__table__)\
             .where(sa.and_(*tests_rast))
 
         data = data + con.execute(stmnt).all()

@@ -3,7 +3,7 @@ import itertools
 import logging
 import re
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from pathlib import Path
 import warnings
 import numpy as np
@@ -23,8 +23,8 @@ from ..db.connections import db_engine
 from ..utils.dwd import get_cdc_file_list, get_dwd_file
 from ..utils.TimestampPeriod import TimestampPeriod
 from ..config import config
-from ..db.models import StationMARaster, MetaBase
-from .constants import AGG_TO, MIN_TSTP
+from ..db.models import StationMARaster, MetaBase, RawFiles
+from .constants import AGG_TO
 from ..db.queries.get_quotient import _get_quotient
 
 # set settings
@@ -402,6 +402,48 @@ class StationBase:
         if not self.isin_db():
             self._create_timeseries_table()
 
+    @db_engine.deco_update_privilege
+    def _check_min_date(self, **kwargs):
+        """Check if the station has already a timeserie and if not create one.
+        """
+        min_dt_config = config.get_datetime("weatherdb", "min_date")
+        with db_engine.connect() as con:
+            # get minimal timeseries timestamp
+            try:
+                min_dt_ts = con.execute(
+                        sa.select(sa.func.min(self._table.c.timestamp))
+                    ).scalar()
+            except sa.exc.ProgrammingError as e:
+                if "relation" in str(e) and "does not exist" in str(e):
+                    min_dt_ts = None
+                else:
+                    raise e
+            if min_dt_ts is None:
+                return None
+            if isinstance(min_dt_ts, date):
+                min_dt_ts = datetime.combine(min_dt_ts, datetime.min.time())
+            min_dt_ts = min_dt_ts.replace(tzinfo=min_dt_config.tzinfo)
+
+            # compare to config min_date and correct timeseries
+            if min_dt_ts < min_dt_config:
+                log.debug(f"The Station{self._para}({self.id})'s minimum timestamp of {min_dt_ts} is below the configurations min_date of {min_dt_config.date()}. The timeserie will be reduced to the configuration value.")
+                con.execute(
+                    sa.delete(self._table)
+                    .where(self._table.c.timestamp < min_dt_config)
+                )
+                con.commit()
+            elif min_dt_ts > min_dt_config:
+                log.debug(f"The Station{self._para}({self.id})'s minimum timestamp of {min_dt_ts} is above the configurations min_date of {min_dt_config.date()}. The timeserie will be expanded to the configuration value and the raw_files for this station are getting deleted, to reload all possible dwd data.")
+                zipfiles = self.get_zipfiles(
+                    only_new=False,
+                    ftp_file_list=kwargs.get("ftp_file_list", None))
+                con.execute(sa.delete(RawFiles.__table__)\
+                    .where(sa.and_(
+                        RawFiles.filepath.in_(zipfiles.index.to_list()),
+                        RawFiles.parameter == self._para)))
+                con.commit()
+                self._expand_timeserie_to_period()
+
     @property
     def _ma_raster_bands(self):
         """Get the raster bands of the stations multi annual raster file."""
@@ -443,7 +485,7 @@ class StationBase:
         sql = """
             WITH whole_ts AS (
                 SELECT generate_series(
-                    '{min_tstp}'::{tstp_dtype},
+                    '{min_date} 00:00'::{tstp_dtype},
                     (SELECT
                         LEAST(
                             date_trunc(
@@ -466,7 +508,8 @@ class StationBase:
             para=self._para,
             tstp_dtype=self._tstp_dtype,
             interval=self._interval,
-            min_tstp=MIN_TSTP.strftime("%Y-%m-%d %H:%M"))
+            min_date=config.get("weatherdb", "min_date"))
+
         with db_engine.connect() as con:
             con.execute(sqltxt(sql))
             con.commit()
@@ -540,25 +583,25 @@ class StationBase:
     def _drop(self, why="No reason given"):
         """Drop this station from the database. (meta table and timeseries)
         """
-        sql = """
-            DROP TABLE IF EXISTS timeseries."{stid}_{para}";
-            DELETE FROM meta_{para} WHERE station_id={stid};
-            INSERT INTO droped_stations(station_id, parameter, why, timestamp)
-            VALUES ('{stid}', '{para}', '{why}', NOW())
+        why=why.replace("'", "''")
+        sql = f"""
+            DROP TABLE IF EXISTS timeseries."{self.id}_{self._para}";
+            DELETE FROM meta_{self._para} WHERE station_id={self.id};
+            DELETE FROM station_ma_raster WHERE station_id={self.id} and parameter='{self._para}';
+            DELETE FROM station_ma_timeseries WHERE station_id={self.id} and parameter='{self._para}';
+            INSERT INTO dropped_stations(station_id, parameter, why, timestamp)
+            VALUES ('{self.id}', '{self._para}', '{why}', NOW())
             ON CONFLICT (station_id, parameter)
                 DO UPDATE SET
                     why = EXCLUDED.why,
                     timestamp = EXCLUDED.timestamp;
-        """.format(
-            stid=self.id, para=self._para,
-            why=why.replace("'", "''"))
+        """
 
         with db_engine.connect() as con:
             con.execute(sqltxt(sql))
             con.commit()
         log.debug(
-            "The {para_long} Station with ID {stid} got droped from the database."
-            .format(stid=self.id, para_long=self._para_long))
+            f"The {self._para_long} Station with ID {self.id} got dropped from the database, because \"{why}\".")
 
     @db_engine.deco_update_privilege
     def _update_meta(self, cols, values):
@@ -819,7 +862,7 @@ class StationBase:
         new_mas = None
         ma_raster_bands = self._ma_raster_bands
 
-        while (new_mas is None or (new_mas is not None and not any(new_mas))) \
+        while (new_mas is None or (new_mas is not None and not np.any(~np.isnan(new_mas)))) \
                and dist <= 1000:
             dist += 50
             new_mas = self._get_raster_value(
@@ -828,9 +871,9 @@ class StationBase:
                 dist=dist)
 
         # write to station_ma_raster table
-        if new_mas is not None and any(new_mas):
+        if new_mas is not None and np.any(~np.isnan(new_mas)):
             # convert from raster unit to db unit
-            new_mas = [int(np.round(val * fact / self._decimals))
+            new_mas = [int(np.round(val * fact * self._decimals))
                        for val, fact in zip(new_mas, self._ma_raster_factors)]
 
             # upload in database
@@ -868,7 +911,7 @@ class StationBase:
         Parameters
         ----------
         kind : str or list of str
-            The tiumeseries data kind to update theire multi annual value.
+            The timeseries data kind to update theire multi annual value.
             Must be a column in the timeseries DB.
             Must be one of "raw", "qc", "filled".
             For the precipitation also "corr" is valid.
@@ -876,17 +919,14 @@ class StationBase:
             Additional keyword arguments catch all, but unused here.
         """
         # check kind input
+        valid_kinds = self._valid_kinds - {"qn", "filled_by"}
         if kind == "all":
-            kind = ["raw", "qc", "filled"]
-            if "corr" in self._valid_kinds:
-                kind.append("corr")
-
+            kind = valid_kinds
         if isinstance(kind, list):
-            for kind in self._check_kinds(kind):
+            for kind in self._check_kinds(kind, valids=valid_kinds):
                 self.update_ma_timeseries(kind)
             return None
-
-        self._check_kind(kind)
+        self._check_kind(kind, valids=valid_kinds)
 
         # create the sql
         sql = f"""
@@ -995,6 +1035,8 @@ class StationBase:
         pandas.DataFrame
             The raw Dataframe of the Stations data.
         """
+        self._check_min_date(ftp_file_list=ftp_file_list)
+
         zipfiles = self.get_zipfiles(
             only_new=only_new,
             ftp_file_list=ftp_file_list)
@@ -1012,7 +1054,8 @@ class StationBase:
         df_all, max_hist_tstp_new = self._download_raw(zipfiles=zipfiles.index)
 
         # cut out valid time period
-        df_all = df_all.loc[df_all.index >= MIN_TSTP]
+        min_date = config.get_datetime("weatherdb", "min_date")
+        df_all = df_all.loc[df_all.index >= min_date]
         max_hist_tstp_old = self.get_meta(infos=["hist_until"])
         if max_hist_tstp_new is None:
             if max_hist_tstp_old is not None:
@@ -1261,12 +1304,12 @@ class StationBase:
             sql_new_qc=self._get_sql_new_qc(period=period),
             stid=self.id, para=self._para)
 
-        # calculate the percentage of droped values
+        # calculate the percentage of dropped values
         sql_qc += f"""
             UPDATE meta_{self._para}
-            SET "qc_droped" = ts."qc_droped"
+            SET "qc_dropped" = ts."qc_dropped"
             FROM (
-                SELECT ROUND(((count("raw")-count("qc"))::numeric/count("raw")), 4)*100 as qc_droped
+                SELECT ROUND(((count("raw")-count("qc"))::numeric/count("raw")), 4)*100 as qc_dropped
                 FROM timeseries."{self.id}_{self._para}"
             ) ts
             WHERE station_id = {self.id};"""
@@ -1323,6 +1366,7 @@ class StationBase:
             exit_cond="SUM((filled IS NULL)::int) = 0",
             extra_unfilled_period_where="",
             add_meta_col="",
+            max_fillup_dist=config.get("weatherdb:max_fillup_distance", "p", fallback=200000),
             **self._sql_fillup_extra_dict(**kwargs)
         )
 
@@ -1464,12 +1508,17 @@ class StationBase:
                                 FROM station_ma_raster
                                 WHERE parameter = '{para_base}' and raster_key='{ma_raster_key}'
                                 GROUP BY station_id
-                            )
+                            ),
+                            meta_dist as (
+                                SELECT *, ST_DISTANCE(
+                                    geometry_utm,
+                                    (SELECT geometry_utm FROM stat_row)) AS dist_m
+                                FROM meta_{para})
                         SELECT meta.station_id,
                             meta.raw_from, meta.raw_until,
                             meta.station_id || '_{para}' AS tablename,
                             {coef_calc}{add_meta_col}
-                        FROM meta_{para} meta
+                        FROM meta_dist meta
                         LEFT JOIN rast_vals ma_other
                             ON ma_other.station_id=meta.station_id
                         LEFT JOIN (SELECT {ma_terms}
@@ -1485,9 +1534,8 @@ class StationBase:
                                     AND tablename LIKE '%\\_{para_escaped}')
                                 AND ({cond_mas_not_null})
                                 AND (meta.raw_from IS NOT NULL AND meta.raw_until IS NOT NULL)
-                        ORDER BY ST_DISTANCE(
-                            geometry_utm,
-                            (SELECT geometry_utm FROM stat_row)) {mul_elev_order} ASC)
+                                AND meta.dist_m <= {max_fillup_dist}
+                        ORDER BY meta.dist_m {mul_elev_order} ASC)
                     LOOP
                         CONTINUE WHEN i.raw_from > unfilled_period.max
                                       OR i.raw_until < unfilled_period.min
@@ -2228,7 +2276,7 @@ class StationBase:
 
         Returns
         -------
-        list of int or float
+        numpy.array of int or float or np.nan
             The rasters value at the stations position
 
         Raises
@@ -2268,8 +2316,8 @@ class StationBase:
             # get the value
             if dist==0:
                 return list(
-                    src.sample(stat_geom.coords, indexes=indexes)
-                    )[0]
+                        src.sample(stat_geom.coords, indexes=indexes, masked=True)
+                    )[0].astype(np.float32).filled(np.nan)
             else:
                 proj_srid = pyproj.CRS.from_epsg(
                     config.get("weatherdb", "RASTER_BUFFER_CRS"))
@@ -2284,12 +2332,14 @@ class StationBase:
                     shapely.ops.transform(tr_to.transform, stat_geom).buffer(dist),
                 )
 
-                return zonal_stats(
-                    buf_geom,
-                    src,
-                    stats=["mean"],
-                    all_touched=True
-                    )[0]["mean"]
+                return np.array([zonal_stats(
+                            buf_geom,
+                            file,
+                            band_num=band_num,
+                            stats=["mean"],
+                            all_touched=True
+                        )[0]["mean"]
+                    for band_num in indexes], dtype=np.float32)
 
     def get_coef(self, other_stid, in_db_unit=False):
         """Get the regionalisation coefficients due to the height.

@@ -116,15 +116,15 @@ class StationsBase:
         if "Abgabe" in meta.columns:
             meta.drop("Abgabe", axis=1, inplace=True)
 
-        # get droped stations and delete from meta file
-        sql_get_droped = sa\
-            .select(models.DropedStations.station_id)\
-            .where(models.DropedStations.parameter == self._para)
+        # get dropped stations and delete from meta file
+        sql_get_dropped = sa\
+            .select(models.DroppedStations.station_id)\
+            .where(models.DroppedStations.parameter == self._para)
         with db_engine.connect() as con:
-            droped_stids = con.execute(sql_get_droped).all()
-        droped_stids = [row[0] for row in droped_stids
+            dropped_stids = con.execute(sql_get_dropped).all()
+        dropped_stids = [row[0] for row in dropped_stids
                         if row[0] in meta.index]
-        meta.drop(droped_stids, inplace=True)
+        meta.drop(dropped_stids, inplace=True)
 
         # check if only some stids should be updated
         if stids != "all":
@@ -842,7 +842,7 @@ class StationsBase:
 
     @db_engine.deco_update_privilege
     def update_ma_raster(self, stids="all", do_mp=False, **kwargs):
-        """Update the multi annual values for the stations.
+        """Update the multi annual raster values for the stations.
 
         Get a multi annual value from the corresponding raster and save to the multi annual table in the database.
 
@@ -870,8 +870,48 @@ class StationsBase:
         self._run_method(
             stations=self.get_stations(only_real=False, stids=stids, **kwargs),
             method="update_ma_raster",
-            name="update ma-values for {para}".format(para=self._para.upper()),
+            name="update ma-raster-values for {para}".format(para=self._para.upper()),
             do_mp=do_mp,
+            **kwargs)
+
+    @db_engine.deco_update_privilege
+    def update_ma_timeseries(self, kind, stids="all", do_mp=False, **kwargs):
+        """Update the multi annual timeseries values for the stations.
+
+        Get a multi annual value from the corresponding timeseries and save to the database.
+
+        Parameters
+        ----------
+        kind : str or list of str
+            The timeseries data kind to update theire multi annual value.
+            Must be a column in the timeseries DB.
+            Must be one of "raw", "qc", "filled".
+            For the precipitation also "corr" is valid.
+        stids: string or list of int, optional
+            The Stations for which to compute.
+            Can either be "all", for all possible stations
+            or a list with the Station IDs.
+            The default is "all".
+        do_mp : bool, optional
+            Should the method be done in multiprocessing mode?
+            If False the methods will be called in threading mode.
+            Multiprocessing needs more memory and a bit more initiating time. Therefor it is only usefull for methods with a lot of computation effort in the python code.
+            If the most computation of a method is done in the postgresql database, then threading is enough to speed the process up.
+            The default is False.
+        **kwargs : dict, optional
+            The additional keyword arguments for the _run_method and get_stations method
+
+        Raises
+        ------
+        ValueError
+            If the given stids (Station_IDs) are not all valid.
+        """
+        self._run_method(
+            stations=self.get_stations(only_real=False, stids=stids, **kwargs),
+            method="update_ma_timeseries",
+            name="update ma-ts-values for {para}".format(para=self._para.upper()),
+            do_mp=do_mp,
+            kwds=dict(kind=kind),
             **kwargs)
 
     @db_engine.deco_update_privilege

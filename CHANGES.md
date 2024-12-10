@@ -1,5 +1,24 @@
 # Change-log
 
+## Version 1.0.5
+
+- fix problem with horizon calculation with holes 
+- fix _check_min_date for non existing stations
+- fix major error in getting multi annual raster values
+- add reason for dropping in log message
+- rename droped to dropped in models
+- add min_date as configuration value
+- check before each update_raw, if the min_date of the configuration is the same as in the database. If not expand or reduce teh timeserie
+- add get_date and get_datetime as methods to config
+- rename config's getlist methode to get_list to be addecuate to the rest
+- set min_date to 1999-01-01
+  I did some analysis and if you start earlier, you will only have one to two possible reference station in the radius of 100km from which to fill up data.
+- set max_fillup_distance for p to 110 km, so at least 4 reference stations are available in the range of 1999-today
+- add compression to rotaed log files
+- rename "station_ma_timeseries_quotient_view" to "station_ma_timeseries_raster_quotient_view"
+- fixed StationMATimeserieRasterQuotientView to not throw error on NULL values in StationMARaster
+- add update_ma_timeseries method to StationsBase and Broker
+ 
 ## Version 1.0.4
 
 - fix Brokers vacuum method and add test step for this method

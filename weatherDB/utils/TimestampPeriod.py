@@ -349,4 +349,21 @@ class TimestampPeriod(object):
         else:
             return self
 
+    def set_tz(self, tzinfo):
+        """Set the TimestampPeriod to a new timezone.
+
+        Parameters
+        ----------
+        tzinfo : str or datetime.timezone object
+            The timezone to set the TimestampPeriod to.
+
+        Returns
+        -------
+        TimestampPeriod
+            This TimestampPeriod.
+        """
+        if not self.is_date:
+            self.start.replace(tzinfo=tzinfo)
+            self.end.replace(tzinfo=tzinfo)
+        return self
 

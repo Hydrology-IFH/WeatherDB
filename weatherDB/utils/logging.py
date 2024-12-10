@@ -5,6 +5,8 @@ from pathlib import Path
 import re
 import socket
 import os
+import gzip
+import shutil
 
 from ..config import config
 
@@ -56,7 +58,7 @@ def setup_logging_handlers():
         raw=True,
         fallback="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     level = config.get("logging", "level", fallback=logging.DEBUG)
-    for handler_type in config.getlist("logging", "handlers"):
+    for handler_type in config.get_list("logging", "handlers"):
         handler_name = f"weatherDB_config:{handler_type}"
 
         # check if coloredlogs is available
@@ -85,6 +87,16 @@ def setup_logging_handlers():
                     log_file,
                     when="midnight",
                     encoding="utf-8")
+                if config.getboolean("logging", "compression", fallback=True):
+                    def namer(name):
+                        return name + ".gz"
+                    def rotator(source, dest):
+                        with open(source, 'rb') as f_in:
+                            with gzip.open(dest, 'wb') as f_out:
+                                shutil.copyfileobj(f_in, f_out)
+                        os.remove(source)
+                    handler.namer = namer
+                    handler.rotator = rotator
             else:
                 raise ValueError(f"Handler '{handler_type}' not known.")
 
