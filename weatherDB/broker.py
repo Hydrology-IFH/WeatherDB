@@ -337,6 +337,27 @@ class Broker(object):
                 if stations._para in paras:
                     stations.update_ma_raster(**kwargs)
 
+    def update_ma_timeseries(self, paras=["p_d", "p", "t", "et"], **kwargs):
+        """Update the multi-annual values from timeseries in the database.
+
+        Parameters
+        ----------
+        paras : list of str, optional
+            The parameters for which to do the actions.
+            Can be one, some or all of ["p_d", "p", "t", "et"].
+            The default is ["p_d", "p", "t", "et"].
+        **kwargs : dict
+            The keyword arguments to pass to update_ma_timeseries method of the stations
+        """
+        self._check_paras(paras)
+        log.info("Broker update_ma_timeseries starts")
+        self._check_db_schema()
+
+        with self.activate():
+            for stations in self.stations:
+                if stations._para in paras:
+                    stations.update_ma_timeseries(**kwargs)
+
     def update_period_meta(self, paras=["p_d", "p", "t", "et"], **kwargs):
         """Update the periods in the meta table.
 

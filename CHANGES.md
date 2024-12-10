@@ -17,6 +17,7 @@
 - add compression to rotaed log files
 - rename "station_ma_timeseries_quotient_view" to "station_ma_timeseries_raster_quotient_view"
 - fixed StationMATimeserieRasterQuotientView to not throw error on NULL values in StationMARaster
+- add update_ma_timeseries method to StationsBase and Broker
  
 ## Version 1.0.4
 

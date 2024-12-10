@@ -583,18 +583,19 @@ class StationBase:
     def _drop(self, why="No reason given"):
         """Drop this station from the database. (meta table and timeseries)
         """
-        sql = """
-            DROP TABLE IF EXISTS timeseries."{stid}_{para}";
-            DELETE FROM meta_{para} WHERE station_id={stid};
+        why=why.replace("'", "''")
+        sql = f"""
+            DROP TABLE IF EXISTS timeseries."{self.id}_{self._para}";
+            DELETE FROM meta_{self._para} WHERE station_id={self.id};
+            DELETE FROM station_ma_raster WHERE station_id={self.id} and parameter='{self._para}';
+            DELETE FROM station_ma_timeseries WHERE station_id={self.id} and parameter='{self._para}';
             INSERT INTO dropped_stations(station_id, parameter, why, timestamp)
-            VALUES ('{stid}', '{para}', '{why}', NOW())
+            VALUES ('{self.id}', '{self._para}', '{why}', NOW())
             ON CONFLICT (station_id, parameter)
                 DO UPDATE SET
                     why = EXCLUDED.why,
                     timestamp = EXCLUDED.timestamp;
-        """.format(
-            stid=self.id, para=self._para,
-            why=why.replace("'", "''"))
+        """
 
         with db_engine.connect() as con:
             con.execute(sqltxt(sql))
@@ -910,7 +911,7 @@ class StationBase:
         Parameters
         ----------
         kind : str or list of str
-            The tiumeseries data kind to update theire multi annual value.
+            The timeseries data kind to update theire multi annual value.
             Must be a column in the timeseries DB.
             Must be one of "raw", "qc", "filled".
             For the precipitation also "corr" is valid.
