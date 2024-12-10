@@ -74,11 +74,11 @@ class ViewBase(ModelBase):
 
 # declare all database views
 # --------------------------
-class StationMATimeserieQuotientView(ViewBase):
-    __tablename__ = 'station_ma_timeseries_quotient_view'
+class StationMATimeserieRasterQuotientView(ViewBase):
+    __tablename__ = 'station_ma_timeseries_raster_quotient_view'
     __table_args__ = dict(
         schema='public',
-        comment="The multi annual mean values of the stations timeseries for the maximum available timespan.",
+        comment="The multi annual mean values of the stations timeseries divided by the multi annual raster values for the maximum available timespan.",
         extend_existing = True)
 
     station_id: Mapped[int] = mapped_column(
@@ -103,7 +103,10 @@ class StationMATimeserieQuotientView(ViewBase):
             StationMATimeserie.kind,
             StationMARaster.raster_key,
             StationMARaster.term,
-            (StationMATimeserie.value / StationMARaster.value).label("value")
+            sa.case(
+                (StationMARaster.value is not None,
+                 StationMATimeserie.value / StationMARaster.value),
+                else_=None).label("value")
         ).select_from(
             StationMATimeserie.__table__.outerjoin(
                 StationMARaster.__table__,

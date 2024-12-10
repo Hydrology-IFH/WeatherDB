@@ -83,6 +83,8 @@ def upgrade() -> None:
                     nullable=True,
                     comment='The percentage of dropped values during the quality check')
 
+    op.execute(sa.text("DROP VIEW IF EXISTS station_ma_timeseries_quotient_view CASCADE;"))
+
 def downgrade() -> None:
     op.execute(sa.text(
         """
@@ -146,3 +148,5 @@ def downgrade() -> None:
                     existing_type=sa.Float(),
                     nullable=True,
                     comment='The percentage of dropped values during the quality check')
+
+    op.execute(sa.text("DROP VIEW IF EXISTS station_ma_timeseries_raster_quotient_view CASCADE;"))
