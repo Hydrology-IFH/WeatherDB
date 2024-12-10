@@ -385,7 +385,7 @@ class InitDBTestCases(BaseTestCases):
                 max_dt = pd.Timestamp(max_dt, tz=timezone.utc)
             max_period = wdb.utils.TimestampPeriod(
                 meta[f"{base_kind}_from"].min(),
-                max(max_dt, meta[f"{base_kind}_until"].max())).set_tz(timezone.utc)
+                max_dt).set_tz(timezone.utc)
 
             # loop over stations to check the periods
             for stat in stats:
