@@ -919,17 +919,14 @@ class StationBase:
             Additional keyword arguments catch all, but unused here.
         """
         # check kind input
+        valid_kinds = self._valid_kinds - {"qn", "filled_by"}
         if kind == "all":
-            kind = ["raw", "qc", "filled"]
-            if "corr" in self._valid_kinds:
-                kind.append("corr")
-
+            kind = valid_kinds
         if isinstance(kind, list):
-            for kind in self._check_kinds(kind):
+            for kind in self._check_kinds(kind, valids=valid_kinds):
                 self.update_ma_timeseries(kind)
             return None
-
-        self._check_kind(kind)
+        self._check_kind(kind, valids=valid_kinds)
 
         # create the sql
         sql = f"""
