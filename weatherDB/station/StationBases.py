@@ -445,6 +445,11 @@ class StationBase:
                 self._expand_timeserie_to_period()
 
     @property
+    def _ma_terms_all(self):
+        """Get all terms for the station. If Year is not part of terms it is added."""
+        return set(self._ma_terms) | {"year"}
+
+    @property
     def _ma_raster_bands(self):
         """Get the raster bands of the stations multi annual raster file."""
         return [self._ma_raster_conf[key]
@@ -454,7 +459,7 @@ class StationBase:
     def _ma_raster_band_conf_keys(self):
         """Get the raster band keys for the station. E.g. P_WIHY"""
         return [f"band_{self._para_base}_{term}"
-                for term in self._ma_terms]
+                for term in self._ma_terms_all]
 
     @property
     def _ma_raster_factors(self):
@@ -466,7 +471,7 @@ class StationBase:
     def _ma_raster_factor_conf_keys(self):
         """Get the raster band keys for the station. E.g. P_WIHY"""
         return [f"factor_{self._para_base}_{term}"
-                for term in self._ma_terms]
+                for term in self._ma_terms_all]
 
     @cached_property
     def _table(self):
@@ -725,15 +730,16 @@ class StationBase:
         bool
             True if Station is in multi annual table.
         """
-        sql_select = sa.exists()\
+        sql_select = sa\
+            .select(sa.func.count(StationMARaster.term)==len(self._ma_terms_all))\
             .where(sa.and_(
                 StationMARaster.station_id == self.id,
                 StationMARaster.raster_key == self._ma_raster_key,
                 StationMARaster.parameter == self._para_base,
-                StationMARaster.term.in_(self._ma_terms),
+                StationMARaster.term.in_(self._ma_terms_all),
                 StationMARaster.value.isnot(None)))
-        with db_engine.session() as session:
-            return session.query(sql_select).scalar()
+        with db_engine.connect() as conn:
+            return conn.execute(sql_select).scalar()
 
     def is_virtual(self):
         """Check if the station is a real station or only a virtual one.
@@ -888,7 +894,7 @@ class StationBase:
                              value=val,
                              distance=dist)
                         for term, val in zip(
-                            self._ma_terms,
+                            self._ma_terms_all,
                             new_mas)])
                 stmnt = stmnt\
                     .on_conflict_do_update(

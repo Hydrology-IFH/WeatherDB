@@ -112,7 +112,8 @@ class StationMATimeserieRasterQuotientView(ViewBase):
                 StationMARaster.__table__,
                 sa.and_(
                     StationMATimeserie.station_id == StationMARaster.station_id,
-                    StationMATimeserie.parameter == StationMARaster.parameter
+                    StationMATimeserie.parameter == StationMARaster.parameter,
+                    StationMARaster.term == "year"
                 )
             )
         ).where(

@@ -1,5 +1,10 @@
 # Change-log
 
+## Version 1.0.6
+
+- add term yearly for every parameter station in the ma_raster table
+- StationMATimeserieRasterQuotientView returns now only quotients for yearly raster values -> before there was an error for precipitation stations
+
 ## Version 1.0.5
 
 - fix problem with horizon calculation with holes 
