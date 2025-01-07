@@ -1,5 +1,9 @@
 # Change-log
 
+## Version 1.0.7
+
+- add GroupStation and GroupStations to default imports.
+
 ## Version 1.0.6
 
 - add term yearly for every parameter station in the ma_raster table
