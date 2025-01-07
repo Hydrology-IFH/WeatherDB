@@ -1,5 +1,6 @@
 stages:
-  - test
+  - test_single
+  - test_matrix
   - build
   - deploy
 
@@ -8,11 +9,12 @@ workflow:
     on_new_commit: interruptible
     on_job_failure: all
 
-test:
+test_single:
+  stage: test_single
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-  image: "python:$PYTHON_VERSION"
+  image: "python:3.8"
   services:
     - name: postgis/postgis:16-3.4
       alias: postgres
@@ -40,12 +42,6 @@ test:
     paths:
       - $CI_PROJECT_DIR/tests/db_dump/**/*
       - $CI_PROJECT_DIR/tests/db_dump/*
-  parallel:
-    matrix:
-      - PYTHON_VERSION: "3.8"
-      - PYTHON_VERSION: "3.9"
-      - PYTHON_VERSION: "3.10"
-      - PYTHON_VERSION: "3.11"
   interruptible: true
   variables:
     PYTHON_VERSION: $PYTHON_VERSION
@@ -70,11 +66,21 @@ test:
   tags:
     - docker
 
+test_matrix:
+  stage: test_matrix
+  extends: test_single
+  image: "python:$PYTHON_VERSION"
+  dependencies:
+    - test_single
+  parallel:
+    matrix:
+      - PYTHON_VERSION: ["3.9","3.10","3.11","3.12","3.13"]
+
 build:
   rules:
     - if: $CI_COMMIT_TAG =~ /^[Vv]\d+\.\d+\.\d+$/
   dependencies:
-    - test
+    - test_matrix
   stage: build
   image: python:3.11
   script:
