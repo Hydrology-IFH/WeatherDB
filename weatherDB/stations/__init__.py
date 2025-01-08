@@ -6,5 +6,6 @@ from .StationsP import StationsP
 from .StationsPD import StationsPD
 from .StationsT import StationsT
 from .StationsET import StationsET
+from .GroupStations import GroupStations
 
-__all__ = ["StationsP", "StationsPD", "StationsT", "StationsET"]
+__all__ = ["StationsP", "StationsPD", "StationsT", "StationsET", "GroupStations"]

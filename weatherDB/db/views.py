@@ -6,7 +6,7 @@ from sqlalchemy.sql.expression import Executable, ClauseElement
 from .models import StationMATimeserie, StationMARaster, ModelBase
 
 __all__ = [
-    "StationMAQuotientView",
+    "StationMATimeserieRasterQuotientView",
     "StationKindQuotientView"
 ]
 

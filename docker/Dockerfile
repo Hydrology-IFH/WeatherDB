@@ -1,5 +1,5 @@
 # Use the official Python base image
-FROM --platform=linux/amd64 python:3.10-rc-slim-buster as pythonbaseimage
+FROM --platform=linux/amd64 python:3.12-rc-slim-bullseye as pythonbaseimage
 
 # update pip and install git
 RUN pip install pip --upgrade && \

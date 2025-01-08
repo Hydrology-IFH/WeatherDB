@@ -1,14 +1,15 @@
 stages:
-  - test
+  - test_single
+  - test_matrix
   - build
   - deploy
 
 workflow:
   auto_cancel:
     on_new_commit: interruptible
-    on_job_failure: all
 
-test:
+test_single:
+  stage: test_single
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
@@ -38,21 +39,16 @@ test:
       junit: test-reports/*.xml
     expire_in: 2 weeks
     paths:
-      - $CI_PROJECT_DIR/tests/db_dump/**/*
-      - $CI_PROJECT_DIR/tests/db_dump/*
-  parallel:
-    matrix:
-      - PYTHON_VERSION: "3.8"
-      - PYTHON_VERSION: "3.9"
-      - PYTHON_VERSION: "3.10"
-      - PYTHON_VERSION: "3.11"
+      - $WEATHERDB_TEST_ARTIFACT_DIR/**/*
+      - $WEATHERDB_TEST_ARTIFACT_DIR/*
   interruptible: true
   variables:
-    PYTHON_VERSION: $PYTHON_VERSION
+    PYTHON_VERSION: 3.8
+    PYTHON_VERSION_ESCAPED: $PY_VERSION | replace(".", "_")
     PIP_CACHE_DIR: $CI_PROJECT_DIR/.cache/pip
     POSTGRES_USER: postgres
     POSTGRES_PASSWORD: postgres
-    POSTGRES_DB: test_db
+    POSTGRES_DB: test_db_$PYTHON_VERSION_ESCAPED
     POSTGRES_HOST_AUTH_METHOD: trust
     WEATHERDB_DB_HOST: postgres
     WEATHERDB_DB_PORT: 5432
@@ -65,16 +61,30 @@ test:
     WEATHERDB_LOGGING_HANDLER: console
     WEATHERDB_LOGGING_LEVEL: DEBUG
     WEATHERDB_HORIZON_RADIUS: 40000
-    WEATHERDB_TEST_DUMP_DB_ON_FAILURE: True
+    WEATHERDB_TEST_ARTIFACT_DIR: $CI_PROJECT_DIR/artifacts
+    WEATHERDB_TEST_ARTIFACT_DB_DUMP: ON_FAILURE
+    WEATHERDB_TEST_ARTIFACT_LIST_DATA_FILES: ON_FAILURE
+    WEATHERDB_TEST_ARTIFACT_COPY_USER_CONFIG: ON_FAILURE
     DOCKER_ENV: test
   tags:
     - docker
+
+test_matrix:
+  stage: test_matrix
+  extends: test_single
+  dependencies:
+    - test_single
+  parallel:
+    matrix:
+      - PY_VERSION: ["3.9","3.10","3.11","3.12","3.13"]
+  variables:
+    PYTHON_VERSION: $PY_VERSION
 
 build:
   rules:
     - if: $CI_COMMIT_TAG =~ /^[Vv]\d+\.\d+\.\d+$/
   dependencies:
-    - test
+    - test_matrix
   stage: build
   image: python:3.11
   script:
@@ -105,3 +115,4 @@ deploy:
     TWINE_PASSWORD: $TWINE_PASSWORD
   tags:
     - docker
+  interruptible: false

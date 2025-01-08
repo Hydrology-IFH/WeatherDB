@@ -418,7 +418,7 @@ class StationsBase:
     def get_quotient(self, kinds_num, kinds_denom, stids="all", return_as="df",  **kwargs):
         """Get the quotient of multi-annual means of two different kinds or the timeserie and the multi annual raster value.
 
-        $quotient = \overline{ts}_{kind_num} / \overline{ts}_{denom}$
+        $quotient = \\overline{ts}_{kind_num} / \\overline{ts}_{denom}$
 
         Parameters
         ----------

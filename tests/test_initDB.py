@@ -7,6 +7,7 @@ from pathlib import Path
 import pandas as pd
 from distutils.util import strtobool
 from datetime import timezone
+import shutil
 
 from weatherDB.db import models
 import weatherDB as wdb
@@ -41,34 +42,56 @@ class InitDBTestCases(BaseTestCases):
 
     @classmethod
     def tearDownClass(cls):
-        # check if errors occured
-        if any([len(res.failures) > 0 for res in cls._test_results]):
-            # save artifacts if asked for
-            if strtobool(os.environ.get("WEATHERDB_TEST_DUMP_DB_ON_FAILURE", "False")):
-                dump_dir = Path(__file__).parent.joinpath("db_dump")
-                cls.log.debug(f"Saving artifacts to {dump_dir}")
+        # check if errors occurred
+        art_dir = Path(
+            os.environ.get("WEATHERDB_TEST_ARTIFACT_DIR",
+                           Path(__file__).parent.joinpath("artifacts")))
+        is_failure = any([len(res.failures) > 0 for res in cls._test_results])
 
-                # get database content
-                metadata = wdb.db.models.ModelBase.metadata
-                metadata.reflect(bind=cls.db_engine.engine, schema="timeseries")
-                with cls.db_engine.engine.connect() as conn:
-                    db = {"public": {}, "timeseries": {}}
-                    for table in metadata.sorted_tables:
-                        db[table.schema][table.name] = pd.read_sql_table(
-                            table.name,
-                            conn,
-                            schema=table.schema)
+        def check_flag(key, default="false"):
+            flag_val = os.environ.get(key, default).lower()
+            if flag_val == "on_failure":
+                return is_failure
+            return strtobool(flag_val)
 
-                # dump dict to csv files
-                for schema, tables in db.items():
-                    schema_dir = dump_dir.joinpath(schema)
-                    schema_dir.mkdir(parents=True, exist_ok=True)
-                    for table_name, df in tables.items():
-                        df.to_csv(
-                            schema_dir.joinpath(f"{table_name}.csv"),
-                            index=False)
-            else:
-                cls.log.info("No dump of the database is created as no WEATHERDB_TEST_ARTIFACT_DIR environment variable defined.")
+        # save artifacts if asked for
+        if check_flag("WEATHERDB_TEST_ARTIFACT_DB_DUMP"):
+            dump_dir = art_dir.joinpath("db_dump")
+            cls.log.debug(f"Saving artifacts to {dump_dir}")
+
+            # get database content
+            metadata = wdb.db.models.ModelBase.metadata
+            metadata.reflect(bind=cls.db_engine.engine, schema="timeseries")
+            with cls.db_engine.engine.connect() as conn:
+                db = {"public": {}, "timeseries": {}}
+                for table in metadata.sorted_tables:
+                    db[table.schema][table.name] = pd.read_sql_table(
+                        table.name,
+                        conn,
+                        schema=table.schema)
+
+            # dump dict to csv files
+            for schema, tables in db.items():
+                schema_dir = dump_dir.joinpath(schema)
+                schema_dir.mkdir(parents=True, exist_ok=True)
+                for table_name, df in tables.items():
+                    df.to_csv(
+                        schema_dir.joinpath(f"{table_name}.csv"),
+                        index=False)
+
+        # list files in data folder
+        if check_flag("WEATHERDB_TEST_ARTIFACT_LIST_DATA_FILES"):
+            cls.log.debug("Listing files in data folder")
+            with open(art_dir.joinpath("data_files.csv"), "w") as f:
+                f.write("Path;Size in MB\n")
+                for path in Path(wdb.config.get("data", "base_dir")).glob("**/*"):
+                    f.write(f"{path};{os.path.getsize(path)/(1024^2)}\n")
+
+        # copy user config file
+        if check_flag("WEATHERDB_TEST_ARTIFACT_COPY_USER_CONFIG"):
+            shutil.copy(
+                wdb.config.user_config_file,
+                art_dir.joinpath("user_config.ini").as_posix())
 
     def run(self, result=None):
         if result is None:

@@ -1,5 +1,11 @@
 # Change-log
 
+## Version 1.0.7
+
+- add GroupStation and GroupStations to default imports.
+- add python 3.12 to 3.13 as compatible versions
+- change gitlab-ci tests to run concurrently if first test works
+
 ## Version 1.0.6
 
 - add term yearly for every parameter station in the ma_raster table
