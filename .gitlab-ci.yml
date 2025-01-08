@@ -7,7 +7,6 @@ stages:
 workflow:
   auto_cancel:
     on_new_commit: interruptible
-    on_job_failure: all
 
 test_single:
   stage: test_single
@@ -40,8 +39,8 @@ test_single:
       junit: test-reports/*.xml
     expire_in: 2 weeks
     paths:
-      - $CI_PROJECT_DIR/tests/db_dump/**/*
-      - $CI_PROJECT_DIR/tests/db_dump/*
+      - $WEATHERDB_TEST_ARTIFACT_DIR/**/*
+      - $WEATHERDB_TEST_ARTIFACT_DIR/*
   interruptible: true
   variables:
     PYTHON_VERSION: 3.8
@@ -62,7 +61,10 @@ test_single:
     WEATHERDB_LOGGING_HANDLER: console
     WEATHERDB_LOGGING_LEVEL: DEBUG
     WEATHERDB_HORIZON_RADIUS: 40000
-    WEATHERDB_TEST_DUMP_DB_ON_FAILURE: True
+    WEATHERDB_TEST_ARTIFACT_DIR: $CI_PROJECT_DIR/artifacts
+    WEATHERDB_TEST_ARTIFACT_DB_DUMP: ON_FAILURE
+    WEATHERDB_TEST_ARTIFACT_LIST_DATA_FILES: ON_FAILURE
+    WEATHERDB_TEST_ARTIFACT_COPY_USER_CONFIG: ON_FAILURE
     DOCKER_ENV: test
   tags:
     - docker
@@ -113,3 +115,4 @@ deploy:
     TWINE_PASSWORD: $TWINE_PASSWORD
   tags:
     - docker
+  interruptible: false
