@@ -45,7 +45,7 @@ def upgrade() -> None:
             SET
                 term= split_part("parameter", '_', 2),
                 parameter= split_part("parameter", '_', 1)
-        WHERE parameter LIKE '%\_%';
+        WHERE parameter LIKE '%\\_%';
         """))
     op.alter_column(
         'station_ma_raster', 'term',
@@ -82,7 +82,7 @@ def downgrade() -> None:
         """
         UPDATE public."station_ma_raster"
             SET "parameter" = "parameter"||'_'||"term"
-        WHERE parameter NOT LIKE '%\_%';
+        WHERE parameter NOT LIKE '%\\_%';
         """))
     op.drop_column('station_ma_raster', 'term')
     op.create_primary_key("station_ma_raster_pkey", "station_ma_raster", ["station_id", "raster_key", "parameter"])
