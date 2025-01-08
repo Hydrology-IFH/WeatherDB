@@ -14,7 +14,7 @@ test_single:
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-  image: "python:3.8"
+  image: "python:$PYTHON_VERSION"
   services:
     - name: postgis/postgis:16-3.4
       alias: postgres
@@ -44,11 +44,12 @@ test_single:
       - $CI_PROJECT_DIR/tests/db_dump/*
   interruptible: true
   variables:
-    PYTHON_VERSION: $PYTHON_VERSION
+    PYTHON_VERSION: 3.8
+    PYTHON_VERSION_ESCAPED: $PY_VERSION | replace(".", "_")
     PIP_CACHE_DIR: $CI_PROJECT_DIR/.cache/pip
     POSTGRES_USER: postgres
     POSTGRES_PASSWORD: postgres
-    POSTGRES_DB: test_db
+    POSTGRES_DB: test_db_$PYTHON_VERSION_ESCAPED
     POSTGRES_HOST_AUTH_METHOD: trust
     WEATHERDB_DB_HOST: postgres
     WEATHERDB_DB_PORT: 5432
@@ -69,12 +70,13 @@ test_single:
 test_matrix:
   stage: test_matrix
   extends: test_single
-  image: "python:$PYTHON_VERSION"
   dependencies:
     - test_single
   parallel:
     matrix:
-      - PYTHON_VERSION: ["3.9","3.10","3.11","3.12","3.13"]
+      - PY_VERSION: ["3.9","3.10","3.11","3.12","3.13"]
+  variables:
+    PYTHON_VERSION: $PY_VERSION
 
 build:
   rules:
