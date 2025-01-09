@@ -1,5 +1,9 @@
 # Change-log
 
+## Version 1.1.0
+
+- rename module from weatherDB to weatherdb to be compliant with PEP 8
+
 ## Version 1.0.7
 
 - add GroupStation and GroupStations to default imports.

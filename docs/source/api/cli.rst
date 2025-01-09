@@ -1,8 +1,8 @@
 cli
 ===
 
-This module contains the command line interface for the weatherDB package.
+This module contains the command line interface for the WeatherDB package.
 
-.. click:: weatherDB.cli:cli
-    :prog: weatherDB
+.. click:: weatherdb.cli:cli
+    :prog: weatherdb
     :nested: full

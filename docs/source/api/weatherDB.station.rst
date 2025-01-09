@@ -1,36 +1,36 @@
 station
 -------
-.. module:: weatherDB.station
+.. module:: weatherdb.station
 
 StationP
 ^^^^^^^^
-.. autoclass:: weatherDB.station.StationP
+.. autoclass:: weatherdb.station.StationP
 
   .. autoclasstoc::
 
 StationT
 ^^^^^^^^
-.. autoclass:: weatherDB.station.StationT
+.. autoclass:: weatherdb.station.StationT
 
   .. autoclasstoc::
 
 StationET
 ^^^^^^^^^
 
-.. autoclass:: weatherDB.station.StationET
+.. autoclass:: weatherdb.station.StationET
 
   .. autoclasstoc::
 
 StationPD
 ^^^^^^^^^
-.. autoclass:: weatherDB.station.StationPD
+.. autoclass:: weatherdb.station.StationPD
    :exclude-members: quality_check, last_imp_quality_check, get_corr, get_adj, get_qc
 
   .. autoclasstoc::
 
 GroupStation
 ^^^^^^^^^^^^
-.. autoclass:: weatherDB.station.GroupStation
+.. autoclass:: weatherdb.station.GroupStation
 
    .. autoclasstoc::
 
@@ -39,18 +39,18 @@ StationBase...
 Those are the base station classes on which the real station classes above depend on.
 None of them is working on its own, because the class variables are not yet set correctly.
 
-.. autoclass:: weatherDB.station.StationBases.StationBase
+.. autoclass:: weatherdb.station.StationBases.StationBase
 
   .. autoclasstoc::
 
-.. autoclass:: weatherDB.station.StationBases.StationPBase
+.. autoclass:: weatherdb.station.StationBases.StationPBase
 
   .. autoclasstoc::
 
-.. autoclass:: weatherDB.station.StationBases.StationCanVirtualBase
+.. autoclass:: weatherdb.station.StationBases.StationCanVirtualBase
 
   .. autoclasstoc::
 
-.. autoclass:: weatherDB.station.StationBases.StationTETBase
+.. autoclass:: weatherdb.station.StationBases.StationTETBase
 
   .. autoclasstoc::

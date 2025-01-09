@@ -9,17 +9,17 @@ src_path = Path(__file__).parent
 base_path = src_path.parents[1]
 sys.path.insert(0, base_path.resolve().as_posix())
 
-import weatherDB
+import weatherdb
 
 # -- Project information -----------------------------------------------------
 
 project = 'WeatherDB'
-copyright = weatherDB.__copyright__
-author = weatherDB.__author__
-author_email = weatherDB.__email__
+copyright = weatherdb.__copyright__
+author = weatherdb.__author__
+author_email = weatherdb.__email__
 
 # The full version, including alpha/beta/rc tags
-release = weatherDB.__version__
+release = weatherdb.__version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -115,10 +115,11 @@ html_favicon = "_static/favicon.ico"
 
 html_context = {
     # display gitlab
-    "display_gitlab": True, # Integrate Gitlab
-    "gitlab_user": "hydrology", # Username
-    "gitlab_repo": "weatherDB", # Repo name
-    "gitlab_version": "master", # Version
+    "display_gitlab": True,
+    "gitlab_host": "https://gitlab.uni-freiburg.de",
+    "gitlab_user": "hydrology",
+    "gitlab_repo": "weatherDB",
+    "gitlab_version": "master",
     "conf_py_path": "/docs/source/", # Path in the checkout to the docs root
 }
 

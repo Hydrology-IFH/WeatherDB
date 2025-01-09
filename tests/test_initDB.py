@@ -9,8 +9,8 @@ from distutils.util import strtobool
 from datetime import timezone
 import shutil
 
-from weatherDB.db import models
-import weatherDB as wdb
+from weatherdb.db import models
+import weatherdb as wdb
 
 sys.path.insert(0, Path(__file__).parent.resolve().as_posix())
 from baseTest import BaseTestCases

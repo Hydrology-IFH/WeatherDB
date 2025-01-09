@@ -1,5 +1,5 @@
 """
-The configuration module for the weatherDB module.
+The configuration module for the WeatherDB module.
 """
 import configparser
 from pathlib import Path
@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 
 # create the config parser class
 class ConfigParser(configparser.ConfigParser):
-    """This is the class/object of the configurations for the weatherDB module.
+    """This is the class/object of the configurations for the WeatherDB module.
     """
     _DEFAULT_CONFIG_FILE = Path(__file__).parent.resolve()/'config_default.ini'
     _MAIN_CONFIG_FILE = Path(__file__).parent.resolve()/'config_main.ini'
@@ -22,7 +22,7 @@ class ConfigParser(configparser.ConfigParser):
         """
         Warning
         -------
-        You shouldn't initialize this class directly, but use the :py:data:``weatherDB.config`` object from the weatherDB module, which is an instance of this class.
+        You shouldn't initialize this class directly, but use the :py:data:``weatherdb.config`` object from the WeatherDB module, which is an instance of this class.
         """
         super().__init__(
             interpolation=configparser.ExtendedInterpolation(),
@@ -99,7 +99,7 @@ class ConfigParser(configparser.ConfigParser):
                 delimiter=self._delimiters[0])
 
     def _set(self, section, option, value):
-        """The internal function to set a configuration option for the weatherDB module.
+        """The internal function to set a configuration option for the WeatherDB module.
 
         Please use set instead.
 
@@ -128,7 +128,7 @@ class ConfigParser(configparser.ConfigParser):
                         cb()
 
     def set(self, section, option, value):
-        """Set a configuration option for the weatherDB module.
+        """Set a configuration option for the WeatherDB module.
 
         Parameters
         ----------
@@ -190,7 +190,7 @@ class ConfigParser(configparser.ConfigParser):
         return self.get_datetime(section, option, fallback=fallback).date()
 
     def _get_db_key_section(self, db_key=None):
-        """Get the database section for the weatherDB database.
+        """Get the database section for the WeatherDB database.
 
         Parameters
         ----------
@@ -214,7 +214,7 @@ class ConfigParser(configparser.ConfigParser):
             db_key=None,
             user=None,
             password=None):
-        """Set the database credentials for the weatherDB database.
+        """Set the database credentials for the WeatherDB database.
 
         Parameters
         ----------
@@ -269,7 +269,7 @@ class ConfigParser(configparser.ConfigParser):
         keyring.set_password(keyring_key, user, password)
 
     def get_db_credentials(self, db_key=None):
-        """Get the database credentials for the weatherDB database.
+        """Get the database credentials for the WeatherDB database.
 
         Parameters
         ----------

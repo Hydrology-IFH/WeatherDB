@@ -3,7 +3,7 @@ import sys
 import sqlalchemy as sa
 from pathlib import Path
 
-import weatherDB as wdb
+import weatherdb as wdb
 
 sys.path.insert(0, Path(__file__).parent.resolve().as_posix())
 from baseTest import BaseTestCases

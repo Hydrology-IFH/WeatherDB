@@ -1,23 +1,23 @@
 # Installation
 
-## Install weatherDB module
+## Install WeatherDB module
 
 To install the package use PIP to install the Github repository:
 
 ```batch
-pip install weatherDB
+pip install weatherdb
 ```
 
 If you also want to install the optional dependencies use:
 
 ```batch
-pip install weatherDB[optionals]
+pip install weatherdb[optionals]
 ```
 
 Or to upgrade use:
 
 ```batch
-pip install weatherDB --upgrade
+pip install weatherdb --upgrade
 ```
 
 After installing the package you need to [configure the module](<project:Configuration.md>).

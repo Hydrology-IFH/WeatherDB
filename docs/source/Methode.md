@@ -5,7 +5,7 @@ Therefor everyone can look into the code to find out exactly how the database cr
 
 The timeseries for Temperature, Evapotranspiration and Precipitation are going through a 3-4 step process.The result of every process is saved and can get downloaded, with the corresponding abbreviation:
 
-**Table 1: The 4 steps of the weatherDB process, with their abbreviation and explanation**
+**Table 1: The 4 steps of the WeatherDB process, with their abbreviation and explanation**
 | step | abreviation | explanation |
 |:--:|:--:|--|
 | 1 | raw | downloading the raw data |

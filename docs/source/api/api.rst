@@ -7,7 +7,7 @@ The API reference is organized in a python package structure and a CLI-API.
 .. toctree::
    :maxdepth: 1
 
-   Python package <weatherDB>
+   Python package <weatherdb>
    CLI <cli>
 
 .. autosummary::

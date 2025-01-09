@@ -23,8 +23,8 @@ services:
     develop:
       watch:
         - action: rebuild
-          path: ../weatherDB
-          target: /src/weatherDB
+          path: ../weatherdb
+          target: /src/weatherdb
         - action: rebuild
           path: ../MANIFEST.in
           target: /src/MANIFEST.in

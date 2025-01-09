@@ -1,22 +1,22 @@
 utils
 =====
 
-In this module there are several utilities used by the weatherDB package, you shouldn't need to use them directly.
+In this module there are several utilities used by the WeatherDB package, you shouldn't need to use them directly.
 
-.. autoclass:: weatherDB.utils.TimestampPeriod
+.. autoclass:: weatherdb.utils.TimestampPeriod
 
 dwd
 ---
-.. automodule:: weatherDB.utils.dwd
+.. automodule:: weatherdb.utils.dwd
 
 geometry
 --------
-.. automodule:: weatherDB.utils.geometry
+.. automodule:: weatherdb.utils.geometry
 
 get_data
 --------
-.. automodule:: weatherDB.utils.get_data
+.. automodule:: weatherdb.utils.get_data
 
 logging
 -------
-.. automodule:: weatherDB.utils.logging
+.. automodule:: weatherdb.utils.logging

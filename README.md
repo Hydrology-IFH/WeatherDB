@@ -28,19 +28,19 @@ This submodule has only one class Broker. This one is used to do actions on all 
 To install the package use PIP to install the Github repository:
 
 ```cmd
-pip install weatherDB
+pip install weatherdb
 ```
 
 If you also want to install the optional dependencies use:
 
 ```batch
-pip install weatherDB[optionals]
+pip install weatherdb[optionals]
 ```
 
 Or to upgrade use:
 
 ```cmd
-pip install weatherDB --upgrade
+pip install weatherdb --upgrade
 ```
 
 ## Configuration

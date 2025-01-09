@@ -5,7 +5,7 @@ import sys
 import argparse
 
 import os
-import weatherDB as wdb
+import weatherdb as wdb
 
 sys.path.insert(0, Path(__file__).parent.resolve().as_posix())
 from baseTest import BaseTestCases
@@ -52,7 +52,7 @@ class DownloadRastersTestCases(BaseTestCases):
                      "Using cached multi anual raster files, as 'WEATHERDB_TEST_COMPLETE' is not set or False and no system argument \"--complete\" was given.")
     def test_download_ma_rasters(self):
         self.log.debug("Downloading multi annual raster files...")
-        from weatherDB.utils.get_data import download_ma_rasters
+        from weatherdb.utils.get_data import download_ma_rasters
         with patch("builtins.input", return_value="y"):
             download_ma_rasters(
                 overwrite=True,
@@ -63,7 +63,7 @@ class DownloadRastersTestCases(BaseTestCases):
                     "Using cached multi anual raster files, as 'WEATHERDB_TEST_COMPLETE' is not set or False and no system argument \"--complete\" was given.")
     def test_download_dem(self):
         self.log.debug("Downloading multi annual raster files...")
-        from weatherDB.utils.get_data import download_dem
+        from weatherdb.utils.get_data import download_dem
         with patch("builtins.input", return_value="y"):
             download_dem(
                 overwrite=True,

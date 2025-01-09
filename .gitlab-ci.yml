@@ -27,7 +27,7 @@ test_single:
     - mkdir -p test-reports
     - python3 -m xmlrunner discover -s tests -p testSuite.py -o test-reports
   cache:
-    - key: weatherDB-data-cache-$CI_COMMIT_REF_SLUG
+    - key: weatherdb-data-cache-$CI_COMMIT_REF_SLUG
       paths:
         - user/
     - key: python-dep
