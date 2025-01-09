@@ -599,8 +599,8 @@ class GroupStation(object):
 
             # create header
             if add_meta:
-                header = ("Name: " + name + "\t" * (len(df.columns)-1) + "\n" +
-                        "Lat: " + y + "   ,Lon: " + x + "\t" * (len(df.columns)-1) + "\n")
+                header = f"Name: {name}{"\t" * (len(df.columns)-1)}\n" +\
+                         f"Lat: {y[0]}   ,Lon: {x[0]}{"\t" * (len(df.columns)-1)}\n"
             else:
                 header = ""
 
