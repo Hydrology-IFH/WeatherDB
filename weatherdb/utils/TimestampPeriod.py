@@ -60,7 +60,7 @@ class TimestampPeriod(object):
 
     @staticmethod
     def _check_period(period):
-        if isinstance(period, TimestampPeriod):
+        if not isinstance(period, TimestampPeriod):
             period = TimestampPeriod(*period)
         return period
 

@@ -4,6 +4,7 @@
 
 - rename module from weatherDB to weatherdb to be compliant with PEP 8
 - fix some missing stationN variables to stationsP
+- fix: TimestampPeriod._check_period
 
 ## Version 1.0.7
 
