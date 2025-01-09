@@ -663,7 +663,7 @@ class StationP(StationPBase):
         ----------
         _last_imp_period : weatherdb.utils.TimestampPeriod, optional
             Give the overall period of the last import.
-            This is only for intern use of the stationsN method to not compute over and over again the period.
+            This is only for intern use of the stationsP method to not compute over and over again the period.
             The default is None.
         **kwargs : dict, optional
             Additional keyword arguments passed to the richter_correct method.

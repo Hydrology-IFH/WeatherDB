@@ -3,6 +3,7 @@
 ## Version 1.1.0
 
 - rename module from weatherDB to weatherdb to be compliant with PEP 8
+- fix some missing stationN variables to stationsP
 
 ## Version 1.0.7
 
