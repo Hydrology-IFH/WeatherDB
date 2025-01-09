@@ -1,10 +1,10 @@
 broker
 ------
-.. module:: weatherDB.broker
+.. module:: weatherdb.broker
 
 Broker
 ^^^^^^
-.. autoclass:: weatherDB.broker.Broker
+.. autoclass:: weatherdb.broker.Broker
 
   .. autoclasstoc::
 

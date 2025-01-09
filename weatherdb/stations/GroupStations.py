@@ -32,7 +32,7 @@ class GroupStations(object):
     _GroupStation = GroupStation
 
     def __init__(self):
-        self.stationsN = StationsP()
+        self.stationsP = StationsP()
 
     def get_valid_stids(self):
         if not hasattr(self, "_valid_stids"):
@@ -243,7 +243,7 @@ class GroupStations(object):
         """
         paras = self._check_paras(paras)
         if not hasattr(self, "stations"):
-            self.stations = [self.stationsN, StationsT(), StationsET()]
+            self.stations = [self.stationsP(), StationsT(), StationsET()]
         return [stats for stats in self.stations if stats._para in paras]
 
     def get_group_stations(self, stids="all", **kwargs):

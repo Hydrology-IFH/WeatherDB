@@ -4,8 +4,8 @@ __pycache__
 # Ignore the created distribution files
 build
 dist
-weatherDB.egg-info
-weatherDB.egg-info/*
+weatherdb.egg-info
+weatherdb.egg-info/*
 dist/*
 
 # Ignore the created docs files
@@ -18,13 +18,13 @@ latex
 _build
 
 # Ignore the user specifiv created files
-weatherDB/data/
+weatherdb/data/
 *.log
-weatherDB/logs
+weatherdb/logs
 tests/db_dumps
 
 # ignore the main (system) configuration file as it is user specific
-weatherDB/config/config_main.ini
+weatherdb/config/config_main.ini
 
 # other system files
 sync.ffs_db

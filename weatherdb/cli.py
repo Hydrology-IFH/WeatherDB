@@ -5,12 +5,12 @@ from textwrap import dedent
 
 
 sys.path.insert(0, Path(__file__).resolve().parent.parent.as_posix())
-import weatherDB
+import weatherdb
 
 # main cli group
 # ---------------------------------------
 
-@click.group(help="This is the Command line interface of the weatherDB package.",
+@click.group(help="This is the Command line interface of the WeatherDB package.",
              chain=True,
              context_settings=dict(
                  show_default=True
@@ -28,14 +28,14 @@ import weatherDB
 def cli(do_logging, connection, verbose):
     if do_logging:
         click.echo("logging to console is set on")
-        handlers = weatherDB.config.get_list("logging", "handler")
+        handlers = weatherdb.config.get_list("logging", "handler")
         if "console" not in handlers:
             handlers.append("console")
-            weatherDB.config.set("logging", "handler", handlers)
+            weatherdb.config.set("logging", "handler", handlers)
 
     if connection is not None:
         print(f"setting the connection to {connection}")
-        weatherDB.config.set("database", "connection", connection)
+        weatherdb.config.set("database", "connection", connection)
 
 
 def safe_entry():
@@ -59,17 +59,17 @@ def safe_entry():
                  As default is the current user will be the owner."""))
 def create_db_schema(owner):
     click.echo("starting to create database schema")
-    broker = weatherDB.broker.Broker()
+    broker = weatherdb.broker.Broker()
     broker.create_db_schema(owner=owner)
 
 
 @cli.command(short_help="Use Alembic directly to update or downgrade the database schema. Have a look at the official alembic documentation for more information.")
 @click.option('--revision', '-r',
               type=str, default="head", show_default=True,
-              help="The revision ID (weatherDB Version e.g. 'V1.0.2') to upgrade/downgrade to.")
+              help="The revision ID (WeatherDB Version e.g. 'V1.0.2') to upgrade/downgrade to.")
 def upgrade_db_schema(revision):
     click.echo("starting to upgrade database schema")
-    broker = weatherDB.broker.Broker()
+    broker = weatherdb.broker.Broker()
     broker.upgrade_db_schema(revision=revision)
 
 
@@ -81,7 +81,7 @@ def upgrade_db_schema(revision):
               type=str, default="ask", show_default=True,
               help="What to do if the file already exists. Options are 'ask', 'overwrite', 'define' or 'error'.")
 def create_user_config(file, on_exists):
-    weatherDB.config.create_user_config(user_config_file=file, on_exists=on_exists)
+    weatherdb.config.create_user_config(user_config_file=file, on_exists=on_exists)
 
 
 @cli.command(short_help="Download the needed multi-annual raster data from zenodo to the data folder.")
@@ -102,7 +102,7 @@ def download_ma_rasters(which, overwrite, update_user_config):
     Schmit, M.; Weiler, M. (2023). German weather services (DWD) multi annual meteorological rasters for the climate period 1991-2020 refined to 25m grid (1.0.0) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.10066045
     """
     click.echo("starting downloading multi annual raster data")
-    from weatherDB.utils.get_data import download_ma_rasters
+    from weatherdb.utils.get_data import download_ma_rasters
     download_ma_rasters(overwrite=overwrite)
 
 
@@ -130,7 +130,7 @@ def download_dem(overwrite, extent):
     Copernicus DEM - Global and European Digital Elevation Model. Digital Surface Model (DSM) provided in 3 different resolutions (90m, 30m, 10m) with varying geographical extent (EEA: European and GLO: global) and varying format (INSPIRE, DGED, DTED). DOI:10.5270/ESA-c5d3d65.
     """
     click.echo("Starting downloading digital elevation model from Copernicus")
-    from weatherDB.utils.get_data import download_dem
+    from weatherdb.utils.get_data import download_dem
     download_dem(overwrite=overwrite, extent=extent)
 
 
@@ -139,69 +139,69 @@ def download_dem(overwrite, extent):
 @cli.command(short_help="Update the complete database. Get the newest data from DWD and treat it.")
 def update_db():
     click.echo("starting updating the database")
-    broker = weatherDB.broker.Broker()
+    broker = weatherdb.broker.Broker()
     broker.update_db()
 
 
 @cli.command(short_help="Update the meta data in the database. Get the newest meta data from DWD.")
 def update_meta():
     click.echo("updating the meta data")
-    broker = weatherDB.broker.Broker()
+    broker = weatherdb.broker.Broker()
     broker.update_meta()
 
 
 @cli.command(short_help="Update the Richter classes of the precipitation stations in the database.")
 def update_richter_class():
     click.echo("starting updating the regionalisation")
-    weatherDB.StationsP().update_richter_class()
+    weatherdb.StationsP().update_richter_class()
 
 
 @cli.command(short_help="Update the multi annual raster values in the database.")
 def update_ma_raster():
     click.echo("starting updating the multi annual raster data")
-    broker = weatherDB.broker.Broker()
+    broker = weatherdb.broker.Broker()
     broker.update_ma_raster()
 
 
 @cli.command(short_help="Update the raw data of the complete database.")
 def update_raw():
     click.echo("starting updating the raw data")
-    broker = weatherDB.broker.Broker()
+    broker = weatherdb.broker.Broker()
     broker.update_raw()
 
 
 @cli.command(short_help="Do the quality check of the complete database.")
 def quality_check():
     click.echo("starting quality check")
-    broker = weatherDB.broker.Broker()
+    broker = weatherdb.broker.Broker()
     broker.quality_check()
 
 
 @cli.command(short_help="Do the filling of the complete database.")
 def fillup():
     click.echo("starting filling up")
-    broker = weatherDB.broker.Broker()
+    broker = weatherdb.broker.Broker()
     broker.fillup()
 
 
 @cli.command(short_help="Do the richter correction of the complete database.")
 def richter_correct():
     click.echo("starting richter correction")
-    broker = weatherDB.broker.Broker()
+    broker = weatherdb.broker.Broker()
     broker.richter_correct()
 
 
 # cli admin stuff
 # ---------------------------------------
 
-@cli.command(short_help="Set the db version to the current weatherDB version to prevent recalculation of the whole database. (!!!Only use this if you're sure that the database did all the necessary updates!!!)")
+@cli.command(short_help="Set the db version to the current WeatherDB version to prevent recalculation of the whole database. (!!!Only use this if you're sure that the database did all the necessary updates!!!)")
 def set_db_version():
     click.echo(dedent(
-        """Are you sure you want to set the db version to the current weatherDB version?
+        """Are you sure you want to set the db version to the current WeatherDB version?
            This will prevent the recalculation of the whole database if there was an update and could resolve in old values in the database."""))
     if click.confirm("Are you sure you want to continue?"):
         click.echo("starting setting db version")
-        broker = weatherDB.broker.Broker()
+        broker = weatherdb.broker.Broker()
         broker.set_db_version()
     else:
         click.echo("aborting setting db version")

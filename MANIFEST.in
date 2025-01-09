@@ -1,8 +1,8 @@
 include requirements.txt
 include LICENSE
-include weatherDB/config/config_default.ini
-include weatherDB/alembic/alembic.ini
-include weatherDB/alembic/script.py.mako
-include weatherDB/db/fixtures/*
+include weatherdb/config/config_default.ini
+include weatherdb/alembic/alembic.ini
+include weatherdb/alembic/script.py.mako
+include weatherdb/db/fixtures/*
 exclude tests/*
 global-exclude logs/*

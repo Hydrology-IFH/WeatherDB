@@ -8,9 +8,10 @@ import pandas as pd
 from distutils.util import strtobool
 from datetime import timezone
 import shutil
+from tempfile import TemporaryDirectory
 
-from weatherDB.db import models
-import weatherDB as wdb
+from weatherdb.db import models
+import weatherdb as wdb
 
 sys.path.insert(0, Path(__file__).parent.resolve().as_posix())
 from baseTest import BaseTestCases
@@ -20,7 +21,7 @@ parser = argparse.ArgumentParser(description="InitDB Test CLI arguments")
 parser.add_argument("--steps", default="all",
                     help="The steps to run. Default is 'all'.")
 parser.add_argument("--just-check", action="store_true",
-                    help="Should only the check be run, without the weatehrDB step method.")
+                    help="Should only the check be run, without the weatherDB step method.")
 cliargs, remaining_args = parser.parse_known_args()
 sys.argv = [sys.argv[0]] + remaining_args
 
@@ -127,6 +128,19 @@ class InitDBTestCases(BaseTestCases):
 
     def step_vacuum(self, **kwargs):
         self.broker.vacuum(**kwargs)
+
+    def step_create_ts(self, **kwargs):
+        with TemporaryDirectory() as td:
+            zip_fp = Path(td).joinpath("test.zip")
+            wdb.GroupStations().create_ts(
+                stids=self.test_stids,
+                period=("2010-01-01", "2011-01-02"),
+                kind="best",
+                agg_to="day",
+                dir=zip_fp)
+            self.assertTrue(
+                zip_fp.exists(),
+                msg="Zip file was not created.")
 
     def _check_no_nas(self, base_kind, kind, stats, add_base_stat_class=None, add_base_kind=None):
         """Check if there are NAs in the timeseries, but exclude rows where the base_kind is NULL.
@@ -475,6 +489,9 @@ class InitDBTestCases(BaseTestCases):
                         0,
                         msg=f"No tables found in schema {schema}.")
 
+    def check_create_ts(self):
+        pass
+
     def test_steps(self):
         """Test the single steps from initiating the database.
 
@@ -485,7 +502,7 @@ class InitDBTestCases(BaseTestCases):
         """
         STEPS = ["update_meta", "update_raw", "update_ma_raster",
                  "quality_check", "fillup", "update_richter_class", "richter_correct",
-                 "vacuum"]
+                 "vacuum", "create_ts"]
         # get steps from cli arguments
         steps = cliargs.steps
         if steps == "all":

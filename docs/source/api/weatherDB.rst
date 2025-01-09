@@ -1,14 +1,14 @@
-weatherDB
+weatherdb
 =========
 
 
 .. toctree::
    :maxdepth: 2
 
-   weatherDB.station
-   weatherDB.stations
-   weatherDB.broker
-   weatherDB.config
+   weatherdb.station
+   weatherdb.stations
+   weatherdb.broker
+   weatherdb.config
 
 internal modules
 ----------------
@@ -18,5 +18,5 @@ Those modules are used internally by weatherDb and should not get used by the us
 .. toctree::
    :maxdepth: 2
 
-   weatherDB.db
-   weatherDB.utils
+   weatherdb.db
+   weatherdb.utils

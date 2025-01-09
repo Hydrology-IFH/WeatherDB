@@ -1,0 +1,2 @@
+[console_scripts]
+weatherdb = weatherdb.cli:cli

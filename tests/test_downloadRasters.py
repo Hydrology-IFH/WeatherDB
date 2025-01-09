@@ -5,7 +5,7 @@ import sys
 import argparse
 
 import os
-import weatherDB as wdb
+import weatherdb as wdb
 
 sys.path.insert(0, Path(__file__).parent.resolve().as_posix())
 from baseTest import BaseTestCases
@@ -37,9 +37,10 @@ def dem_rasters_available():
             file = Path(file)
             if not file.exists():
                 return False
+            else:
+                return True
     else:
         return False
-    return True
 
 # define TestCases class
 class DownloadRastersTestCases(BaseTestCases):
@@ -52,23 +53,33 @@ class DownloadRastersTestCases(BaseTestCases):
                      "Using cached multi anual raster files, as 'WEATHERDB_TEST_COMPLETE' is not set or False and no system argument \"--complete\" was given.")
     def test_download_ma_rasters(self):
         self.log.debug("Downloading multi annual raster files...")
-        from weatherDB.utils.get_data import download_ma_rasters
+        from weatherdb.utils.get_data import download_ma_rasters
         with patch("builtins.input", return_value="y"):
             download_ma_rasters(
                 overwrite=True,
                 update_user_config=True,
                 which=["hyras", "dwd"])
 
+        # check if the files exists
+        self.assertTrue(
+            ma_rasters_available(),
+            "Some multi annual raster files are missing.")
+
     @unittest.skipIf(not (do_complete or not dem_rasters_available()),
-                    "Using cached multi anual raster files, as 'WEATHERDB_TEST_COMPLETE' is not set or False and no system argument \"--complete\" was given.")
+                    "Using cached DEM raster file, as 'WEATHERDB_TEST_COMPLETE' is not set or False and no system argument \"--complete\" was given.")
     def test_download_dem(self):
-        self.log.debug("Downloading multi annual raster files...")
-        from weatherDB.utils.get_data import download_dem
+        self.log.debug("Downloading DEM raster file...")
+        from weatherdb.utils.get_data import download_dem
         with patch("builtins.input", return_value="y"):
             download_dem(
                 overwrite=True,
                 extent=[7, 47.5, 8.7, 48.5],
                 update_user_config=True)
+
+        # check if the file exists
+        self.assertTrue(
+            dem_rasters_available(),
+            "DEM raster file is missing.")
 
 # cli entry point
 if __name__ == "__main__":

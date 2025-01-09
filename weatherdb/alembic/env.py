@@ -3,9 +3,9 @@ import re
 from setuptools_scm import get_version
 from packaging.version import parse as vparse
 
-import weatherDB as wdb
-from weatherDB.db.models import ModelBase
-from weatherDB.db.connections import db_engine
+import weatherdb as wdb
+from weatherdb.db.models import ModelBase
+from weatherdb.db.connections import db_engine
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -13,10 +13,10 @@ config = context.config
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-# in console do: weatherDB>alembic -c alembic\alembic.ini revision --autogenerate -m "comment" --rev-id "V1.0.0"
+# in console do: weatherdb>alembic -c alembic\alembic.ini revision --autogenerate -m "comment" --rev-id "V1.0.0"
 target_metadata = ModelBase.metadata
 
-# check for alembic database copnnection in the weatherDB config
+# check for alembic database copnnection in the WeatherDB config
 # ##############################################################
 engine = config.attributes.get("engine", None)
 if engine is None and \
@@ -64,7 +64,7 @@ def process_revision_directives(context, revision, directives):
     # extract Migration
     migration_script = directives[0]
 
-    # get version from setuptools_scm or weatherDB if not in git
+    # get version from setuptools_scm or WeatherDB if not in git
     try:
         version = vparse(get_version(root="..", relative_to=wdb.__file__))
     except LookupError:

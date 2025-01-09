@@ -1,34 +1,34 @@
 stations
 --------
-.. module:: weatherDB.stations
+.. module:: weatherdb.stations
 
 StationsP
 ^^^^^^^^^
-.. autoclass:: weatherDB.stations.StationsP
+.. autoclass:: weatherdb.stations.StationsP
 
   .. autoclasstoc::
 
 StationsT
 ^^^^^^^^^
-.. autoclass:: weatherDB.stations.StationsT
+.. autoclass:: weatherdb.stations.StationsT
 
   .. autoclasstoc::
 
 StationsET
 ^^^^^^^^^^
-.. autoclass:: weatherDB.stations.StationsET
+.. autoclass:: weatherdb.stations.StationsET
 
   .. autoclasstoc::
 
 StationsPD
 ^^^^^^^^^^
-.. autoclass:: weatherDB.stations.StationsPD
+.. autoclass:: weatherdb.stations.StationsPD
 
   .. autoclasstoc::
 
 GroupStations
 ^^^^^^^^^^^^^
-.. autoclass:: weatherDB.stations.GroupStations
+.. autoclass:: weatherdb.stations.GroupStations
 
   .. autoclasstoc::
 
@@ -37,10 +37,10 @@ StationsBase...
 Those are the base stations classes on which the real stations classes above depend on.
 None of them is working on its own, because the class variables are not yet set correctly.
 
-.. autoclass:: weatherDB.stations.StationsBase.StationsBase
+.. autoclass:: weatherdb.stations.StationsBase.StationsBase
 
   .. autoclasstoc::
 
-.. autoclass:: weatherDB.stations.StationsBaseTET.StationsBaseTET
+.. autoclass:: weatherdb.stations.StationsBaseTET.StationsBaseTET
 
    .. autoclasstoc::

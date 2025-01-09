@@ -227,7 +227,7 @@ class Broker(object):
             except Exception as e:
                 self._db_schema_valid = False
                 if "Target database is not up to date" in str(e):
-                    note = "You may need to run `weatherDB upgrade-db-schema` in CLI or use `weatherDB.Broker().upgrade_db_schema()` as python script to upgrade the database schema first."
+                    note = "You may need to run `weatherdb upgrade-db-schema` in CLI or use `weatherdb.Broker().upgrade_db_schema()` as python script to upgrade the database schema first."
                     if sys.version_info >= (3, 11):
                         e.add_note(note)
                     else:

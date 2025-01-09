@@ -1,7 +1,7 @@
 config
 ======
-This is the module to configure your weatherDB package.
+This is the module to configure your WeatherDB package.
 
-.. autodata:: weatherDB.config
+.. autodata:: weatherdb.config
 
-.. autoclass:: weatherDB.config.ConfigParser
+.. autoclass:: weatherdb.config.ConfigParser

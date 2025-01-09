@@ -1,10 +1,10 @@
 # Configuration
 
-The weatherDB module has several configurations you can make. Those are stored in a INI-File.
+The WeatherDB module has several configurations you can make. Those are stored in a INI-File.
 
 ## create user configuration
 
-To configure your weatherDB module, you need to create a user configuration file somewhere on your system. To do so:
+To configure your WeatherDB module, you need to create a user configuration file somewhere on your system. To do so:
 
 ::::{tab-set}
 :sync-group: category
@@ -13,7 +13,7 @@ To configure your weatherDB module, you need to create a user configuration file
 :sync: python
 
 ```{code-block} python
-import weatherDB as wdb
+import weatherdb as wdb
 wdb.config.create_user_config()
 ```
 :::
@@ -22,23 +22,23 @@ wdb.config.create_user_config()
 :sync: bash
 
 ```{code-block} bash
-weatherDB create-user-config
+weatherdb create-user-config
 ```
 :::
 
 ::::
 
 This now created a INI-File with all possible configurations, but all values are commented out and you will see the default value.
-After creating the file, you can edit the configuration file with any Texteditor and weatherDB will use those configurations on your next import.
+After creating the file, you can edit the configuration file with any Texteditor and WeatherDB will use those configurations on your next import.
 
 ## Setup database
 
-To get started you need to setup your PostGreSQL database the weatherDB module should use.
+To get started you need to setup your PostGreSQL database the WeatherDB module should use.
 
 There are two usage scenarios:
-1. your working with an existing weatherDB-database someone else did setup.
+1. your working with an existing WeatherDB-database someone else did setup.
    Then continue with this guide
-2. you want to create your own weatherDB database instance.
+2. you want to create your own WeatherDB database instance.
    Then first follow the [hosting instructions](<Hosting.md>).
 
 (setup-main-con)=
@@ -84,12 +84,12 @@ USER = philip
 
 ### multiple connections
 
-The weatherDB configuration also allows you to work with multiple database connections. This works similarly as with the [main database](#setup-main-connection), but you don't use the `[connection:main]`{l=ini} section of the configuration file, but add a custom connection subsection by giving it any name of your choice `[connection:my_con_name]`{l=ini}.
+The WeatherDB configuration also allows you to work with multiple database connections. This works similarly as with the [main database](#setup-main-connection), but you don't use the `[connection:main]`{l=ini} section of the configuration file, but add a custom connection subsection by giving it any name of your choice `[connection:my_con_name]`{l=ini}.
 
-Then you have to tell weatherDB to use this connection:
+Then you have to tell WeatherDB to use this connection:
 
 ```python
-import weatherDB as wdb
+import weatherdb as wdb
 
 wdb.config.set("database", "connection", "my_con_name")
 ```
@@ -100,7 +100,7 @@ Alternatively you can also set this custom database connection to be used as the
 ```ini
 [database]
 ; These are the main database settings
-; The database is created with the cli command create-db-schema or the weatherDB.Broker().create_db_schema() method
+; The database is created with the cli command create-db-schema or the weatherdb.Broker().create_db_schema() method
 ; you can define multiple database connections by adding a new section like [database.connection_name], where you can define your connection name
 ; The connection setting defines which connection is used if not specified
 connection = my_con_name

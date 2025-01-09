@@ -3,8 +3,8 @@ import sqlalchemy as sa
 import logging
 import os
 
-import weatherDB as wdb
-from weatherDB.db import models
+import weatherdb as wdb
+from weatherdb.db import models
 
 # setup logging handler for testing
 class ListHandler(logging.Handler):

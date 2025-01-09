@@ -1,23 +1,23 @@
 db
 ==
 
-In this module there are all the database setups and models used by the weatherDB package, you shouldn't need to use them directly.
+In this module there are all the database setups and models used by the WeatherDB package, you shouldn't need to use them directly.
 
 models
 ------
 
 Those are the database models
 
-.. automodule:: weatherDB.db.models
+.. automodule:: weatherdb.db.models
 
 base models
 ^^^^^^^^^^^
 
-.. autoclass:: weatherDB.db.models.ModelBase
+.. autoclass:: weatherdb.db.models.ModelBase
 
-.. autoclass:: weatherDB.db.models.MetaBase
+.. autoclass:: weatherdb.db.models.MetaBase
 
-.. autoclass:: weatherDB.db.models.MetaBaseQC
+.. autoclass:: weatherdb.db.models.MetaBaseQC
 
 
 

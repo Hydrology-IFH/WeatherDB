@@ -3,8 +3,8 @@ __pycache__
 # Ignore the created distribution files
 build
 dist
-weatherDB.egg-info
-weatherDB.egg-info/*
+weatherdb.egg-info
+weatherdb.egg-info/*
 dist/*
 _version.py
 
@@ -24,7 +24,7 @@ logs
 tests/db_dumps
 
 # ignore the main (system) configuration file as it is user specific
-weatherDB/config/config_main.ini
+weatherdb/config/config_main.ini
 
 # ignore docker files
 *.docker-secret

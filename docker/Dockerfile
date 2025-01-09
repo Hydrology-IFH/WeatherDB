@@ -22,7 +22,7 @@ RUN pip install toml && \
 
 # Copy the source code
 COPY ../README.md ../MANIFEST.in  ./
-COPY ../weatherDB ./weatherDB
+COPY ../weatherdb ./weatherdb
 RUN --mount=source=../.git,target=/src/.git,type=bind \
     pip install . --upgrade --upgrade-strategy only-if-needed --no-deps --no-cache-dir --root-user-action=ignore
 

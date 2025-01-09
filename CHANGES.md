@@ -1,5 +1,13 @@
 # Change-log
 
+## Version 1.1.0
+
+- !!rename module from weatherDB to weatherdb to be compliant with PEP 8!!
+  So you need to import the module now with `import weatherdb`
+- fix some missing stationN variables to stationsP
+- fix: TimestampPeriod._check_period
+- add basic test for create_ts method
+
 ## Version 1.0.7
 
 - add GroupStation and GroupStations to default imports.
