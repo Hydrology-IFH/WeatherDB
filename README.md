@@ -6,7 +6,7 @@ Author: [Max Schmit](https://github.com/maxschmi)
 [![Documentation Status](https://readthedocs.org/projects/weatherdb/badge/?version=latest)](https://weatherdb.readthedocs.io/latest)
 [![Pipeline status](https://gitlab.uni-freiburg.de/hydrology/weatherDB/badges/master/pipeline.svg?ignore_skipped=true)](https://gitlab.uni-freiburg.de/hydrology/weatherDB/-/pipelines) 
 
-The weather-DB module offers an API to interact with the automatically filled weather Database.
+The WeatherDB module offers an API to interact with the automatically filled weather Database.
 
 Depending on the Database user privileges you can use more or less methods of the classes.
 
