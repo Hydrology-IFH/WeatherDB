@@ -1,5 +1,9 @@
 # Change-log
 
+## Version 1.0.1
+
+ - minor fixes to fix previous version
+
 ## Version 1.1.0
 
 - !!rename module from weatherDB to weatherdb to be compliant with PEP 8!!
