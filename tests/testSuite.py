@@ -22,5 +22,5 @@ def load_tests(loader, tests, pattern):
 if __name__ == "__main__":
     loader = TestLoader()
     suite = load_tests(loader, tests=None, pattern=None)
-    runner = TextTestRunner()
+    runner = TextTestRunner(failfast=True)
     runner.run(suite)
