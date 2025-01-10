@@ -33,12 +33,8 @@ def ma_rasters_available():
 
 def dem_rasters_available():
     if wdb.config.has_option("data:rasters", "dems"):
-        for file in wdb.config.get_list("data:rasters", "dems"):
-            file = Path(file)
-            if not file.exists():
-                return False
-            else:
-                return True
+        return all([Path(file).exists()
+                    for file in wdb.config.get_list("data:rasters", "dems")])
     else:
         return False
 
