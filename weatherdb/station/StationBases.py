@@ -504,10 +504,12 @@ class StationBase:
                     '{interval}'::INTERVAL)::{tstp_dtype} AS timestamp)
             INSERT INTO timeseries."{stid}_{para}"(timestamp)
                 (SELECT wts.timestamp
-                FROM whole_ts wts
-                LEFT JOIN timeseries."{stid}_{para}" ts
+                 FROM whole_ts wts
+                 LEFT JOIN timeseries."{stid}_{para}" ts
                     ON ts.timestamp=wts.timestamp
-                WHERE ts.timestamp IS NULL);
+                 WHERE ts.timestamp IS NULL);
+            DELETE FROM timeseries."{stid}_{para}"
+            WHERE timestamp < '{min_date} 00:00'::{tstp_dtype};
         """.format(
             stid=self.id,
             para=self._para,

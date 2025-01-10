@@ -3,6 +3,7 @@
 ## Version 1.1.2
 
 - add method to download DEM data from OpenTopography-API
+- update StationBase._expand_timeserie_to_period to remove entries that are older than the min_date config to remove unnessecary database entries
 
 ## Version 1.1.1
 
