@@ -9,11 +9,13 @@ import progressbar as pb
 import keyring
 import os
 import getpass
+import logging
 
 from ..config import config
-from .logging import log
 
 __all__ = ["download_ma_rasters", "download_dem"]
+
+log = logging.getLogger(__name__)
 
 # Multi annual rasters
 # --------------------
@@ -68,7 +70,7 @@ def download_ma_rasters(which="all", overwrite=None, update_user_config=False):
         if file_key in which:
             # check if file is in config
             if f"data:rasters:{file_key}" not in config:
-                print(f"Skipping {file_key} as it is not in your configuration.\nPlease add a section 'data:rasters:{file_key}' to your configuration file.")
+                log.debug(f"Skipping {file_key} as it is not in your configuration.\nPlease add a section 'data:rasters:{file_key}' to your configuration file.")
                 continue
 
             # check if file already exists
@@ -83,7 +85,7 @@ def download_ma_rasters(which="all", overwrite=None, update_user_config=False):
                         "Do you want to overwrite it? [y/n] "))
 
                 if skip:
-                    print(f"Skipping {file_key} as overwriting is not allowed.")
+                    log.debug(f"Skipping {file_key} as overwriting is not allowed.")
                     continue
 
             # check if the directory exists
@@ -134,7 +136,7 @@ def download_ma_rasters(which="all", overwrite=None, update_user_config=False):
                 if config.has_user_config:
                     config.update_user_config(f"data:rasters:{file_key}", "file", str(file_path))
                 else:
-                    print(f"No user configuration file found, therefor the raster '{file_key}' is not set in the user configuration file.")
+                    log.error(f"No user configuration file found, therefor the raster '{file_key}' is not set in the user configuration file.")
 
 # DEM data
 # --------
