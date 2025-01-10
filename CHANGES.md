@@ -1,8 +1,14 @@
 # Change-log
 
-## Version 1.0.1
+## Version 1.1.2
 
- - minor fixes to fix previous version
+- add method to download DEM data from OpenTopography-API
+- update StationBase._expand_timeserie_to_period to remove entries that are older than the min_date config to remove unnessecary database entries
+- fix GroupStation.create_ts: don't throw period changed warning if the change was only due to the expand_to_timestamp output
+
+## Version 1.1.1
+
+- minor fixes to fix previous version
 
 ## Version 1.1.0
 

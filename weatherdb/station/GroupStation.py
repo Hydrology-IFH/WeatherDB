@@ -526,7 +526,9 @@ class GroupStation(object):
                 period_new = period_filled.union(
                     period,
                     how="inner")
-                if period_new != period:
+                if period_new != period and not (
+                        (period.start == period_new.start) and
+                        ((period.end - period_new.end) <= pd.Timedelta(days=1))):
                     warnings.warn(
                         f"The Period for Station {self.id} got changed from {str(period)} to {str(period_new)}.")
                     period = period_new

@@ -103,10 +103,16 @@ def download_ma_rasters(which, overwrite, update_user_config):
     """
     click.echo("starting downloading multi annual raster data")
     from weatherdb.utils.get_data import download_ma_rasters
-    download_ma_rasters(overwrite=overwrite)
+    download_ma_rasters(
+        which=which,
+        overwrite=overwrite,
+        update_user_config=update_user_config)
 
 
 @cli.command(short_help="Download the needed digital elevation model raster data from Copernicus to the data folder.")
+@click.option('--out-dir', '-d',
+              type=click.Path(), default=None, show_default=False,
+              help="The directory to save the downloaded DEM data to.")
 @click.option('--overwrite/--no-overwrite', '-o/-no-o',
               type=bool, is_flag=True, default=None, show_default=False,
               help="Should the digital elevation model raster be downloaded even if it already exists?")
@@ -116,7 +122,11 @@ def download_ma_rasters(which, overwrite, update_user_config):
 @click.option("--update-user-config", "-u",
               type=bool, default=False, show_default=True, is_flag=True,
               help="Should the user configuration be updated with the path to the downloaded DEM?")
-def download_dem(overwrite, extent):
+@click.option("--service", "-s",
+              type=str, default=["prism", "openTopography"], show_default=True, multiple=True,
+              help="The service to use to download the DEM. Options are 'prism' or 'openTopography'. " +\
+                   "You can use this option muultiple times to test both in the given order until the file could be downloaded.")
+def download_dem(out_dir, overwrite, extent, update_user_config, service="prism"):
     """Download the newest DEM data from the Copernicus Sentinel dataset.
 
     Only the GLO-30 DEM, wich has a 30m resolution, is downloaded as it is freely available.
@@ -131,7 +141,12 @@ def download_dem(overwrite, extent):
     """
     click.echo("Starting downloading digital elevation model from Copernicus")
     from weatherdb.utils.get_data import download_dem
-    download_dem(overwrite=overwrite, extent=extent)
+    download_dem(
+        out_dir=out_dir,
+        overwrite=overwrite,
+        extent=extent,
+        service=service,
+        update_user_config=update_user_config)
 
 
 # cli statements to update the database
