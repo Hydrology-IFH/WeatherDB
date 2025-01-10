@@ -6,9 +6,17 @@ from pathlib import Path
 from distutils.util import strtobool
 import hashlib
 import progressbar as pb
+import keyring
+import os
+import getpass
 
 from ..config import config
+from .logging import log
 
+__all__ = ["download_ma_rasters", "download_dem"]
+
+# Multi annual rasters
+# --------------------
 def download_ma_rasters(which="all", overwrite=None, update_user_config=False):
     """Get the multi annual rasters on which bases the regionalisation is done.
 
@@ -128,22 +136,40 @@ def download_ma_rasters(which="all", overwrite=None, update_user_config=False):
                 else:
                     print(f"No user configuration file found, therefor the raster '{file_key}' is not set in the user configuration file.")
 
-
-def download_dem(overwrite=None, extent=(5.3, 46.1, 15.6, 55.4), update_user_config=False):
-    """Download the newest DEM data from the Copernicus Sentinel dataset.
-
-    Only the GLO-30 DEM, which has a 30m resolution, is downloaded as it is freely available.
-    If you register as a scientific researcher also the EEA-10, with 10 m resolution, is available.
-    You will have to download the data yourself and define it in the configuration file.
-
-    After downloading the data, the files are merged and saved as a single tif file in the data directory in a subfolder called 'DEM'.
-    To use the DEM data in the WeatherDB, you will have to define the path to the tif file in the configuration file.
-
-    Source:
-    Copernicus DEM - Global and European Digital Elevation Model. Digital Surface Model (DSM) provided in 3 different resolutions (90m, 30m, 10m) with varying geographical extent (EEA: European and GLO: global) and varying format (INSPIRE, DGED, DTED). DOI:10.5270/ESA-c5d3d65.
+# DEM data
+# --------
+def _check_write_fp(fp, overwrite):
+    """Check if a file exists and if it should be overwritten.
 
     Parameters
     ----------
+    fp : str or Path
+        The path to the file to check.
+    overwrite : bool
+        Should the file be overwritten?
+
+    Returns
+    -------
+    bool
+        Should the file be written?
+    """
+    fp = Path(fp)
+    if fp.exists():
+        log.info(f"The file already exists at {fp}.")
+        if overwrite is None:
+            overwrite = strtobool(input(f"{fp} already exists. Do you want to overwrite it? [y/n] "))
+        if not overwrite:
+            log.info("Skipping, because overwritting was turned of.")
+            return False
+    return True
+
+def _download_dem_prism(out_dir, overwrite=None, extent=(5.3, 46.1, 15.6, 55.4)):
+    """Download the DEM data from the Copernicus PRISM service.
+
+    Parameters
+    ----------
+    out_dir: str or Path
+        The directory to save the DEM data to.
     overwrite : bool, optional
         Should the DEM data be downloaded even if it already exists?
         If None the user will be asked.
@@ -151,9 +177,11 @@ def download_dem(overwrite=None, extent=(5.3, 46.1, 15.6, 55.4), update_user_con
     extent : tuple, optional
         The extent in WGS84 of the DEM data to download.
         The default is the boundary of germany + ~40km = (5.3, 46.1, 15.6, 55.4).
-    update_user_config : bool, optional
-        Should the downloaded DEM be set as the used DEM in the user configuration file?
-        The default is False.
+
+    Returns
+    -------
+    fp : Path
+        The path to the downloaded DEM file.
     """
     # import necessary modules
     import rasterio as rio
@@ -164,10 +192,8 @@ def download_dem(overwrite=None, extent=(5.3, 46.1, 15.6, 55.4), update_user_con
     import re
     import json
 
-    # get dem_dir
-    base_dir = Path(config.get("data", "base_dir"))
-    dem_dir = base_dir / "DEM"
-    dem_dir.mkdir(parents=True, exist_ok=True)
+    # check dir
+    out_dir = Path(out_dir)
 
     # get available datasets
     prism_url = "https://prism-dem-open.copernicus.eu/pd-desk-open-access/publicDemURLs"
@@ -191,20 +217,12 @@ def download_dem(overwrite=None, extent=(5.3, 46.1, 15.6, 55.4), update_user_con
         )[-1]["id"]
 
     # check if dataset already exists
-    dem_file = dem_dir / f'{ds_id.replace("/", "__")}.tif'
-    if dem_file.exists():
-        print(f"The DEM data already exists at {dem_file}.")
-        if overwrite is None:
-            overwrite = strtobool(input("Do you want to overwrite it? [y/n] "))
-        if not overwrite:
-            print("Skipping, because overwritting was turned of.")
-            return
-        else:
-            print("Overwriting the dataset.")
-    dem_dir.mkdir(exist_ok=True)
+    dem_file = out_dir / f'{ds_id.replace("/", "__")}.tif'
+    if not _check_write_fp(dem_file, overwrite):
+        return
 
     # selecting DEM tiles
-    print(f"getting available tiles for Copernicus dataset '{ds_id}'")
+    log.info(f"getting available tiles for Copernicus dataset '{ds_id}'")
     ds_files_req = json.loads(
         requests.get(
             f"{prism_url}/{ds_id.replace('/', '__')}",
@@ -225,13 +243,13 @@ def download_dem(overwrite=None, extent=(5.3, 46.1, 15.6, 55.4), update_user_con
         ds_files_all))
 
     # download DEM tiles
-    print("downloading tiles")
+    log.info("downloading tiles")
     with TemporaryDirectory() as tmp_dir:
         tmp_dir_fp = Path(tmp_dir)
         for f in pb.progressbar(ds_files):
             with open(tmp_dir_fp / Path(f["nativeDemUrl"]).name, "wb") as d:
                 d.write(requests.get(f["nativeDemUrl"]).content)
-        print("downloaded all files")
+        log.info("downloaded all files")
 
         # extracting tifs from tars
         for i, f in pb.progressbar(list(enumerate(tmp_dir_fp.glob("*.tar")))):
@@ -269,17 +287,161 @@ def download_dem(overwrite=None, extent=(5.3, 46.1, 15.6, 55.4), update_user_con
         tmp_eula_fp = next(tmp_dir_fp.glob("*.pdf"))
         shutil.copyfile(
             tmp_eula_fp,
-            dem_dir / tmp_eula_fp.name
+            out_dir / tmp_eula_fp.name
         )
 
-    print(f"created DEM at '{dem_file}'.")
+    log.info(f"created DEM at '{dem_file}'.")
+    return dem_file
+
+def _download_dem_opentopo(
+        out_dir,
+        overwrite=None,
+        extent=(5.3, 46.1, 15.6, 55.4),
+        api_key=os.environ.get(
+            "WEATHERDB_OPENTOPO_API_KEY",
+            fallback=keyring.get_password("weatherdb", "opentopo_api_key"))):
+    """Download the DEM data from the OpenTopography service.
+
+    Get an API key from (OpenTopography)[https://portal.opentopography.org/] to use this service.
+
+    Parameters
+    ----------
+    out_dir : str or Path
+        The directory to save the DEM data to.
+    overwrite : bool, optional
+        Should the DEM data be downloaded even if it already exists?
+        If None the user will be asked.
+        The default is None.
+    extent : tuple, optional
+        The extent in WGS84 of the DEM data to download.
+        Should be in the format (south, west, north, east).
+        The default is the boundary of germany + ~40km = (5.3, 46.1, 15.6, 55.4).
+    api_key : str, optional
+        The API key for the OpenTopography service.
+        If None the user will be asked.
+        The default is to check if the environment variable "WEATHERDB_OPENTOPO_API_KEY" is set or if the keyring has a password for "weatherdb" and "opentopo_api_key".
+
+    Returns
+    -------
+    fp : Path
+        The path to the downloaded DEM file.
+    """
+    # check api key
+    if api_key is None:
+        print("No API key for OpenTopography was given or found in the keyring or environment variable.")
+        api_key = getpass("Please enter your API key for OpenTopography: ")
+
+    # make query
+    w, s, e, n = extent
+    url = f"https://portal.opentopography.org/API/globaldem?demtype=COP30&west={w}&south={s}&east={e}&north={n}&outputFormat=GTiff&API_Key={api_key}"
+    r = requests.get(url)
+    if r.status_code == 200:
+        # store api key
+        if api_key != keyring.get_password("weatherdb", "opentopo_api_key"):
+            keyring.set_password("weatherdb", "opentopo_api_key", api_key)
+
+        # get dem file
+        out_fp = out_dir / "OpenTopo_COP30.tif"
+
+        # check if file already exists
+        if not _check_write_fp(out_fp, overwrite):
+            return
+
+        # download file
+        with open(out_fp, "wb") as f:
+            for chunk in r.iter_content(chunk_size=1024):
+                f.write(chunk)
+            log.info(f"Downloaded DEM data from OpenTopography to '{out_fp}'.")
+            return out_fp
+
+    log.error(f"Request to openTopography API with url {r.url.replace(api_key, "[MASKED]")} returned status code {r.status_code}")
+
+def download_dem(out_dir=None,
+                 overwrite=None,
+                 extent=(5.3, 46.1, 15.6, 55.4),
+                 update_user_config=False,
+                 service=["prism", "openTopography"], **kwargs):
+    """Download the newest DEM data from the Copernicus Sentinel dataset.
+
+    Only the GLO-30 DEM, which has a 30m resolution, is downloaded as it is freely available.
+    If you register as a scientific researcher also the EEA-10, with 10 m resolution, is available.
+    You will have to download the data yourself and define it in the configuration file.
+
+    After downloading the data, the files are merged and saved as a single tif file in the data directory in a subfolder called 'DEM'.
+    To use the DEM data in the WeatherDB, you will have to define the path to the tif file in the configuration file.
+
+    Source:
+    Copernicus DEM - Global and European Digital Elevation Model. Digital Surface Model (DSM) provided in 3 different resolutions (90m, 30m, 10m) with varying geographical extent (EEA: European and GLO: global) and varying format (INSPIRE, DGED, DTED). DOI:10.5270/ESA-c5d3d65.
+
+    Parameters
+    ----------
+    out_dir : str or Path, optional
+        The directory to save the DEM data to.
+        If None the data is saved in the data directory in a subfolder called 'DEM'.
+        The default is None.
+    overwrite : bool, optional
+        Should the DEM data be downloaded even if it already exists?
+        If None the user will be asked.
+        The default is None.
+    extent : tuple, optional
+        The extent in WGS84 of the DEM data to download.
+        The default is the boundary of germany + ~40km = (5.3, 46.1, 15.6, 55.4).
+    update_user_config : bool, optional
+        Should the downloaded DEM be set as the used DEM in the user configuration file?
+        The default is False.
+    service : str or list of str, optional
+        The service to use to download the DEM data.
+        Options are "prism" and "openTopography".
+        If Both are given they are executed in the order they are given.
+        If OpenTopography is selected, you will have to provide an API key.
+        The default is ["prism", "openTopography"].
+    """
+    # check service
+    if isinstance(service, str):
+        service = [service]
+
+    # check dir
+    if out_dir is None:
+        out_dir = Path(config.get("data", "base_dir")) / "DEM"
+    else:
+        out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    # download data
+    fp=None
+    for s in service:
+        if s == "prism":
+            try:
+                fp = _download_dem_prism(
+                    out_dir=out_dir,
+                    overwrite=overwrite,
+                    extent=extent,
+                    **kwargs)
+                break
+            except Exception as e:
+                log.debug(f"Error while downloading DEM from PRISM: {e}")
+        elif s == "openTopography":
+            try:
+                fp = _download_dem_opentopo(
+                    out_dir=out_dir,
+                    overwrite=overwrite,
+                    extent=extent,
+                    **kwargs)
+                break
+            except Exception as e:
+                log.debug(f"Error while downloading DEM from OpenTopography: {e}")
+
+    # check if file was downloaded
+    if fp is None:
+        log.error("No DEM data was downloaded.")
+        return
 
     # update user config
     if update_user_config:
         if config.has_user_config:
-            config.update_user_config("data:rasters", "dems", str(dem_file))
+            config.update_user_config("data:rasters", "dems", str(fp))
             return
         else:
-            print("No user configuration file found, therefor the DEM is not set in the user configuration file.")
+            log.info("No user configuration file found, therefor the DEM is not set in the user configuration file.")
 
-    print("To use the DEM data in the WeatherDB, you will have to define the path to the tif file in the user configuration file.")
+    log.info("To use the DEM data in the WeatherDB, you will have to define the path to the tif file in the user configuration file.")

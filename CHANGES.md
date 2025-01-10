@@ -1,8 +1,12 @@
 # Change-log
 
-## Version 1.0.1
+## Version 1.1.2
 
- - minor fixes to fix previous version
+- add method to download DEM data from OpenTopography-API
+
+## Version 1.1.1
+
+- minor fixes to fix previous version
 
 ## Version 1.1.0
 
