@@ -3,6 +3,7 @@ import unittest
 from unittest.mock import patch
 import sys
 import argparse
+from shutil import copyfile
 
 import os
 import weatherdb as wdb
@@ -19,6 +20,18 @@ parser.add_argument(
 cliargs, remaining_args = parser.parse_known_args()
 sys.argv = [sys.argv[0]] + remaining_args
 do_complete = cliargs.complete
+
+# copy the test datasets before running the tests
+print("Copying test data...")
+data_dir = Path(wdb.config.get("data", "base_dir"))
+orig_dir = Path(__file__).parent/"test-data"
+for fp in orig_dir.glob("**/*.tif"):
+    dst_fp = data_dir / fp.relative_to(orig_dir)
+    if dst_fp.exists():
+        dst_fp.unlink()
+    dst_fp.parent.mkdir(parents=True, exist_ok=True)
+    copyfile(fp, dst_fp)
+wdb.config.read(orig_dir.joinpath("test-data-config.ini"))
 
 # define functions
 def ma_rasters_available():

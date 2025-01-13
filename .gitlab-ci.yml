@@ -1,6 +1,7 @@
 stages:
   - test_single
   - test_matrix
+  - test_manual
   - build
   - deploy
 
@@ -21,10 +22,10 @@ test_single:
   before_script:
     - python3 -m pip install --upgrade pip --root-user-action=ignore
     - python3 -m pip install unittest-xml-reporting --root-user-action=ignore
-  script:
     - python3 -m pip install .[optionals] --root-user-action=ignore
     - mkdir -p $WEATHERDB_DATA_BASE_DIR
     - mkdir -p test-reports
+  script:
     - python3 -m xmlrunner discover -s tests -p testSuite.py -o test-reports
   cache:
     - key: weatherdb-data-cache-$CI_COMMIT_REF_SLUG
@@ -73,13 +74,24 @@ test_single:
 test_matrix:
   stage: test_matrix
   extends: test_single
-  dependencies:
-    - test_single
   parallel:
     matrix:
       - PY_VERSION: ["3.9","3.10","3.11","3.12","3.13"]
   variables:
     PYTHON_VERSION: $PY_VERSION
+
+test_download_rasters:
+  extends: test_single
+  stage: test_manual
+  rules:
+    - when: manual
+  script:
+    - python3 -m xmlrunner discover -s tests -p test_downloadRasters.py --complete -o test-reports
+  variables:
+    PYTHON_VERSION: $PY_VERSION
+  parallel:
+    matrix:
+      - PY_VERSION: ["3.9","3.10","3.11","3.12","3.13"]
 
 build:
   rules:
