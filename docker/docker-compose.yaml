@@ -14,12 +14,14 @@ services:
       WEATHERDB_USER_CONFIG_FILE: /home/config_user.yaml
       WEATHERDB_DATA_BASE_DIR: /home/data
       WEATHERDB_HANDLE_NON_EXISTING_CONFIG: create
+      WEATHERDB_OPENTOPO_API_KEY: /run/secrets/opentopo_api_key
       DOCKER_ENV: main
     volumes:
       - weatherdb_home:/home
     command: ["sleep", "infinity"] # to keep awake
     secrets:
       - db_password
+      - opentopo_api_key
     develop:
       watch:
         - action: rebuild
@@ -53,6 +55,8 @@ volumes:
 secrets:
   db_password:
     file: ./db_password.docker-secret
+  opentopo_api_key:
+    file: ./opentopo_api_key.docker-secret
 
 # start from parent folder with `docker compose -f docker\\docker-compose.yaml up --build`
 # To connect to ther weatherdb service use `docker-compose exec weatherdb bash`
