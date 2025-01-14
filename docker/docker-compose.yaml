@@ -59,4 +59,4 @@ secrets:
     file: ./opentopo_api_key.docker-secret
 
 # start from parent folder with `docker compose -f docker\\docker-compose.yaml up --build`
-# To connect to ther weatherdb service use `docker-compose exec weatherdb bash`
+# To connect to the weatherdb service use `docker-compose exec weatherdb bash`
