@@ -301,7 +301,7 @@ def _download_dem_opentopo(
         extent=(5.3, 46.1, 15.6, 55.4),
         api_key=os.environ.get(
             "WEATHERDB_OPENTOPO_API_KEY",
-            fallback=keyring.get_password("weatherdb", "opentopo_api_key"))):
+            default=keyring.get_password("weatherdb", "opentopo_api_key"))):
     """Download the DEM data from the OpenTopography service.
 
     Get an API key from (OpenTopography)[https://portal.opentopography.org/] to use this service.
@@ -322,6 +322,7 @@ def _download_dem_opentopo(
         The API key for the OpenTopography service.
         If None the user will be asked.
         The default is to check if the environment variable "WEATHERDB_OPENTOPO_API_KEY" is set or if the keyring has a password for "weatherdb" and "opentopo_api_key".
+        If the value is a valid filepath the content of the file is used as the API key.
 
     Returns
     -------
@@ -332,6 +333,9 @@ def _download_dem_opentopo(
     if api_key is None:
         print("No API key for OpenTopography was given or found in the keyring or environment variable.")
         api_key = getpass("Please enter your API key for OpenTopography: ")
+    if Path(api_key).exists():
+        with open(api_key) as f:
+            api_key = f.read().strip()
 
     # make query
     w, s, e, n = extent

@@ -1,6 +1,7 @@
 stages:
   - test_single
   - test_matrix
+  - test_manual
   - build
   - deploy
 
@@ -21,10 +22,10 @@ test_single:
   before_script:
     - python3 -m pip install --upgrade pip --root-user-action=ignore
     - python3 -m pip install unittest-xml-reporting --root-user-action=ignore
-  script:
     - python3 -m pip install .[optionals] --root-user-action=ignore
     - mkdir -p $WEATHERDB_DATA_BASE_DIR
     - mkdir -p test-reports
+  script:
     - python3 -m xmlrunner discover -s tests -p testSuite.py -o test-reports
   cache:
     - key: weatherdb-data-cache-$CI_COMMIT_REF_SLUG
@@ -61,11 +62,13 @@ test_single:
     WEATHERDB_LOGGING_HANDLER: console
     WEATHERDB_LOGGING_LEVEL: DEBUG
     WEATHERDB_HORIZON_RADIUS: 40000
+    WEATHERDB_OPENTOPO_API_KEY: $WEATHERDB_OPENTOPO_API_KEY
     WEATHERDB_TEST_ARTIFACT_DIR: $CI_PROJECT_DIR/artifacts
     WEATHERDB_TEST_ARTIFACT_DB_DUMP: ON_FAILURE
     WEATHERDB_TEST_ARTIFACT_LIST_DATA_FILES: ON_FAILURE
     WEATHERDB_TEST_ARTIFACT_COPY_USER_CONFIG: ON_FAILURE
-    WEATHERDB_OPENTOPO_API_KEY: $WEATHERDB_OPENTOPO_API_KEY
+    WEATHERDB_TEST_DR_COPY_RASTERS: True
+    WEATHERDB_TEST_DR_UPDATE_USER_CONFIG: True
     DOCKER_ENV: test
   tags:
     - docker
@@ -73,13 +76,25 @@ test_single:
 test_matrix:
   stage: test_matrix
   extends: test_single
-  dependencies:
-    - test_single
   parallel:
     matrix:
       - PY_VERSION: ["3.9","3.10","3.11","3.12","3.13"]
   variables:
     PYTHON_VERSION: $PY_VERSION
+
+test_download_rasters:
+  extends: test_single
+  stage: test_manual
+  rules:
+    - when: manual
+      allow_failure: true
+  script:
+    - python3 -m xmlrunner discover -s tests -p test_downloadRasters.py --complete -o test-reports
+  variables:
+    PYTHON_VERSION: $PY_VERSION
+  parallel:
+    matrix:
+      - PY_VERSION: ["3.9","3.10","3.11","3.12","3.13"]
 
 build:
   rules:

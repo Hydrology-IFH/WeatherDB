@@ -46,7 +46,8 @@ So there is:
 - "raw" : the raw measurements as on the DWD server
 - "qc"  : The quality checked data
 - "filled" : The filled timeseries
-- "filled_by" : The station ID of the station from which the data was taken to fill the measurements
+- "filled_by" : The station ID of the station from which the data was taken to fill the measurements.
+                If the value was filled by linear intrepolation "filled_by" is `-1`
 - "corr"    : The Richter corrected timeserie.
 
 If you want more than just one kind of timeseries, e.g. the filled timeseries, together with the id from which station the respective field got filled with use:

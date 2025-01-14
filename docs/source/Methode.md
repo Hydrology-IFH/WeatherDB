@@ -117,7 +117,11 @@ N_{neighbor} * \dfrac{N_{station,ma,winter}}{N_{neighbor,ma,winter}} \space if\s
 N_{neighbor} * \dfrac{N_{station,ma,summer}}{N_{neighbor,ma,summer}} \space if\space month\notin[4:9]
 \end{cases}$
 
-For the precipitation stations only stations within a 100 km radius are taken to fill missing values. For the potential Evapotranspiration and the temperature this radius is 150km. For the temperature stations the median of the regionalised values from the 5 closest stations (but not more than 150 km away) is taken to fill missing values.
+For the precipitation stations only stations within a 110 km radius are taken to fill missing values. For the potential Evapotranspiration and the temperature this radius is 150km. For the temperature stations the median of the regionalised values from the 5 closest stations (but not more than 150 km away) is taken to fill missing values. Those limits can get configured in the user configurations.
+
+### linear interpolation
+
+After missing values got filled with regionalised values from the neighboring stations there can still be missing values left. To fill those residual missing values, they get interpolated linearly. Those linear interpolations have configurable limits for how big the interval of missing values can be. The default values are 1h for precipitation and 2 days for temperature and evapotranspiration.
 
 ### adjusting precipitation to daily station measurements
 

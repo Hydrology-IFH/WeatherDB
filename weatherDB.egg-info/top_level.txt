@@ -1,5 +1,0 @@
-build
-docker
-docs
-tests
-weatherDB
