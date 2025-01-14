@@ -1491,6 +1491,70 @@ class StationBase:
                 extra_fillup_where=sql_format_dict["extra_fillup_where"] +\
                     ' OR ts."filled_by" IS DISTINCT FROM new."filled_by"'))
 
+        # linear interpolation for the last missing values
+        lr_limit = config.get(
+            "weatherdb",
+            "LINEAR_INTERPOLATION_LIMIT_{self._para_base}",
+            fallback="0")
+        if lr_limit != "0":
+            sql_format_dict.update(dict(
+                sql_linear_interpolation=f"""
+                    DO
+                    $do$
+                        DECLARE reg_borders record;
+                        BEGIN
+                            FOR reg_borders IN
+                                WITH empty_periods AS (
+                                    SELECT *
+                                    FROM (  SELECT
+                                                CASE WHEN dist_next>'{self._interval}'::interval
+                                                     THEN timestamp ELSE NULL
+                                                END AS start,
+                                                CASE WHEN dist_next>'{self._interval}'::interval
+                                                     THEN LEAD(timestamp) OVER (ORDER BY timestamp)
+                                                     ELSE NULL
+                                                END AS end
+                                            FROM (
+                                                SELECT *,
+                                                    timestamp - lag(timestamp, 1) OVER ( ORDER BY timestamp) AS dist_prev,
+                                                    lead(timestamp, 1) OVER ( ORDER BY timestamp) - timestamp AS dist_next
+                                                FROM new_filled_{self.id}_{self._para}
+                                                WHERE filled IS NOT NULL) t
+                                            WHERE t.dist_prev > '{self._interval}'::interval
+                                                  OR t.dist_next > '{self._interval}'::interval
+                                         ) p
+                                    WHERE p.start IS NOT NULL AND p.end IS NOT NULL)
+                                SELECT
+                                    ep.start AS timestamp_start,
+                                    ttss.filled AS value_start,
+                                    ep.end AS timestamp_end,
+                                    ttse.filled AS value_end,
+                                    (ttse.filled - ttss.filled)::numeric/(EXTRACT(EPOCH FROM (ep.end - ep.start))/EXTRACT(EPOCH FROM '{self._interval}'::interval))::numeric as slope
+                                FROM empty_periods ep
+                                LEFT JOIN new_filled_{self.id}_{self._para} ttss ON ep.start = ttss.timestamp
+                                LEFT JOIN new_filled_{self.id}_{self._para} ttse ON ep.end = ttse.timestamp
+                                where (ep.end - ep.start - '{self._interval}'::interval) <= '{lr_limit}'::interval
+                            loop
+                                execute FORMAT(
+                                $$
+                                UPDATE new_filled_{self.id}_{self._para} ts
+                                SET filled=%2$L + (EXTRACT(EPOCH FROM ts.timestamp - %1$L)::numeric/(EXTRACT(EPOCH FROM '{self._interval}'::interval))::numeric * %5$L),
+                                    filled_by=-1
+                                WHERE ts.timestamp>%1$L and ts.timestamp<%3$L;
+                                $$,
+                                reg_borders.timestamp_start,
+                                reg_borders.value_start,
+                                reg_borders.timestamp_end,
+                                reg_borders.value_end,
+                                reg_borders.slope
+                                );
+                            END loop;
+                        END
+                    $do$;"""))
+        else:
+            sql_format_dict.update(dict(sql_linear_interpolation=""))
+
+
         # Make SQL statement to fill the missing values with values from nearby stations
         sql = """
             CREATE TEMP TABLE new_filled_{stid}_{para}
@@ -1563,15 +1627,16 @@ class StationBase:
                         FROM new_filled_{stid}_{para}
                         WHERE "filled" IS NULL {extra_unfilled_period_where};
                     END LOOP;
-                    {sql_extra_after_loop}
-                    UPDATE timeseries."{stid}_{para}" ts
-                    SET filled = new.filled, {extra_cols_fillup}
-                        filled_by = new.filled_by
-                    FROM new_filled_{stid}_{para} new
-                    WHERE ts.timestamp = new.timestamp
-                        AND (ts."filled" IS DISTINCT FROM new."filled" {extra_fillup_where}) ;
                 END
             $do$;
+            {sql_linear_interpolation}
+            {sql_extra_after_loop}
+            UPDATE timeseries."{stid}_{para}" ts
+            SET filled = new.filled, {extra_cols_fillup}
+                filled_by = new.filled_by
+            FROM new_filled_{stid}_{para} new
+            WHERE ts.timestamp = new.timestamp
+                AND (ts."filled" IS DISTINCT FROM new."filled" {extra_fillup_where}) ;
         """.format(**sql_format_dict)
 
         # execute

@@ -1,8 +1,9 @@
 # Change-log
 
-## Version next
+## Version 1.2.0
 
 - tests: add test rasters and make downloading the rasters a manual job on GitLab as there were many problems
+- fillup: add method to linearly interpolate residual missing values
 
 ## Version 1.1.2
 

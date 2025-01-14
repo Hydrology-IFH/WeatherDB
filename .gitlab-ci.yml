@@ -87,6 +87,7 @@ test_download_rasters:
   stage: test_manual
   rules:
     - when: manual
+      allow_failure: true
   script:
     - python3 -m xmlrunner discover -s tests -p test_downloadRasters.py --complete -o test-reports
   variables:
