@@ -16,6 +16,7 @@ import weatherdb
                  show_default=True
                  )
             )
+@click.version_option(weatherdb.__version__)
 @click.option('--do-logging/--no-logging',
               is_flag=True, default=True, show_default=True,
               help="Should the logging be done to the console?")
