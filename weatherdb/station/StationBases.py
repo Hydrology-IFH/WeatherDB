@@ -1493,8 +1493,8 @@ class StationBase:
 
         # linear interpolation for the last missing values
         lr_limit = config.get(
-            "weatherdb",
-            f"LINEAR_INTERPOLATION_LIMIT_{self._para_base}",
+            "weatherdb:linear_interpolation_limit",
+            self._para_base,
             fallback="0")
         if lr_limit != "0":
             sql_format_dict.update(dict(
