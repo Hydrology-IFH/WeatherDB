@@ -22,11 +22,11 @@ log = logging.getLogger(__name__)
 def download_ma_rasters(which="all", overwrite=None, update_user_config=False):
     """Get the multi annual rasters on which bases the regionalisation is done.
 
-    The refined multi annual datasets, that are downloaded are published on Zenodo [1]_
+    The refined multi annual datasets, that are downloaded are published on Zenodo. [1]_
 
     References
     ----------
-    .. [1] Schmit, M.; Weiler, M. (2023). German weather services (DWD) multi annual meteorological rasters for the climate period 1991-2020 refined to 25m grid (1.0.0) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.10066045
+    .. [1] Schmit, M.; Weiler, M. (2023). German weather services (DWD) multi annual meteorological rasters for the climate period 1991-2020 refined to 25m grid (1.0.0) [Data set]. Zenodo. `DOI:10.5281/zenodo.10066045 <https://doi.org/10.5281/zenodo.10066045>`_
 
     Parameters
     ----------
@@ -360,14 +360,14 @@ def _download_dem_opentopo(
             log.info(f"Downloaded DEM data from OpenTopography to '{out_fp}'.")
             return out_fp
 
-    log.error(f"Request to openTopography API with url {r.url.replace(api_key, "[MASKED]")} returned status code {r.status_code}")
+    log.error(f"Request to openTopography API with url {r.url.replace(api_key, '[MASKED]')} returned status code {r.status_code}")
 
 def download_dem(out_dir=None,
                  overwrite=None,
                  extent=(5.3, 46.1, 15.6, 55.4),
                  update_user_config=False,
                  service=["prism", "openTopography"], **kwargs):
-    """Download the newest DEM data from the Copernicus Sentinel dataset.
+    """Download the newest DEM data from the Copernicus Sentinel dataset. [2]_
 
     Only the GLO-30 DEM, which has a 30m resolution, is downloaded as it is freely available.
     If you register as a scientific researcher also the EEA-10, with 10 m resolution, is available.
@@ -376,8 +376,9 @@ def download_dem(out_dir=None,
     After downloading the data, the files are merged and saved as a single tif file in the data directory in a subfolder called 'DEM'.
     To use the DEM data in the WeatherDB, you will have to define the path to the tif file in the configuration file.
 
-    Source:
-    Copernicus DEM - Global and European Digital Elevation Model. Digital Surface Model (DSM) provided in 3 different resolutions (90m, 30m, 10m) with varying geographical extent (EEA: European and GLO: global) and varying format (INSPIRE, DGED, DTED). DOI:10.5270/ESA-c5d3d65.
+    References
+    ----------
+    .. [2] Copernicus DEM - Global and European Digital Elevation Model. Digital Surface Model (DSM) provided in 3 different resolutions (90m, 30m, 10m) with varying geographical extent (EEA: European and GLO: global) and varying format (INSPIRE, DGED, DTED). `DOI:10.5270/ESA-c5d3d65 <https://doi.org/10.5270/ESA-c5d3d65>`_ .
 
     Parameters
     ----------

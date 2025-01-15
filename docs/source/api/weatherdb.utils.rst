@@ -3,6 +3,8 @@ utils
 
 In this module there are several utilities used by the WeatherDB package, you shouldn't need to use them directly.
 
+TimestampPeriod
+---------------
 .. autoclass:: weatherdb.utils.TimestampPeriod
 
 dwd

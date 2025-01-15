@@ -431,8 +431,8 @@ class StationsBase:
             The timeseries kinds of the denominator or the multi annual raster key.
             If the denominator is a multi annual raster key, then the result is the quotient of the timeserie and the raster value.
             Possible values are:
-                - for timeserie kinds: 'raw', 'qc', 'filled' or for precipitation also "corr".
-                - for raster keys: 'hyras', 'dwd' or 'regnie', depending on your defined raster files.
+            - for timeserie kinds: 'raw', 'qc', 'filled' or for precipitation also "corr".
+            - for raster keys: 'hyras', 'dwd' or 'regnie', depending on your defined raster files.
         stids : list of Integer
             The stations IDs for which to compute the quotient.
         return_as : str, optional
@@ -600,8 +600,8 @@ class StationsBase:
             The number of processes that should get started simultaneously.
             If 1 or less, then the process is computed as a simple loop, so there is no multiprocessing or threading done.
             There are two possible configuration values in the config file to set the number of processes:
-                - system:parallel_processes:absolute: The absolute number of processes to start.
-                - system:parallel_processes:cpu_count_minus: The number of CPU kernels are substracted by this number, to get the number of processes to start.
+            - system:parallel_processes:absolute: The absolute number of processes to start.
+            - system:parallel_processes:cpu_count_minus: The number of CPU kernels are substracted by this number, to get the number of processes to start.
             The default is the cpu count -1.
         """
         log.info(

@@ -1887,8 +1887,8 @@ class StationBase:
             The timeseries kinds of the denominator or the multi annual raster key.
             If the denominator is a multi annual raster key, then the result is the quotient of the timeserie and the raster value.
             Possible values are:
-                - for timeserie kinds: 'raw', 'qc', 'filled' or for precipitation also "corr".
-                - for raster keys: 'hyras', 'dwd' or 'regnie', depending on your defined raster files.
+            - for timeserie kinds: 'raw', 'qc', 'filled' or for precipitation also "corr".
+            - for raster keys: 'hyras', 'dwd' or 'regnie', depending on your defined raster files.
         return_as : str, optional
             The format of the return value.
             If "df" then a pandas DataFrame is returned.
@@ -2226,7 +2226,6 @@ class StationBase:
             The elevation difference is considered with the formula from LARSIM (equation 3-18 & 3-19 from the LARSIM manual [1]_ ):
 
             .. math::
-
                 L_{weighted} = L_{horizontal} * (1 + (\\frac{|\\delta H|}{P_1})^{P_2})
             If None, then the height difference is not considered and only the nearest stations are returned.
             The default is None.
@@ -2923,18 +2922,21 @@ class StationTETBase(StationCanVirtualBase):
         Parameters
         ----------
         p_elev : tuple, optional
-            In Larsim those parameters are defined as $P_1 = 500$ and $P_2 = 1$.
-            Stoelzle et al. (2016) found that $P_1 = 100$ and $P_2 = 4$ is better for Baden-Würtemberg to consider the quick changes in topographie.
+            In Larsim [3]_ those parameters are defined as $P_1 = 500$ and $P_2 = 1$.
+            Stoelzle et al. (2016) [2]_ found that $P_1 = 100$ and $P_2 = 4$ is better for Baden-Würtemberg to consider the quick changes in topographie.
             For all of germany, those parameter values are giving too much weight to the elevation difference, which can result in getting neighboor stations from the border of the Tschec Republic for the Feldberg station. Therefor the values $P_1 = 250$ and $P_2 = 1.5$ are used as default values.
-            literature:
-                - Stoelzle, Michael & Weiler, Markus & Steinbrich, Andreas. (2016) Starkregengefährdung in Baden-Württemberg – von der Methodenentwicklung zur Starkregenkartierung. Tag der Hydrologie.
-                - LARSIM Dokumentation, Stand 06.04.2023, online unter https://www.larsim.info/dokumentation/LARSIM-Dokumentation.pdf
             The default is (250, 1.5).
+
+        References
+        ----------
+        .. [2] Stoelzle, Michael & Weiler, Markus & Steinbrich, Andreas. (2016) Starkregengefährdung in Baden-Württemberg – von der Methodenentwicklung zur Starkregenkartierung. Tag der Hydrologie.
+        .. [3] LARSIM Dokumentation, Stand 06.04.2023, online unter `LARSIM-Dokumentation <https://www.larsim.info/dokumentation/LARSIM-Dokumentation.pdf>`_
 
         Returns
         -------
-        _type_
-            _description_
+        list of int
+            A list of station Ids in order of distance.
+            The closest station is the first in the list.
         """
         # define the P1 and P2 default values for T and ET
         return super().get_neighboor_stids(p_elev=p_elev, **kwargs)

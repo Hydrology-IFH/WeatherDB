@@ -84,6 +84,9 @@ autoclasstoc_sections = [
 # Autosummary options
 autosummary_generate = True
 autosummary_generate_overwrite = True
+suppress_warnings = [
+    'autosummary.import_cycle',
+]
 
 # intersphinx
 intersphinx_mapping = {
