@@ -647,8 +647,9 @@ class Broker(object):
         is_active : bool
             Whether the broker is active.
         """
+        if self._is_active != is_active:
+            self.set_setting("broker_active", str(is_active))
         self._is_active = is_active
-        self.set_setting("broker_active", str(is_active))
 
     def _deactivate(self):
         self.is_active = False

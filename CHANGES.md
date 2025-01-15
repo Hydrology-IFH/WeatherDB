@@ -5,6 +5,7 @@
 - fix: filllup linear regression did not take configuration value and therefor did never work
 - cli: add version parameter
 - multiprocessing: make process count configurable through user configuration
+- broker: prevent broker inactivation by other broker
 
 ## Version 1.2.0
 
