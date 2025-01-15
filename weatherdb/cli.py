@@ -222,6 +222,16 @@ def set_db_version():
     else:
         click.echo("aborting setting db version")
 
+@cli.command(short_help="Forcefully set the active broker flag in the database to deactivated. This is useful if the broker got exited before it could deactivate itself. (!!!Only use this if you're sure that the database did all the necessary updates!!!)")
+def force_deactivate_all_broker():
+    click.echo(dedent("""
+        Are you sure that there is no more broker running? This could lead to problems as multiple brokers could run at the same time contradicting themself."""))
+    if click.confirm("Are you sure you want to set the activation flag in the database to deactivated?"):
+        click.echo("deactivating the brokers flag")
+        broker = weatherdb.broker.Broker()
+        broker.force_deactivate_all()
+    else:
+        click.echo("aborting the deactivation of the brokers flag")
 
 # cli
 # ---------------------------------------

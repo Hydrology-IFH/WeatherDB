@@ -6,6 +6,7 @@
 - cli: add version parameter
 - multiprocessing: make process count configurable through user configuration
 - broker: prevent broker inactivation by other broker
+- broker: add force deactivate all method to forcefully change the database flag of active brokers
 
 ## Version 1.2.0
 
