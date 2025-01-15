@@ -360,7 +360,7 @@ def _download_dem_opentopo(
             log.info(f"Downloaded DEM data from OpenTopography to '{out_fp}'.")
             return out_fp
 
-    log.error(f"Request to openTopography API with url {r.url.replace(api_key, "[MASKED]")} returned status code {r.status_code}")
+    log.error(f"Request to openTopography API with url {r.url.replace(api_key, '[MASKED]')} returned status code {r.status_code}")
 
 def download_dem(out_dir=None,
                  overwrite=None,
