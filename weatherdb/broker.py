@@ -647,8 +647,9 @@ class Broker(object):
         is_active : bool
             Whether the broker is active.
         """
+        if self._is_active != is_active:
+            self.set_setting("broker_active", str(is_active))
         self._is_active = is_active
-        self.set_setting("broker_active", str(is_active))
 
     def _deactivate(self):
         self.is_active = False
@@ -665,3 +666,12 @@ class Broker(object):
         finally:
             self._deactivate()
             atexit.unregister(self._deactivate)
+
+    def force_deactivate_all(self):
+        """Forcefully set the active broker flag in the database to deactivated.
+
+        This is useful if the broker got exited before it could deactivate itself.
+        """
+        if self.is_active:
+            self._deactivate()
+        self.set_setting("broker_active", "False")

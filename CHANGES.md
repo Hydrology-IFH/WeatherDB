@@ -1,6 +1,18 @@
 # Change-log
 
+## Version 1.2.1
+
+- fix: filllup linear regression did not take configuration value and therefor did never work
+- config: change LINEAR_INTERPOLATION_LIMIT to be a category
+- cli: add version parameter
+- multiprocessing: make process count configurable through user configuration
+- broker: prevent broker inactivation by other broker
+- broker: add force deactivate all method to forcefully change the database flag of active brokers
+
 ## Version 1.2.0
+
+> [!WARNING]
+> This versions update did have an error and the lienear regression doesn't work at all. PLease use version 1.2.1
 
 - tests: add test rasters and make downloading the rasters a manual job on GitLab as there were many problems
 - fillup: add method to linearly interpolate residual missing values
@@ -17,7 +29,10 @@
 
 ## Version 1.1.0
 
-- !!rename module from weatherDB to weatherdb to be compliant with PEP 8!!
+> [!NOTE]
+> **major change:** The module got renamed to `weatherdb`, you need to adapt this in your import and cli statements
+
+- rename module from weatherDB to weatherdb to be compliant with PEP 8
   So you need to import the module now with `import weatherdb`
 - fix some missing stationN variables to stationsP
 - fix: TimestampPeriod._check_period

@@ -3,7 +3,7 @@ stages:
   - test_matrix
   - test_manual
   - build
-  - deploy
+  - release
 
 workflow:
   auto_cancel:
@@ -97,11 +97,11 @@ test_download_rasters:
       - PY_VERSION: ["3.9","3.10","3.11","3.12","3.13"]
 
 build:
+  stage: build
   rules:
-    - if: $CI_COMMIT_TAG =~ /^[Vv]\d+\.\d+\.\d+$/
+    - if: $CI_COMMIT_TAG =~ /^[Vv]*\d+\.\d+\.\d+$/
   dependencies:
     - test_matrix
-  stage: build
   image: python:3.11
   script:
     - python -m pip install --upgrade pip --root-user-action=ignore
@@ -115,12 +115,12 @@ build:
   tags:
     - docker
 
-deploy:
+release_pypi:
+  stage: release
   rules:
     - !reference [build, rules]
   dependencies:
     - build
-  stage: deploy
   image: python:3.11
   script:
     - python -m pip install --upgrade pip --root-user-action=ignore
@@ -132,3 +132,18 @@ deploy:
   tags:
     - docker
   interruptible: false
+
+release_gitlab:
+  stage: release
+  rules:
+    - !reference [build, rules]
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  dependencies:
+    - build
+    - release_pypi
+  script:
+    - echo "running release_gitlab"
+  release:
+    name: '$CI_COMMIT_TAG'
+    tag_name: '$CI_COMMIT_TAG'
+    description: '$CI_COMMIT_TAG_MESSAGE'
