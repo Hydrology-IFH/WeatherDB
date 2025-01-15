@@ -1507,8 +1507,9 @@ class StationBase:
                                 WITH empty_periods AS (
                                     SELECT *
                                     FROM (  SELECT
-                                                CASE WHEN dist_next>'{self._interval}'::interval
-                                                     THEN timestamp ELSE NULL
+                                                CASE WHEN dist_next::interval>'{self._interval}'::interval
+                                                     THEN timestamp
+                                                     ELSE NULL
                                                 END AS start,
                                                 CASE WHEN dist_next>'{self._interval}'::interval
                                                      THEN LEAD(timestamp) OVER (ORDER BY timestamp)
@@ -1516,8 +1517,12 @@ class StationBase:
                                                 END AS end
                                             FROM (
                                                 SELECT *,
-                                                    timestamp - lag(timestamp, 1) OVER ( ORDER BY timestamp) AS dist_prev,
-                                                    lead(timestamp, 1) OVER ( ORDER BY timestamp) - timestamp AS dist_next
+                                                    (timestamp::timestamp
+                                                        - lag(timestamp::timestamp, 1)  OVER ( ORDER BY timestamp)
+                                                    )::interval AS dist_prev,
+                                                    (lead(timestamp::timestamp, 1) OVER ( ORDER BY timestamp)
+                                                        - timestamp::timestamp
+                                                    )::interval AS dist_next
                                                 FROM new_filled_{self.id}_{self._para}
                                                 WHERE filled IS NOT NULL) t
                                             WHERE t.dist_prev > '{self._interval}'::interval
@@ -1529,18 +1534,20 @@ class StationBase:
                                     ttss.filled AS value_start,
                                     ep.end AS timestamp_end,
                                     ttse.filled AS value_end,
-                                    (ttse.filled - ttss.filled)::numeric/(EXTRACT(EPOCH FROM (ep.end - ep.start))/EXTRACT(EPOCH FROM '{self._interval}'::interval))::numeric as slope
+                                    (ttse.filled - ttss.filled)::numeric/(EXTRACT(EPOCH FROM (ep.end::timestamp - ep.start::timestamp))/EXTRACT(EPOCH FROM '{self._interval}'::interval))::numeric as slope
                                 FROM empty_periods ep
-                                LEFT JOIN new_filled_{self.id}_{self._para} ttss ON ep.start = ttss.timestamp
-                                LEFT JOIN new_filled_{self.id}_{self._para} ttse ON ep.end = ttse.timestamp
-                                where (ep.end - ep.start - '{self._interval}'::interval) <= '{lr_limit}'::interval
+                                LEFT JOIN new_filled_{self.id}_{self._para} ttss ON ep.start::timestamp = ttss.timestamp::timestamp
+                                LEFT JOIN new_filled_{self.id}_{self._para} ttse ON ep.end::timestamp = ttse.timestamp::timestamp
+                                WHERE (ep.end::timestamp - ep.start::timestamp - '{self._interval}'::interval) <= '{lr_limit}'::interval
                             loop
                                 execute FORMAT(
                                 $$
                                 UPDATE new_filled_{self.id}_{self._para} ts
-                                SET filled=%2$L + (EXTRACT(EPOCH FROM ts.timestamp - %1$L)::numeric/(EXTRACT(EPOCH FROM '{self._interval}'::interval))::numeric * %5$L),
-                                    filled_by=-1
-                                WHERE ts.timestamp>%1$L and ts.timestamp<%3$L;
+                                SET filled=%2$L::numeric + (%5$L::numeric *
+                                        EXTRACT(EPOCH FROM ts.timestamp::timestamp - %1$L::timestamp)::numeric
+                                         /EXTRACT(EPOCH FROM '{self._interval}'::interval)::numeric),
+                                    filled_by={"ARRAY[-1]::smallint[]" if self._filled_by_n>1 else "-1::smallint"}
+                                WHERE ts.timestamp > %1$L AND ts.timestamp < %3$L;
                                 $$,
                                 reg_borders.timestamp_start,
                                 reg_borders.value_start,
