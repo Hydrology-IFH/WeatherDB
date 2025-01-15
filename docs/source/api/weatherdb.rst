@@ -1,7 +1,6 @@
 weatherdb
 =========
 
-
 .. toctree::
    :maxdepth: 2
 

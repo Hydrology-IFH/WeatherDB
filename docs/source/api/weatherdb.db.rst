@@ -19,5 +19,15 @@ base models
 
 .. autoclass:: weatherdb.db.models.MetaBaseQC
 
+views
+-----
 
+Those are the database views
+
+.. automodule:: weatherdb.db.views
+
+connections
+-----------
+
+.. automodule:: weatherdb.db.connections
 
