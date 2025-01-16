@@ -1,5 +1,9 @@
 # Change-log
 
+## next Version
+
+- config: define utf-8 as default encoding for config files
+
 ## Version 1.2.1
 
 - fix: filllup linear regression did not take configuration value and therefor did never work
