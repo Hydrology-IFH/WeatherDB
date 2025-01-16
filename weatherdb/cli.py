@@ -76,7 +76,8 @@ def upgrade_db_schema(revision):
 
 @cli.command(short_help="Create User configuration file.")
 @click.option('--file', '-f',
-              type=click.Path(), default="ask", show_default=True,
+              type=click.Path(resolve_path=True, dir_okay=False, file_okay=True),
+              default="ask", show_default=True,
               help="The file to save the user configuration to.")
 @click.option('--on-exists', '-e',
               type=str, default="ask", show_default=True,
