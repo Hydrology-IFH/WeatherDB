@@ -1,8 +1,9 @@
 # Change-log
 
-## next Version
+## Version 1.2.2
 
 - config: define utf-8 as default encoding for config files
+- fix: GroupStation(s).create_ts parameter "paras"="n" should be "p", changes create_roger_ts conversion for roger_toolbox
 
 ## Version 1.2.1
 
