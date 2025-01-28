@@ -163,7 +163,7 @@ class GroupStation(object):
             The default is True.
         paras : list of str or str, optional
             Give the parameters for which to get the meta information.
-            Can be "n", "t", "et" or "all".
+            Can be "p", "t", "et" or "all".
             If "all", then every available station parameter is returned.
             The default is "all"
         add_na_share : bool, optional
@@ -298,7 +298,7 @@ class GroupStation(object):
         ----------
         paras : list of str or str, optional
             Give the parameters for which to get the meta information.
-            Can be "n", "t", "et" or "all".
+            Can be "p", "t", "et" or "all".
             If "all", then every available station parameter is returned.
             The default is "all"
         **kwargs : dict, optional
@@ -398,8 +398,8 @@ class GroupStation(object):
                 agg_to="10 min", r_r0=r_r0, split_date=True,
                 nas_allowed=False,
                 add_t_min=add_t_min, add_t_max=add_t_max,
-                file_names={"N":"PREC.txt", "T":"TA.txt", "ET":"PET.txt"},
-                col_names={"N":"PREC", "ET":"PET",
+                file_names={"P":"PREC.txt", "T":"TA.txt", "ET":"PET.txt"},
+                col_names={"P":"PREC", "ET":"PET",
                            "T":"TA", "T_min":"TA_min", "T_max":"TA_max",
                            "Jahr":"YYYY", "Monat":"MM", "Tag":"DD",
                            "Stunde":"hh", "Minute":"mm"},
@@ -443,7 +443,7 @@ class GroupStation(object):
             If only one kind is asked for, then the columns get renamed to only have the parameter name as column name.
         paras : list of str or str, optional
             Give the parameters for which to get the meta information.
-            Can be "n", "t", "et" or "all".
+            Can be "p", "t", "et" or "all".
             If "all", then every available station parameter is returned.
             The default is "all"
         agg_to : str, optional
@@ -484,12 +484,12 @@ class GroupStation(object):
             The default is True.
         file_names : dict, optional
             A dictionary with the file names for the different parameters.
-            e.g.{"N":"PREC.txt", "T":"TA.txt", "ET":"ET.txt"}
+            e.g.{"P":"PREC.txt", "T":"TA.txt", "ET":"ET.txt"}
             If an empty dictionary is given, then the standard names are used.
             The default is {}.
         col_names : dict, optional
             A dictionary with the column names for the different parameters.
-            e.g.{"N":"PREC", "T":"TA", "ET":"ET", "Jahr":"YYYY", "Monat":"MM", "Tag":"DD", "Stunde":"HH", "Minute":"MN"}
+            e.g.{"P":"PREC", "T":"TA", "ET":"ET", "Jahr":"YYYY", "Monat":"MM", "Tag":"DD", "Stunde":"HH", "Minute":"MN"}
             If an empty dictionary is given, then the standard names are used.
             The default is {}.
         keep_date_parts : bool, optional

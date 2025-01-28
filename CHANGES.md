@@ -1,5 +1,10 @@
 # Change-log
 
+## Version 1.2.2
+
+- config: define utf-8 as default encoding for config files
+- fix: GroupStation(s).create_ts parameter "paras"="n" should be "p", changes create_roger_ts conversion for roger_toolbox
+
 ## Version 1.2.1
 
 - fix: filllup linear regression did not take configuration value and therefor did never work

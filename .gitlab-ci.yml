@@ -45,11 +45,10 @@ test_single:
   interruptible: true
   variables:
     PYTHON_VERSION: 3.8
-    PYTHON_VERSION_ESCAPED: $PY_VERSION | replace(".", "_")
     PIP_CACHE_DIR: $CI_PROJECT_DIR/.cache/pip
     POSTGRES_USER: postgres
     POSTGRES_PASSWORD: postgres
-    POSTGRES_DB: test_db_$PYTHON_VERSION_ESCAPED
+    POSTGRES_DB: test_db_$PYTHON_VERSION
     POSTGRES_HOST_AUTH_METHOD: trust
     WEATHERDB_DB_HOST: postgres
     WEATHERDB_DB_PORT: 5432

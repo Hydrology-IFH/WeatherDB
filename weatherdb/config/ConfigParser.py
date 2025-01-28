@@ -36,10 +36,23 @@ class ConfigParser(configparser.ConfigParser):
         self._user_listeners = []
 
         # read the configuration files
-        self.read(self._DEFAULT_CONFIG_FILE)
+        self.read(self._DEFAULT_CONFIG_FILE, encoding="utf-8")
         self._read_main_config()
         self.load_user_config(raise_undefined_error=False)
         self.load_environment_variables()
+
+    def read(self, filenames, encoding="utf-8"):
+        """Read and parse a list of filenames.
+
+        Parameters
+        ----------
+        filenames : list or str
+            A list of filenames or a single filename to read.
+        encoding : str, optional
+            The encoding of the file.
+            The default is None.
+        """
+        super().read(filenames=filenames, encoding=encoding)
 
     def add_listener(self, section, option, callback):
         """Add a callback function to be called when a configuration option is changed.
