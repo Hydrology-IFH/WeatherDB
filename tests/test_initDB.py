@@ -252,7 +252,7 @@ class InitDBTestCases(BaseTestCases):
     def check_update_meta(self):
         with self.db_engine.connect() as conn:
             for model, n_expct in zip([models.MetaP, models.MetaT, models.MetaPD, models.MetaET],
-                                      [7, 5, 7, 3]):
+                                      [6, 4, 6, 3]):
                 # check number of stations
                 with self.subTest(model=model):
                     stmnt = sa.select(sa.func.count('*')).select_from(model)
