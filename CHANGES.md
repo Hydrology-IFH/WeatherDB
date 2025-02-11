@@ -4,6 +4,8 @@
 
 - config: define utf-8 as default encoding for config files
 - fix: GroupStation(s).create_ts parameter "paras"="n" should be "p", changes create_roger_ts conversion for roger_toolbox
+- fix: dropping stations
+- fix: test environment as DWD kicked station 2388
 
 ## Version 1.2.1
 
