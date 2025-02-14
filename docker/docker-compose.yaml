@@ -38,11 +38,13 @@ services:
           target: /src/tests
 
   db:
-    image: postgis/postgis:16-3.4
+    image: timescale/timescaledb-ha:pg17 # about 1 minute faster for tests
+    # image: postgis/postgis:17-3.4
     environment:
       POSTGRES_DB: weatherdb
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    shm_size: '2g'
     ports:
       - 5454:5432
     volumes:

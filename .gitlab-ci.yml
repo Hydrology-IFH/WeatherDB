@@ -16,7 +16,7 @@ test_single:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   image: "python:$PYTHON_VERSION"
   services:
-    - name: postgis/postgis:17-3.5
+    - name: timescale/timescaledb-ha:pg17
       alias: postgres
       command: ["postgres", "-c", "fsync=off"]
   before_script:
