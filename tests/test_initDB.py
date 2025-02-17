@@ -7,6 +7,7 @@ from pathlib import Path
 import pandas as pd
 from distutils.util import strtobool
 from datetime import timezone
+from datetime import datetime
 import shutil
 from tempfile import TemporaryDirectory
 
@@ -252,7 +253,7 @@ class InitDBTestCases(BaseTestCases):
     def check_update_meta(self):
         with self.db_engine.connect() as conn:
             for model, n_expct in zip([models.MetaP, models.MetaT, models.MetaPD, models.MetaET],
-                                      [7, 5, 7, 3]):
+                                      [6, 4, 6, 3]):
                 # check number of stations
                 with self.subTest(model=model):
                     stmnt = sa.select(sa.func.count('*')).select_from(model)
@@ -503,6 +504,7 @@ class InitDBTestCases(BaseTestCases):
         STEPS = ["update_meta", "update_raw", "update_ma_raster",
                  "quality_check", "fillup", "update_richter_class", "richter_correct",
                  "vacuum", "create_ts"]
+
         # get steps from cli arguments
         steps = cliargs.steps
         if steps == "all":
@@ -527,14 +529,17 @@ class InitDBTestCases(BaseTestCases):
                     steps = STEPS[STEPS.index(highest_step)+1:STEPS.index(steps[-1])+1]
 
         # run steps
+        times = dict()
         for step in steps:
             # run step
             try:
                 if not cliargs.just_check:
+                    start_time = datetime.now()
                     getattr(self, f"step_{step}")(
                         stids=self.test_stids,
                         skip_missing_stids=True
                     )
+                    times[step] = datetime.now() - start_time
             except Exception as e:
                 self.log.exception(e)
                 self.fail("{} failed ({}: {})".format(step, type(e), e))
@@ -553,6 +558,12 @@ class InitDBTestCases(BaseTestCases):
             else:
                 self.log.debug(f"Step {step} failed. Highest run step is still {self.broker.get_setting('highest_run_step')}")
                 break
+
+        # print times
+        self.log.info(
+            "Times for steps:\n" +
+            "\n".join([f"{step}: {dt.seconds//60}:{dt.seconds-(dt.seconds//60*60):0>2}"
+                            for step, dt in times.items()]))
 
 # cli entry point
 if __name__ == "__main__":

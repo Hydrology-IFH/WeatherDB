@@ -240,8 +240,8 @@ class StationP(StationPBase):
     @db_engine.deco_create_privilege
     def _create_timeseries_table(self):
         """Create the timeseries table in the DB if it is not yet existing."""
-        sql_add_table = '''
-            CREATE TABLE IF NOT EXISTS timeseries."{stid}_{para}"  (
+        sql_add_table = f'''
+            CREATE TABLE IF NOT EXISTS timeseries."{self.id}_{self._para}"  (
                 timestamp timestamp PRIMARY KEY,
                 raw int4,
                 qn smallint,
@@ -250,7 +250,7 @@ class StationP(StationPBase):
                 filled_by int2,
                 corr int4
             );
-        '''.format(stid=self.id, para=self._para)
+        '''
         with db_engine.connect() as con:
             con.execute(sqltxt(sql_add_table))
             con.commit()

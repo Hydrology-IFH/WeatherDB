@@ -595,7 +595,7 @@ class StationBase:
             DROP TABLE IF EXISTS timeseries."{self.id}_{self._para}";
             DELETE FROM meta_{self._para} WHERE station_id={self.id};
             DELETE FROM station_ma_raster WHERE station_id={self.id} and parameter='{self._para}';
-            DELETE FROM station_ma_timeseries WHERE station_id={self.id} and parameter='{self._para}';
+            DELETE FROM station_ma_timeserie WHERE station_id={self.id} and parameter='{self._para}';
             INSERT INTO dropped_stations(station_id, parameter, why, timestamp)
             VALUES ('{self.id}', '{self._para}', '{why}', NOW())
             ON CONFLICT (station_id, parameter)

@@ -27,11 +27,12 @@ else:
 class BaseTestCases(unittest.TestCase):
     broker = wdb.broker.Broker()
     db_engine = wdb.db.connections.db_engine
-    test_stids = [1224, 1443, 2388, 7243, 1346, 684, 757]
+    test_stids = [1224, 1443, 7243, 1346, 684, 757]
     log = wdb.utils.logging.log
 
-    @staticmethod
-    def empty_db():
+    @classmethod
+    def empty_db(cls):
+        cls.log.debug("Dropping all tables and schema from test database.")
         with wdb.db.connections.db_engine.connect() as conn:
             models.ModelBase.metadata.drop_all(conn)
             conn.execute(sa.schema.DropSchema("timeseries", cascade=True, if_exists=True))

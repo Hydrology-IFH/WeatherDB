@@ -1,5 +1,11 @@
 # Change-log
 
+## Version 1.2.3
+
+- fix: dropping stations
+- fix: test environment as DWD kicked station 2388
+- docker: optimize image with timescaledb image instead of postgis
+
 ## Version 1.2.2
 
 - config: define utf-8 as default encoding for config files
@@ -7,7 +13,7 @@
 
 ## Version 1.2.1
 
-- fix: filllup linear regression did not take configuration value and therefor did never work
+- fix: fillup linear regression did not take configuration value and therefor did never work
 - config: change LINEAR_INTERPOLATION_LIMIT to be a category
 - cli: add version parameter
 - multiprocessing: make process count configurable through user configuration
