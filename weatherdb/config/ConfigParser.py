@@ -357,7 +357,7 @@ class ConfigParser(configparser.ConfigParser):
                 user_config_file = "ask"
 
         # ask for the user config file
-        if user_config_file == "ask":
+        if user_config_file.lower().strip()[0] == "a":
             try:
                 from tkinter import Tk
                 from tkinter import filedialog
