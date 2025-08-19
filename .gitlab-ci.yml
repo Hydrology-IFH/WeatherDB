@@ -145,3 +145,39 @@ release_gitlab:
     name: '$CI_COMMIT_TAG'
     tag_name: '$CI_COMMIT_TAG'
     description: '$CI_COMMIT_TAG_MESSAGE'
+
+# deploying to Zenodo
+include:
+  - remote: 'https://gitlab.com/deploy2zenodo/deploy2zenodo/-/releases/permalink/latest/downloads/deploy2zenodo.yaml'
+
+deploy2zenodo:
+  stage: release
+  rules:
+    - !reference [build, rules]
+  dependencies:
+    - release_pypi
+  variables:
+    DEPLOY2ZENODO_JSON: zenodo.json
+    DEPLOY2ZENODO_ADD_IsNewVersionOf: yes
+    DEPLOY2ZENODO_GET_METADATA: "result.json"
+  before_script:
+    - apk add --no-cache curl jq git pandoc
+    # pack
+    - TAG=$(echo $CI_COMMIT_TAG | cut -d "v" -f 2)
+    - DEPLOY2ZENODO_UPLOAD=v$TAG.zip
+    - git archive --format zip --output "$DEPLOY2ZENODO_UPLOAD" $CI_COMMIT_SHA
+    # prepare zenodo.json
+    - publication_date=$(echo "$CI_COMMIT_TIMESTAMP" | grep -Eo "^[0-9]{4}-[0-9]{2}-[0-9]{2}")
+    - pandoc -o README.html README.md
+    - tmpjson="$(mktemp)"
+    - |
+        jq . $DEPLOY2ZENODO_JSON | \
+        jq ".metadata.version = \"$TAG\"" | \
+        jq ".metadata.publication_date = \"$publication_date\"" | \
+        jq --rawfile README README.html '.metadata.description = $README' | \
+        jq . | tee "$tmpjson"
+    - mv "$tmpjson" "$DEPLOY2ZENODO_JSON"
+  artifacts:
+    paths:
+      - $DEPLOY2ZENODO_JSON
+      - $DEPLOY2ZENODO_GET_METADATA
