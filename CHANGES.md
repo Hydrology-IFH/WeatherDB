@@ -1,5 +1,10 @@
 # Change-log
 
+## Version 1.2.4
+
+- added Zenodo upload
+- fix problem with creating user config
+
 ## Version 1.2.3
 
 - fix: dropping stations

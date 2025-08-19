@@ -1,0 +1,57 @@
+{
+    "metadata":{
+        "creators":[
+            {
+                "name": "Schmit, Max",
+                "affiliation": "University of Freiburg",
+                "orcid": "0000-0002-0712-4116"
+            }
+        ],
+        "contributor":[
+            {
+                "name": "Weiler, Markus",
+                "affiliation": "University of Freiburg",
+                "orcid": "0000-0001-6245-6917",
+                "type": "Supervisor"
+            }
+        ],
+        "license": {"id":"GPL-3.0-or-later"},
+        "title": "WeatherDB",
+        "version": "***",
+        "publication_date": "***",
+        "upload_type":"software",
+        "related_identifiers": [
+            {
+                "relation": "cites",
+                "identifier": "10.5281/zenodo.10066044",
+                "resource_type": "Dataset"
+            },
+            {
+                "relation": "requires",
+                "identifier": "https://opendata.dwd.de/climate_environment/CDC/",
+                "resource_type": "Dataset"
+            }
+        ],
+        "references": [
+            "DWD Climate Data Center (CDC): Historical daily station observations (temperature, pressure, precipitation, sunshine duration, etc.) for Germany, version v21.3, 2021, online available: https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/kl/historical/",
+            "DWD Climate Data Center (CDC): Recent daily station observations (temperature, pressure, precipitation, sunshine duration, etc.) for Germany, quality control not completed yet, version recent, online available: https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/kl/recent/",
+            "DWD Climate Data Center: Berechnete historische Tageswerte von charakteristischen Elementen aus dem Boden und dem Pflanzenbestand, historic values, Version v2, parameter \"VPGFAO\" online available: https://opendata.dwd.de/climate_environment/CDC/derived_germany/soil/daily/historical/",
+            "DWD Climate Data Center: Berechnete historische Tageswerte von charakteristischen Elementen aus dem Boden und dem Pflanzenbestand, recent values, Version v2, parameter \"VPGFAO\", online available: https://opendata.dwd.de/climate_environment/CDC/derived_germany/soil/daily/recent/",
+            "DWD Climate Data Center (CDC): Historical 10-minute station observations of precipitation for Germany, version V1, 2019, online available: https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/precipitation/historical/",
+            "DWD Climate Data Center (CDC): Recent 10-minute station observations of precipitation for Germany,version recent, 2019, online available: https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/precipitation/recent",
+            "DWD Climate Data Center (CDC): Historical daily station observations (temperature, pressure, precipitation, sunshine duration, etc.) for Germany, version v21.3, 2021, online available: https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/kl/historical/",
+            "DWD Climate Data Center (CDC): Recent daily station observations (temperature, pressure, precipitation, sunshine duration, etc.) for Germany, quality control not completed yet, version recent, online available: https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/kl/recent/",
+            "Schmit, M., & Weiler, M. (2023). German weather services (DWD) multi annual meteorological rasters for the climate period 1991-2020 refined to 25m grid (1.0.0) [Data set]. Zenodo. DOI:10.5281/zenodo.10066045",
+            "Richter, D. 1995. Ergebnisse methodischer Untersuchungen zur Korrektur des systematischen Meßfehlers des Hellmann-Niederschlagsmessers. Offenbach am Main: Selbstverl. des Dt. Wetterdienstes.",
+            "Copernicus. 2016. European Digital Elevation Model (EU-DEM), version 1.1. online available: https://land.copernicus.eu/imagery-in-situ/eu-dem/eu-dem-v1.1",
+            "Stoelzle, Michael & Weiler, Markus & Steinbrich, Andreas. (2016) Starkregengefährdung in Baden-Württemberg – von der Methodenentwicklung zur Starkregenkartierung. Tag der Hydrologie.",
+            "LARSIM Dokumentation, Stand 06.04.2023, online available: https://www.larsim.info/dokumentation/LARSIM-Dokumentation.pdf"
+        ],
+        "subjects": [
+            {"term": "Meteorology", "identifier": "mesh:D055904"},
+            {"term": "Meteorology", "identifier": "euroscivoc:281"},
+            {"term": "Meteorology", "identifier": "gemet:concept/5197"}
+        ],
+        "language": "English"
+    }
+}
