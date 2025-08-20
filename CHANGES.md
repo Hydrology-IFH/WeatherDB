@@ -3,6 +3,7 @@
 ## Version 1.2.5
 
 - cli updating methods have now additional parameters for stids, period and para to be able to update only a some specific stations
+- fillup: update also Temperature values if the filled_max and filled_min are NULL.
 
 ## Version 1.2.4
 

@@ -1447,7 +1447,8 @@ class StationBase:
                     {sql_format_dict["extra_exec_cols"].format(i=i)}
                     filled_by[{i}]=%1$s
                 FROM timeseries.%2$I nb
-                WHERE nf.filled IS NULL AND nf.nb_mean[{i}] IS NULL {prev_check}
+                WHERE (nf.filled IS NULL {sql_format_dict["extra_fillup_update_where"]})
+                    AND nf.nb_mean[{i}] IS NULL {prev_check}
                     AND nf.timestamp = nb.timestamp;"""
                 prev_check += f" AND nf.nb_mean[{i}] IS NOT NULL AND nf.filled_by[{i}] != %1$s"
 
@@ -1689,6 +1690,7 @@ class StationBase:
                 "extra_fillup_where": "",
                 "mul_elev_order": "",
                 "extra_exec_cols": "",
+                "extra_fillup_update_where": "",
                 "extra_after_loop_extra_col": ""}
 
     @db_engine.deco_update_privilege

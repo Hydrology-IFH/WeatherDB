@@ -135,6 +135,7 @@ class StationT(StationTETBase):
                                   ' OR ts."filled_max" IS DISTINCT FROM new."filled_max"',
             "extra_exec_cols": "nb_max[{i}]=round(nb.raw_max + %3$s, 0)::int,"+
                                "nb_min[{i}]=round(nb.raw_min + %3$s, 0)::int,",
+            "extra_fillup_update_where": ' OR nf."filled_min" IS NULL OR nf."filled_max" IS NULL',
             "extra_after_loop_extra_col": """,
                 filled_min=(SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY v)
                             FROM unnest(nb_min) as T(v)),
