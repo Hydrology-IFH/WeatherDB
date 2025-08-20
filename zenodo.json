@@ -24,12 +24,12 @@
             {
                 "relation": "cites",
                 "identifier": "10.5281/zenodo.10066044",
-                "resource_type": "Dataset"
+                "resource_type": "dataset"
             },
             {
                 "relation": "requires",
                 "identifier": "https://opendata.dwd.de/climate_environment/CDC/",
-                "resource_type": "Dataset"
+                "resource_type": "dataset"
             }
         ],
         "references": [
