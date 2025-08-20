@@ -7,6 +7,43 @@ from textwrap import dedent
 sys.path.insert(0, Path(__file__).resolve().parent.parent.as_posix())
 import weatherdb
 
+# Reusable option decorators
+# ---------------------------------------
+
+def period_options(f):
+    """Add period options only"""
+    f = click.option("--period_from", "-f",
+                     default=None, show_default=True,
+                     help="The from timestamp of the period to apply the method on. Timestamp should be in the format YYYY-MM-DD.")(f)
+    f = click.option("--period_until", "-u",
+                     default=None, show_default=True,
+                     help="The until timestamp of the period to apply the method on. Timestamp should be in the format YYYY-MM-DD.")(f)
+    return f
+
+def stid_option(f):
+    """Add station ID options"""
+    f = click.option("--stid", "-i",
+                     default=["all"], show_default=True, multiple=True,
+                     callback=lambda ctx, param, value: "all" if "all" in value else [int(v) for v in value],
+                     help="The station IDs to apply the method to. Options are 'all' or a specific station ID. " +
+                          "You can enter multiple values to add multiple station IDs.")(f)
+    return f
+
+def para_options(f):
+    """Add parameter options"""
+    f = click.option("--para", "-p",
+                     default=["p", "t", "et"], show_default=True, multiple=True,
+                     help="The parameters to work with. Options are 'p', 't' and 'et'. " +
+                          "You can enter multiple values to add multiple parameters.")(f)
+    return f
+
+def common_update_options(f):
+    """Add common options for processing commands (para, stid, period)"""
+    f = para_options(f)
+    f = stid_option(f)
+    f = period_options(f)
+    return f
+
 # main cli group
 # ---------------------------------------
 
@@ -185,31 +222,43 @@ def update_ma_raster():
 
 
 @cli.command(short_help="Update the raw data of the complete database.")
-def update_raw():
+@common_update_options
+def update_raw(para, stid, period_from, period_until):
     click.echo("starting updating the raw data")
     broker = weatherdb.broker.Broker()
-    broker.update_raw()
+    broker.update_raw(paras=para,
+                      stids=stid,
+                      period=(period_from, period_until))
 
 
 @cli.command(short_help="Do the quality check of the complete database.")
-def quality_check():
+@common_update_options
+def quality_check(para, stid, period_from, period_until):
     click.echo("starting quality check")
     broker = weatherdb.broker.Broker()
-    broker.quality_check()
+    broker.quality_check(paras=para,
+                         stids=stid,
+                         period=(period_from, period_until))
 
 
 @cli.command(short_help="Do the filling of the complete database.")
-def fillup():
+@common_update_options
+def fillup(para, stid, period_from, period_until):
     click.echo("starting filling up")
     broker = weatherdb.broker.Broker()
-    broker.fillup()
+    broker.fillup(paras=para,
+                  stids=stid,
+                  period=(period_from, period_until))
 
 
 @cli.command(short_help="Do the richter correction of the complete database.")
-def richter_correct():
+@stid_option
+@period_options
+def richter_correct(stid, period_from, period_until):
     click.echo("starting richter correction")
     broker = weatherdb.broker.Broker()
-    broker.richter_correct()
+    broker.richter_correct(stids=stid,
+                           period=(period_from, period_until))
 
 
 # cli admin stuff

@@ -1,5 +1,9 @@
 # Change-log
 
+## Version 1.2.5
+
+- cli updating methods have now additional parameters for stids, period and para to be able to update only a some specific stations
+
 ## Version 1.2.4
 
 - added Zenodo upload
