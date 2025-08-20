@@ -52,6 +52,6 @@
             {"term": "Meteorology", "identifier": "euroscivoc:281"},
             {"term": "Meteorology", "identifier": "gemet:concept/5197"}
         ],
-        "language": "English"
+        "language": "eng"
     }
 }
