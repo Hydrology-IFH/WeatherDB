@@ -167,6 +167,7 @@ deploy2zenodo:
     - apk add --no-cache curl jq git pandoc
     # pack
     - TAG=$(echo $CI_COMMIT_TAG | cut -d "v" -f 2)
+    - if [ -z "$TAG" ]; then echo "TAG is empty, exiting"; exit 1; fi
     - DEPLOY2ZENODO_UPLOAD=v$TAG.zip
     - git archive --format zip --output "$DEPLOY2ZENODO_UPLOAD" $CI_COMMIT_SHA
     # prepare zenodo.json
