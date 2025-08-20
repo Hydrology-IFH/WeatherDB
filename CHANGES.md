@@ -4,6 +4,8 @@
 
 - added Zenodo upload
 - fix problem with creating user config
+- add format placeholders for GroupStations.create_ts for file_names parameter
+- translate Parameter name for Precipitation for create_roger_ts back to german names to work with actual RoGeR version
 
 ## Version 1.2.3
 
