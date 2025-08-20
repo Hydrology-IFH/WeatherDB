@@ -293,10 +293,17 @@ class GroupStations(object):
 
         return stations
 
-    def create_ts(self, dir, period=(None, None), kinds="best",
-                  stids="all", agg_to="10 min", r_r0=None, split_date=False,
-                  nas_allowed=True, add_na_share=False,
-                  add_t_min=False, add_t_max=False,
+    def create_ts(self, dir,
+                  period=(None, None),
+                  kinds="best",
+                  stids="all",
+                  agg_to="10 min",
+                  r_r0=None,
+                  split_date=False,
+                  nas_allowed=True,
+                  add_na_share=False,
+                  add_t_min=False,
+                  add_t_max=False,
                   **kwargs):
         """Download and create the weather tables as csv files.
 
@@ -393,7 +400,6 @@ class GroupStations(object):
                         add_na_share=add_na_share,
                         add_t_min=add_t_min,
                         add_t_max=add_t_max,
-                        _skip_period_check=True,
                         **kwargs)
                     pbar.variables["last_station"] = stat.id
                     pbar.update(pbar.value + 1)
@@ -498,10 +504,16 @@ class GroupStations(object):
         """
         if do_toolbox_format:
             return self.create_ts(
-                dir=dir, period=period, kinds=kind,
-                agg_to="10 min", r_r0=r_r0, stids=stids,
-                split_date=True, nas_allowed=False,
-                add_t_min=add_t_min, add_t_max=add_t_max,
+                dir=dir,
+                period=period,
+                kinds=kind,
+                agg_to="10 min",
+                r_r0=r_r0,
+                stids=stids,
+                split_date=True,
+                nas_allowed=False,
+                add_t_min=add_t_min,
+                add_t_max=add_t_max,
                 file_names={"P":"PREC.txt", "T":"TA.txt", "ET":"PET.txt"},
                 col_names={"P":"PREC", "ET":"PET",
                            "T":"TA", "T_min":"TA_min", "T_max":"TA_max",
@@ -512,8 +524,16 @@ class GroupStations(object):
                 **kwargs)
         else:
             return self.create_ts(
-                dir=dir, period=period, kinds=kind,
-                agg_to="10 min", r_r0=r_r0, stids=stids,
-                split_date=True, nas_allowed=False,
-                add_t_min=add_t_min, add_t_max=add_t_max,
+                dir=dir,
+                period=period,
+                kinds=kind,
+                agg_to="10 min",
+                r_r0=r_r0,
+                stids=stids,
+                split_date=True,
+                nas_allowed=False,
+                file_names={"P": "N_{id:0>5}.txt"},
+                col_names={"P":"N"},
+                add_t_min=add_t_min,
+                add_t_max=add_t_max,
                 **kwargs)

@@ -344,8 +344,13 @@ class GroupStation(object):
     def get_name(self):
         return self.station_parts[0].get_name()
 
-    def create_roger_ts(self, dir, period=(None, None),
-                        kind="best", r_r0=1, add_t_min=False, add_t_max=False,
+    def create_roger_ts(self,
+                        dir,
+                        period=(None, None),
+                        kind="best",
+                        r_r0=1,
+                        add_t_min=False,
+                        add_t_max=False,
                         do_toolbox_format=False,
                         **kwargs):
         """Create the timeserie files for roger as csv.
@@ -394,10 +399,15 @@ class GroupStation(object):
         """
         if do_toolbox_format:
             return self.create_ts(
-                dir=dir, period=period, kinds=kind,
-                agg_to="10 min", r_r0=r_r0, split_date=True,
+                dir=dir,
+                period=period,
+                kinds=kind,
+                agg_to="10 min",
+                r_r0=r_r0,
+                split_date=True,
                 nas_allowed=False,
-                add_t_min=add_t_min, add_t_max=add_t_max,
+                add_t_min=add_t_min,
+                add_t_max=add_t_max,
                 file_names={"P":"PREC.txt", "T":"TA.txt", "ET":"PET.txt"},
                 col_names={"P":"PREC", "ET":"PET",
                            "T":"TA", "T_min":"TA_min", "T_max":"TA_max",
@@ -408,18 +418,34 @@ class GroupStation(object):
                 **kwargs)
         else:
             return self.create_ts(
-                dir=dir, period=period, kinds=kind,
-                agg_to="10 min", r_r0=r_r0, split_date=True,
+                dir=dir,
+                period=period,
+                kinds=kind,
+                agg_to="10 min",
+                r_r0=r_r0,
+                split_date=True,
                 nas_allowed=False,
-                add_t_min=add_t_min, add_t_max=add_t_max,
+                file_names={"P":"N_{id:0>5}.txt"},
+                col_names={"P":"N"},
+                add_t_min=add_t_min,
+                add_t_max=add_t_max,
                 **kwargs)
 
-    def create_ts(self, dir, period=(None, None),
-                  kinds="best", paras="all",
-                  agg_to="10 min", r_r0=None, split_date=False,
-                  nas_allowed=True, add_na_share=False,
-                  add_t_min=False, add_t_max=False,
-                  add_meta=True, file_names={}, col_names={},
+    def create_ts(self,
+                  dir,
+                  period=(None, None),
+                  kinds="best",
+                  paras="all",
+                  agg_to="10 min",
+                  r_r0=None,
+                  split_date=False,
+                  nas_allowed=True,
+                  add_na_share=False,
+                  add_t_min=False,
+                  add_t_max=False,
+                  add_meta=True,
+                  file_names={},
+                  col_names={},
                   keep_date_parts=False,
                   **kwargs):
         """Create the timeserie files as csv.
@@ -485,6 +511,7 @@ class GroupStation(object):
         file_names : dict, optional
             A dictionary with the file names for the different parameters.
             e.g.{"P":"PREC.txt", "T":"TA.txt", "ET":"ET.txt"}
+            Additionally, the station ID ("{id}" as int) and period ({period} as TimestampPeriod) are available as placeholders.
             If an empty dictionary is given, then the standard names are used.
             The default is {}.
         col_names : dict, optional
@@ -536,19 +563,22 @@ class GroupStation(object):
             del kwargs["_skip_period_check"]
 
         # prepare loop
-        name_suffix = "_{stid:0>5}.txt".format(stid=self.id)
+        name_suffix = "_{id:0>5}.txt".format(id=self.id)
         x, y = self.get_geom().coords.xy
-        name = self.get_name() + " (ID: {stid})".format(stid=self.id)
+        name = self.get_name() + " (ID: {id})".format(id=self.id)
         do_zip = isinstance(dir, zipfile.ZipFile)
 
         for para in paras:
             # get the timeserie
             df = self.get_df(
-                period=period, kinds=kinds,
-                paras=[para], agg_to=agg_to,
+                period=period,
+                kinds=kinds,
+                paras=[para],
+                agg_to=agg_to,
                 nas_allowed=nas_allowed,
                 add_na_share=add_na_share,
-                add_t_min=add_t_min, add_t_max=add_t_max,
+                add_t_min=add_t_min,
+                add_t_max=add_t_max,
                 _skip_period_check=True,
                 **kwargs)
 
@@ -573,8 +603,7 @@ class GroupStation(object):
             # check for NAs
             filled_cols = [col for col in df.columns if "filled_by" in col]
             if not nas_allowed and df.drop(filled_cols, axis=1).isna().sum().sum() > 0:
-                warnings.warn("There were NAs in the timeserie for Station {stid}.".format(
-                    stid=self.id))
+                warnings.warn(f"There were NAs in the timeseries for Station {self.id}.")
 
             # special operations for et
             if para == "et" and r_r0 is not None:
@@ -609,9 +638,11 @@ class GroupStation(object):
 
             # get file name
             if para.upper() in file_names:
-                file_name = file_names[para.upper()]
+                file_name = file_names[para.upper()]\
+                    .format(id=self.id, period=period)
             elif para in file_names:
-                file_name = file_names[para]
+                file_name = file_names[para]\
+                    .format(id=self.id, period=period)
             else:
                 file_name = para.upper() + name_suffix
 

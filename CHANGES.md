@@ -4,6 +4,10 @@
 
 - added Zenodo upload
 - fix problem with creating user config
+- add format placeholders for GroupStations.create_ts for file_names parameter
+- translate Parameter name for Precipitation for create_roger_ts back to german names to work with actual RoGeR version
+- fix problem when create_ts is invoked with a zip file. 
+  Previously the precipitation timeseries did not get expanded to the last complete date and stopped at 00:00 o'clock
 
 ## Version 1.2.3
 
